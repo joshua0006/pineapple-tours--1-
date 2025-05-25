@@ -23,7 +23,7 @@ import { useState } from "react"
 
 export default function Home() {
   const [selectedCategory, setSelectedCategory] = useState("all")
-  const { data: products, loading, error } = useRezdyProducts(12, 0)
+  const { data: products, loading, error } = useRezdyProducts(24, 0)
 
   // Filter products based on selected category
   const filteredProducts = products?.filter(product => {
@@ -32,16 +32,42 @@ export default function Home() {
     
     if (selectedCategory === "all") return true
     
-    // Simple category filtering based on product name and description
-    const searchText = `${product.name} ${product.shortDescription || ''} ${product.description || ''}`.toLowerCase()
+    // Enhanced category filtering based on product name, description, and categories
+    const searchText = `${product.name} ${product.shortDescription || ''} ${product.description || ''} ${product.categories?.join(' ') || ''}`.toLowerCase()
     
     switch (selectedCategory) {
       case "family":
-        return searchText.includes("family") || searchText.includes("kids") || searchText.includes("children")
+        return searchText.includes("family") || 
+               searchText.includes("kids") || 
+               searchText.includes("children") ||
+               searchText.includes("child") ||
+               searchText.includes("all ages") ||
+               searchText.includes("family-friendly") ||
+               searchText.includes("suitable for children")
       case "honeymoon":
-        return searchText.includes("romantic") || searchText.includes("honeymoon") || searchText.includes("couples")
+        return searchText.includes("romantic") || 
+               searchText.includes("honeymoon") || 
+               searchText.includes("couples") ||
+               searchText.includes("romance") ||
+               searchText.includes("intimate") ||
+               searchText.includes("private") ||
+               searchText.includes("sunset") ||
+               searchText.includes("luxury")
       case "adventure":
-        return searchText.includes("adventure") || searchText.includes("hiking") || searchText.includes("diving") || searchText.includes("expedition")
+        return searchText.includes("adventure") || 
+               searchText.includes("hiking") || 
+               searchText.includes("diving") || 
+               searchText.includes("expedition") ||
+               searchText.includes("extreme") ||
+               searchText.includes("adrenaline") ||
+               searchText.includes("outdoor") ||
+               searchText.includes("active") ||
+               searchText.includes("sport") ||
+               searchText.includes("climbing") ||
+               searchText.includes("kayak") ||
+               searchText.includes("snorkel") ||
+               searchText.includes("zip") ||
+               searchText.includes("trek")
       default:
         return true
     }
@@ -58,13 +84,23 @@ export default function Home() {
         {/* Hero Section */}
         <section className="relative">
           <div className="absolute inset-0 z-0">
-            <Image
-              src="/placeholder.svg?height=800&width=1920"
-              alt="Tropical beach"
-              fill
-              className="object-cover brightness-[0.7]"
-              priority
-            />
+            <div className="relative h-full w-full overflow-hidden">
+              <iframe
+                src="https://www.youtube.com/embed/KoabrcWfI_I?autoplay=1&mute=1&loop=1&playlist=KoabrcWfI_I&controls=0&showinfo=0&rel=0&iv_load_policy=3&modestbranding=1&playsinline=1"
+                title="Tourism Background Video"
+                className="absolute top-1/2 left-1/2 min-w-full min-h-full w-auto h-auto transform -translate-x-1/2 -translate-y-1/2 brightness-[0.7]"
+                style={{
+                  aspectRatio: '16/9',
+                  minWidth: '100vw',
+                  minHeight: '100vh',
+                }}
+                allow="autoplay; encrypted-media"
+                allowFullScreen={false}
+                frameBorder="0"
+              />
+              {/* Overlay to ensure content is readable */}
+              <div className="absolute inset-0 bg-black/20" />
+            </div>
           </div>
           <div className="container relative z-10 py-24 md:py-32 lg:py-40">
             <div className="max-w-3xl space-y-5 text-center sm:text-left">
@@ -134,8 +170,8 @@ export default function Home() {
               {!loading && !error && (
                 <TabsContent value={selectedCategory}>
                   {filteredProducts.length > 0 ? (
-                    <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-                      {filteredProducts.slice(0, 6).map((product) => (
+                    <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                      {filteredProducts.slice(0, 12).map((product) => (
                         <DynamicTourCard key={product.productCode} product={product} />
                       ))}
                     </div>

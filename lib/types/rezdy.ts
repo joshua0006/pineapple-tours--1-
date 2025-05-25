@@ -10,6 +10,21 @@ export interface RezdyAddress {
   longitude?: number;
 }
 
+export interface RezdyExtra {
+  id: string;
+  name: string;
+  description?: string;
+  price: number;
+  currency?: string;
+  priceType: 'PER_PERSON' | 'PER_BOOKING' | 'PER_DAY';
+  maxQuantity?: number;
+  minQuantity?: number;
+  isRequired?: boolean;
+  isAvailable?: boolean;
+  category?: string;
+  image?: RezdyImage;
+}
+
 export interface RezdyProduct {
   productCode: string;
   name: string;
@@ -24,6 +39,7 @@ export interface RezdyProduct {
   customFields?: Record<string, any>;
   status?: string;
   categories?: string[];
+  extras?: RezdyExtra[];
 }
 
 export interface RezdyImage {
@@ -84,6 +100,14 @@ export interface RezdyBookingItem {
   participants: RezdyParticipant[];
   amount: number;
   pickupId?: string;
+  extras?: RezdyBookingExtra[];
+}
+
+export interface RezdyBookingExtra {
+  extraId: string;
+  quantity: number;
+  unitPrice: number;
+  totalPrice: number;
 }
 
 export interface RezdyParticipant {

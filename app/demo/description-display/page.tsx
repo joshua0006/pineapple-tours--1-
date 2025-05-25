@@ -29,7 +29,7 @@ export default function DescriptionDisplayDemo() {
   const plainTextDescription = `
     Discover the hidden gems of our beautiful region on this comprehensive full-day tour. 
     We'll visit ancient landmarks, sample local cuisine, and learn about the rich cultural heritage 
-    that makes this destination so special. Our small group sizes ensure personalized attention 
+    that makes this tour so special. Our small group sizes ensure personalized attention 
     and the flexibility to adapt the itinerary based on your interests and the day's conditions.
     
     This tour includes transportation, professional guide services, entrance fees to all attractions, 

@@ -11,11 +11,17 @@ interface SearchFilters {
   sortBy: string;
   checkIn: string;
   checkOut: string;
+  page: number;
+  limit: number;
 }
 
 interface SearchResponse {
   products: RezdyProduct[];
   totalCount: number;
+  totalPages: number;
+  currentPage: number;
+  hasNextPage: boolean;
+  hasPreviousPage: boolean;
   filters: SearchFilters;
   metadata: {
     hasResults: boolean;
@@ -45,6 +51,8 @@ export function useSearch(initialFilters?: Partial<SearchFilters>) {
     sortBy: 'relevance',
     checkIn: '',
     checkOut: '',
+    page: 1,
+    limit: 12,
     ...initialFilters,
   });
 
@@ -63,7 +71,7 @@ export function useSearch(initialFilters?: Partial<SearchFilters>) {
       const searchParams = new URLSearchParams();
       Object.entries(searchFilters).forEach(([key, value]) => {
         if (value && value !== '') {
-          searchParams.append(key, value);
+          searchParams.append(key, value.toString());
         }
       });
 
@@ -100,22 +108,32 @@ export function useSearch(initialFilters?: Partial<SearchFilters>) {
     return () => clearTimeout(timeoutId);
   }, [filters, performSearch, searchTriggered]);
 
-  const updateFilter = useCallback((key: keyof SearchFilters, value: string) => {
-    setFilters(prev => ({ ...prev, [key]: value }));
+  const updateFilter = useCallback((key: keyof SearchFilters, value: string | number) => {
+    setFilters(prev => ({ 
+      ...prev, 
+      [key]: value,
+      // Reset to page 1 when filters change (except when changing page itself)
+      ...(key !== 'page' ? { page: 1 } : {})
+    }));
     setSearchTriggered(true);
   }, []);
 
   const updateFilters = useCallback((newFilters: Partial<SearchFilters>) => {
-    setFilters(prev => ({ ...prev, ...newFilters }));
+    setFilters(prev => ({ 
+      ...prev, 
+      ...newFilters,
+      // Reset to page 1 when filters change (unless page is explicitly set)
+      ...(newFilters.page === undefined ? { page: 1 } : {})
+    }));
     setSearchTriggered(true);
   }, []);
 
   const search = useCallback((searchQuery?: string) => {
     if (searchQuery !== undefined) {
-      setFilters(prev => ({ ...prev, query: searchQuery }));
+      setFilters(prev => ({ ...prev, query: searchQuery, page: 1 }));
     }
     setSearchTriggered(true);
-    performSearch(searchQuery !== undefined ? { ...filters, query: searchQuery } : filters);
+    performSearch(searchQuery !== undefined ? { ...filters, query: searchQuery, page: 1 } : filters);
   }, [filters, performSearch]);
 
   const clearSearch = useCallback(() => {
@@ -129,6 +147,8 @@ export function useSearch(initialFilters?: Partial<SearchFilters>) {
       sortBy: 'relevance',
       checkIn: '',
       checkOut: '',
+      page: 1,
+      limit: 12,
     });
     setState({
       data: null,
@@ -139,7 +159,7 @@ export function useSearch(initialFilters?: Partial<SearchFilters>) {
   }, []);
 
   const clearFilter = useCallback((filterKey: keyof SearchFilters) => {
-    const defaultValues: Record<keyof SearchFilters, string> = {
+    const defaultValues: Record<keyof SearchFilters, string | number> = {
       query: '',
       category: 'all',
       productType: 'all',
@@ -149,10 +169,28 @@ export function useSearch(initialFilters?: Partial<SearchFilters>) {
       sortBy: 'relevance',
       checkIn: '',
       checkOut: '',
+      page: 1,
+      limit: 12,
     };
     
     updateFilter(filterKey, defaultValues[filterKey]);
   }, [updateFilter]);
+
+  const goToPage = useCallback((page: number) => {
+    updateFilter('page', page);
+  }, [updateFilter]);
+
+  const nextPage = useCallback(() => {
+    if (state.data?.hasNextPage) {
+      updateFilter('page', filters.page + 1);
+    }
+  }, [state.data?.hasNextPage, filters.page, updateFilter]);
+
+  const previousPage = useCallback(() => {
+    if (state.data?.hasPreviousPage) {
+      updateFilter('page', filters.page - 1);
+    }
+  }, [state.data?.hasPreviousPage, filters.page, updateFilter]);
 
   return {
     // State
@@ -167,6 +205,9 @@ export function useSearch(initialFilters?: Partial<SearchFilters>) {
     clearSearch,
     clearFilter,
     performSearch: () => performSearch(filters),
+    goToPage,
+    nextPage,
+    previousPage,
     
     // Computed values
     hasActiveFilters: filters.query !== '' || 
@@ -179,5 +220,9 @@ export function useSearch(initialFilters?: Partial<SearchFilters>) {
     
     hasResults: state.data?.metadata.hasResults ?? false,
     totalResults: state.data?.totalCount ?? 0,
+    totalPages: state.data?.totalPages ?? 0,
+    currentPage: state.data?.currentPage ?? 1,
+    hasNextPage: state.data?.hasNextPage ?? false,
+    hasPreviousPage: state.data?.hasPreviousPage ?? false,
   };
 } 

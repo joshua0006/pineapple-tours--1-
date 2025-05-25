@@ -1,9 +1,15 @@
-import { RezdyProduct, RezdySession } from "@/lib/types/rezdy"
+import { RezdyProduct, RezdySession, RezdyExtra } from "@/lib/types/rezdy"
+
+export interface SelectedExtra {
+  extra: RezdyExtra;
+  quantity: number;
+}
 
 export interface PricingOptions {
   adults: number
   children: number
   infants: number
+  extras?: SelectedExtra[]
   taxRate?: number
   serviceFeesRate?: number
   childDiscountRate?: number
@@ -19,10 +25,12 @@ export interface PricingBreakdown {
   childPrice: number
   infantPrice: number
   subtotal: number
+  extrasSubtotal: number
   taxes: number
   serviceFees: number
   total: number
   savings?: number
+  selectedExtras?: SelectedExtra[]
 }
 
 export interface TaxInfo {
@@ -65,17 +73,45 @@ export function calculatePricing(
   const childPrice = Math.round(sessionPrice * (1 - config.childDiscountRate))
   const infantPrice = Math.round(sessionPrice * (1 - config.infantDiscountRate))
   
-  // Calculate subtotal
+  // Calculate subtotal for main tour
   const subtotal = (options.adults * adultPrice) + 
                   (options.children * childPrice) + 
                   (options.infants * infantPrice)
   
-  // Calculate taxes and fees
-  const taxes = Math.round(subtotal * config.taxRate)
-  const serviceFees = Math.round(subtotal * config.serviceFeesRate)
+  // Calculate extras subtotal
+  let extrasSubtotal = 0
+  const selectedExtras = options.extras || []
+  
+  selectedExtras.forEach(({ extra, quantity }) => {
+    let extraPrice = 0
+    
+    switch (extra.priceType) {
+      case 'PER_PERSON':
+        extraPrice = extra.price * (options.adults + options.children + options.infants) * quantity
+        break
+      case 'PER_BOOKING':
+        extraPrice = extra.price * quantity
+        break
+      case 'PER_DAY':
+        // Assuming 1 day for now, could be extended to calculate based on tour duration
+        extraPrice = extra.price * quantity
+        break
+      default:
+        extraPrice = extra.price * quantity
+    }
+    
+    extrasSubtotal += extraPrice
+  })
+  
+  // Calculate total subtotal including extras
+  const totalSubtotal = subtotal + extrasSubtotal
+  
+  // Calculate taxes and fees on total subtotal
+  const taxes = Math.round(totalSubtotal * config.taxRate)
+  const serviceFees = Math.round(totalSubtotal * config.serviceFeesRate)
   
   // Calculate total
-  const total = subtotal + taxes + serviceFees
+  const total = totalSubtotal + taxes + serviceFees
   
   // Calculate potential savings
   const fullPriceTotal = (options.adults + options.children + options.infants) * adultPrice
@@ -90,10 +126,12 @@ export function calculatePricing(
     childPrice,
     infantPrice,
     subtotal,
+    extrasSubtotal,
     taxes,
     serviceFees,
     total,
-    savings: savings > 0 ? savings : undefined
+    savings: savings > 0 ? savings : undefined,
+    selectedExtras
   }
 }
 

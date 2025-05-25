@@ -19,10 +19,11 @@ import { Badge } from "@/components/ui/badge"
 import { Textarea } from "@/components/ui/textarea"
 import { PricingDisplay, PricingSummary } from "@/components/ui/pricing-display"
 import { GuestManager, type GuestInfo } from "@/components/ui/guest-manager"
+import { ExtrasSelector } from "@/components/ui/extras-selector"
 import { useRezdyAvailability } from "@/hooks/use-rezdy"
 import { RezdyProduct, RezdySession } from "@/lib/types/rezdy"
 import { formatPrice, getLocationString } from "@/lib/utils/product-utils"
-import { calculatePricing, formatCurrency, getPricingSummaryText, getDiscountInfo, validatePricingOptions, type PricingBreakdown as PricingBreakdownType } from "@/lib/utils/pricing-utils"
+import { calculatePricing, formatCurrency, getPricingSummaryText, getDiscountInfo, validatePricingOptions, type PricingBreakdown as PricingBreakdownType, type SelectedExtra } from "@/lib/utils/pricing-utils"
 import { cn } from "@/lib/utils"
 
 interface EnhancedBookingFormProps {
@@ -51,6 +52,7 @@ export function EnhancedBookingForm({ product, onClose }: EnhancedBookingFormPro
   const [startDate, setStartDate] = useState<Date | undefined>(undefined)
   const [selectedSession, setSelectedSession] = useState<RezdySession | null>(null)
   const [specialRequests, setSpecialRequests] = useState('')
+  const [selectedExtras, setSelectedExtras] = useState<SelectedExtra[]>([])
   
   // Contact information
   const [contactInfo, setContactInfo] = useState({
@@ -115,9 +117,10 @@ export function EnhancedBookingForm({ product, onClose }: EnhancedBookingFormPro
     return calculatePricing(product, selectedSession, {
       adults: guestCounts.adults,
       children: guestCounts.children,
-      infants: guestCounts.infants
+      infants: guestCounts.infants,
+      extras: selectedExtras
     })
-  }, [product, selectedSession, guestCounts])
+  }, [product, selectedSession, guestCounts, selectedExtras])
 
   // Guest management is now handled by the GuestManager component
 
@@ -154,6 +157,7 @@ export function EnhancedBookingForm({ product, onClose }: EnhancedBookingFormPro
         guests: guests.filter(g => g.firstName && g.lastName),
         contact: contactInfo,
         pricing: pricingBreakdown,
+        selectedExtras: selectedExtras,
         specialRequests
       }
 
@@ -322,7 +326,7 @@ export function EnhancedBookingForm({ product, onClose }: EnhancedBookingFormPro
             </div>
           </div>
 
-                    <Separator />
+          <Separator />
 
           {/* Enhanced Guest Management */}
           <GuestManager
@@ -335,7 +339,20 @@ export function EnhancedBookingForm({ product, onClose }: EnhancedBookingFormPro
 
           <Separator />
 
-                    {/* Tour Information */}
+          {/* Optional Extras Selection */}
+          {product.extras && product.extras.length > 0 && (
+            <>
+              <ExtrasSelector
+                extras={product.extras}
+                selectedExtras={selectedExtras}
+                onExtrasChange={setSelectedExtras}
+                guestCount={guestCounts.adults + guestCounts.children + guestCounts.infants}
+              />
+              <Separator />
+            </>
+          )}
+
+          {/* Tour Information */}
           <Card>
             <CardContent className="pt-6 space-y-3">
               <div className="flex justify-between">
@@ -358,6 +375,23 @@ export function EnhancedBookingForm({ product, onClose }: EnhancedBookingFormPro
                       hour: '2-digit',
                       minute: '2-digit'
                     })}
+                  </span>
+                </div>
+              )}
+              <div className="flex justify-between">
+                <span>Guests</span>
+                <span className="text-right">
+                  {guestCounts.adults + guestCounts.children + guestCounts.infants} total
+                  {guestCounts.adults > 0 && ` (${guestCounts.adults} adult${guestCounts.adults > 1 ? 's' : ''})`}
+                  {guestCounts.children > 0 && ` (${guestCounts.children} child${guestCounts.children > 1 ? 'ren' : ''})`}
+                  {guestCounts.infants > 0 && ` (${guestCounts.infants} infant${guestCounts.infants > 1 ? 's' : ''})`}
+                </span>
+              </div>
+              {selectedExtras.length > 0 && (
+                <div className="flex justify-between">
+                  <span>Selected Extras</span>
+                  <span className="text-right">
+                    {selectedExtras.length} item{selectedExtras.length > 1 ? 's' : ''} • {formatCurrency(pricingBreakdown.extrasSubtotal)}
                   </span>
                 </div>
               )}
@@ -534,6 +568,34 @@ export function EnhancedBookingForm({ product, onClose }: EnhancedBookingFormPro
                     <span>Guests</span>
                     <span>{guests.length} {guests.length === 1 ? 'guest' : 'guests'}</span>
                   </div>
+                  {selectedExtras.length > 0 && (
+                    <>
+                      <div className="flex justify-between text-sm font-medium">
+                        <span>Selected Extras</span>
+                        <span>{selectedExtras.length} item{selectedExtras.length > 1 ? 's' : ''}</span>
+                      </div>
+                      <div className="ml-4 space-y-1">
+                        {selectedExtras.map(({ extra, quantity }) => (
+                          <div key={extra.id} className="flex justify-between text-xs text-muted-foreground">
+                            <span>{extra.name} × {quantity}</span>
+                            <span>{formatCurrency((() => {
+                              const guestCount = guestCounts.adults + guestCounts.children + guestCounts.infants
+                              switch (extra.priceType) {
+                                case 'PER_PERSON':
+                                  return extra.price * guestCount * quantity
+                                case 'PER_BOOKING':
+                                  return extra.price * quantity
+                                case 'PER_DAY':
+                                  return extra.price * quantity
+                                default:
+                                  return extra.price * quantity
+                              }
+                            })())}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </>
+                  )}
                 </div>
                 <Separator />
                 <PricingSummary breakdown={pricingBreakdown} />

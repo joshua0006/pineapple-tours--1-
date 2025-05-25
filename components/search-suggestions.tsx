@@ -55,7 +55,7 @@ export function SearchSuggestions({ onSuggestionClick, className = "" }: SearchS
         <CardHeader className="pb-3">
           <CardTitle className="flex items-center gap-2 text-lg">
             <TrendingUp className="h-5 w-5" />
-            Popular Destinations
+            Popular Tours
           </CardTitle>
         </CardHeader>
         <CardContent>

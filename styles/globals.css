@@ -92,3 +92,122 @@ body {
     @apply bg-background text-foreground;
   }
 }
+
+/* Mobile Navigation Animations */
+@keyframes fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slide-in-left {
+  from {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes scale-in {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* Responsive Navigation Enhancements */
+@layer components {
+  .nav-link {
+    @apply relative transition-all duration-200 ease-in-out;
+  }
+  
+  .nav-link::after {
+    content: '';
+    @apply absolute bottom-0 left-0 w-0 h-0.5 bg-yellow-500 transition-all duration-300 ease-in-out;
+  }
+  
+  .nav-link:hover::after,
+  .nav-link:focus::after {
+    @apply w-full;
+  }
+  
+  .mobile-nav-item {
+    animation: fade-in-up 0.4s ease-out forwards;
+    opacity: 0;
+  }
+  
+  .tablet-dropdown {
+    @apply transform transition-all duration-200 ease-in-out;
+    transform-origin: top center;
+  }
+  
+  .tablet-dropdown[data-state="open"] {
+    animation: scale-in 0.2s ease-out forwards;
+  }
+  
+  .tablet-dropdown[data-state="closed"] {
+    animation: scale-in 0.2s ease-out reverse;
+  }
+}
+
+/* Touch-friendly enhancements */
+@media (hover: none) and (pointer: coarse) {
+  .nav-link:hover {
+    @apply bg-accent text-accent-foreground;
+  }
+  
+  .mobile-nav-item {
+    @apply min-h-[48px] touch-manipulation;
+  }
+}
+
+/* Reduced motion preferences */
+@media (prefers-reduced-motion: reduce) {
+  .mobile-nav-item,
+  .nav-link,
+  .tablet-dropdown {
+    animation: none !important;
+    transition: none !important;
+  }
+  
+  .nav-link::after {
+    transition: none !important;
+  }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .nav-link {
+    @apply border border-transparent;
+  }
+  
+  .nav-link:hover,
+  .nav-link:focus {
+    @apply border-current;
+  }
+}
+
+/* Focus visible enhancements */
+.nav-link:focus-visible {
+  @apply outline-none ring-2 ring-yellow-500 ring-offset-2;
+}
+
+/* Print styles */
+@media print {
+  .mobile-nav,
+  .tablet-dropdown {
+    @apply hidden;
+  }
+}

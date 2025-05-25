@@ -27,7 +27,7 @@ const TOUR_CATEGORIES: Omit<TourCategory, 'tourCount'>[] = [
     description: 'Perfect single-day adventures and experiences',
     icon: Calendar,
     productTypes: ['DAY_TOUR', 'TOUR', 'DAYTOUR'], // Include common variations
-    image: '/placeholder.svg?height=300&width=400',
+    image: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80',
     slug: 'day-tour'
   },
   {
@@ -36,7 +36,7 @@ const TOUR_CATEGORIES: Omit<TourCategory, 'tourCount'>[] = [
     description: 'Extended adventures spanning multiple days',
     icon: MapPin,
     productTypes: ['MULTIDAY_TOUR', 'MULTI_DAY_TOUR', 'MULTIDAYTOUR'],
-    image: '/placeholder.svg?height=300&width=400',
+    image: 'https://images.unsplash.com/photo-1464822759844-d150baec93d5?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80',
     slug: 'multiday-tour'
   },
   {
@@ -45,7 +45,7 @@ const TOUR_CATEGORIES: Omit<TourCategory, 'tourCount'>[] = [
     description: 'Exclusive personalized tour experiences',
     icon: Users,
     productTypes: ['PRIVATE_TOUR', 'PRIVATE'],
-    image: '/placeholder.svg?height=300&width=400',
+    image: 'https://images.unsplash.com/photo-1488646953014-85cb44e25828?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2035&q=80',
     slug: 'private-tour'
   },
   {
@@ -54,7 +54,7 @@ const TOUR_CATEGORIES: Omit<TourCategory, 'tourCount'>[] = [
     description: 'Transportation and transfer services',
     icon: Car,
     productTypes: ['TRANSFER', 'TRANSPORT', 'TRANSPORTATION'],
-    image: '/placeholder.svg?height=300&width=400',
+    image: 'https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2069&q=80',
     slug: 'transfer'
   }
 ]

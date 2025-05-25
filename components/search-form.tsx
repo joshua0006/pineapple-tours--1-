@@ -19,10 +19,10 @@ interface SearchFormProps {
 
 export function SearchForm({ onSearch, showRedirect = true }: SearchFormProps) {
   const router = useRouter()
-  const [searchType, setSearchType] = useState("destination")
+  const [searchType, setSearchType] = useState("tours")
   
-  // Form state for destination search
-  const [destination, setDestination] = useState("")
+  // Form state for tours search
+  const [tours, setTours] = useState("")
   const [checkInDate, setCheckInDate] = useState<Date | undefined>()
   const [checkOutDate, setCheckOutDate] = useState<Date | undefined>()
   const [travelers, setTravelers] = useState("2")
@@ -33,16 +33,16 @@ export function SearchForm({ onSearch, showRedirect = true }: SearchFormProps) {
   const [budget, setBudget] = useState("any")
   const [tourTravelers, setTourTravelers] = useState("2")
 
-  const handleDestinationSearch = (e: React.FormEvent) => {
+  const handleToursSearch = (e: React.FormEvent) => {
     e.preventDefault()
     
     const searchData = {
-      query: destination,
+      query: tours,
       category: 'all',
       travelers: travelers,
       checkIn: checkInDate ? format(checkInDate, 'yyyy-MM-dd') : '',
       checkOut: checkOutDate ? format(checkOutDate, 'yyyy-MM-dd') : '',
-      searchType: 'destination'
+      searchType: 'tours'
     }
 
     if (onSearch) {
@@ -50,7 +50,7 @@ export function SearchForm({ onSearch, showRedirect = true }: SearchFormProps) {
     } else if (showRedirect) {
       // Redirect to search results page
       const params = new URLSearchParams()
-      if (destination) params.append('query', destination)
+      if (tours) params.append('query', tours)
       if (travelers !== '2') params.append('travelers', travelers)
       if (checkInDate) params.append('checkIn', format(checkInDate, 'yyyy-MM-dd'))
       if (checkOutDate) params.append('checkOut', format(checkOutDate, 'yyyy-MM-dd'))
@@ -86,24 +86,24 @@ export function SearchForm({ onSearch, showRedirect = true }: SearchFormProps) {
   }
 
   return (
-    <Tabs defaultValue="destination" className="w-full" onValueChange={setSearchType}>
+    <Tabs defaultValue="tours" className="w-full" onValueChange={setSearchType}>
       <div className="bg-white p-6">
         <TabsList className="grid w-full grid-cols-2 mb-6">
-          <TabsTrigger value="destination">Search by Destination</TabsTrigger>
+          <TabsTrigger value="tours">Search by Tours</TabsTrigger>
           <TabsTrigger value="tour">Search by Tour Type</TabsTrigger>
         </TabsList>
-        <TabsContent value="destination" className="mt-0">
-          <form onSubmit={handleDestinationSearch} className="grid gap-4 md:grid-cols-4">
+        <TabsContent value="tours" className="mt-0">
+          <form onSubmit={handleToursSearch} className="grid gap-4 md:grid-cols-4">
             <div className="space-y-2">
-              <Label htmlFor="destination">Destination</Label>
+              <Label htmlFor="tours">Tours</Label>
               <div className="relative">
                 <MapPin className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                 <Input 
-                  id="destination" 
+                  id="tours" 
                   placeholder="Where do you want to go?" 
                   className="pl-9"
-                  value={destination}
-                  onChange={(e) => setDestination(e.target.value)}
+                  value={tours}
+                  onChange={(e) => setTours(e.target.value)}
                 />
               </div>
             </div>

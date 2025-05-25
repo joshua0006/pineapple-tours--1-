@@ -14,7 +14,7 @@ interface QuickSearchProps {
 }
 
 export function QuickSearch({ 
-  placeholder = "Search tours, destinations...", 
+  placeholder = "Search tours, locations...", 
   className = "",
   onSearch,
   showButton = true 

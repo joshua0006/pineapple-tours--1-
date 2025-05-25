@@ -14,6 +14,8 @@ import { SiteFooter } from "@/components/site-footer"
 import { DynamicTourCard } from "@/components/dynamic-tour-card"
 import { TourGridSkeleton } from "@/components/tour-grid-skeleton"
 import { ErrorState } from "@/components/error-state"
+import { TourPagination } from "@/components/tour-pagination"
+import { PaginationInfo } from "@/components/pagination-info"
 import { useSearch } from "@/hooks/use-search"
 
 export default function ToursPage() {
@@ -31,6 +33,8 @@ export default function ToursPage() {
     sortBy: searchParams.get('sortBy') || 'name',
     checkIn: searchParams.get('checkIn') || '',
     checkOut: searchParams.get('checkOut') || '',
+    page: parseInt(searchParams.get('page') || '1'),
+    limit: 12,
   }
 
   const {
@@ -45,6 +49,13 @@ export default function ToursPage() {
     hasActiveFilters,
     hasResults,
     totalResults,
+    totalPages,
+    currentPage,
+    hasNextPage,
+    hasPreviousPage,
+    goToPage,
+    nextPage,
+    previousPage,
   } = useSearch(initialFilters)
 
   const [localQuery, setLocalQuery] = useState(filters.query)
@@ -53,6 +64,20 @@ export default function ToursPage() {
   useEffect(() => {
     search()
   }, []) // Only run on mount
+
+  // Update URL when filters change
+  useEffect(() => {
+    const params = new URLSearchParams()
+    
+    Object.entries(filters).forEach(([key, value]) => {
+      if (value && value !== '' && value !== 'all' && value !== 'any' && value !== 2 && value !== 12 && value !== 1) {
+        params.append(key, value.toString())
+      }
+    })
+
+    const newUrl = params.toString() ? `/tours?${params.toString()}` : '/tours'
+    router.replace(newUrl, { scroll: false })
+  }, [filters, router])
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -122,7 +147,7 @@ export default function ToursPage() {
                 <div className="relative flex-1 max-w-md">
                   <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                   <Input
-                    placeholder="Search tours, destinations, activities..."
+                    placeholder="Search tours, locations, activities..."
                     value={localQuery}
                     onChange={(e) => setLocalQuery(e.target.value)}
                     className="pl-9"
@@ -208,7 +233,11 @@ export default function ToursPage() {
             <div className="mt-4 flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <p className="text-sm text-muted-foreground">
-                  {loading ? "Loading..." : `${totalResults} tours found`}
+                  {loading ? "Loading..." : (
+                    totalPages > 1 
+                      ? `${totalResults} tours found • Page ${currentPage} of ${totalPages}`
+                      : `${totalResults} tours found`
+                  )}
                 </p>
                 
                 {hasActiveFilters && (
@@ -326,11 +355,32 @@ export default function ToursPage() {
             {!loading && !error && data && (
               <>
                 {hasResults ? (
-                  <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-                    {data.products.map((product) => (
-                      <DynamicTourCard key={product.productCode} product={product} />
-                    ))}
-                  </div>
+                  <>
+                    <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                      {data.products.map((product) => (
+                        <DynamicTourCard key={product.productCode} product={product} />
+                      ))}
+                    </div>
+                    
+                    {/* Pagination Info and Controls */}
+                    <div className="mt-8 flex flex-col items-center gap-4">
+                      <PaginationInfo
+                        currentPage={currentPage}
+                        totalPages={totalPages}
+                        totalResults={totalResults}
+                        resultsPerPage={filters.limit}
+                      />
+                      <TourPagination
+                        currentPage={currentPage}
+                        totalPages={totalPages}
+                        hasNextPage={hasNextPage}
+                        hasPreviousPage={hasPreviousPage}
+                        onPageChange={goToPage}
+                        onNextPage={nextPage}
+                        onPreviousPage={previousPage}
+                      />
+                    </div>
+                  </>
                 ) : (
                   <Card className="p-12 text-center">
                     <CardContent>

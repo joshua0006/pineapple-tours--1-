@@ -58,11 +58,8 @@ export function SiteFooter() {
           <div>
             <h3 className="text-lg font-medium">Quick Links</h3>
             <nav className="mt-4 flex flex-col gap-2">
-              <Link href="/destinations" className="text-gray-400 hover:text-white">
-                Destinations
-              </Link>
               <Link href="/tours" className="text-gray-400 hover:text-white">
-                Tour Packages
+                Tours
               </Link>
               <Link href="/special-offers" className="text-gray-400 hover:text-white">
                 Special Offers
@@ -79,24 +76,24 @@ export function SiteFooter() {
             </nav>
           </div>
           <div>
-            <h3 className="text-lg font-medium">Popular Destinations</h3>
+            <h3 className="text-lg font-medium">Popular Tours</h3>
             <nav className="mt-4 flex flex-col gap-2">
-              <Link href="/destinations/hawaii" className="text-gray-400 hover:text-white">
+              <Link href="/tours/hawaii" className="text-gray-400 hover:text-white">
                 Hawaii
               </Link>
-              <Link href="/destinations/caribbean" className="text-gray-400 hover:text-white">
+              <Link href="/tours/caribbean" className="text-gray-400 hover:text-white">
                 Caribbean
               </Link>
-              <Link href="/destinations/fiji" className="text-gray-400 hover:text-white">
+              <Link href="/tours/fiji" className="text-gray-400 hover:text-white">
                 Fiji
               </Link>
-              <Link href="/destinations/bali" className="text-gray-400 hover:text-white">
+              <Link href="/tours/bali" className="text-gray-400 hover:text-white">
                 Bali
               </Link>
-              <Link href="/destinations/maldives" className="text-gray-400 hover:text-white">
+              <Link href="/tours/maldives" className="text-gray-400 hover:text-white">
                 Maldives
               </Link>
-              <Link href="/destinations/tahiti" className="text-gray-400 hover:text-white">
+              <Link href="/tours/tahiti" className="text-gray-400 hover:text-white">
                 Tahiti
               </Link>
             </nav>

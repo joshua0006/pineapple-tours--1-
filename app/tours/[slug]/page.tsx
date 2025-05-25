@@ -51,7 +51,76 @@ export default function TourDetailPage({ params }: { params: Promise<{ slug: str
   useEffect(() => {
     if (products && productCode) {
       const product = products.find(p => p.productCode === productCode)
-      setSelectedProduct(product || null)
+      if (product) {
+        // Add sample extras data for demonstration
+        // In a real implementation, this would come from the Rezdy API
+        const productWithExtras = {
+          ...product,
+          extras: [
+            {
+              id: 'extra-1',
+              name: 'Professional Photography Package',
+              description: 'Get professional photos of your tour experience taken by our expert photographer. Includes 20+ high-resolution digital photos delivered within 24 hours.',
+              price: 45,
+              priceType: 'PER_BOOKING' as const,
+              maxQuantity: 1,
+              isAvailable: true,
+              category: 'Photography',
+              image: {
+                id: 1001,
+                itemUrl: '/placeholder.svg?height=400&width=600',
+                thumbnailUrl: '/placeholder.svg?height=100&width=100',
+                mediumSizeUrl: '/placeholder.svg?height=200&width=200',
+                largeSizeUrl: '/placeholder.svg?height=400&width=600',
+                caption: 'Professional Photography'
+              }
+            },
+            {
+              id: 'extra-2',
+              name: 'Premium Lunch Upgrade',
+              description: 'Upgrade to our premium lunch featuring locally sourced ingredients and gourmet options.',
+              price: 25,
+              priceType: 'PER_PERSON' as const,
+              maxQuantity: 5,
+              isAvailable: true,
+              category: 'Food & Beverage'
+            },
+            {
+              id: 'extra-3',
+              name: 'Equipment Rental',
+              description: 'High-quality equipment rental including waterproof gear and safety equipment.',
+              price: 15,
+              priceType: 'PER_PERSON' as const,
+              maxQuantity: 10,
+              isAvailable: true,
+              category: 'Equipment'
+            },
+            {
+              id: 'extra-4',
+              name: 'Transportation Upgrade',
+              description: 'Upgrade to premium transportation with air conditioning and comfortable seating.',
+              price: 35,
+              priceType: 'PER_BOOKING' as const,
+              maxQuantity: 1,
+              isAvailable: true,
+              category: 'Transportation'
+            },
+            {
+              id: 'extra-5',
+              name: 'Souvenir Package',
+              description: 'Take home a curated selection of local souvenirs and memorabilia.',
+              price: 20,
+              priceType: 'PER_PERSON' as const,
+              maxQuantity: 3,
+              isAvailable: true,
+              category: 'Souvenirs'
+            }
+          ]
+        }
+        setSelectedProduct(productWithExtras)
+      } else {
+        setSelectedProduct(null)
+      }
     }
   }, [products, productCode])
 
@@ -690,7 +759,7 @@ export default function TourDetailPage({ params }: { params: Promise<{ slug: str
           aria-modal="true"
           aria-labelledby="booking-modal-title"
         >
-          <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+          <div className="bg-white rounded-lg max-w-7xl w-full max-h-[90vh] overflow-y-auto">
             <div className="p-6">
               <div className="flex items-center justify-between mb-6">
                 <h2 id="booking-modal-title" className="text-2xl font-bold">Book {selectedProduct.name}</h2>

@@ -1,135 +1,204 @@
 "use client"
 
 import Link from "next/link"
-import { useState } from "react"
-import { Menu, Phone } from "lucide-react"
+import { useState, useEffect } from "react"
+import { Menu, Phone, ChevronDown, MapPin, Calendar, Users, MessageCircle, Database } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
+import { Sheet, SheetContent, SheetTrigger, SheetTitle } from "@/components/ui/sheet"
+import { VisuallyHidden } from "@/components/ui/visually-hidden"
 import { ThemeToggle } from "@/components/theme-toggle"
-import { ThemeToggleSimple } from "@/components/theme-toggle-simple"
+import { MobileNavigation } from "@/components/mobile-navigation"
+import { useResponsive } from "@/hooks/use-responsive"
+import { cn } from "@/lib/utils"
 
 export function SiteHeader() {
   const [isOpen, setIsOpen] = useState(false)
+  const [isScrolled, setIsScrolled] = useState(false)
+  const { isMobile, isTablet, isDesktop } = useResponsive()
+
+  // Handle scroll effect for header
+  useEffect(() => {
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 10)
+    }
+    window.addEventListener('scroll', handleScroll)
+    return () => window.removeEventListener('scroll', handleScroll)
+  }, [])
+
+  // Close mobile menu when clicking outside or on escape
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setIsOpen(false)
+      }
+    }
+    
+    if (isOpen) {
+      document.addEventListener('keydown', handleKeyDown)
+      document.body.style.overflow = 'hidden'
+    } else {
+      document.body.style.overflow = 'unset'
+    }
+    
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown)
+      document.body.style.overflow = 'unset'
+    }
+  }, [isOpen])
+
+  const navigationItems = [
+    { href: "/tours", label: "Tours", icon: <MapPin className="w-5 h-5" /> },
+    { href: "/blog", label: "Blog", icon: <Calendar className="w-5 h-5" /> },
+    { href: "/about", label: "About Us", icon: <Users className="w-5 h-5" /> },
+    { href: "/contact", label: "Contact", icon: <MessageCircle className="w-5 h-5" /> }
+  ]
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="container flex h-16 items-center">
-        <Link href="/" className="flex items-center gap-2 font-bold text-xl">
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            className="h-6 w-6 text-yellow-500"
-          >
-            <path d="M17 14c.889-.889 2.111.889 3-1s1-6-4-7c-3.5-.7-5.5.7-7 2" />
-            <path d="M17 14s-1 1-2 1-2-1-2-2c0-4 4-2 4-2" />
-            <path d="M14 7c.889-.889 2.111.889 3-1s1-6-4-7c-3.5-.7-5.5.7-7 2" />
-            <path d="M14 7s-1 1-2 1-2-1-2-2c0-4 4-2 4-2" />
-            <path d="M5 22v-3" />
-            <path d="M9 22v-3" />
-            <path d="M9 12v3" />
-            <path d="M5 12v3" />
-            <path d="M5 15h4" />
-            <path d="M5 19h4" />
-          </svg>
-          <span>Pineapple Tours</span>
+    <header 
+      className={cn(
+        "sticky top-0 z-50 w-full border-b transition-all duration-300",
+        isScrolled 
+          ? "bg-background/98 backdrop-blur-md shadow-sm supports-[backdrop-filter]:bg-background/80" 
+          : "bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60"
+      )}
+    >
+      <div className="container flex h-16 items-center justify-between">
+        {/* Logo */}
+        <Link 
+          href="/" 
+          className="flex items-center gap-2 font-bold text-xl hover:opacity-80 transition-opacity focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:ring-offset-2 rounded-md"
+          aria-label="Pineapple Tours - Home"
+        >
+         <img src="/pineapple-tour-logo.png" alt="Pineapple Tours" className="h-10" />
+          <span>
+            Pineapple Tours
+          </span>
         </Link>
-        <nav className="hidden md:flex md:flex-1 md:items-center md:justify-center md:gap-6">
-          <Link href="/tours" className="text-sm font-medium">
-            Destinations
-          </Link>
-          <Link href="/blog" className="text-sm font-medium">
-            Blog
-          </Link>
-          <Link href="/about" className="text-sm font-medium">
-            About Us
-          </Link>
-          <Link href="/contact" className="text-sm font-medium">
-            Contact
-          </Link>
-          <Link href="/rezdy" className="text-sm font-medium">
-            Rezdy Data
-          </Link>
-        </nav>
-        <div className="hidden md:flex md:items-center md:gap-4 md:justify-end">
-          <div className="flex items-center gap-2">
-            <Phone className="h-4 w-4 text-yellow-500" />
-            <span className="text-sm font-medium">1-800-PINEAPPLE</span>
-          </div>
-          <ThemeToggle />
-          <Button className="bg-yellow-500 text-black hover:bg-yellow-600">Book Now</Button>
-        </div>
-        <Sheet open={isOpen} onOpenChange={setIsOpen}>
-          <SheetTrigger asChild>
-            <Button variant="ghost" size="icon" className="md:hidden">
-              <Menu className="h-6 w-6" />
-              <span className="sr-only">Toggle menu</span>
-            </Button>
-          </SheetTrigger>
-          <SheetContent side="left">
-            <div className="flex flex-col gap-6 pt-6">
-              <Link href="/" className="flex items-center gap-2 font-bold text-xl" onClick={() => setIsOpen(false)}>
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  className="h-6 w-6 text-yellow-500"
+
+        {/* Desktop Navigation */}
+        {isDesktop && (
+          <nav className="flex flex-1 items-center justify-center" aria-label="Main navigation">
+            <ul className="flex items-center gap-1">
+              {navigationItems.map((item) => (
+                <li key={item.href}>
+                  <Link 
+                    href={item.href} 
+                    className="px-3 py-2 text-sm font-medium rounded-md transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:ring-offset-2"
+                  >
+                    {item.label}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </nav>
+        )}
+
+        {/* Tablet Navigation */}
+        {isTablet && (
+          <nav className="flex flex-1 items-center justify-center" aria-label="Main navigation">
+            <ul className="flex items-center gap-1">
+              {navigationItems.slice(0, 3).map((item) => (
+                <li key={item.href}>
+                  <Link 
+                    href={item.href} 
+                    className="px-2 py-2 text-sm font-medium rounded-md transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:ring-offset-2"
+                  >
+                    {item.label}
+                  </Link>
+                </li>
+              ))}
+              {/* More menu for remaining items on tablet */}
+              <li className="relative group">
+                <button 
+                  className="flex items-center gap-1 px-2 py-2 text-sm font-medium rounded-md transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:ring-offset-2"
+                  aria-expanded="false"
+                  aria-haspopup="true"
                 >
-                  <path d="M17 14c.889-.889 2.111.889 3-1s1-6-4-7c-3.5-.7-5.5.7-7 2" />
-                  <path d="M17 14s-1 1-2 1-2-1-2-2c0-4 4-2 4-2" />
-                  <path d="M14 7c.889-.889 2.111.889 3-1s1-6-4-7c-3.5-.7-5.5.7-7 2" />
-                  <path d="M14 7s-1 1-2 1-2-1-2-2c0-4 4-2 4-2" />
-                  <path d="M5 22v-3" />
-                  <path d="M9 22v-3" />
-                  <path d="M9 12v3" />
-                  <path d="M5 12v3" />
-                  <path d="M5 15h4" />
-                  <path d="M5 19h4" />
-                </svg>
-                <span>Pineapple Tours</span>
-              </Link>
-              <nav className="flex flex-col gap-4">
-                <Link href="/tours" className="text-sm font-medium" onClick={() => setIsOpen(false)}>
-                  Destinations
-                </Link>
-                <Link href="/blog" className="text-sm font-medium" onClick={() => setIsOpen(false)}>
-                  Blog
-                </Link>
-                <Link href="/about" className="text-sm font-medium" onClick={() => setIsOpen(false)}>
-                  About Us
-                </Link>
-                <Link href="/contact" className="text-sm font-medium" onClick={() => setIsOpen(false)}>
-                  Contact
-                </Link>
-                <Link href="/rezdy" className="text-sm font-medium" onClick={() => setIsOpen(false)}>
-                  Rezdy Data
-                </Link>
-              </nav>
-              <div className="flex flex-col gap-4">
-                <div className="flex items-center gap-2">
-                  <Phone className="h-4 w-4 text-yellow-500" />
-                  <span className="text-sm font-medium">1-800-PINEAPPLE</span>
+                  More
+                  <ChevronDown className="h-3 w-3" />
+                  <VisuallyHidden>navigation options</VisuallyHidden>
+                </button>
+                <div className="absolute top-full left-0 mt-1 w-48 bg-popover border rounded-md shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible group-focus-within:opacity-100 group-focus-within:visible transition-all duration-200 z-50">
+                  <ul className="py-1" role="menu">
+                    {navigationItems.slice(3).map((item) => (
+                      <li key={item.href} role="none">
+                        <Link 
+                          href={item.href} 
+                          className="flex items-center gap-2 px-3 py-2 text-sm hover:bg-accent hover:text-accent-foreground transition-colors"
+                          role="menuitem"
+                        >
+                          {item.icon}
+                          {item.label}
+                        </Link>
+                      </li>
+                    ))}
+                  </ul>
                 </div>
-                <div className="flex items-center gap-2">
-                  <span className="text-sm font-medium">Theme:</span>
-                  <ThemeToggleSimple />
-                </div>
-                <Button className="bg-yellow-500 text-black hover:bg-yellow-600" onClick={() => setIsOpen(false)}>
-                  Book Now
-                </Button>
-              </div>
+              </li>
+            </ul>
+          </nav>
+        )}
+
+        {/* Desktop Actions */}
+        {isDesktop && (
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2 text-sm">
+              <Phone className="h-4 w-4 text-yellow-500" aria-hidden="true" />
+              <span className="font-medium">1-800-PINEAPPLE</span>
             </div>
-          </SheetContent>
-        </Sheet>
+            <ThemeToggle />
+            <Button 
+              className="bg-yellow-500 text-black hover:bg-yellow-600 focus:ring-2 focus:ring-yellow-500 focus:ring-offset-2 transition-all"
+              size="sm"
+            >
+              Book Now
+            </Button>
+          </div>
+        )}
+
+        {/* Tablet Actions */}
+        {isTablet && (
+          <div className="flex items-center gap-2">
+            <ThemeToggle />
+            <Button 
+              className="bg-yellow-500 text-black hover:bg-yellow-600 focus:ring-2 focus:ring-yellow-500 focus:ring-offset-2 transition-all"
+              size="sm"
+            >
+              Book
+            </Button>
+          </div>
+        )}
+
+        {/* Mobile Menu */}
+        {isMobile && (
+          <Sheet open={isOpen} onOpenChange={setIsOpen}>
+            <SheetTrigger asChild>
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                className="h-10 w-10 focus:ring-2 focus:ring-yellow-500 focus:ring-offset-2"
+                aria-label="Toggle navigation menu"
+              >
+                <Menu className="h-6 w-6" />
+                <VisuallyHidden>Open navigation menu</VisuallyHidden>
+              </Button>
+            </SheetTrigger>
+            <SheetContent 
+              side="left" 
+              className="w-[320px] sm:w-[380px] p-0 overflow-y-auto"
+            >
+              {/* Required for accessibility */}
+              <SheetTitle>
+                <VisuallyHidden>Navigation Menu</VisuallyHidden>
+              </SheetTitle>
+              <MobileNavigation 
+                navigationItems={navigationItems}
+                onItemClick={() => setIsOpen(false)}
+              />
+            </SheetContent>
+          </Sheet>
+        )}
       </div>
     </header>
   )

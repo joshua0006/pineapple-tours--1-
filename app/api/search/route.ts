@@ -13,8 +13,8 @@ interface SearchFilters {
   sortBy?: string;
   checkIn?: string;
   checkOut?: string;
+  page?: number;
   limit?: number;
-  offset?: number;
 }
 
 export async function GET(request: NextRequest) {
@@ -39,12 +39,12 @@ export async function GET(request: NextRequest) {
       sortBy: searchParams.get('sortBy') || 'name',
       checkIn: searchParams.get('checkIn') || '',
       checkOut: searchParams.get('checkOut') || '',
-      limit: parseInt(searchParams.get('limit') || '100'),
-      offset: parseInt(searchParams.get('offset') || '0'),
+      page: parseInt(searchParams.get('page') || '1'),
+      limit: parseInt(searchParams.get('limit') || '12'),
     };
 
-    // Fetch products from Rezdy API
-    const url = `${REZDY_BASE_URL}/products?apiKey=${API_KEY}&limit=${filters.limit}&offset=${filters.offset}`;
+    // Fetch ALL products from Rezdy API first (we'll filter and paginate them)
+    const url = `${REZDY_BASE_URL}/products?apiKey=${API_KEY}&limit=1000&offset=0`;
     
     const response = await fetch(url, {
       method: 'GET',
@@ -210,10 +210,21 @@ export async function GET(request: NextRequest) {
       }
     });
 
+    // Calculate pagination
+    const totalCount = sortedProducts.length;
+    const totalPages = Math.ceil(totalCount / (filters.limit || 12));
+    const currentPage = Math.max(1, Math.min(filters.page || 1, totalPages));
+    const offset = (currentPage - 1) * (filters.limit || 12);
+    const paginatedProducts = sortedProducts.slice(offset, offset + (filters.limit || 12));
+
     // Prepare response with metadata
     const response_data = {
-      products: sortedProducts,
-      totalCount: sortedProducts.length,
+      products: paginatedProducts,
+      totalCount: totalCount,
+      totalPages: totalPages,
+      currentPage: currentPage,
+      hasNextPage: currentPage < totalPages,
+      hasPreviousPage: currentPage > 1,
       filters: filters,
       metadata: {
         hasResults: sortedProducts.length > 0,
@@ -240,6 +251,10 @@ export async function GET(request: NextRequest) {
         error: 'Failed to search tours',
         products: [],
         totalCount: 0,
+        totalPages: 0,
+        currentPage: 1,
+        hasNextPage: false,
+        hasPreviousPage: false,
         metadata: { hasResults: false }
       },
       { status: 500 }

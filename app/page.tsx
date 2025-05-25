@@ -109,12 +109,12 @@ export default function Home() {
                 Discover Paradise with Pineapple Tours
               </h1>
               <p className="text-xl text-white/90">
-                Experience the vacation of a lifetime with our handpicked tropical destinations and exclusive tour
+                Experience the vacation of a lifetime with our handpicked tropical tours and exclusive tour
                 packages.
               </p>
               <div className="flex flex-col space-y-3 sm:flex-row sm:space-x-3 sm:space-y-0">
                 <Button size="lg" className="bg-yellow-500 text-black hover:bg-yellow-600">
-                  Explore Destinations
+                  Explore Tours
                 </Button>
                 <Button size="lg" variant="outline" className="border-white text-black hover:bg-white/20">
                   View Special Offers
@@ -265,7 +265,7 @@ export default function Home() {
               </div>
               <h3 className="mt-4 text-lg font-medium">Local Expertise</h3>
               <p className="mt-2 text-sm text-muted-foreground">
-                Our guides are locals with deep knowledge of each destination's culture and hidden gems.
+                Our guides are locals with deep knowledge of each tour's culture and hidden gems.
               </p>
             </div>
             <div className="flex flex-col items-center text-center">
@@ -404,7 +404,7 @@ export default function Home() {
                 <h3 className="mt-2 text-xl font-bold">Caribbean Food Guide: Must-Try Dishes</h3>
                 <p className="mt-2 line-clamp-2 text-muted-foreground">
                   Explore the rich culinary traditions of the Caribbean islands and learn about the must-try dishes in
-                  each destination.
+                  each tour.
                 </p>
                 <Link
                   href="/blog/caribbean-food-guide"

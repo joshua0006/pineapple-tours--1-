@@ -114,6 +114,38 @@ export function PricingDisplay({
           </div>
         )}
         
+        {/* Extras breakdown */}
+        {breakdown.selectedExtras && breakdown.selectedExtras.length > 0 && (
+          <>
+            <Separator className="my-3" />
+            <div className="space-y-2">
+              <h4 className="font-medium text-sm text-muted-foreground">Optional Extras</h4>
+              {breakdown.selectedExtras.map(({ extra, quantity }) => {
+                const totalPrice = (() => {
+                  const guestCount = breakdown.adults + breakdown.children + breakdown.infants
+                  switch (extra.priceType) {
+                    case 'PER_PERSON':
+                      return extra.price * guestCount * quantity
+                    case 'PER_BOOKING':
+                      return extra.price * quantity
+                    case 'PER_DAY':
+                      return extra.price * quantity
+                    default:
+                      return extra.price * quantity
+                  }
+                })()
+                
+                return (
+                  <div key={extra.id} className="flex justify-between text-sm">
+                    <span>{extra.name} × {quantity}</span>
+                    <span>{formatCurrency(totalPrice)}</span>
+                  </div>
+                )
+              })}
+            </div>
+          </>
+        )}
+        
         {/* Discounts */}
         {discountInfo.hasDiscounts && (
           <div className="bg-green-50 border border-green-200 rounded-lg p-3">
@@ -131,9 +163,16 @@ export function PricingDisplay({
         )}
         
         <div className="flex justify-between font-medium">
-          <span>Subtotal</span>
+          <span>Tour Subtotal</span>
           <span>{formatCurrency(breakdown.subtotal)}</span>
         </div>
+        
+        {breakdown.extrasSubtotal > 0 && (
+          <div className="flex justify-between font-medium">
+            <span>Extras Subtotal</span>
+            <span>{formatCurrency(breakdown.extrasSubtotal)}</span>
+          </div>
+        )}
         
         <div className="flex justify-between text-muted-foreground">
           <div className="flex items-center gap-1">

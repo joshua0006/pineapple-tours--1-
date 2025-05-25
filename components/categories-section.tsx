@@ -1,14 +1,89 @@
 'use client'
 
 import Link from "next/link"
-import { ChevronRight, Loader2, AlertCircle } from "lucide-react"
+import { ChevronRight, Loader2, AlertCircle, Calendar, MapPin, Users, Car } from "lucide-react"
+import { useState, useEffect } from "react"
 
 import { CategoryCard } from "@/components/category-card"
-import { useCategories } from "@/hooks/use-categories"
 import { Alert, AlertDescription } from "@/components/ui/alert"
+import { useRezdyProducts } from "@/hooks/use-rezdy"
+
+// Define the specific tour categories based on productType
+interface TourCategory {
+  id: string
+  title: string
+  description: string
+  icon: any
+  productTypes: string[]
+  image: string
+  slug: string
+  tourCount: number
+}
+
+const TOUR_CATEGORIES: Omit<TourCategory, 'tourCount'>[] = [
+  {
+    id: 'day-tour',
+    title: 'Day Tour',
+    description: 'Perfect single-day adventures and experiences',
+    icon: Calendar,
+    productTypes: ['DAY_TOUR', 'TOUR', 'DAYTOUR'], // Include common variations
+    image: '/placeholder.svg?height=300&width=400',
+    slug: 'day-tour'
+  },
+  {
+    id: 'multiday-tour',
+    title: 'Multiday Tour',
+    description: 'Extended adventures spanning multiple days',
+    icon: MapPin,
+    productTypes: ['MULTIDAY_TOUR', 'MULTI_DAY_TOUR', 'MULTIDAYTOUR'],
+    image: '/placeholder.svg?height=300&width=400',
+    slug: 'multiday-tour'
+  },
+  {
+    id: 'private-tour',
+    title: 'Private Tour',
+    description: 'Exclusive personalized tour experiences',
+    icon: Users,
+    productTypes: ['PRIVATE_TOUR', 'PRIVATE'],
+    image: '/placeholder.svg?height=300&width=400',
+    slug: 'private-tour'
+  },
+  {
+    id: 'transfer',
+    title: 'Transfer',
+    description: 'Transportation and transfer services',
+    icon: Car,
+    productTypes: ['TRANSFER', 'TRANSPORT', 'TRANSPORTATION'],
+    image: '/placeholder.svg?height=300&width=400',
+    slug: 'transfer'
+  }
+]
 
 export function CategoriesSection() {
-  const { categories, loading, error } = useCategories()
+  const { data: products, loading, error } = useRezdyProducts(100, 0)
+  const [categoriesWithCounts, setCategoriesWithCounts] = useState<TourCategory[]>(
+    TOUR_CATEGORIES.map(cat => ({ ...cat, tourCount: 0 }))
+  )
+
+  // Calculate tour counts for each category based on productType
+  useEffect(() => {
+    if (products) {
+      const updatedCategories = TOUR_CATEGORIES.map(category => {
+        const tourCount = products.filter(product => {
+          if (!product.productType) return false
+          return category.productTypes.some(type => 
+            product.productType?.toUpperCase().includes(type.toUpperCase())
+          )
+        }).length
+
+        return {
+          ...category,
+          tourCount
+        }
+      })
+      setCategoriesWithCounts(updatedCategories)
+    }
+  }, [products])
 
   if (loading) {
     return (
@@ -61,7 +136,7 @@ export function CategoriesSection() {
         </Link>
       </div>
       <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-        {categories.map((category) => (
+        {categoriesWithCounts.map((category) => (
           <CategoryCard
             key={category.id}
             id={category.id}

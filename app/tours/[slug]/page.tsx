@@ -11,7 +11,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Badge } from "@/components/ui/badge"
 import { SiteHeader } from "@/components/site-header"
 import { SiteFooter } from "@/components/site-footer"
-import { BookingForm } from "@/components/booking-form"
+import { EnhancedBookingForm } from "@/components/enhanced-booking-form"
 import { ErrorState } from "@/components/error-state"
 import { DescriptionDisplay } from "@/components/ui/description-display"
 import { TourInfoTable, createTourInfoItems } from "@/components/ui/tour-info-table"
@@ -703,7 +703,7 @@ export default function TourDetailPage({ params }: { params: Promise<{ slug: str
                   ×
                 </Button>
               </div>
-              <BookingForm 
+              <EnhancedBookingForm 
                 product={selectedProduct}
                 onClose={() => setShowBooking(false)}
               />

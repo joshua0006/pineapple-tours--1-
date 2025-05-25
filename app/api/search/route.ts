@@ -6,6 +6,7 @@ const API_KEY = process.env.REZDY_API_KEY;
 interface SearchFilters {
   query?: string;
   category?: string;
+  productType?: string;
   priceRange?: string;
   duration?: string;
   travelers?: string;
@@ -31,6 +32,7 @@ export async function GET(request: NextRequest) {
     const filters: SearchFilters = {
       query: searchParams.get('query') || '',
       category: searchParams.get('category') || 'all',
+      productType: searchParams.get('productType') || 'all',
       priceRange: searchParams.get('priceRange') || 'all',
       duration: searchParams.get('duration') || 'any',
       travelers: searchParams.get('travelers') || '1',
@@ -97,6 +99,28 @@ export async function GET(request: NextRequest) {
             break;
           case "luxury":
             if (!searchText.includes("luxury") && !searchText.includes("premium") && !searchText.includes("exclusive")) return false;
+            break;
+        }
+      }
+
+      // Product Type filter
+      if (filters.productType && filters.productType !== 'all') {
+        if (!product.productType) return false;
+        
+        const productTypeUpper = product.productType.toUpperCase();
+        
+        switch (filters.productType) {
+          case "day-tour":
+            if (!productTypeUpper.includes("DAY_TOUR") && !productTypeUpper.includes("TOUR")) return false;
+            break;
+          case "multiday-tour":
+            if (!productTypeUpper.includes("MULTIDAY_TOUR") && !productTypeUpper.includes("MULTI_DAY_TOUR") && !productTypeUpper.includes("PACKAGE")) return false;
+            break;
+          case "private-tour":
+            if (!productTypeUpper.includes("PRIVATE_TOUR") && !productTypeUpper.includes("PRIVATE")) return false;
+            break;
+          case "transfer":
+            if (!productTypeUpper.includes("TRANSFER") && !productTypeUpper.includes("TRANSPORT") && !productTypeUpper.includes("TRANSPORTATION")) return false;
             break;
         }
       }
@@ -196,6 +220,7 @@ export async function GET(request: NextRequest) {
         searchQuery: filters.query,
         appliedFilters: {
           category: filters.category !== 'all' ? filters.category : null,
+          productType: filters.productType !== 'all' ? filters.productType : null,
           priceRange: filters.priceRange !== 'all' ? filters.priceRange : null,
           duration: filters.duration !== 'any' ? filters.duration : null,
         }

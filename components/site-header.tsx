@@ -2,11 +2,10 @@
 
 import Link from "next/link"
 import { useState } from "react"
-import { Menu, ChevronDown, Phone } from "lucide-react"
+import { Menu, Phone } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { ThemeToggle } from "@/components/theme-toggle"
 import { ThemeToggleSimple } from "@/components/theme-toggle-simple"
 
@@ -41,36 +40,8 @@ export function SiteHeader() {
           <span>Pineapple Tours</span>
         </Link>
         <nav className="hidden md:flex md:flex-1 md:items-center md:justify-center md:gap-6">
-          <Link href="/destinations" className="text-sm font-medium">
+          <Link href="/tours" className="text-sm font-medium">
             Destinations
-          </Link>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <button className="flex items-center gap-1 text-sm font-medium">
-                Tour Packages
-                <ChevronDown className="h-4 w-4" />
-              </button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="center">
-              <DropdownMenuItem asChild>
-                <Link href="/tours/family">Family Vacations</Link>
-              </DropdownMenuItem>
-              <DropdownMenuItem asChild>
-                <Link href="/tours/honeymoon">Honeymoon Packages</Link>
-              </DropdownMenuItem>
-              <DropdownMenuItem asChild>
-                <Link href="/tours/adventure">Adventure Tours</Link>
-              </DropdownMenuItem>
-              <DropdownMenuItem asChild>
-                <Link href="/tours/luxury">Luxury Retreats</Link>
-              </DropdownMenuItem>
-              <DropdownMenuItem asChild>
-                <Link href="/tours">View All Tours</Link>
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-          <Link href="/special-offers" className="text-sm font-medium">
-            Special Offers
           </Link>
           <Link href="/blog" className="text-sm font-medium">
             Blog
@@ -127,28 +98,8 @@ export function SiteHeader() {
                 <span>Pineapple Tours</span>
               </Link>
               <nav className="flex flex-col gap-4">
-                <Link href="/destinations" className="text-sm font-medium" onClick={() => setIsOpen(false)}>
+                <Link href="/tours" className="text-sm font-medium" onClick={() => setIsOpen(false)}>
                   Destinations
-                </Link>
-                <div className="flex flex-col gap-3 pl-4">
-                  <Link href="/tours/family" className="text-sm font-medium" onClick={() => setIsOpen(false)}>
-                    Family Vacations
-                  </Link>
-                  <Link href="/tours/honeymoon" className="text-sm font-medium" onClick={() => setIsOpen(false)}>
-                    Honeymoon Packages
-                  </Link>
-                  <Link href="/tours/adventure" className="text-sm font-medium" onClick={() => setIsOpen(false)}>
-                    Adventure Tours
-                  </Link>
-                  <Link href="/tours/luxury" className="text-sm font-medium" onClick={() => setIsOpen(false)}>
-                    Luxury Retreats
-                  </Link>
-                  <Link href="/tours" className="text-sm font-medium" onClick={() => setIsOpen(false)}>
-                    View All Tours
-                  </Link>
-                </div>
-                <Link href="/special-offers" className="text-sm font-medium" onClick={() => setIsOpen(false)}>
-                  Special Offers
                 </Link>
                 <Link href="/blog" className="text-sm font-medium" onClick={() => setIsOpen(false)}>
                   Blog

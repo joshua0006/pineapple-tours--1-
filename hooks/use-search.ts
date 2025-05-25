@@ -4,6 +4,7 @@ import { RezdyProduct } from '@/lib/types/rezdy';
 interface SearchFilters {
   query: string;
   category: string;
+  productType: string;
   priceRange: string;
   duration: string;
   travelers: string;
@@ -37,6 +38,7 @@ export function useSearch(initialFilters?: Partial<SearchFilters>) {
   const [filters, setFilters] = useState<SearchFilters>({
     query: '',
     category: 'all',
+    productType: 'all',
     priceRange: 'all',
     duration: 'any',
     travelers: '2',
@@ -120,6 +122,7 @@ export function useSearch(initialFilters?: Partial<SearchFilters>) {
     setFilters({
       query: '',
       category: 'all',
+      productType: 'all',
       priceRange: 'all',
       duration: 'any',
       travelers: '2',
@@ -139,6 +142,7 @@ export function useSearch(initialFilters?: Partial<SearchFilters>) {
     const defaultValues: Record<keyof SearchFilters, string> = {
       query: '',
       category: 'all',
+      productType: 'all',
       priceRange: 'all',
       duration: 'any',
       travelers: '2',
@@ -167,6 +171,7 @@ export function useSearch(initialFilters?: Partial<SearchFilters>) {
     // Computed values
     hasActiveFilters: filters.query !== '' || 
                      filters.category !== 'all' || 
+                     filters.productType !== 'all' ||
                      filters.priceRange !== 'all' || 
                      filters.duration !== 'any' ||
                      filters.checkIn !== '' ||

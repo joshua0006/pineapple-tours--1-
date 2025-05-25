@@ -24,6 +24,7 @@ export default function ToursPage() {
   const initialFilters = {
     query: searchParams.get('query') || '',
     category: searchParams.get('category') || 'all',
+    productType: searchParams.get('productType') || 'all',
     priceRange: searchParams.get('priceRange') || 'all',
     duration: searchParams.get('duration') || 'any',
     travelers: searchParams.get('travelers') || '2',
@@ -71,6 +72,12 @@ export default function ToursPage() {
         cultural: 'Cultural',
         nature: 'Nature',
         luxury: 'Luxury',
+      },
+      productType: {
+        'day-tour': 'Day Tour',
+        'multiday-tour': 'Multiday Tour',
+        'private-tour': 'Private Tour',
+        'transfer': 'Transfer',
       },
       priceRange: {
         'under-500': 'Under $500',
@@ -140,6 +147,19 @@ export default function ToursPage() {
                     <SelectItem value="cultural">Cultural</SelectItem>
                     <SelectItem value="nature">Nature</SelectItem>
                     <SelectItem value="luxury">Luxury</SelectItem>
+                  </SelectContent>
+                </Select>
+
+                <Select value={filters.productType} onValueChange={(value) => updateFilter('productType', value)}>
+                  <SelectTrigger className="w-[140px]">
+                    <SelectValue placeholder="Tour Type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Types</SelectItem>
+                    <SelectItem value="day-tour">Day Tour</SelectItem>
+                    <SelectItem value="multiday-tour">Multiday Tour</SelectItem>
+                    <SelectItem value="private-tour">Private Tour</SelectItem>
+                    <SelectItem value="transfer">Transfer</SelectItem>
                   </SelectContent>
                 </Select>
 
@@ -224,6 +244,17 @@ export default function ToursPage() {
                     Category: {getFilterDisplayName('category', filters.category)}
                     <button
                       onClick={() => clearFilter('category')}
+                      className="ml-1 hover:text-destructive"
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                  </Badge>
+                )}
+                {filters.productType !== 'all' && (
+                  <Badge variant="secondary" className="flex items-center gap-1">
+                    Type: {getFilterDisplayName('productType', filters.productType)}
+                    <button
+                      onClick={() => clearFilter('productType')}
                       className="ml-1 hover:text-destructive"
                     >
                       <X className="h-3 w-3" />

@@ -1,0 +1,185 @@
+import { RezdyProduct, RezdyImage } from "@/lib/types/rezdy"
+
+/**
+ * Generate a URL-friendly slug from a Rezdy product
+ */
+export function generateProductSlug(product: RezdyProduct): string {
+  const nameSlug = product.name
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/-+/g, '-')
+    .replace(/^-|-$/g, '')
+  
+  return `${product.productCode.toLowerCase()}-${nameSlug}`
+}
+
+/**
+ * Extract product code from a slug
+ */
+export function extractProductCodeFromSlug(slug: string): string | null {
+  const parts = slug.split('-')
+  if (parts.length === 0) return null
+  
+  // The product code is typically the first part of the slug
+  return parts[0].toUpperCase()
+}
+
+/**
+ * Find a product by slug from a list of products
+ */
+export function findProductBySlug(products: RezdyProduct[], slug: string): RezdyProduct | null {
+  const productCode = extractProductCodeFromSlug(slug)
+  if (!productCode) return null
+  
+  return products.find(product => product.productCode === productCode) || null
+}
+
+/**
+ * Format price for display
+ */
+export function formatPrice(price: number | undefined): string {
+  if (!price) return 'Price on request'
+  return `$${price.toFixed(0)}`
+}
+
+/**
+ * Get the primary image URL from a product
+ */
+export function getPrimaryImageUrl(product: RezdyProduct, size: 'thumbnail' | 'medium' | 'large' | 'original' = 'large'): string {
+  const primaryImage = product.images?.find(img => img.isPrimary) || product.images?.[0]
+  
+  if (!primaryImage) {
+    return "/placeholder.svg?height=400&width=600"
+  }
+  
+  switch (size) {
+    case 'thumbnail':
+      return primaryImage.thumbnailUrl
+    case 'medium':
+      return primaryImage.mediumSizeUrl
+    case 'large':
+      return primaryImage.largeSizeUrl
+    case 'original':
+      return primaryImage.itemUrl
+    default:
+      return primaryImage.largeSizeUrl
+  }
+}
+
+/**
+ * Get all valid images from a product, filtering out broken or empty URLs
+ */
+export function getValidImages(product: RezdyProduct): RezdyImage[] {
+  if (!product.images) return []
+  
+  return product.images.filter(image => 
+    image.itemUrl && 
+    image.itemUrl.trim() !== '' && 
+    !image.itemUrl.includes('placeholder') &&
+    image.thumbnailUrl &&
+    image.mediumSizeUrl &&
+    image.largeSizeUrl
+  )
+}
+
+/**
+ * Get the appropriate image URL from a RezdyImage based on desired size
+ */
+export function getImageUrl(image: RezdyImage, size: 'thumbnail' | 'medium' | 'large' | 'original' = 'large'): string {
+  switch (size) {
+    case 'thumbnail':
+      return image.thumbnailUrl
+    case 'medium':
+      return image.mediumSizeUrl
+    case 'large':
+      return image.largeSizeUrl
+    case 'original':
+      return image.itemUrl
+    default:
+      return image.largeSizeUrl
+  }
+}
+
+/**
+ * Get optimized image URL with size parameters
+ */
+export function getOptimizedImageUrl(
+  imageUrl: string, 
+  width?: number, 
+  height?: number, 
+  quality: number = 85
+): string {
+  if (!imageUrl || imageUrl.includes('placeholder')) {
+    return "/placeholder.svg?height=400&width=600"
+  }
+
+  // For external image services, you might want to add optimization parameters
+  // This is a basic implementation - you can extend it based on your image service
+  try {
+    const url = new URL(imageUrl)
+    
+    // Add optimization parameters if supported by the image service
+    if (width) url.searchParams.set('w', width.toString())
+    if (height) url.searchParams.set('h', height.toString())
+    if (quality !== 85) url.searchParams.set('q', quality.toString())
+    
+    return url.toString()
+  } catch {
+    // If URL parsing fails, return original URL
+    return imageUrl
+  }
+}
+
+/**
+ * Generate responsive image sizes string for different breakpoints
+ */
+export function generateImageSizes(
+  breakpoints: { size: string; width: string }[] = [
+    { size: '(max-width: 640px)', width: '100vw' },
+    { size: '(max-width: 1024px)', width: '50vw' },
+    { size: '(max-width: 1280px)', width: '33vw' },
+  ],
+  defaultWidth: string = '25vw'
+): string {
+  const sizeStrings = breakpoints.map(bp => `${bp.size} ${bp.width}`)
+  return [...sizeStrings, defaultWidth].join(', ')
+}
+
+/**
+ * Get image dimensions from URL or return defaults
+ */
+export function getImageDimensions(imageUrl: string): { width: number; height: number } {
+  // Try to extract dimensions from URL parameters
+  try {
+    const url = new URL(imageUrl)
+    const width = url.searchParams.get('width') || url.searchParams.get('w')
+    const height = url.searchParams.get('height') || url.searchParams.get('h')
+    
+    if (width && height) {
+      return {
+        width: parseInt(width, 10),
+        height: parseInt(height, 10)
+      }
+    }
+  } catch {
+    // URL parsing failed
+  }
+  
+  // Return default dimensions
+  return { width: 800, height: 600 }
+}
+
+/**
+ * Extract location string from locationAddress
+ */
+export function getLocationString(locationAddress: string | any): string {
+  if (typeof locationAddress === 'string') {
+    return locationAddress
+  }
+  
+  if (locationAddress && typeof locationAddress === 'object') {
+    return locationAddress.city || locationAddress.addressLine || 'Location TBD'
+  }
+  
+  return 'Location TBD'
+} 

@@ -1,0 +1,411 @@
+"use client"
+
+import Link from "next/link"
+import Image from "next/image"
+import { ChevronRight, MapPin, Calendar } from "lucide-react"
+
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Card, CardContent } from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { TourCard } from "@/components/tour-card"
+import { DynamicTourCard } from "@/components/dynamic-tour-card"
+import { TourGridSkeleton } from "@/components/tour-grid-skeleton"
+import { ErrorState } from "@/components/error-state"
+import { TestimonialCard } from "@/components/testimonial-card"
+import { SearchForm } from "@/components/search-form"
+import { SiteHeader } from "@/components/site-header"
+import { SiteFooter } from "@/components/site-footer"
+import { CategoriesSection } from "@/components/categories-section"
+import { useRezdyProducts } from "@/hooks/use-rezdy"
+import { useState } from "react"
+
+export default function Home() {
+  const [selectedCategory, setSelectedCategory] = useState("all")
+  const { data: products, loading, error } = useRezdyProducts(12, 0)
+
+  // Filter products based on selected category
+  const filteredProducts = products?.filter(product => {
+    // Exclude GIFT_CARD products from Featured Tour Packages
+    if (product.productType === "GIFT_CARD") return false
+    
+    if (selectedCategory === "all") return true
+    
+    // Simple category filtering based on product name and description
+    const searchText = `${product.name} ${product.shortDescription || ''} ${product.description || ''}`.toLowerCase()
+    
+    switch (selectedCategory) {
+      case "family":
+        return searchText.includes("family") || searchText.includes("kids") || searchText.includes("children")
+      case "honeymoon":
+        return searchText.includes("romantic") || searchText.includes("honeymoon") || searchText.includes("couples")
+      case "adventure":
+        return searchText.includes("adventure") || searchText.includes("hiking") || searchText.includes("diving") || searchText.includes("expedition")
+      default:
+        return true
+    }
+  }) || []
+
+  const handleRetry = () => {
+    window.location.reload()
+  }
+
+  return (
+    <div className="flex min-h-screen flex-col">
+      <SiteHeader />
+      <main className="flex-1">
+        {/* Hero Section */}
+        <section className="relative">
+          <div className="absolute inset-0 z-0">
+            <Image
+              src="/placeholder.svg?height=800&width=1920"
+              alt="Tropical beach"
+              fill
+              className="object-cover brightness-[0.7]"
+              priority
+            />
+          </div>
+          <div className="container relative z-10 py-24 md:py-32 lg:py-40">
+            <div className="max-w-3xl space-y-5 text-center sm:text-left">
+              <Badge className="bg-yellow-500 text-black hover:bg-yellow-600">Best Tropical Getaways</Badge>
+              <h1 className="text-4xl font-bold tracking-tight text-white sm:text-5xl md:text-6xl">
+                Discover Paradise with Pineapple Tours
+              </h1>
+              <p className="text-xl text-white/90">
+                Experience the vacation of a lifetime with our handpicked tropical destinations and exclusive tour
+                packages.
+              </p>
+              <div className="flex flex-col space-y-3 sm:flex-row sm:space-x-3 sm:space-y-0">
+                <Button size="lg" className="bg-yellow-500 text-black hover:bg-yellow-600">
+                  Explore Destinations
+                </Button>
+                <Button size="lg" variant="outline" className="border-white text-black hover:bg-white/20">
+                  View Special Offers
+                </Button>
+              </div>
+            </div>
+          </div>
+          <div className="container relative z-10 -mt-10 mb-16">
+            <Card className="overflow-hidden border-none shadow-lg">
+              <CardContent className="p-0">
+                <SearchForm />
+              </CardContent>
+            </Card>
+          </div>
+        </section>
+
+        {/* Categories Section */}
+        <CategoriesSection />
+
+        {/* Featured Tour Packages */}
+        <section className="bg-muted py-16">
+          <div className="container">
+            <div className="flex flex-col items-center justify-between gap-4 sm:flex-row">
+              <div>
+                <h2 className="text-3xl font-bold tracking-tight">Featured Tour Packages</h2>
+                <p className="text-muted-foreground">Real-time tours and experiences from our partners</p>
+              </div>
+              <Link href="/tours" className="flex items-center text-sm font-medium text-primary">
+                View all packages
+                <ChevronRight className="ml-1 h-4 w-4" />
+              </Link>
+            </div>
+            <Tabs value={selectedCategory} onValueChange={setSelectedCategory} className="mt-8">
+              <TabsList className="mb-6">
+                <TabsTrigger value="all">All</TabsTrigger>
+                <TabsTrigger value="family">Family</TabsTrigger>
+                <TabsTrigger value="honeymoon">Honeymoon</TabsTrigger>
+                <TabsTrigger value="adventure">Adventure</TabsTrigger>
+              </TabsList>
+              
+              {loading && (
+                <TourGridSkeleton count={6} />
+              )}
+              
+              {error && (
+                <ErrorState
+                  title="Unable to load tours"
+                  message="We're having trouble connecting to our booking system. Please try again in a moment."
+                  onRetry={handleRetry}
+                />
+              )}
+              
+              {!loading && !error && (
+                <TabsContent value={selectedCategory}>
+                  {filteredProducts.length > 0 ? (
+                    <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                      {filteredProducts.slice(0, 6).map((product) => (
+                        <DynamicTourCard key={product.productCode} product={product} />
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="text-center py-12">
+                      <p className="text-muted-foreground">No tours found for this category.</p>
+                      <Button 
+                        variant="outline" 
+                        className="mt-4"
+                        onClick={() => setSelectedCategory("all")}
+                      >
+                        View All Tours
+                      </Button>
+                    </div>
+                  )}
+                </TabsContent>
+              )}
+            </Tabs>
+          </div>
+        </section>
+
+        {/* Why Choose Us */}
+        <section className="container py-16">
+          <div className="text-center">
+            <h2 className="text-3xl font-bold tracking-tight">Why Choose Pineapple Tours</h2>
+            <p className="mx-auto mt-2 max-w-2xl text-muted-foreground">
+              We're dedicated to creating unforgettable tropical experiences with exceptional service
+            </p>
+          </div>
+          <div className="mt-12 grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
+            <div className="flex flex-col items-center text-center">
+              <div className="flex h-16 w-16 items-center justify-center rounded-full bg-yellow-100">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  strokeWidth={1.5}
+                  stroke="currentColor"
+                  className="h-8 w-8 text-yellow-600"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M9 12.75L11.25 15 15 9.75M21 12c0 1.268-.63 2.39-1.593 3.068a3.745 3.745 0 01-1.043 3.296 3.745 3.745 0 01-3.296 1.043A3.745 3.745 0 0112 21c-1.268 0-2.39-.63-3.068-1.593a3.746 3.746 0 01-3.296-1.043 3.745 3.745 0 01-1.043-3.296A3.745 3.745 0 013 12c0-1.268.63-2.39 1.593-3.068a3.745 3.745 0 011.043-3.296 3.746 3.746 0 013.296-1.043A3.746 3.746 0 0112 3c1.268 0 2.39.63 3.068 1.593a3.746 3.746 0 013.296 1.043 3.746 3.746 0 011.043 3.296A3.745 3.745 0 0121 12z"
+                  />
+                </svg>
+              </div>
+              <h3 className="mt-4 text-lg font-medium">Real-Time Availability</h3>
+              <p className="mt-2 text-sm text-muted-foreground">
+                Live booking system with instant confirmation and real-time availability updates.
+              </p>
+            </div>
+            <div className="flex flex-col items-center text-center">
+              <div className="flex h-16 w-16 items-center justify-center rounded-full bg-yellow-100">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  strokeWidth={1.5}
+                  stroke="currentColor"
+                  className="h-8 w-8 text-yellow-600"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M2.25 8.25h19.5M2.25 9h19.5m-16.5 5.25h6m-6 2.25h3m-3.75 3h15a2.25 2.25 0 002.25-2.25V6.75A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25v10.5A2.25 2.25 0 004.5 19.5z"
+                  />
+                </svg>
+              </div>
+              <h3 className="mt-4 text-lg font-medium">Best Price Guarantee</h3>
+              <p className="mt-2 text-sm text-muted-foreground">
+                We promise the best rates with no hidden fees or unexpected charges.
+              </p>
+            </div>
+            <div className="flex flex-col items-center text-center">
+              <div className="flex h-16 w-16 items-center justify-center rounded-full bg-yellow-100">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  strokeWidth={1.5}
+                  stroke="currentColor"
+                  className="h-8 w-8 text-yellow-600"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z"
+                  />
+                </svg>
+              </div>
+              <h3 className="mt-4 text-lg font-medium">Local Expertise</h3>
+              <p className="mt-2 text-sm text-muted-foreground">
+                Our guides are locals with deep knowledge of each destination's culture and hidden gems.
+              </p>
+            </div>
+            <div className="flex flex-col items-center text-center">
+              <div className="flex h-16 w-16 items-center justify-center rounded-full bg-yellow-100">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  strokeWidth={1.5}
+                  stroke="currentColor"
+                  className="h-8 w-8 text-yellow-600"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M9.879 7.519c1.171-1.025 3.071-1.025 4.242 0 1.172 1.025 1.172 2.687 0 3.712-.203.179-.43.326-.67.442-.745.361-1.45.999-1.45 1.827v.75M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9 5.25h.008v.008H12v-.008z"
+                  />
+                </svg>
+              </div>
+              <h3 className="mt-4 text-lg font-medium">24/7 Support</h3>
+              <p className="mt-2 text-sm text-muted-foreground">
+                Our dedicated team is available around the clock to assist with any needs during your trip.
+              </p>
+            </div>
+          </div>
+        </section>
+
+        {/* Testimonials */}
+        <section className="bg-gradient-to-b from-white to-yellow-50 py-16">
+          <div className="container">
+            <div className="text-center">
+              <h2 className="text-3xl font-bold tracking-tight">What Our Travelers Say</h2>
+              <p className="mx-auto mt-2 max-w-2xl text-muted-foreground">
+                Read about the experiences of our satisfied customers
+              </p>
+            </div>
+            <div className="mt-12 grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
+              <TestimonialCard
+                name="Sarah Johnson"
+                location="New York, USA"
+                image="/placeholder.svg?height=100&width=100"
+                rating={5}
+                testimonial="Our Hawaiian vacation with Pineapple Tours exceeded all expectations. The accommodations were luxurious, the activities were perfectly planned, and our guide was incredibly knowledgeable. Can't wait to book our next trip!"
+              />
+              <TestimonialCard
+                name="Michael Chen"
+                location="Toronto, Canada"
+                image="/placeholder.svg?height=100&width=100"
+                rating={5}
+                testimonial="The Caribbean cruise package was amazing! Everything was taken care of from the moment we arrived. The island excursions were the highlight of our trip - especially the snorkeling adventure in Turks and Caicos."
+              />
+              <TestimonialCard
+                name="Emma and James Wilson"
+                location="London, UK"
+                image="/placeholder.svg?height=100&width=100"
+                rating={5}
+                testimonial="Our honeymoon in Fiji was absolute perfection. The private island resort recommended by Pineapple Tours was paradise on earth. The attention to detail and personalized service made our special trip truly unforgettable."
+              />
+            </div>
+          </div>
+        </section>
+
+        {/* Newsletter */}
+        <section className="container py-16">
+          <div className="rounded-xl bg-yellow-500 p-8 md:p-12">
+            <div className="grid gap-6 md:grid-cols-2 md:gap-12">
+              <div>
+                <h2 className="text-3xl font-bold tracking-tight text-black">Subscribe to Our Newsletter</h2>
+                <p className="mt-4 text-black/80">
+                  Stay updated with our latest offers, travel tips, and exclusive deals. Subscribe now and get 10% off
+                  your first booking!
+                </p>
+              </div>
+              <div className="flex flex-col justify-center">
+                <div className="flex flex-col gap-2 sm:flex-row">
+                  <Input
+                    placeholder="Enter your email"
+                    type="email"
+                    className="border-black/10 bg-white text-black placeholder:text-black/50"
+                  />
+                  <Button className="bg-black text-white hover:bg-black/80">Subscribe</Button>
+                </div>
+                <p className="mt-2 text-xs text-black/70">
+                  By subscribing, you agree to our Privacy Policy and consent to receive updates from our company.
+                </p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Blog Preview */}
+        <section className="container py-16">
+          <div className="flex flex-col items-center justify-between gap-4 sm:flex-row">
+            <div>
+              <h2 className="text-3xl font-bold tracking-tight">Travel Blog</h2>
+              <p className="text-muted-foreground">Tips, guides, and inspiration for your next adventure</p>
+            </div>
+            <Link href="/blog" className="flex items-center text-sm font-medium text-primary">
+              View all posts
+              <ChevronRight className="ml-1 h-4 w-4" />
+            </Link>
+          </div>
+          <div className="mt-8 grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
+            <Card className="overflow-hidden">
+              <div className="relative h-48 w-full">
+                <Image src="/placeholder.svg?height=300&width=500" alt="Blog post" fill className="object-cover" />
+              </div>
+              <CardContent className="p-6">
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <Calendar className="h-4 w-4" />
+                  <span>May 15, 2023</span>
+                </div>
+                <h3 className="mt-2 text-xl font-bold">10 Must-Visit Beaches in Hawaii</h3>
+                <p className="mt-2 line-clamp-2 text-muted-foreground">
+                  Discover the most stunning beaches across the Hawaiian islands, from hidden coves to popular stretches
+                  of sand.
+                </p>
+                <Link
+                  href="/blog/must-visit-beaches-hawaii"
+                  className="mt-4 inline-flex items-center text-sm font-medium text-primary"
+                >
+                  Read more
+                  <ChevronRight className="ml-1 h-4 w-4" />
+                </Link>
+              </CardContent>
+            </Card>
+            <Card className="overflow-hidden">
+              <div className="relative h-48 w-full">
+                <Image src="/placeholder.svg?height=300&width=500" alt="Blog post" fill className="object-cover" />
+              </div>
+              <CardContent className="p-6">
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <Calendar className="h-4 w-4" />
+                  <span>April 28, 2023</span>
+                </div>
+                <h3 className="mt-2 text-xl font-bold">Caribbean Food Guide: Must-Try Dishes</h3>
+                <p className="mt-2 line-clamp-2 text-muted-foreground">
+                  Explore the rich culinary traditions of the Caribbean islands and learn about the must-try dishes in
+                  each destination.
+                </p>
+                <Link
+                  href="/blog/caribbean-food-guide"
+                  className="mt-4 inline-flex items-center text-sm font-medium text-primary"
+                >
+                  Read more
+                  <ChevronRight className="ml-1 h-4 w-4" />
+                </Link>
+              </CardContent>
+            </Card>
+            <Card className="overflow-hidden">
+              <div className="relative h-48 w-full">
+                <Image src="/placeholder.svg?height=300&width=500" alt="Blog post" fill className="object-cover" />
+              </div>
+              <CardContent className="p-6">
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <Calendar className="h-4 w-4" />
+                  <span>March 10, 2023</span>
+                </div>
+                <h3 className="mt-2 text-xl font-bold">Packing Tips for Tropical Vacations</h3>
+                <p className="mt-2 line-clamp-2 text-muted-foreground">
+                  Essential packing tips and must-have items for your tropical getaway to ensure you're prepared for
+                  paradise.
+                </p>
+                <Link
+                  href="/blog/packing-tips-tropical"
+                  className="mt-4 inline-flex items-center text-sm font-medium text-primary"
+                >
+                  Read more
+                  <ChevronRight className="ml-1 h-4 w-4" />
+                </Link>
+              </CardContent>
+            </Card>
+          </div>
+        </section>
+      </main>
+      <SiteFooter />
+    </div>
+  )
+}

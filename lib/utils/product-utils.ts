@@ -182,4 +182,77 @@ export function getLocationString(locationAddress: string | any): string {
   }
   
   return 'Location TBD'
+}
+
+/**
+ * Extract city name from locationAddress
+ */
+export function getCityFromLocation(locationAddress: string | any): string | null {
+  if (!locationAddress) return null;
+  
+  if (typeof locationAddress === 'string') {
+    // Try to extract city from string format
+    // Common patterns: "City, State", "Address, City, State", etc.
+    const parts = locationAddress.split(',').map(part => part.trim());
+    if (parts.length >= 2) {
+      // Assume the second-to-last part is the city for most formats
+      return parts[parts.length - 2] || null;
+    }
+    // If only one part, it might be the city
+    return parts[0] || null;
+  }
+  
+  if (locationAddress && typeof locationAddress === 'object') {
+    return locationAddress.city || null;
+  }
+  
+  return null;
+}
+
+/**
+ * Extract unique cities from an array of products
+ */
+export function getUniqueCitiesFromProducts(products: RezdyProduct[]): string[] {
+  if (!products || products.length === 0) return [];
+  
+  const cities = new Set<string>();
+  
+  products.forEach(product => {
+    const city = getCityFromLocation(product.locationAddress);
+    if (city && city.trim() !== '' && city !== 'Location TBD') {
+      cities.add(city.trim());
+    }
+  });
+  
+  return Array.from(cities).sort();
+}
+
+/**
+ * Filter products by city
+ */
+export function filterProductsByCity(products: RezdyProduct[], selectedCity: string): RezdyProduct[] {
+  console.log('filterProductsByCity called with:', {
+    productsLength: products.length,
+    selectedCity,
+    isAll: selectedCity === 'all'
+  });
+  
+  if (!selectedCity || selectedCity === 'all') {
+    console.log('Returning all products:', products.length);
+    return products;
+  }
+  
+  const filtered = products.filter(product => {
+    const city = getCityFromLocation(product.locationAddress);
+    const matches = city && city.toLowerCase() === selectedCity.toLowerCase();
+    return matches;
+  });
+  
+  console.log('Filtered products:', {
+    selectedCity,
+    originalCount: products.length,
+    filteredCount: filtered.length
+  });
+  
+  return filtered;
 } 

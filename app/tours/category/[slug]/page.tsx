@@ -15,37 +15,12 @@ import { TourGridSkeleton } from "@/components/tour-grid-skeleton"
 import { ErrorState } from "@/components/error-state"
 import { useRezdyProducts } from "@/hooks/use-rezdy"
 import { RezdyProduct } from "@/lib/types/rezdy"
-
-// Category mapping
-const CATEGORY_CONFIG = {
-  'day-tour': {
-    title: 'Day Tours',
-    description: 'Perfect single-day adventures and experiences',
-    productTypes: ['DAY_TOUR', 'TOUR']
-  },
-  'multiday-tour': {
-    title: 'Multiday Tours',
-    description: 'Extended adventures spanning multiple days',
-    productTypes: ['MULTIDAY_TOUR', 'MULTI_DAY_TOUR', 'PACKAGE']
-  },
-  'private-tour': {
-    title: 'Private Tours',
-    description: 'Exclusive personalized tour experiences',
-    productTypes: ['PRIVATE_TOUR', 'PRIVATE']
-  },
-  'transfer': {
-    title: 'Transfer Services',
-    description: 'Transportation and transfer services',
-    productTypes: ['TRANSFER', 'TRANSPORT', 'TRANSPORTATION']
-  }
-} as const
-
-type CategorySlug = keyof typeof CATEGORY_CONFIG
+import { getCategoryBySlug, filterProductsByCategory } from "@/lib/constants/categories"
 
 export default function CategoryPage({ params }: { params: Promise<{ slug: string }> }) {
   const router = useRouter()
   const resolvedParams = use(params)
-  const categorySlug = resolvedParams.slug as CategorySlug
+  const categorySlug = resolvedParams.slug
   
   const [sortBy, setSortBy] = useState('name')
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
@@ -53,16 +28,12 @@ export default function CategoryPage({ params }: { params: Promise<{ slug: strin
   const { data: allProducts, loading, error } = useRezdyProducts(100, 0)
   
   // Get category configuration
-  const categoryConfig = CATEGORY_CONFIG[categorySlug]
+  const categoryConfig = getCategoryBySlug(categorySlug)
   
-  // Filter products based on category
-  const filteredProducts = allProducts?.filter(product => {
-    if (!product.productType || !categoryConfig) return false
-    
-    return categoryConfig.productTypes.some(type => 
-      product.productType?.toUpperCase().includes(type.toUpperCase())
-    )
-  }) || []
+  // Enhanced filtering logic using shared helper function
+  const filteredProducts = allProducts && categoryConfig 
+    ? filterProductsByCategory(allProducts, categoryConfig)
+    : []
   
   // Sort products
   const sortedProducts = [...filteredProducts].sort((a, b) => {
@@ -127,11 +98,14 @@ export default function CategoryPage({ params }: { params: Promise<{ slug: strin
                   <Badge variant="secondary">
                     {filteredProducts.length} {filteredProducts.length === 1 ? 'tour' : 'tours'} available
                   </Badge>
+                  <Badge variant="outline" className="capitalize">
+                    {categoryConfig.categoryGroup}
+                  </Badge>
                 </div>
               </div>
               
               {/* Filters and View Controls */}
-              <div className="flex items-center gap-4">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
                 <Select value={sortBy} onValueChange={setSortBy}>
                   <SelectTrigger className="w-[180px]">
                     <SelectValue placeholder="Sort by" />
@@ -184,7 +158,7 @@ export default function CategoryPage({ params }: { params: Promise<{ slug: strin
                 {sortedProducts.length > 0 ? (
                   <div className={`grid gap-6 ${
                     viewMode === 'grid' 
-                      ? 'sm:grid-cols-2 lg:grid-cols-3' 
+                      ? 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4' 
                       : 'grid-cols-1 max-w-4xl mx-auto'
                   }`}>
                     {sortedProducts.map((product) => (

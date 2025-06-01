@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { useSearchParams, useRouter } from "next/navigation"
-import { Search, Filter, MapPin, Star, X, ArrowLeft } from "lucide-react"
+import { Search, Filter, MapPin, Star, X, ArrowLeft, RefreshCw } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -18,10 +18,18 @@ import { ErrorState } from "@/components/error-state"
 import { TourPagination } from "@/components/tour-pagination"
 import { PaginationInfo } from "@/components/pagination-info"
 import { useSearch } from "@/hooks/use-search"
+import { useCityProducts } from "@/hooks/use-city-products"
+import { getSearchCategories, getCategoryDisplayName } from "@/lib/constants/categories"
 
 export default function SearchPage() {
   const router = useRouter()
   const searchParams = useSearchParams()
+  
+  // Get city data for the dropdown
+  const { cities, loading: citiesLoading } = useCityProducts()
+  
+  // Get search categories for the dropdown
+  const searchCategories = getSearchCategories()
   
   // Initialize search with URL parameters
   const initialFilters = {
@@ -33,6 +41,8 @@ export default function SearchPage() {
     sortBy: searchParams.get('sortBy') || 'relevance',
     checkIn: searchParams.get('checkIn') || '',
     checkOut: searchParams.get('checkOut') || '',
+    city: searchParams.get('city') || '',
+    location: searchParams.get('location') || '',
     page: parseInt(searchParams.get('page') || '1'),
     limit: 12,
   }
@@ -61,11 +71,9 @@ export default function SearchPage() {
 
   const [localQuery, setLocalQuery] = useState(filters.query)
 
-  // Trigger search on component mount if there are initial filters
+  // Trigger search on component mount to show all products
   useEffect(() => {
-    if (hasActiveFilters || searchParams.get('query')) {
-      search()
-    }
+    search()
   }, []) // Only run on mount
 
   // Update URL when filters change
@@ -93,14 +101,9 @@ export default function SearchPage() {
 
   const getFilterDisplayName = (key: string, value: string) => {
     const displayNames: Record<string, Record<string, string>> = {
-      category: {
-        family: 'Family',
-        honeymoon: 'Honeymoon',
-        adventure: 'Adventure',
-        cultural: 'Cultural',
-        nature: 'Nature',
-        luxury: 'Luxury',
-      },
+      category: Object.fromEntries(
+        searchCategories.map(cat => [cat.id, cat.title])
+      ),
       priceRange: {
         'under-500': 'Under $500',
         '500-1000': '$500 - $1,000',
@@ -170,19 +173,46 @@ export default function SearchPage() {
               </form>
               
               <div className="flex flex-wrap gap-2">
+                {/* City/Location Filter */}
+                <Select 
+                  value={filters.city || filters.location || 'all'} 
+                  onValueChange={(value) => {
+                    if (value === 'all') {
+                      clearFilter('city')
+                      clearFilter('location')
+                    } else {
+                      updateFilter('city', value)
+                      clearFilter('location') // Clear location when city is set
+                    }
+                  }}
+                  disabled={citiesLoading}
+                >
+                  <SelectTrigger className="w-[160px]">
+                    <MapPin className="mr-2 h-4 w-4" />
+                    <SelectValue placeholder={citiesLoading ? "Loading..." : "Destination"} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Destinations</SelectItem>
+                    {cities.map((city) => (
+                      <SelectItem key={city} value={city}>
+                        {city}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+
                 <Select value={filters.category} onValueChange={(value) => updateFilter('category', value)}>
-                  <SelectTrigger className="w-[140px]">
+                  <SelectTrigger className="w-[160px]">
                     <Filter className="mr-2 h-4 w-4" />
                     <SelectValue placeholder="Category" />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">All Categories</SelectItem>
-                    <SelectItem value="family">Family</SelectItem>
-                    <SelectItem value="honeymoon">Honeymoon</SelectItem>
-                    <SelectItem value="adventure">Adventure</SelectItem>
-                    <SelectItem value="cultural">Cultural</SelectItem>
-                    <SelectItem value="nature">Nature</SelectItem>
-                    <SelectItem value="luxury">Luxury</SelectItem>
+                    {searchCategories.map((category) => (
+                      <SelectItem key={category.id} value={category.id}>
+                        {category.title}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
 
@@ -259,6 +289,21 @@ export default function SearchPage() {
                       onClick={() => {
                         clearFilter('query')
                         setLocalQuery('')
+                      }}
+                      className="ml-1 hover:text-destructive"
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                  </Badge>
+                )}
+                {(filters.city || filters.location) && (
+                  <Badge variant="secondary" className="flex items-center gap-1">
+                    <MapPin className="h-3 w-3" />
+                    Destination: {filters.city || filters.location}
+                    <button
+                      onClick={() => {
+                        clearFilter('city')
+                        clearFilter('location')
                       }}
                       className="ml-1 hover:text-destructive"
                     >

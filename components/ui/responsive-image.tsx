@@ -165,7 +165,7 @@ export function ImageGallery({
   alt,
   className,
   layout = "grid",
-  maxImages = 4,
+  maxImages = 5,
   enableModal = true,
   tourName
 }: ImageGalleryProps) {
@@ -199,39 +199,56 @@ export function ImageGallery({
             />
           </div>
         
-        {/* Smaller gallery images */}
-        {displayImages.slice(1, 4).map((image, index) => (
-          <div key={index} className="relative h-64 overflow-hidden rounded-lg">
-            <ResponsiveImage
-              images={[image]}
-              alt={`${alt} - Gallery image ${index + 2}`}
-              aspectRatio="square"
-              className="h-full w-full"
-              onClick={() => handleImageClick(index + 1)}
-              showNavigation={false}
-            />
-            {/* Show remaining count on last image */}
-            {index === 2 && remainingCount > 0 && (
-              <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
-                <span className="text-white text-lg font-semibold">
-                  +{remainingCount} more
-                </span>
-              </div>
-            )}
-          </div>
-        ))}
-        
-        {/* Placeholder images if not enough images */}
-        {Array.from({ length: Math.max(0, 3 - (displayImages.length - 1)) }).map((_, index) => (
-          <div key={`placeholder-${index}`} className="relative h-64 overflow-hidden rounded-lg">
-            <Image
-              src="/placeholder.svg?height=400&width=600"
-              alt={`${alt} - Placeholder image ${index + displayImages.length + 1}`}
-              fill
-              className="object-cover"
-            />
-          </div>
-        ))}
+        {/* Smaller gallery images - always showing exactly 4 small images */}
+        {Array.from({ length: 4 }).map((_, index) => {
+          // Cycle through available images starting from index 1, or use first image if only one available
+          const imageIndex = displayImages.length > 1 ? ((index % (displayImages.length - 1)) + 1) : 0;
+          const image = displayImages[imageIndex];
+          
+          if (!image) return null;
+          
+          // For the overlay: show on the 4th small image if there are remaining images
+          const isLastSmallImage = index === 3;
+          const shouldShowOverlay = isLastSmallImage && remainingCount > 0;
+          
+          return (
+            <div key={index} className="relative h-64 overflow-hidden rounded-lg">
+              <ResponsiveImage
+                images={[image]}
+                alt={`${alt} - Gallery image ${index + 2}`}
+                aspectRatio="square"
+                className="h-full w-full"
+                onClick={() => handleImageClick(imageIndex)}
+                showNavigation={false}
+              />
+              {/* Show remaining count on last small image */}
+              {shouldShowOverlay && (
+                <div 
+                  className="absolute inset-0 bg-black/50 flex items-center justify-center cursor-pointer hover:bg-black/60 transition-colors"
+                  onClick={(e) => {
+                    e.stopPropagation(); // Prevent the underlying image click
+                    // Open modal starting from the first image not shown in the grid (maxImages index)
+                    handleImageClick(maxImages);
+                  }}
+                  role="button"
+                  tabIndex={0}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      handleImageClick(maxImages);
+                    }
+                  }}
+                  aria-label={`View ${remainingCount} more images`}
+                >
+                  <span className="text-white text-lg font-semibold">
+                    +{remainingCount} more
+                  </span>
+                </div>
+              )}
+            </div>
+          )
+        })}
       </div>
       
       {/* Image Modal */}

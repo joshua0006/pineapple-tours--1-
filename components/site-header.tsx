@@ -9,6 +9,7 @@ import { Sheet, SheetContent, SheetTrigger, SheetTitle } from "@/components/ui/s
 import { VisuallyHidden } from "@/components/ui/visually-hidden"
 import { ThemeToggle } from "@/components/theme-toggle"
 import { MobileNavigation } from "@/components/mobile-navigation"
+import { TourCategoriesDropdown } from "@/components/tour-categories-dropdown"
 import { useResponsive } from "@/hooks/use-responsive"
 import { cn } from "@/lib/utils"
 
@@ -49,6 +50,8 @@ export function SiteHeader() {
 
   const navigationItems = [
     { href: "/tours", label: "Tours", icon: <MapPin className="w-5 h-5" /> },
+    { href: "/search/enhanced", label: "Enhanced Search", icon: <Database className="w-5 h-5" /> },
+    { href: "/demo/data-management", label: "Data Demo", icon: <Database className="w-5 h-5" /> },
     { href: "/blog", label: "Blog", icon: <Calendar className="w-5 h-5" /> },
     { href: "/about", label: "About Us", icon: <Users className="w-5 h-5" /> },
     { href: "/contact", label: "Contact", icon: <MessageCircle className="w-5 h-5" /> }
@@ -80,6 +83,9 @@ export function SiteHeader() {
         {isDesktop && (
           <nav className="flex flex-1 items-center justify-center" aria-label="Main navigation">
             <ul className="flex items-center gap-1">
+              <li>
+                <TourCategoriesDropdown />
+              </li>
               {navigationItems.map((item) => (
                 <li key={item.href}>
                   <Link 
@@ -98,7 +104,10 @@ export function SiteHeader() {
         {isTablet && (
           <nav className="flex flex-1 items-center justify-center" aria-label="Main navigation">
             <ul className="flex items-center gap-1">
-              {navigationItems.slice(0, 3).map((item) => (
+              <li>
+                <TourCategoriesDropdown />
+              </li>
+              {navigationItems.slice(0, 2).map((item) => (
                 <li key={item.href}>
                   <Link 
                     href={item.href} 
@@ -121,7 +130,7 @@ export function SiteHeader() {
                 </button>
                 <div className="absolute top-full left-0 mt-1 w-48 bg-popover border rounded-md shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible group-focus-within:opacity-100 group-focus-within:visible transition-all duration-200 z-50">
                   <ul className="py-1" role="menu">
-                    {navigationItems.slice(3).map((item) => (
+                    {navigationItems.slice(2).map((item) => (
                       <li key={item.href} role="none">
                         <Link 
                           href={item.href} 

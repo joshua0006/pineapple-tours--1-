@@ -11,7 +11,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Badge } from "@/components/ui/badge"
 import { SiteHeader } from "@/components/site-header"
 import { SiteFooter } from "@/components/site-footer"
-import { EnhancedBookingForm } from "@/components/enhanced-booking-form"
+import { EnhancedBookingExperience } from "@/components/enhanced-booking-experience"
 import { ErrorState } from "@/components/error-state"
 import { DescriptionDisplay } from "@/components/ui/description-display"
 import { TourInfoTable, createTourInfoItems } from "@/components/ui/tour-info-table"
@@ -754,29 +754,21 @@ export default function TourDetailPage({ params }: { params: Promise<{ slug: str
       {/* Booking Modal */}
       {showBooking && (
         <div 
-          className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50"
+          className="fixed inset-0 bg-black/50 flex items-start justify-center p-4 z-50 overflow-y-auto"
           role="dialog"
           aria-modal="true"
           aria-labelledby="booking-modal-title"
         >
-          <div className="bg-white rounded-lg max-w-7xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="p-6">
-              <div className="flex items-center justify-between mb-6">
-                <h2 id="booking-modal-title" className="text-2xl font-bold">Book {selectedProduct.name}</h2>
-                <Button 
-                  variant="ghost" 
-                  size="sm"
-                  onClick={() => setShowBooking(false)}
-                  aria-label="Close booking form"
-                >
-                  ×
-                </Button>
-              </div>
-              <EnhancedBookingForm 
-                product={selectedProduct}
-                onClose={() => setShowBooking(false)}
-              />
-            </div>
+          <div className="bg-white rounded-lg w-full max-w-none mx-4 my-8">
+            <EnhancedBookingExperience 
+              product={selectedProduct}
+              onClose={() => setShowBooking(false)}
+              onBookingComplete={(bookingData) => {
+                console.log('Booking completed:', bookingData)
+                // Here you could redirect to a confirmation page or show a success message
+                setShowBooking(false)
+              }}
+            />
           </div>
         </div>
       )}

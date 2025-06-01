@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { getCityFromLocation } from '@/lib/utils/product-utils';
+import { doesProductMatchCategory } from '@/lib/constants/categories';
 
 const REZDY_BASE_URL = 'https://api.rezdy.com/v1';
 const API_KEY = process.env.REZDY_API_KEY;
@@ -13,6 +15,8 @@ interface SearchFilters {
   sortBy?: string;
   checkIn?: string;
   checkOut?: string;
+  city?: string;
+  location?: string;
   page?: number;
   limit?: number;
 }
@@ -39,6 +43,8 @@ export async function GET(request: NextRequest) {
       sortBy: searchParams.get('sortBy') || 'name',
       checkIn: searchParams.get('checkIn') || '',
       checkOut: searchParams.get('checkOut') || '',
+      city: searchParams.get('city') || '',
+      location: searchParams.get('location') || '',
       page: parseInt(searchParams.get('page') || '1'),
       limit: parseInt(searchParams.get('limit') || '12'),
     };
@@ -67,6 +73,26 @@ export async function GET(request: NextRequest) {
         return false;
       }
 
+      // City filter - check both city and location parameters
+      if ((filters.city && filters.city !== 'all') || (filters.location && filters.location !== '')) {
+        const targetCity = filters.city || filters.location;
+        
+        if (targetCity) {
+          const productCity = getCityFromLocation(product.locationAddress);
+          
+          if (!productCity || productCity.toLowerCase() !== targetCity.toLowerCase()) {
+            // Also check if the city is mentioned in the location address string
+            const locationText = typeof product.locationAddress === 'string' 
+              ? product.locationAddress.toLowerCase()
+              : '';
+            
+            if (!locationText.includes(targetCity.toLowerCase())) {
+              return false;
+            }
+          }
+        }
+      }
+
       // Search query filter
       if (filters.query && filters.query.trim() !== '') {
         const searchText = `${product.name} ${product.shortDescription || ''} ${product.description || ''} ${product.locationAddress || ''}`.toLowerCase();
@@ -77,29 +103,10 @@ export async function GET(request: NextRequest) {
         if (!matchesQuery) return false;
       }
 
-      // Category filter
+      // Category filter using the centralized function
       if (filters.category && filters.category !== 'all') {
-        const searchText = `${product.name} ${product.shortDescription || ''} ${product.description || ''}`.toLowerCase();
-        
-        switch (filters.category) {
-          case "family":
-            if (!searchText.includes("family") && !searchText.includes("kids") && !searchText.includes("children")) return false;
-            break;
-          case "honeymoon":
-            if (!searchText.includes("romantic") && !searchText.includes("honeymoon") && !searchText.includes("couples")) return false;
-            break;
-          case "adventure":
-            if (!searchText.includes("adventure") && !searchText.includes("hiking") && !searchText.includes("diving") && !searchText.includes("expedition")) return false;
-            break;
-          case "cultural":
-            if (!searchText.includes("cultural") && !searchText.includes("culture") && !searchText.includes("heritage") && !searchText.includes("traditional")) return false;
-            break;
-          case "nature":
-            if (!searchText.includes("nature") && !searchText.includes("wildlife") && !searchText.includes("national park") && !searchText.includes("scenic")) return false;
-            break;
-          case "luxury":
-            if (!searchText.includes("luxury") && !searchText.includes("premium") && !searchText.includes("exclusive")) return false;
-            break;
+        if (!doesProductMatchCategory(product, filters.category)) {
+          return false;
         }
       }
 

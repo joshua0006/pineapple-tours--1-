@@ -35,31 +35,25 @@ const GUEST_TYPES = {
 }
 
 const AGE_RANGES = [
-  { value: '0', label: 'Under 1 year' },
-  { value: '1', label: '1 year' },
-  { value: '2', label: '2 years' },
-  { value: '3', label: '3 years' },
-  { value: '4', label: '4 years' },
-  { value: '5', label: '5 years' },
-  { value: '6', label: '6 years' },
-  { value: '7', label: '7 years' },
-  { value: '8', label: '8 years' },
-  { value: '9', label: '9 years' },
-  { value: '10', label: '10 years' },
-  { value: '11', label: '11 years' },
-  { value: '12', label: '12 years' },
-  { value: '13', label: '13 years' },
-  { value: '14', label: '14 years' },
-  { value: '15', label: '15 years' },
-  { value: '16', label: '16 years' },
-  { value: '17', label: '17 years' },
-  { value: '18', label: '18+ years (Adult)' }
+  { value: '1', label: 'Infants (0-2)', type: 'INFANT' },
+  { value: '10', label: 'Children (3-17)', type: 'CHILD' },
+  { value: '25', label: 'Adults (18+)', type: 'ADULT' }
 ]
 
 function getGuestType(age: number): 'ADULT' | 'CHILD' | 'INFANT' {
   if (age <= GUEST_TYPES.INFANT.maxAge!) return 'INFANT'
   if (age <= GUEST_TYPES.CHILD.maxAge!) return 'CHILD'
   return 'ADULT'
+}
+
+// Helper function to get representative age for each category
+function getRepresentativeAge(type: 'ADULT' | 'CHILD' | 'INFANT'): number {
+  switch (type) {
+    case 'INFANT': return 1
+    case 'CHILD': return 10
+    case 'ADULT': return 25
+    default: return 25
+  }
 }
 
 export function GuestManager({ 
@@ -229,13 +223,21 @@ export function GuestManager({
                 />
               </div>
               <div>
-                <Label htmlFor={`age-${guest.id}`}>Age *</Label>
+                <Label htmlFor={`age-${guest.id}`}>Age Category *</Label>
                 <Select 
                   value={guest.age.toString()} 
-                  onValueChange={(value) => updateGuest(guest.id, { age: parseInt(value) })}
+                  onValueChange={(value) => {
+                    const selectedRange = AGE_RANGES.find(range => range.value === value)
+                    if (selectedRange) {
+                      updateGuest(guest.id, { 
+                        age: parseInt(value),
+                        type: selectedRange.type as 'ADULT' | 'CHILD' | 'INFANT'
+                      })
+                    }
+                  }}
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="Select age" />
+                    <SelectValue placeholder="Select age category" />
                   </SelectTrigger>
                   <SelectContent>
                     {AGE_RANGES.map((range) => (

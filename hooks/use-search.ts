@@ -11,6 +11,8 @@ interface SearchFilters {
   sortBy: string;
   checkIn: string;
   checkOut: string;
+  city: string;
+  location: string;
   page: number;
   limit: number;
 }
@@ -30,6 +32,8 @@ interface SearchResponse {
       category: string | null;
       priceRange: string | null;
       duration: string | null;
+      city: string | null;
+      location: string | null;
     };
   };
 }
@@ -51,6 +55,8 @@ export function useSearch(initialFilters?: Partial<SearchFilters>) {
     sortBy: 'relevance',
     checkIn: '',
     checkOut: '',
+    city: '',
+    location: '',
     page: 1,
     limit: 12,
     ...initialFilters,
@@ -70,10 +76,16 @@ export function useSearch(initialFilters?: Partial<SearchFilters>) {
 
       const searchParams = new URLSearchParams();
       Object.entries(searchFilters).forEach(([key, value]) => {
-        if (value && value !== '') {
+        if (value && value !== '' && value !== 'all' && value !== 'any') {
           searchParams.append(key, value.toString());
         }
       });
+
+      // Always include at least one parameter to ensure the search is triggered
+      // If no other parameters are set, include a default limit
+      if (searchParams.toString() === '') {
+        searchParams.append('limit', searchFilters.limit.toString());
+      }
 
       const response = await fetch(`/api/search?${searchParams.toString()}`);
       
@@ -147,6 +159,8 @@ export function useSearch(initialFilters?: Partial<SearchFilters>) {
       sortBy: 'relevance',
       checkIn: '',
       checkOut: '',
+      city: '',
+      location: '',
       page: 1,
       limit: 12,
     });
@@ -169,6 +183,8 @@ export function useSearch(initialFilters?: Partial<SearchFilters>) {
       sortBy: 'relevance',
       checkIn: '',
       checkOut: '',
+      city: '',
+      location: '',
       page: 1,
       limit: 12,
     };
@@ -216,7 +232,9 @@ export function useSearch(initialFilters?: Partial<SearchFilters>) {
                      filters.priceRange !== 'all' || 
                      filters.duration !== 'any' ||
                      filters.checkIn !== '' ||
-                     filters.checkOut !== '',
+                     filters.checkOut !== '' ||
+                     filters.city !== '' ||
+                     filters.location !== '',
     
     hasResults: state.data?.metadata.hasResults ?? false,
     totalResults: state.data?.totalCount ?? 0,

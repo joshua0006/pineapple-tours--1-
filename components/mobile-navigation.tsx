@@ -4,6 +4,7 @@ import Link from "next/link"
 import { Phone } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { ThemeToggleSimple } from "@/components/theme-toggle-simple"
+import { TourCategoriesDropdown } from "@/components/tour-categories-dropdown"
 import { cn } from "@/lib/utils"
 
 interface NavigationItem {
@@ -41,6 +42,11 @@ export function MobileNavigation({
       {/* Mobile Navigation */}
       <nav className="flex-1 p-6" aria-label="Mobile navigation">
         <ul className="space-y-2">
+          {/* Tour Categories Dropdown */}
+          <li>
+            <TourCategoriesDropdown isMobile={true} />
+          </li>
+          
           {navigationItems.map((item, index) => (
             <li key={item.href}>
               <Link 
@@ -54,7 +60,7 @@ export function MobileNavigation({
                 )}
                 onClick={onItemClick}
                 style={{ 
-                  animationDelay: `${index * 75}ms`,
+                  animationDelay: `${(index + 1) * 75}ms`, // +1 to account for tour categories
                   animation: "fade-in-up 0.4s ease-out forwards"
                 }}
               >

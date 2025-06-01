@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import Image from "next/image"
-import { ChevronRight, MapPin, Calendar } from "lucide-react"
+import { ChevronRight, MapPin, Calendar, Package, DollarSign } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -19,62 +19,57 @@ import { SiteHeader } from "@/components/site-header"
 import { SiteFooter } from "@/components/site-footer"
 import { CategoriesSection } from "@/components/categories-section"
 import { useRezdyProducts } from "@/hooks/use-rezdy"
-import { useState } from "react"
+import { useState, useMemo } from "react"
+import { BudgetAnalysisCard } from "@/components/budget-analysis-card"
 
 export default function Home() {
-  const [selectedCategory, setSelectedCategory] = useState("all")
+  const [selectedBudget, setSelectedBudget] = useState("all")
   const { data: products, loading, error } = useRezdyProducts(24, 0)
 
-  // Filter products based on selected category
+  // Helper function to categorize products by budget
+  const categorizeByBudget = (product: any) => {
+    const price = product.advertisedPrice || 0
+    if (price === 0) return 'unknown'
+    if (price < 100) return 'budget'
+    if (price >= 100 && price < 300) return 'mid-range'
+    if (price >= 300) return 'luxury'
+    return 'unknown'
+  }
+
+  // Get budget statistics for display
+  const budgetStats = useMemo(() => {
+    if (!products) return { budget: 0, 'mid-range': 0, luxury: 0, unknown: 0 }
+    
+    const stats = { budget: 0, 'mid-range': 0, luxury: 0, unknown: 0 }
+    products.forEach(product => {
+      if (product.productType !== "GIFT_CARD") {
+        const budgetCategory = categorizeByBudget(product)
+        stats[budgetCategory as keyof typeof stats]++
+      }
+    })
+    return stats
+  }, [products])
+
+  // Filter products based on selected budget
   const filteredProducts = products?.filter(product => {
     // Exclude GIFT_CARD products from Featured Tour Packages
     if (product.productType === "GIFT_CARD") return false
     
-    if (selectedCategory === "all") return true
-    
-    // Enhanced category filtering based on product name, description, and categories
-    const searchText = `${product.name} ${product.shortDescription || ''} ${product.description || ''} ${product.categories?.join(' ') || ''}`.toLowerCase()
-    
-    switch (selectedCategory) {
-      case "family":
-        return searchText.includes("family") || 
-               searchText.includes("kids") || 
-               searchText.includes("children") ||
-               searchText.includes("child") ||
-               searchText.includes("all ages") ||
-               searchText.includes("family-friendly") ||
-               searchText.includes("suitable for children")
-      case "honeymoon":
-        return searchText.includes("romantic") || 
-               searchText.includes("honeymoon") || 
-               searchText.includes("couples") ||
-               searchText.includes("romance") ||
-               searchText.includes("intimate") ||
-               searchText.includes("private") ||
-               searchText.includes("sunset") ||
-               searchText.includes("luxury")
-      case "adventure":
-        return searchText.includes("adventure") || 
-               searchText.includes("hiking") || 
-               searchText.includes("diving") || 
-               searchText.includes("expedition") ||
-               searchText.includes("extreme") ||
-               searchText.includes("adrenaline") ||
-               searchText.includes("outdoor") ||
-               searchText.includes("active") ||
-               searchText.includes("sport") ||
-               searchText.includes("climbing") ||
-               searchText.includes("kayak") ||
-               searchText.includes("snorkel") ||
-               searchText.includes("zip") ||
-               searchText.includes("trek")
-      default:
-        return true
+    // Budget filter
+    if (selectedBudget !== "all") {
+      const productBudgetCategory = categorizeByBudget(product)
+      if (productBudgetCategory !== selectedBudget) return false
     }
+    
+    return true
   }) || []
 
   const handleRetry = () => {
     window.location.reload()
+  }
+
+  const handleBudgetCategorySelect = (category: string) => {
+    setSelectedBudget(category === selectedBudget ? "all" : category)
   }
 
   return (
@@ -86,7 +81,7 @@ export default function Home() {
           <div className="absolute inset-0 z-0">
             <div className="relative h-full w-full overflow-hidden">
               <iframe
-                src="https://www.youtube.com/embed/KoabrcWfI_I?autoplay=1&mute=1&loop=1&playlist=KoabrcWfI_I&controls=0&showinfo=0&rel=0&iv_load_policy=3&modestbranding=1&playsinline=1"
+                src="https://www.youtube.com/embed/KoabrcWfI_I?autoplay=1&mute=1&loop=1&playlist=KoabrcWfI_I&controls=0&showinfo=0&rel=0&iv_load_policy=3&modestbranding=1&playsinline=1&hd=1&vq=hd1080"
                 title="Tourism Background Video"
                 className="absolute top-1/2 left-1/2 min-w-full min-h-full w-auto h-auto transform -translate-x-1/2 -translate-y-1/2 brightness-[0.7]"
                 style={{
@@ -98,11 +93,10 @@ export default function Home() {
                 allowFullScreen={false}
                 frameBorder="0"
               />
-              {/* Overlay to ensure content is readable */}
-              <div className="absolute inset-0 bg-black/20" />
+            
             </div>
           </div>
-          <div className="container relative z-10 py-24 md:py-32 lg:py-40">
+          <div className="container relative z-10 pb-16 md:py-20 lg:py-28">
             <div className="max-w-3xl space-y-5 text-center sm:text-left">
               <Badge className="bg-yellow-500 text-black hover:bg-yellow-600">Best Tropical Getaways</Badge>
               <h1 className="text-4xl font-bold tracking-tight text-white sm:text-5xl md:text-6xl">
@@ -122,7 +116,7 @@ export default function Home() {
               </div>
             </div>
           </div>
-          <div className="container relative z-10 -mt-10 mb-16">
+          <div className="container relative z-10 -mt-10 mb-0">
             <Card className="overflow-hidden border-none shadow-lg">
               <CardContent className="p-0">
                 <SearchForm />
@@ -137,59 +131,145 @@ export default function Home() {
         {/* Featured Tour Packages */}
         <section className="bg-muted py-16">
           <div className="container">
-            <div className="flex flex-col items-center justify-between gap-4 sm:flex-row">
+            <div className="flex flex-col items-center justify-between gap-4 sm:flex-row mb-8">
               <div>
                 <h2 className="text-3xl font-bold tracking-tight">Featured Tour Packages</h2>
-                <p className="text-muted-foreground">Real-time tours and experiences from our partners</p>
+                <p className="text-muted-foreground">
+                  Discover our handpicked selection of amazing tropical tours
+                </p>
               </div>
               <Link href="/tours" className="flex items-center text-sm font-medium text-primary">
                 View all packages
                 <ChevronRight className="ml-1 h-4 w-4" />
               </Link>
             </div>
-            <Tabs value={selectedCategory} onValueChange={setSelectedCategory} className="mt-8">
-              <TabsList className="mb-6">
-                <TabsTrigger value="all">All</TabsTrigger>
-                <TabsTrigger value="family">Family</TabsTrigger>
-                <TabsTrigger value="honeymoon">Honeymoon</TabsTrigger>
-                <TabsTrigger value="adventure">Adventure</TabsTrigger>
-              </TabsList>
-              
-              {loading && (
-                <TourGridSkeleton count={6} />
-              )}
-              
-              {error && (
-                <ErrorState
-                  title="Unable to load tours"
-                  message="We're having trouble connecting to our booking system. Please try again in a moment."
-                  onRetry={handleRetry}
+
+            {/* Budget Analysis Section */}
+            {!loading && !error && products && products.length > 0 && (
+              <div className="mb-8">
+                <BudgetAnalysisCard
+                  products={products}
+                  onCategorySelect={handleBudgetCategorySelect}
+                  selectedCategory={selectedBudget}
+                  compact={true}
                 />
-              )}
-              
-              {!loading && !error && (
-                <TabsContent value={selectedCategory}>
-                  {filteredProducts.length > 0 ? (
-                    <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-                      {filteredProducts.slice(0, 12).map((product) => (
-                        <DynamicTourCard key={product.productCode} product={product} />
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="text-center py-12">
-                      <p className="text-muted-foreground">No tours found for this category.</p>
-                      <Button 
-                        variant="outline" 
-                        className="mt-4"
-                        onClick={() => setSelectedCategory("all")}
-                      >
-                        View All Tours
-                      </Button>
-                    </div>
-                  )}
-                </TabsContent>
-              )}
+              </div>
+            )}
+
+            {/* Budget Range Filter Tabs */}
+            <Tabs value={selectedBudget} onValueChange={setSelectedBudget} className="mb-8">
+              <TabsList className="grid w-full grid-cols-2 lg:grid-cols-5">
+                <TabsTrigger value="all" className="flex items-center gap-2">
+                  All Budgets
+                  {products && <Badge variant="secondary">{products.filter(p => p.productType !== "GIFT_CARD").length}</Badge>}
+                </TabsTrigger>
+                <TabsTrigger value="budget" className="flex items-center gap-2">
+                  Budget (Under $100)
+                  <Badge variant="secondary">{budgetStats.budget}</Badge>
+                </TabsTrigger>
+                <TabsTrigger value="mid-range" className="flex items-center gap-2">
+                  Mid-Range ($100-$299)
+                  <Badge variant="secondary">{budgetStats['mid-range']}</Badge>
+                </TabsTrigger>
+                <TabsTrigger value="luxury" className="flex items-center gap-2">
+                  Luxury ($300+)
+                  <Badge variant="secondary">{budgetStats.luxury}</Badge>
+                </TabsTrigger>
+                <TabsTrigger value="unknown" className="flex items-center gap-2">
+                  No Price Set
+                  <Badge variant="secondary">{budgetStats.unknown}</Badge>
+                </TabsTrigger>
+              </TabsList>
             </Tabs>
+
+            {/* Active Filters Display */}
+            {(selectedBudget !== "all") && (
+              <div className="mb-6 p-4 bg-background rounded-lg border">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-medium">Active Filters:</span>
+                    <Badge variant="secondary" className="capitalize">
+                      {selectedBudget === "mid-range" ? "Mid-Range" : selectedBudget}
+                    </Badge>
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => {
+                      setSelectedBudget("all")
+                    }}
+                  >
+                    Clear All
+                  </Button>
+                </div>
+              </div>
+            )}
+
+            {/* Loading State */}
+            {loading && <TourGridSkeleton count={12} />}
+
+            {/* Error State */}
+            {error && (
+              <ErrorState
+                title="Unable to load tours"
+                message="We're having trouble loading our tour packages. Please try again."
+                onRetry={handleRetry}
+              />
+            )}
+
+            {/* Tours Grid */}
+            {!loading && !error && filteredProducts.length > 0 && (
+              <div className="space-y-6">
+                {/* Results Summary */}
+                <div className="flex items-center justify-between">
+                  <p className="text-sm text-muted-foreground">
+                    Showing {filteredProducts.length} tour{filteredProducts.length !== 1 ? 's' : ''}
+                    {selectedBudget !== "all" && ` • ${selectedBudget === "mid-range" ? "Mid-Range" : selectedBudget.charAt(0).toUpperCase() + selectedBudget.slice(1)} budget`}
+                  </p>
+                </div>
+                
+                {/* Products Grid */}
+                <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                  {filteredProducts.slice(0, 12).map((product) => (
+                    <DynamicTourCard
+                      key={product.productCode}
+                      product={product}
+                    />
+                  ))}
+                </div>
+                
+                {/* Show More Button */}
+                {filteredProducts.length > 12 && (
+                  <div className="text-center pt-6">
+                    <Link href="/tours">
+                      <Button variant="outline" size="lg">
+                        View All {filteredProducts.length} Tours
+                        <ChevronRight className="ml-2 h-4 w-4" />
+                      </Button>
+                    </Link>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Empty State */}
+            {!loading && !error && filteredProducts.length === 0 && (
+              <div className="text-center py-12">
+                <Package className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
+                <h3 className="text-lg font-medium mb-2">No tours found</h3>
+                <p className="text-muted-foreground mb-4">
+                  No tours match your selected filters. Try adjusting your budget selection.
+                </p>
+                <div className="flex flex-col sm:flex-row gap-2 justify-center">
+                  <Button 
+                    variant="outline" 
+                    onClick={() => setSelectedBudget("all")}
+                  >
+                    Show All Budgets
+                  </Button>
+                </div>
+              </div>
+            )}
           </div>
         </section>
 

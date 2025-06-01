@@ -166,12 +166,26 @@ export default function ToursPage() {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">All Categories</SelectItem>
-                    <SelectItem value="family">Family</SelectItem>
-                    <SelectItem value="honeymoon">Honeymoon</SelectItem>
+                    {/* Tours Categories */}
                     <SelectItem value="adventure">Adventure</SelectItem>
                     <SelectItem value="cultural">Cultural</SelectItem>
+                    <SelectItem value="food-wine">Food & Wine</SelectItem>
                     <SelectItem value="nature">Nature</SelectItem>
+                    <SelectItem value="urban">Urban</SelectItem>
+                    <SelectItem value="family">Family</SelectItem>
+                    <SelectItem value="romantic">Romantic</SelectItem>
                     <SelectItem value="luxury">Luxury</SelectItem>
+                    <SelectItem value="photography">Photography</SelectItem>
+                    <SelectItem value="water-activities">Water Activities</SelectItem>
+                    {/* Experiences Categories */}
+                    <SelectItem value="workshops">Workshops</SelectItem>
+                    <SelectItem value="classes">Classes</SelectItem>
+                    <SelectItem value="tastings">Tastings</SelectItem>
+                    {/* Transportation Categories */}
+                    <SelectItem value="transfers">Transfers</SelectItem>
+                    <SelectItem value="day-trips">Day Trips</SelectItem>
+                    <SelectItem value="multiday-tours">Multi-day Tours</SelectItem>
+                    <SelectItem value="airport-services">Airport Services</SelectItem>
                   </SelectContent>
                 </Select>
 

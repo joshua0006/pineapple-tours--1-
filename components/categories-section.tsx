@@ -1,89 +1,174 @@
 'use client'
 
 import Link from "next/link"
-import { ChevronRight, Loader2, AlertCircle, Calendar, MapPin, Users, Car } from "lucide-react"
-import { useState, useEffect } from "react"
+import { ChevronRight, Loader2, AlertCircle, Mountain, Landmark, UtensilsCrossed, TreePine, Building, Wrench, GraduationCap, Wine, Car, MapPin, Calendar, Users, Heart, Sparkles, Camera, Waves, Plane, ChevronLeft } from "lucide-react"
+import { useState, useEffect, useRef } from "react"
 
 import { CategoryCard } from "@/components/category-card"
 import { Alert, AlertDescription } from "@/components/ui/alert"
+import { Button } from "@/components/ui/button"
 import { useRezdyProducts } from "@/hooks/use-rezdy"
+import { TOUR_CATEGORIES, TourCategory, filterProductsByCategory } from "@/lib/constants/categories"
 
-// Define the specific tour categories based on productType
-interface TourCategory {
-  id: string
-  title: string
-  description: string
-  icon: any
-  productTypes: string[]
-  image: string
-  slug: string
-  tourCount: number
-}
+// Icon mapping for categories
+const CATEGORY_ICONS = {
+  'adventure': Mountain,
+  'cultural': Landmark,
+  'food-wine': UtensilsCrossed,
+  'nature': TreePine,
+  'urban': Building,
+  'family': Users,
+  'romantic': Heart,
+  'luxury': Sparkles,
+  'photography': Camera,
+  'water-activities': Waves,
+  'workshops': Wrench,
+  'classes': GraduationCap,
+  'tastings': Wine,
+  'transfers': Car,
+  'day-trips': MapPin,
+  'multiday-tours': Calendar,
+  'airport-services': Plane
+} as const
 
-const TOUR_CATEGORIES: Omit<TourCategory, 'tourCount'>[] = [
-  {
-    id: 'day-tour',
-    title: 'Day Tour',
-    description: 'Perfect single-day adventures and experiences',
-    icon: Calendar,
-    productTypes: ['DAY_TOUR', 'TOUR', 'DAYTOUR'], // Include common variations
-    image: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80',
-    slug: 'day-tour'
-  },
-  {
-    id: 'multiday-tour',
-    title: 'Multiday Tour',
-    description: 'Extended adventures spanning multiple days',
-    icon: MapPin,
-    productTypes: ['MULTIDAY_TOUR', 'MULTI_DAY_TOUR', 'MULTIDAYTOUR'],
-    image: 'https://images.unsplash.com/photo-1464822759844-d150baec93d5?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80',
-    slug: 'multiday-tour'
-  },
-  {
-    id: 'private-tour',
-    title: 'Private Tour',
-    description: 'Exclusive personalized tour experiences',
-    icon: Users,
-    productTypes: ['PRIVATE_TOUR', 'PRIVATE'],
-    image: 'https://images.unsplash.com/photo-1488646953014-85cb44e25828?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2035&q=80',
-    slug: 'private-tour'
-  },
-  {
-    id: 'transfer',
-    title: 'Transfer',
-    description: 'Transportation and transfer services',
-    icon: Car,
-    productTypes: ['TRANSFER', 'TRANSPORT', 'TRANSPORTATION'],
-    image: 'https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2069&q=80',
-    slug: 'transfer'
+// Image mapping for categories
+const CATEGORY_IMAGES = {
+  'adventure': 'https://images.unsplash.com/photo-1551632811-561732d1e306?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80',
+  'cultural': 'https://images.unsplash.com/photo-1539650116574-75c0c6d73f6e?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80',
+  'food-wine': 'https://images.unsplash.com/photo-1414235077428-338989a2e8c0?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80',
+  'nature': 'https://images.unsplash.com/photo-1441974231531-c6227db76b6e?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80',
+  'urban': 'https://images.unsplash.com/photo-1477959858617-67f85cf4f1df?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2044&q=80',
+  'family': 'https://images.unsplash.com/photo-1511895426328-dc8714191300?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80',
+  'romantic': 'https://images.unsplash.com/photo-1518709268805-4e9042af2176?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2025&q=80',
+  'luxury': 'https://images.unsplash.com/photo-1566073771259-6a8506099945?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80',
+  'photography': 'https://images.unsplash.com/photo-1502920917128-1aa500764cbd?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80',
+  'water-activities': 'https://images.unsplash.com/photo-1544551763-46a013bb70d5?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80',
+  'workshops': 'https://images.unsplash.com/photo-1581833971358-2c8b550f87b3?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80',
+  'classes': 'https://images.unsplash.com/photo-1524178232363-1fb2b075b655?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80',
+  'tastings': 'https://images.unsplash.com/photo-1510812431401-41d2bd2722f3?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80',
+  'transfers': 'https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2069&q=80',
+  'day-trips': 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80',
+  'multiday-tours': 'https://images.unsplash.com/photo-1464822759844-d150baec93d5?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80',
+  'airport-services': 'https://images.unsplash.com/photo-1436491865332-7a61a109cc05?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2074&q=80'
+} as const
+
+// Horizontal scroll component for category rows
+function CategoryRow({ title, categories }: { title: string; categories: TourCategory[] }) {
+  const scrollRef = useRef<HTMLDivElement>(null)
+  const [canScrollLeft, setCanScrollLeft] = useState(false)
+  const [canScrollRight, setCanScrollRight] = useState(false)
+
+  const checkScrollButtons = () => {
+    if (scrollRef.current) {
+      const { scrollLeft, scrollWidth, clientWidth } = scrollRef.current
+      setCanScrollLeft(scrollLeft > 0)
+      setCanScrollRight(scrollLeft < scrollWidth - clientWidth - 1)
+    }
   }
-]
+
+  useEffect(() => {
+    checkScrollButtons()
+    const scrollElement = scrollRef.current
+    if (scrollElement) {
+      scrollElement.addEventListener('scroll', checkScrollButtons)
+      return () => scrollElement.removeEventListener('scroll', checkScrollButtons)
+    }
+  }, [categories])
+
+  const scroll = (direction: 'left' | 'right') => {
+    if (scrollRef.current) {
+      const scrollAmount = 320 // Width of one card plus gap
+      const newScrollLeft = scrollRef.current.scrollLeft + (direction === 'right' ? scrollAmount : -scrollAmount)
+      scrollRef.current.scrollTo({ left: newScrollLeft, behavior: 'smooth' })
+    }
+  }
+
+  if (categories.length === 0) return null
+
+  return (
+    <div className="mt-12">
+      <div className="flex items-center justify-between mb-6">
+        <h3 className="text-xl font-semibold text-primary">{title}</h3>
+        <div className="flex gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => scroll('left')}
+            disabled={!canScrollLeft}
+            className="h-8 w-8 p-0"
+          >
+            <ChevronLeft className="h-4 w-4" />
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => scroll('right')}
+            disabled={!canScrollRight}
+            className="h-8 w-8 p-0"
+          >
+            <ChevronRight className="h-4 w-4" />
+          </Button>
+        </div>
+      </div>
+      <div 
+        ref={scrollRef}
+        className="flex gap-6 overflow-x-auto scrollbar-hide pb-4"
+        style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+      >
+        {categories.map((category) => (
+          <div key={category.id} className="flex-none w-80">
+            <CategoryCard
+              id={category.id}
+              title={category.title}
+              description={category.description}
+              image={category.image || ''}
+              tourCount={category.tourCount || 0}
+              slug={category.slug}
+            />
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
 
 export function CategoriesSection() {
   const { data: products, loading, error } = useRezdyProducts(100, 0)
   const [categoriesWithCounts, setCategoriesWithCounts] = useState<TourCategory[]>(
-    TOUR_CATEGORIES.map(cat => ({ ...cat, tourCount: 0 }))
+    TOUR_CATEGORIES.map(cat => ({ 
+      ...cat, 
+      tourCount: 0,
+      icon: CATEGORY_ICONS[cat.id as keyof typeof CATEGORY_ICONS],
+      image: CATEGORY_IMAGES[cat.id as keyof typeof CATEGORY_IMAGES]
+    }))
   )
 
-  // Calculate tour counts for each category based on productType
+  // Enhanced categorization logic using shared helper function
   useEffect(() => {
     if (products) {
       const updatedCategories = TOUR_CATEGORIES.map(category => {
-        const tourCount = products.filter(product => {
-          if (!product.productType) return false
-          return category.productTypes.some(type => 
-            product.productType?.toUpperCase().includes(type.toUpperCase())
-          )
-        }).length
+        const filteredProducts = filterProductsByCategory(products, category)
+        const tourCount = filteredProducts.length
 
         return {
           ...category,
-          tourCount
+          tourCount,
+          icon: CATEGORY_ICONS[category.id as keyof typeof CATEGORY_ICONS],
+          image: CATEGORY_IMAGES[category.id as keyof typeof CATEGORY_IMAGES]
         }
       })
       setCategoriesWithCounts(updatedCategories)
     }
   }, [products])
+
+  // Group categories by their category group
+  const groupedCategories = categoriesWithCounts.reduce((acc, category) => {
+    if (!acc[category.categoryGroup]) {
+      acc[category.categoryGroup] = []
+    }
+    acc[category.categoryGroup].push(category)
+    return acc
+  }, {} as Record<string, TourCategory[]>)
 
   if (loading) {
     return (
@@ -135,19 +220,15 @@ export function CategoriesSection() {
           <ChevronRight className="ml-1 h-4 w-4" />
         </Link>
       </div>
-      <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-        {categoriesWithCounts.map((category) => (
-          <CategoryCard
-            key={category.id}
-            id={category.id}
-            title={category.title}
-            description={category.description}
-            image={category.image}
-            tourCount={category.tourCount}
-            slug={category.slug}
-          />
-        ))}
-      </div>
+
+      {/* Tours Section */}
+      <CategoryRow title="Tours" categories={groupedCategories.tours || []} />
+
+      {/* Experiences Section */}
+      <CategoryRow title="Experiences" categories={groupedCategories.experiences || []} />
+
+      {/* Transportation Section */}
+      <CategoryRow title="Transportation" categories={groupedCategories.transportation || []} />
     </section>
   )
 } 

@@ -20,7 +20,10 @@ import {
   Tag,
   Calendar,
   Clock,
-  Users
+  Users,
+  DollarSign,
+  TrendingUp,
+  BarChart3
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { format, addDays } from 'date-fns';
@@ -35,6 +38,7 @@ export default function RezdyDataPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [productsViewMode, setProductsViewMode] = useState<'cards' | 'json'>('cards');
   const [selectedProductType, setSelectedProductType] = useState<string>('all');
+  const [selectedBudgetRange, setSelectedBudgetRange] = useState<string>('all');
   
   // Selected product for details
   const [selectedProduct, setSelectedProduct] = useState<string>('');
@@ -47,6 +51,16 @@ export default function RezdyDataPage() {
   // Fetch data
   const { data: products, loading: productsLoading, error: productsError } = useRezdyProducts();
 
+  // Helper function to categorize products by budget
+  const categorizeByBudget = (product: RezdyProduct) => {
+    const price = product.advertisedPrice || 0;
+    if (price === 0) return 'unknown';
+    if (price < 100) return 'budget';
+    if (price >= 100 && price < 300) return 'mid-range';
+    if (price >= 300) return 'luxury';
+    return 'unknown';
+  };
+
   // Get unique product types
   const productTypes = useMemo(() => {
     if (!products) return [];
@@ -54,7 +68,39 @@ export default function RezdyDataPage() {
     return types.sort();
   }, [products]);
 
-  // Filter products based on search and product type
+  // Budget analysis
+  const budgetAnalysis = useMemo(() => {
+    if (!products) return {
+      budget: { count: 0, products: [], avgPrice: 0, totalRevenue: 0 },
+      'mid-range': { count: 0, products: [], avgPrice: 0, totalRevenue: 0 },
+      luxury: { count: 0, products: [], avgPrice: 0, totalRevenue: 0 },
+      unknown: { count: 0, products: [], avgPrice: 0, totalRevenue: 0 }
+    };
+
+    const analysis = {
+      budget: { count: 0, products: [] as RezdyProduct[], avgPrice: 0, totalRevenue: 0 },
+      'mid-range': { count: 0, products: [] as RezdyProduct[], avgPrice: 0, totalRevenue: 0 },
+      luxury: { count: 0, products: [] as RezdyProduct[], avgPrice: 0, totalRevenue: 0 },
+      unknown: { count: 0, products: [] as RezdyProduct[], avgPrice: 0, totalRevenue: 0 }
+    };
+
+    products.forEach(product => {
+      const category = categorizeByBudget(product);
+      analysis[category as keyof typeof analysis].products.push(product);
+      analysis[category as keyof typeof analysis].count++;
+      analysis[category as keyof typeof analysis].totalRevenue += product.advertisedPrice || 0;
+    });
+
+    // Calculate average prices
+    Object.keys(analysis).forEach(key => {
+      const category = analysis[key as keyof typeof analysis];
+      category.avgPrice = category.count > 0 ? category.totalRevenue / category.count : 0;
+    });
+
+    return analysis;
+  }, [products]);
+
+  // Filter products based on search, product type, and budget range
   const filteredProducts = useMemo(() => {
     if (!products) return [];
     
@@ -68,8 +114,12 @@ export default function RezdyDataPage() {
       filtered = filtered.filter(product => product.productType === selectedProductType);
     }
 
+    if (selectedBudgetRange !== 'all') {
+      filtered = filtered.filter(product => categorizeByBudget(product) === selectedBudgetRange);
+    }
+
     return filtered;
-  }, [products, searchTerm, selectedProductType]);
+  }, [products, searchTerm, selectedProductType, selectedBudgetRange]);
 
   // Group products by productType
   const groupedProducts = useMemo(() => {
@@ -93,7 +143,21 @@ export default function RezdyDataPage() {
     return sortedGroups;
   }, [filteredProducts]);
 
+  // Group products by budget category
+  const groupedByBudget = useMemo(() => {
+    if (!filteredProducts) return {};
+    
+    const grouped = filteredProducts.reduce((acc, product) => {
+      const budget = categorizeByBudget(product);
+      if (!acc[budget]) {
+        acc[budget] = [];
+      }
+      acc[budget].push(product);
+      return acc;
+    }, {} as Record<string, RezdyProduct[]>);
 
+    return grouped;
+  }, [filteredProducts]);
 
   const handleProductSelect = (product: RezdyProduct) => {
     setSelectedProduct(product.productCode);
@@ -200,11 +264,18 @@ export default function RezdyDataPage() {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <TabsList className="grid w-full grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7 gap-1 h-auto p-1">
+        <TabsList className="grid w-full grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-8 gap-1 h-auto p-1">
           <TabsTrigger value="all" className="flex items-center gap-2">
             <Package className="h-4 w-4" />
             All Products
             {products && <Badge variant="secondary">{products.length}</Badge>}
+          </TabsTrigger>
+          <TabsTrigger value="budget-analysis" className="flex items-center gap-2">
+            <DollarSign className="h-4 w-4" />
+            Budget Analysis
+            <Badge variant="secondary">
+              {Object.values(budgetAnalysis).reduce((sum, category) => sum + category.count, 0)}
+            </Badge>
           </TabsTrigger>
           <TabsTrigger value="availability" className="flex items-center gap-2">
             <Calendar className="h-4 w-4" />
@@ -234,13 +305,91 @@ export default function RezdyDataPage() {
           )}
         </TabsList>
 
+        {/* Budget Analysis Tab */}
+        <TabsContent value="budget-analysis" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <BarChart3 className="h-5 w-5" />
+                Budget Category Analysis
+              </CardTitle>
+              <CardDescription>
+                Product distribution and revenue analysis by price ranges
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+                {Object.entries(budgetAnalysis).map(([category, data]) => (
+                  <Card key={category} className="p-4">
+                    <div className="flex items-center justify-between mb-2">
+                      <h3 className="font-semibold capitalize">
+                        {category === 'mid-range' ? 'Mid-Range' : category}
+                      </h3>
+                      <Badge variant="outline">{data.count}</Badge>
+                    </div>
+                    <div className="space-y-2 text-sm">
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Avg Price:</span>
+                        <span className="font-medium">${data.avgPrice.toFixed(2)}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Total Value:</span>
+                        <span className="font-medium">${data.totalRevenue.toFixed(2)}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Price Range:</span>
+                        <span className="font-medium">
+                          {category === 'budget' && 'Under $100'}
+                          {category === 'mid-range' && '$100-$299'}
+                          {category === 'luxury' && '$300+'}
+                          {category === 'unknown' && 'No Price'}
+                        </span>
+                      </div>
+                    </div>
+                  </Card>
+                ))}
+              </div>
+
+              {/* Budget Category Products */}
+              <div className="mt-8 space-y-6">
+                {Object.entries(groupedByBudget).map(([category, categoryProducts]) => (
+                  <div key={category} className="space-y-4">
+                    <div className="flex items-center gap-3">
+                      <h3 className="text-xl font-semibold capitalize">
+                        {category === 'mid-range' ? 'Mid-Range Products' : `${category} Products`}
+                      </h3>
+                      <Badge variant="outline">{categoryProducts.length} products</Badge>
+                    </div>
+                    <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                      {categoryProducts.slice(0, 6).map((product) => (
+                        <RezdyProductCard
+                          key={product.productCode}
+                          product={product}
+                          onViewDetails={handleProductSelect}
+                        />
+                      ))}
+                    </div>
+                    {categoryProducts.length > 6 && (
+                      <div className="text-center">
+                        <Button variant="outline" size="sm">
+                          View All {categoryProducts.length} {category} Products
+                        </Button>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
         {/* All Products Tab */}
         <TabsContent value="all" className="space-y-6">
           <Card>
             <CardHeader>
               <CardTitle>Products</CardTitle>
               <CardDescription>
-                All products available in Rezdy, categorized by product type
+                All products available in Rezdy, categorized by product type and budget
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -266,6 +415,18 @@ export default function RezdyDataPage() {
                           {type}
                         </SelectItem>
                       ))}
+                    </SelectContent>
+                  </Select>
+                  <Select value={selectedBudgetRange} onValueChange={setSelectedBudgetRange}>
+                    <SelectTrigger className="w-48">
+                      <SelectValue placeholder="Filter by budget" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Budgets</SelectItem>
+                      <SelectItem value="budget">Budget (Under $100)</SelectItem>
+                      <SelectItem value="mid-range">Mid-Range ($100-$299)</SelectItem>
+                      <SelectItem value="luxury">Luxury ($300+)</SelectItem>
+                      <SelectItem value="unknown">No Price Set</SelectItem>
                     </SelectContent>
                   </Select>
                   <Button variant="outline" size="icon">
@@ -295,12 +456,49 @@ export default function RezdyDataPage() {
                 </div>
               </div>
 
+              {/* Active Filters Display */}
+              {(selectedProductType !== 'all' || selectedBudgetRange !== 'all' || searchTerm) && (
+                <div className="mb-6 p-4 bg-muted/50 rounded-lg">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-medium">Active Filters:</span>
+                      {searchTerm && (
+                        <Badge variant="secondary">
+                          Search: "{searchTerm}"
+                        </Badge>
+                      )}
+                      {selectedProductType !== 'all' && (
+                        <Badge variant="secondary">
+                          Type: {selectedProductType}
+                        </Badge>
+                      )}
+                      {selectedBudgetRange !== 'all' && (
+                        <Badge variant="secondary">
+                          Budget: {selectedBudgetRange === 'mid-range' ? 'Mid-Range' : selectedBudgetRange}
+                        </Badge>
+                      )}
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => {
+                        setSearchTerm('');
+                        setSelectedProductType('all');
+                        setSelectedBudgetRange('all');
+                      }}
+                    >
+                      Clear All
+                    </Button>
+                  </div>
+                </div>
+              )}
+
               {/* Product Type Summary */}
               {!productsLoading && products && (
                 <div className="mb-6 p-4 bg-muted/50 rounded-lg">
                   <h3 className="text-sm font-medium mb-3 flex items-center gap-2">
                     <Tag className="h-4 w-4" />
-                    Product Categories
+                    Product Categories ({filteredProducts.length} products)
                   </h3>
                   <div className="flex flex-wrap gap-2">
                     {Object.entries(groupedProducts).map(([type, typeProducts]) => (
@@ -365,7 +563,7 @@ export default function RezdyDataPage() {
                   <Package className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
                   <h3 className="text-lg font-medium mb-2">No products found</h3>
                   <p className="text-muted-foreground">
-                    {searchTerm || selectedProductType !== 'all' 
+                    {searchTerm || selectedProductType !== 'all' || selectedBudgetRange !== 'all'
                       ? 'Try adjusting your search terms or filters.' 
                       : 'No products available.'}
                   </p>

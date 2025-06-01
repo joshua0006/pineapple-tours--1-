@@ -27,7 +27,9 @@ export function useRezdyProducts(limit = 100, offset = 0) {
       try {
         setState(prev => ({ ...prev, loading: true, error: null }));
         
-        const response = await fetch(`/api/rezdy/products?limit=${limit}&offset=${offset}`);
+        // Add cache-busting parameter to ensure fresh data
+        const cacheBuster = Date.now();
+        const response = await fetch(`/api/rezdy/products?limit=${limit}&offset=${offset}&_t=${cacheBuster}`);
         
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
@@ -39,12 +41,21 @@ export function useRezdyProducts(limit = 100, offset = 0) {
           throw new Error(data.error);
         }
         
+        const products = data.products || data.data || [];
+        console.log('useRezdyProducts: Fetched products:', {
+          totalProducts: products.length,
+          hasProducts: products.length > 0,
+          firstProduct: products[0]?.name || 'None',
+          cacheBuster
+        });
+        
         setState({
-          data: data.products || data.data || [],
+          data: products,
           loading: false,
           error: null,
         });
       } catch (error) {
+        console.error('useRezdyProducts error:', error);
         setState({
           data: null,
           loading: false,

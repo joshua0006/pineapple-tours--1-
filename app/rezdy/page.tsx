@@ -51,13 +51,16 @@ export default function RezdyDataPage() {
   // Fetch data
   const { data: products, loading: productsLoading, error: productsError } = useRezdyProducts();
 
-  // Helper function to categorize products by budget
-  const categorizeByBudget = (product: RezdyProduct) => {
-    const price = product.advertisedPrice || 0;
-    if (price === 0) return 'unknown';
-    if (price < 100) return 'budget';
-    if (price >= 100 && price < 300) return 'mid-range';
-    if (price >= 300) return 'luxury';
+  // Categorize products by budget range based on actual data analysis
+  const categorizeByBudget = (product: RezdyProduct): string => {
+    const price = product.advertisedPrice;
+    if (!price || price <= 0) return 'unknown';
+    
+    if (price < 99) return 'budget';
+    if (price >= 99 && price < 159) return 'mid-range';
+    if (price >= 159 && price < 299) return 'premium';
+    if (price >= 299) return 'luxury';
+    
     return 'unknown';
   };
 
@@ -339,9 +342,10 @@ export default function RezdyDataPage() {
                       <div className="flex justify-between">
                         <span className="text-muted-foreground">Price Range:</span>
                         <span className="font-medium">
-                          {category === 'budget' && 'Under $100'}
-                          {category === 'mid-range' && '$100-$299'}
-                          {category === 'luxury' && '$300+'}
+                          {category === 'budget' && 'Under $99'}
+                          {category === 'mid-range' && '$99-$159'}
+                          {category === 'premium' && '$159-$299'}
+                          {category === 'luxury' && '$299+'}
                           {category === 'unknown' && 'No Price'}
                         </span>
                       </div>
@@ -423,9 +427,10 @@ export default function RezdyDataPage() {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="all">All Budgets</SelectItem>
-                      <SelectItem value="budget">Budget (Under $100)</SelectItem>
-                      <SelectItem value="mid-range">Mid-Range ($100-$299)</SelectItem>
-                      <SelectItem value="luxury">Luxury ($300+)</SelectItem>
+                      <SelectItem value="budget">Budget (Under $99)</SelectItem>
+                      <SelectItem value="mid-range">Mid-Range ($99-$159)</SelectItem>
+                      <SelectItem value="premium">Premium ($159-$299)</SelectItem>
+                      <SelectItem value="luxury">Luxury ($299+)</SelectItem>
                       <SelectItem value="unknown">No Price Set</SelectItem>
                     </SelectContent>
                   </Select>

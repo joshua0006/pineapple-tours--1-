@@ -1,0 +1,4235 @@
+{
+  "timestamp": "2025-06-02T11:43:27.176Z",
+  "totalProducts": 100,
+  "targetCategories": [
+    "Winery Tours",
+    "Brewery Tours",
+    "Hop-On Hop-Off",
+    "Bus Charter",
+    "Day Tours",
+    "Corporate Tours",
+    "Hens Party",
+    "Barefoot Luxury"
+  ],
+  "keywords": {
+    "Winery Tours": [
+      "winery",
+      "wine",
+      "vineyard",
+      "cellar",
+      "vintage",
+      "wine tasting",
+      "wine tour"
+    ],
+    "Brewery Tours": [
+      "brewery",
+      "beer",
+      "craft beer",
+      "brewing",
+      "ale",
+      "lager",
+      "beer tasting",
+      "brewery tour"
+    ],
+    "Hop-On Hop-Off": [
+      "hop-on",
+      "hop off",
+      "hop on hop off",
+      "sightseeing bus",
+      "city tour bus",
+      "tourist bus"
+    ],
+    "Bus Charter": [
+      "bus charter",
+      "charter bus",
+      "private bus",
+      "group transport",
+      "coach charter"
+    ],
+    "Day Tours": [
+      "day tour",
+      "full day",
+      "day trip",
+      "day excursion",
+      "all day",
+      "daily tour"
+    ],
+    "Corporate Tours": [
+      "corporate",
+      "business",
+      "team building",
+      "company",
+      "corporate event",
+      "business tour"
+    ],
+    "Hens Party": [
+      "hens party",
+      "hen party",
+      "bachelorette",
+      "bridal party",
+      "girls night",
+      "ladies night"
+    ],
+    "Barefoot Luxury": [
+      "barefoot luxury",
+      "luxury",
+      "premium",
+      "exclusive",
+      "vip",
+      "high-end",
+      "upscale"
+    ]
+  },
+  "results": {
+    "summary": {
+      "Winery Tours": {
+        "count": 46,
+        "products": [
+          {
+            "productCode": "PH1FEA",
+            "name": " Hop on Hop off Bus - Tamborine Mountain - From Brisbane",
+            "productType": "CUSTOM",
+            "price": 99
+          },
+          {
+            "productCode": "PJGM0A",
+            "name": "$199 Gift Voucher - For Full Day Winery Tour",
+            "productType": "GIFT_CARD",
+            "price": 199
+          },
+          {
+            "productCode": "PYUMZN",
+            "name": "$229 Gift Voucher",
+            "productType": "GIFT_CARD",
+            "price": 229
+          },
+          {
+            "productCode": "PU8SCU",
+            "name": "$358 Gift Voucher",
+            "productType": "GIFT_CARD",
+            "price": 358
+          },
+          {
+            "productCode": "PN0S6R",
+            "name": "$398 Gift Voucher - Two people Full Day Wine Tour",
+            "productType": "GIFT_CARD",
+            "price": 398
+          },
+          {
+            "productCode": "P30VE2",
+            "name": "$458 Gift Voucher - Two people Full Day Wine Tour including Pickup",
+            "productType": "GIFT_CARD",
+            "price": 458
+          },
+          {
+            "productCode": "PWGSA9",
+            "name": "$598 Gift Voucher - Two people Premium Full Day Wine Tour including Pickup",
+            "productType": "GIFT_CARD",
+            "price": 598
+          },
+          {
+            "productCode": "P3K9H2",
+            "name": "$998 Gift Voucher - Two people Premium Boutique Winery Tour ",
+            "productType": "GIFT_CARD",
+            "price": 998
+          },
+          {
+            "productCode": "PHKGRW",
+            "name": "3 Day Luxury Brisbane - Gold Coast - Bryon Bay Experience",
+            "productType": "DAYTOUR",
+            "price": 1995
+          },
+          {
+            "productCode": "PUGMBV",
+            "name": "3 Day Luxury Hinterland Experience",
+            "productType": "DAYTOUR",
+            "price": 1995
+          },
+          {
+            "productCode": "PQDX6V",
+            "name": "A Taste of Gourmet Tasting Experience ",
+            "productType": "DAYTOUR",
+            "price": 900
+          },
+          {
+            "productCode": "PKLDFV",
+            "name": "Brisbane Last Minute Deals",
+            "productType": "DAYTOUR",
+            "price": 135
+          },
+          {
+            "productCode": "PJKCEW",
+            "name": "Brisbane to Tamborine Mountain Shuttle Service",
+            "productType": "CUSTOM",
+            "price": 99
+          },
+          {
+            "productCode": "PZY1HM",
+            "name": "BW Tastes of Tamborine",
+            "productType": "DAYTOUR",
+            "price": 174
+          },
+          {
+            "productCode": "PZM0SX",
+            "name": "Champagne Sunset Winery Tour",
+            "productType": "PRIVATE_TOUR",
+            "price": 199
+          },
+          {
+            "productCode": "PGG164",
+            "name": "Christmas Party - 6Hrs",
+            "productType": "DAYTOUR",
+            "price": 189
+          },
+          {
+            "productCode": "PT1CFA",
+            "name": "Currumbin Wildlife Sanctuary - Southern Gold Coast - Northern NSW - Hop on Hop off Shuttle",
+            "productType": "TRANSFER",
+            "price": 99
+          },
+          {
+            "productCode": "PK4F35",
+            "name": "Currumbin Wildlife Sanctuary entry - Includes Unlimited Hop on Hop off - Southern Gold Coast / Northern NSW",
+            "productType": "ACTIVITY",
+            "price": 159
+          },
+          {
+            "productCode": "P0E7JV",
+            "name": "Early Bird - Full Day Mount Tamborine Winery Tour",
+            "productType": "DAYTOUR",
+            "price": 219
+          },
+          {
+            "productCode": "PLK0BC",
+            "name": "Early Bird - Hinterland Explorer Pass",
+            "productType": "CUSTOM",
+            "price": 88
+          },
+          {
+            "productCode": "PUN2ZS",
+            "name": "FDWT Non Drinker BNE",
+            "productType": "DAYTOUR",
+            "price": 145
+          },
+          {
+            "productCode": "P37WU0",
+            "name": "FDWT Non Drinker GC",
+            "productType": "DAYTOUR",
+            "price": 145
+          },
+          {
+            "productCode": "PMP0H7",
+            "name": "Gold Coast - Tamborine Mountain Shuttle Service",
+            "productType": "CUSTOM",
+            "price": 99
+          },
+          {
+            "productCode": "PMVZUK",
+            "name": "Gold Coast Last Minute Deals",
+            "productType": "DAYTOUR",
+            "price": 135
+          },
+          {
+            "productCode": "P7JY1E",
+            "name": "Groups - Tamborine Mountain Rainforest Skywalk + Glow Worm Cave Tour + Waterfalls or Shopping",
+            "productType": "CUSTOM",
+            "price": 159
+          },
+          {
+            "productCode": "P1T19K",
+            "name": "HDWT Non Drinker",
+            "productType": "DAYTOUR",
+            "price": 110
+          },
+          {
+            "productCode": "P7WH5Q",
+            "name": "Hop on Hop Off  Wine Tour - Tamborine Mountain - From Brisbane - Flexi Pass",
+            "productType": "CUSTOM",
+            "price": 99
+          },
+          {
+            "productCode": "PTMB07",
+            "name": "Hop on Hop off Brewery adventure - Tamborine Mountain - From Brisbane",
+            "productType": "CUSTOM",
+            "price": 99
+          },
+          {
+            "productCode": "PTEFYF",
+            "name": "Hop on Hop off Brewery adventure - Tamborine Mountain - Gold Coast",
+            "productType": "CUSTOM",
+            "price": 99
+          },
+          {
+            "productCode": "PW1HTG",
+            "name": "Hop on Hop Off Bus - Movie World - from Brisbane",
+            "productType": "CUSTOM",
+            "price": 99
+          },
+          {
+            "productCode": "P0SVHC",
+            "name": "Hop on Hop Off Bus - Movie World - from Gold Coast",
+            "productType": "CUSTOM",
+            "price": 99
+          },
+          {
+            "productCode": "P2UDGV",
+            "name": "Hop on Hop off Bus - Single Trip - Brisbane City Loop + Unlimited Hop on Hop off - Tamborine Mountain",
+            "productType": "CUSTOM",
+            "price": 128
+          },
+          {
+            "productCode": "PKK5KB",
+            "name": "Hop on Hop Off Bus - Tamborine Mountain - from Gold Coast",
+            "productType": "CUSTOM",
+            "price": 99
+          },
+          {
+            "productCode": "PJXQHN",
+            "name": "Hop on Hop off Bus with Rainforest Skywalk + Glow Worm Caves - From Brisbane",
+            "productType": "CUSTOM",
+            "price": 165
+          },
+          {
+            "productCode": "P70YXP",
+            "name": "Hop on Hop off Bus with Rainforest Skywalk + Glow Worm Caves - From Gold Coast",
+            "productType": "CUSTOM",
+            "price": 165
+          },
+          {
+            "productCode": "PKQL4P",
+            "name": "Hop on Hop off Distillery adventure - Tamborine Mountain - Brisbane",
+            "productType": "CUSTOM",
+            "price": 99
+          },
+          {
+            "productCode": "PFMGXB",
+            "name": "Hop on Hop off Distillery adventure - Tamborine Mountain - Gold Coast",
+            "productType": "CUSTOM",
+            "price": 99
+          },
+          {
+            "productCode": "PMRS95",
+            "name": "Hop on Hop off Wine Tasting Tour - From Brisbane",
+            "productType": "DAYTOUR",
+            "price": 165
+          },
+          {
+            "productCode": "PKCDT3",
+            "name": "Hop on Hop off Wine Tasting Tour - From Gold Coast",
+            "productType": "DAYTOUR",
+            "price": 165
+          },
+          {
+            "productCode": "PNP4S2",
+            "name": "Hop on Hop Off Wine Tour - Tamborine Mountain - from Gold Coast - Flexi Pass",
+            "productType": "CUSTOM",
+            "price": 99
+          },
+          {
+            "productCode": "PLKY3R",
+            "name": "Hop on Hop off Winery adventure - Tamborine Mountain - Brisbane",
+            "productType": "CUSTOM",
+            "price": 99
+          },
+          {
+            "productCode": "PBRFH9",
+            "name": "Hop on Hop off Winery adventure - Tamborine Mountain - Gold Coast",
+            "productType": "CUSTOM",
+            "price": 99
+          },
+          {
+            "productCode": "PFJYQ7",
+            "name": "Hot Air Balloon",
+            "productType": "CUSTOM",
+            "price": 450
+          },
+          {
+            "productCode": "PZCW0V",
+            "name": "Husk Distillery - Unlimited Hop on Hop off Day Pass - Southern Gold Coast / Northern NSW",
+            "productType": "CUSTOM",
+            "price": 99
+          },
+          {
+            "productCode": "PSMW0S",
+            "name": "Internal - Currumbin Wildlife Sanctuary - Unlimited Hop on Hop off Day Pass - Southern Gold Coast / Northern NSW",
+            "productType": "CUSTOM",
+            "price": 99
+          },
+          {
+            "productCode": "PMHU1R",
+            "name": "Jellurgal Aboriginal Cultural Centre - Unlimited Hop on Hop off Day Pass - Southern Gold Coast / Northern NSW",
+            "productType": "DAYTOUR",
+            "price": 138
+          }
+        ]
+      },
+      "Brewery Tours": {
+        "count": 32,
+        "products": [
+          {
+            "productCode": "PH1FEA",
+            "name": " Hop on Hop off Bus - Tamborine Mountain - From Brisbane",
+            "productType": "CUSTOM",
+            "price": 99
+          },
+          {
+            "productCode": "PHKGRW",
+            "name": "3 Day Luxury Brisbane - Gold Coast - Bryon Bay Experience",
+            "productType": "DAYTOUR",
+            "price": 1995
+          },
+          {
+            "productCode": "PVUZWD",
+            "name": "A Tale of Two Distilleries Gin Tour",
+            "productType": "PRIVATE_TOUR",
+            "price": 150
+          },
+          {
+            "productCode": "PQDX6V",
+            "name": "A Taste of Gourmet Tasting Experience ",
+            "productType": "DAYTOUR",
+            "price": 900
+          },
+          {
+            "productCode": "PRVHY0",
+            "name": "Brewery Tour - (4 hours)",
+            "productType": "DAYTOUR",
+            "price": 100
+          },
+          {
+            "productCode": "PJKCEW",
+            "name": "Brisbane to Tamborine Mountain Shuttle Service",
+            "productType": "CUSTOM",
+            "price": 99
+          },
+          {
+            "productCode": "PTS7WT",
+            "name": "Build Your Own Brewery Tour",
+            "productType": "DAYTOUR",
+            "price": 45
+          },
+          {
+            "productCode": "PDW319",
+            "name": "Byron Bay Day Tour - Signature Experience",
+            "productType": "PRIVATE_TOUR",
+            "price": 1295
+          },
+          {
+            "productCode": "PKL0XE",
+            "name": "Candice's Rainforest experience 1Hr Tour",
+            "productType": "DAYTOUR",
+            "price": 49
+          },
+          {
+            "productCode": "PBMUT0",
+            "name": "Candice's Rainforest experience 2Hrs - Gourmet Two Course Meal - Door to Door Pickup from the Gold Coast",
+            "productType": "DAYTOUR",
+            "price": 159
+          },
+          {
+            "productCode": "PT1CFA",
+            "name": "Currumbin Wildlife Sanctuary - Southern Gold Coast - Northern NSW - Hop on Hop off Shuttle",
+            "productType": "TRANSFER",
+            "price": 99
+          },
+          {
+            "productCode": "PK4F35",
+            "name": "Currumbin Wildlife Sanctuary entry - Includes Unlimited Hop on Hop off - Southern Gold Coast / Northern NSW",
+            "productType": "ACTIVITY",
+            "price": 159
+          },
+          {
+            "productCode": "PMP0H7",
+            "name": "Gold Coast - Tamborine Mountain Shuttle Service",
+            "productType": "CUSTOM",
+            "price": 99
+          },
+          {
+            "productCode": "PTC5RK",
+            "name": "Hop on Hop Off  - Brisbane City Loop - ATE25 ",
+            "productType": "CUSTOM",
+            "price": 99
+          },
+          {
+            "productCode": "P7WH5Q",
+            "name": "Hop on Hop Off  Wine Tour - Tamborine Mountain - From Brisbane - Flexi Pass",
+            "productType": "CUSTOM",
+            "price": 99
+          },
+          {
+            "productCode": "PTMB07",
+            "name": "Hop on Hop off Brewery adventure - Tamborine Mountain - From Brisbane",
+            "productType": "CUSTOM",
+            "price": 99
+          },
+          {
+            "productCode": "PTEFYF",
+            "name": "Hop on Hop off Brewery adventure - Tamborine Mountain - Gold Coast",
+            "productType": "CUSTOM",
+            "price": 99
+          },
+          {
+            "productCode": "PW1HTG",
+            "name": "Hop on Hop Off Bus - Movie World - from Brisbane",
+            "productType": "CUSTOM",
+            "price": 99
+          },
+          {
+            "productCode": "P0SVHC",
+            "name": "Hop on Hop Off Bus - Movie World - from Gold Coast",
+            "productType": "CUSTOM",
+            "price": 99
+          },
+          {
+            "productCode": "PKK5KB",
+            "name": "Hop on Hop Off Bus - Tamborine Mountain - from Gold Coast",
+            "productType": "CUSTOM",
+            "price": 99
+          },
+          {
+            "productCode": "PNYY7C",
+            "name": "Hop on Hop off Day Pass + Glow Worm Tour -  Brisbane Pickup",
+            "productType": "DAYTOUR",
+            "price": 135
+          },
+          {
+            "productCode": "PZ6FNP",
+            "name": "Hop on Hop off Day Pass + Glow Worm Tour - Gold Coast Pickup",
+            "productType": "DAYTOUR",
+            "price": 135
+          },
+          {
+            "productCode": "P119KN",
+            "name": "Hop on Hop off Day Pass - Freesale - Book any date with this voucher",
+            "productType": "GIFT_CARD",
+            "price": 29
+          },
+          {
+            "productCode": "PKQL4P",
+            "name": "Hop on Hop off Distillery adventure - Tamborine Mountain - Brisbane",
+            "productType": "CUSTOM",
+            "price": 99
+          },
+          {
+            "productCode": "PFMGXB",
+            "name": "Hop on Hop off Distillery adventure - Tamborine Mountain - Gold Coast",
+            "productType": "CUSTOM",
+            "price": 99
+          },
+          {
+            "productCode": "PNP4S2",
+            "name": "Hop on Hop Off Wine Tour - Tamborine Mountain - from Gold Coast - Flexi Pass",
+            "productType": "CUSTOM",
+            "price": 99
+          },
+          {
+            "productCode": "PLKY3R",
+            "name": "Hop on Hop off Winery adventure - Tamborine Mountain - Brisbane",
+            "productType": "CUSTOM",
+            "price": 99
+          },
+          {
+            "productCode": "PBRFH9",
+            "name": "Hop on Hop off Winery adventure - Tamborine Mountain - Gold Coast",
+            "productType": "CUSTOM",
+            "price": 99
+          },
+          {
+            "productCode": "PZCW0V",
+            "name": "Husk Distillery - Unlimited Hop on Hop off Day Pass - Southern Gold Coast / Northern NSW",
+            "productType": "CUSTOM",
+            "price": 99
+          },
+          {
+            "productCode": "PSMW0S",
+            "name": "Internal - Currumbin Wildlife Sanctuary - Unlimited Hop on Hop off Day Pass - Southern Gold Coast / Northern NSW",
+            "productType": "CUSTOM",
+            "price": 99
+          },
+          {
+            "productCode": "PMHU1R",
+            "name": "Jellurgal Aboriginal Cultural Centre - Unlimited Hop on Hop off Day Pass - Southern Gold Coast / Northern NSW",
+            "productType": "DAYTOUR",
+            "price": 138
+          },
+          {
+            "productCode": "P6YWKK",
+            "name": "Jet Ski Safaris + Beer - Gold Coast - Visit Islands in the Broadwater and Gold Coasts best Breweries",
+            "productType": "DAYTOUR",
+            "price": 369
+          }
+        ]
+      },
+      "Hop-On Hop-Off": {
+        "count": 34,
+        "products": [
+          {
+            "productCode": "PH1FEA",
+            "name": " Hop on Hop off Bus - Tamborine Mountain - From Brisbane",
+            "productType": "CUSTOM",
+            "price": 99
+          },
+          {
+            "productCode": "PKLDFV",
+            "name": "Brisbane Last Minute Deals",
+            "productType": "DAYTOUR",
+            "price": 135
+          },
+          {
+            "productCode": "PJKCEW",
+            "name": "Brisbane to Tamborine Mountain Shuttle Service",
+            "productType": "CUSTOM",
+            "price": 99
+          },
+          {
+            "productCode": "PT1CFA",
+            "name": "Currumbin Wildlife Sanctuary - Southern Gold Coast - Northern NSW - Hop on Hop off Shuttle",
+            "productType": "TRANSFER",
+            "price": 99
+          },
+          {
+            "productCode": "PK4F35",
+            "name": "Currumbin Wildlife Sanctuary entry - Includes Unlimited Hop on Hop off - Southern Gold Coast / Northern NSW",
+            "productType": "ACTIVITY",
+            "price": 159
+          },
+          {
+            "productCode": "PMP0H7",
+            "name": "Gold Coast - Tamborine Mountain Shuttle Service",
+            "productType": "CUSTOM",
+            "price": 99
+          },
+          {
+            "productCode": "PMVZUK",
+            "name": "Gold Coast Last Minute Deals",
+            "productType": "DAYTOUR",
+            "price": 135
+          },
+          {
+            "productCode": "PTC5RK",
+            "name": "Hop on Hop Off  - Brisbane City Loop - ATE25 ",
+            "productType": "CUSTOM",
+            "price": 99
+          },
+          {
+            "productCode": "P7WH5Q",
+            "name": "Hop on Hop Off  Wine Tour - Tamborine Mountain - From Brisbane - Flexi Pass",
+            "productType": "CUSTOM",
+            "price": 99
+          },
+          {
+            "productCode": "PTMB07",
+            "name": "Hop on Hop off Brewery adventure - Tamborine Mountain - From Brisbane",
+            "productType": "CUSTOM",
+            "price": 99
+          },
+          {
+            "productCode": "PTEFYF",
+            "name": "Hop on Hop off Brewery adventure - Tamborine Mountain - Gold Coast",
+            "productType": "CUSTOM",
+            "price": 99
+          },
+          {
+            "productCode": "PEMLWN",
+            "name": "Hop on Hop off Bus - Brisbane City Loop",
+            "productType": "CUSTOM",
+            "price": 29
+          },
+          {
+            "productCode": "PNG5LL",
+            "name": "Hop on Hop off Bus - Brisbane City Loop - Resource ",
+            "productType": "CUSTOM",
+            "price": 29
+          },
+          {
+            "productCode": "PB2XAV",
+            "name": "Hop on Hop off Bus - Brisbane City Loop - The Heart of Brisbane- 24hrs",
+            "productType": "CUSTOM",
+            "price": 99
+          },
+          {
+            "productCode": "PYRSK0",
+            "name": "Hop on Hop Off Bus - From Tamborine Mountain ",
+            "productType": "CUSTOM",
+            "price": 68
+          },
+          {
+            "productCode": "PW1HTG",
+            "name": "Hop on Hop Off Bus - Movie World - from Brisbane",
+            "productType": "CUSTOM",
+            "price": 99
+          },
+          {
+            "productCode": "P0SVHC",
+            "name": "Hop on Hop Off Bus - Movie World - from Gold Coast",
+            "productType": "CUSTOM",
+            "price": 99
+          },
+          {
+            "productCode": "P2UDGV",
+            "name": "Hop on Hop off Bus - Single Trip - Brisbane City Loop + Unlimited Hop on Hop off - Tamborine Mountain",
+            "productType": "CUSTOM",
+            "price": 128
+          },
+          {
+            "productCode": "PKK5KB",
+            "name": "Hop on Hop Off Bus - Tamborine Mountain - from Gold Coast",
+            "productType": "CUSTOM",
+            "price": 99
+          },
+          {
+            "productCode": "PJXQHN",
+            "name": "Hop on Hop off Bus with Rainforest Skywalk + Glow Worm Caves - From Brisbane",
+            "productType": "CUSTOM",
+            "price": 165
+          },
+          {
+            "productCode": "P70YXP",
+            "name": "Hop on Hop off Bus with Rainforest Skywalk + Glow Worm Caves - From Gold Coast",
+            "productType": "CUSTOM",
+            "price": 165
+          },
+          {
+            "productCode": "PNYY7C",
+            "name": "Hop on Hop off Day Pass + Glow Worm Tour -  Brisbane Pickup",
+            "productType": "DAYTOUR",
+            "price": 135
+          },
+          {
+            "productCode": "PZ6FNP",
+            "name": "Hop on Hop off Day Pass + Glow Worm Tour - Gold Coast Pickup",
+            "productType": "DAYTOUR",
+            "price": 135
+          },
+          {
+            "productCode": "P119KN",
+            "name": "Hop on Hop off Day Pass - Freesale - Book any date with this voucher",
+            "productType": "GIFT_CARD",
+            "price": 29
+          },
+          {
+            "productCode": "PKQL4P",
+            "name": "Hop on Hop off Distillery adventure - Tamborine Mountain - Brisbane",
+            "productType": "CUSTOM",
+            "price": 99
+          },
+          {
+            "productCode": "PFMGXB",
+            "name": "Hop on Hop off Distillery adventure - Tamborine Mountain - Gold Coast",
+            "productType": "CUSTOM",
+            "price": 99
+          },
+          {
+            "productCode": "PMRS95",
+            "name": "Hop on Hop off Wine Tasting Tour - From Brisbane",
+            "productType": "DAYTOUR",
+            "price": 165
+          },
+          {
+            "productCode": "PKCDT3",
+            "name": "Hop on Hop off Wine Tasting Tour - From Gold Coast",
+            "productType": "DAYTOUR",
+            "price": 165
+          },
+          {
+            "productCode": "PNP4S2",
+            "name": "Hop on Hop Off Wine Tour - Tamborine Mountain - from Gold Coast - Flexi Pass",
+            "productType": "CUSTOM",
+            "price": 99
+          },
+          {
+            "productCode": "PLKY3R",
+            "name": "Hop on Hop off Winery adventure - Tamborine Mountain - Brisbane",
+            "productType": "CUSTOM",
+            "price": 99
+          },
+          {
+            "productCode": "PBRFH9",
+            "name": "Hop on Hop off Winery adventure - Tamborine Mountain - Gold Coast",
+            "productType": "CUSTOM",
+            "price": 99
+          },
+          {
+            "productCode": "PZCW0V",
+            "name": "Husk Distillery - Unlimited Hop on Hop off Day Pass - Southern Gold Coast / Northern NSW",
+            "productType": "CUSTOM",
+            "price": 99
+          },
+          {
+            "productCode": "PSMW0S",
+            "name": "Internal - Currumbin Wildlife Sanctuary - Unlimited Hop on Hop off Day Pass - Southern Gold Coast / Northern NSW",
+            "productType": "CUSTOM",
+            "price": 99
+          },
+          {
+            "productCode": "PMHU1R",
+            "name": "Jellurgal Aboriginal Cultural Centre - Unlimited Hop on Hop off Day Pass - Southern Gold Coast / Northern NSW",
+            "productType": "DAYTOUR",
+            "price": 138
+          }
+        ]
+      },
+      "Bus Charter": {
+        "count": 2,
+        "products": [
+          {
+            "productCode": "PRPEE2",
+            "name": "27 Seat Minibus Charter South East QLD and Northern NSW - Hourly Rate",
+            "productType": "RENTAL",
+            "price": 240
+          },
+          {
+            "productCode": "PXWDXR",
+            "name": "57 Seat Coach Charter",
+            "productType": "CHARTER",
+            "price": 850
+          }
+        ]
+      },
+      "Day Tours": {
+        "count": 18,
+        "products": [
+          {
+            "productCode": "PJGM0A",
+            "name": "$199 Gift Voucher - For Full Day Winery Tour",
+            "productType": "GIFT_CARD",
+            "price": 199
+          },
+          {
+            "productCode": "PYUMZN",
+            "name": "$229 Gift Voucher",
+            "productType": "GIFT_CARD",
+            "price": 229
+          },
+          {
+            "productCode": "PU8SCU",
+            "name": "$358 Gift Voucher",
+            "productType": "GIFT_CARD",
+            "price": 358
+          },
+          {
+            "productCode": "PN0S6R",
+            "name": "$398 Gift Voucher - Two people Full Day Wine Tour",
+            "productType": "GIFT_CARD",
+            "price": 398
+          },
+          {
+            "productCode": "P30VE2",
+            "name": "$458 Gift Voucher - Two people Full Day Wine Tour including Pickup",
+            "productType": "GIFT_CARD",
+            "price": 458
+          },
+          {
+            "productCode": "PWGSA9",
+            "name": "$598 Gift Voucher - Two people Premium Full Day Wine Tour including Pickup",
+            "productType": "GIFT_CARD",
+            "price": 598
+          },
+          {
+            "productCode": "PHKGRW",
+            "name": "3 Day Luxury Brisbane - Gold Coast - Bryon Bay Experience",
+            "productType": "DAYTOUR",
+            "price": 1995
+          },
+          {
+            "productCode": "PUGMBV",
+            "name": "3 Day Luxury Hinterland Experience",
+            "productType": "DAYTOUR",
+            "price": 1995
+          },
+          {
+            "productCode": "PDW319",
+            "name": "Byron Bay Day Tour - Signature Experience",
+            "productType": "PRIVATE_TOUR",
+            "price": 1295
+          },
+          {
+            "productCode": "P0E7JV",
+            "name": "Early Bird - Full Day Mount Tamborine Winery Tour",
+            "productType": "DAYTOUR",
+            "price": 219
+          },
+          {
+            "productCode": "PUN2ZS",
+            "name": "FDWT Non Drinker BNE",
+            "productType": "DAYTOUR",
+            "price": 145
+          },
+          {
+            "productCode": "P37WU0",
+            "name": "FDWT Non Drinker GC",
+            "productType": "DAYTOUR",
+            "price": 145
+          },
+          {
+            "productCode": "P1T19K",
+            "name": "HDWT Non Drinker",
+            "productType": "DAYTOUR",
+            "price": 110
+          },
+          {
+            "productCode": "PTC5RK",
+            "name": "Hop on Hop Off  - Brisbane City Loop - ATE25 ",
+            "productType": "CUSTOM",
+            "price": 99
+          },
+          {
+            "productCode": "PEMLWN",
+            "name": "Hop on Hop off Bus - Brisbane City Loop",
+            "productType": "CUSTOM",
+            "price": 29
+          },
+          {
+            "productCode": "PNG5LL",
+            "name": "Hop on Hop off Bus - Brisbane City Loop - Resource ",
+            "productType": "CUSTOM",
+            "price": 29
+          },
+          {
+            "productCode": "PB2XAV",
+            "name": "Hop on Hop off Bus - Brisbane City Loop - The Heart of Brisbane- 24hrs",
+            "productType": "CUSTOM",
+            "price": 99
+          },
+          {
+            "productCode": "P2UDGV",
+            "name": "Hop on Hop off Bus - Single Trip - Brisbane City Loop + Unlimited Hop on Hop off - Tamborine Mountain",
+            "productType": "CUSTOM",
+            "price": 128
+          }
+        ]
+      },
+      "Corporate Tours": {
+        "count": 20,
+        "products": [
+          {
+            "productCode": "PH1FEA",
+            "name": " Hop on Hop off Bus - Tamborine Mountain - From Brisbane",
+            "productType": "CUSTOM",
+            "price": 99
+          },
+          {
+            "productCode": "PRPEE2",
+            "name": "27 Seat Minibus Charter South East QLD and Northern NSW - Hourly Rate",
+            "productType": "RENTAL",
+            "price": 240
+          },
+          {
+            "productCode": "PXWDXR",
+            "name": "57 Seat Coach Charter",
+            "productType": "CHARTER",
+            "price": 850
+          },
+          {
+            "productCode": "PJKCEW",
+            "name": "Brisbane to Tamborine Mountain Shuttle Service",
+            "productType": "CUSTOM",
+            "price": 99
+          },
+          {
+            "productCode": "PJVPPN",
+            "name": "Cocktail Social - Tamborine Mountain",
+            "productType": "LESSON",
+            "price": 205
+          },
+          {
+            "productCode": "PPYTS0",
+            "name": "Gin Blending Class - Tamborine Mountain",
+            "productType": "LESSON",
+            "price": 139
+          },
+          {
+            "productCode": "PMP0H7",
+            "name": "Gold Coast - Tamborine Mountain Shuttle Service",
+            "productType": "CUSTOM",
+            "price": 99
+          },
+          {
+            "productCode": "P7WH5Q",
+            "name": "Hop on Hop Off  Wine Tour - Tamborine Mountain - From Brisbane - Flexi Pass",
+            "productType": "CUSTOM",
+            "price": 99
+          },
+          {
+            "productCode": "PTMB07",
+            "name": "Hop on Hop off Brewery adventure - Tamborine Mountain - From Brisbane",
+            "productType": "CUSTOM",
+            "price": 99
+          },
+          {
+            "productCode": "PTEFYF",
+            "name": "Hop on Hop off Brewery adventure - Tamborine Mountain - Gold Coast",
+            "productType": "CUSTOM",
+            "price": 99
+          },
+          {
+            "productCode": "PW1HTG",
+            "name": "Hop on Hop Off Bus - Movie World - from Brisbane",
+            "productType": "CUSTOM",
+            "price": 99
+          },
+          {
+            "productCode": "P0SVHC",
+            "name": "Hop on Hop Off Bus - Movie World - from Gold Coast",
+            "productType": "CUSTOM",
+            "price": 99
+          },
+          {
+            "productCode": "PKK5KB",
+            "name": "Hop on Hop Off Bus - Tamborine Mountain - from Gold Coast",
+            "productType": "CUSTOM",
+            "price": 99
+          },
+          {
+            "productCode": "PKQL4P",
+            "name": "Hop on Hop off Distillery adventure - Tamborine Mountain - Brisbane",
+            "productType": "CUSTOM",
+            "price": 99
+          },
+          {
+            "productCode": "PFMGXB",
+            "name": "Hop on Hop off Distillery adventure - Tamborine Mountain - Gold Coast",
+            "productType": "CUSTOM",
+            "price": 99
+          },
+          {
+            "productCode": "PNP4S2",
+            "name": "Hop on Hop Off Wine Tour - Tamborine Mountain - from Gold Coast - Flexi Pass",
+            "productType": "CUSTOM",
+            "price": 99
+          },
+          {
+            "productCode": "PLKY3R",
+            "name": "Hop on Hop off Winery adventure - Tamborine Mountain - Brisbane",
+            "productType": "CUSTOM",
+            "price": 99
+          },
+          {
+            "productCode": "PBRFH9",
+            "name": "Hop on Hop off Winery adventure - Tamborine Mountain - Gold Coast",
+            "productType": "CUSTOM",
+            "price": 99
+          },
+          {
+            "productCode": "P9JJWS",
+            "name": "Hybrid or EV Luxury SUV with Driver",
+            "productType": "RENTAL",
+            "price": 500
+          },
+          {
+            "productCode": "P6YWKK",
+            "name": "Jet Ski Safaris + Beer - Gold Coast - Visit Islands in the Broadwater and Gold Coasts best Breweries",
+            "productType": "DAYTOUR",
+            "price": 369
+          }
+        ]
+      },
+      "Hens Party": {
+        "count": 0,
+        "products": []
+      },
+      "Barefoot Luxury": {
+        "count": 34,
+        "products": [
+          {
+            "productCode": "PH1FEA",
+            "name": " Hop on Hop off Bus - Tamborine Mountain - From Brisbane",
+            "productType": "CUSTOM",
+            "price": 99
+          },
+          {
+            "productCode": "PWGSA9",
+            "name": "$598 Gift Voucher - Two people Premium Full Day Wine Tour including Pickup",
+            "productType": "GIFT_CARD",
+            "price": 598
+          },
+          {
+            "productCode": "P3K9H2",
+            "name": "$998 Gift Voucher - Two people Premium Boutique Winery Tour ",
+            "productType": "GIFT_CARD",
+            "price": 998
+          },
+          {
+            "productCode": "PRPEE2",
+            "name": "27 Seat Minibus Charter South East QLD and Northern NSW - Hourly Rate",
+            "productType": "RENTAL",
+            "price": 240
+          },
+          {
+            "productCode": "PHKGRW",
+            "name": "3 Day Luxury Brisbane - Gold Coast - Bryon Bay Experience",
+            "productType": "DAYTOUR",
+            "price": 1995
+          },
+          {
+            "productCode": "PUGMBV",
+            "name": "3 Day Luxury Hinterland Experience",
+            "productType": "DAYTOUR",
+            "price": 1995
+          },
+          {
+            "productCode": "PWMH4N",
+            "name": "3hr Koala and Kangaroo Wildlife Experience - From Brisbane",
+            "productType": "CUSTOM",
+            "price": 79
+          },
+          {
+            "productCode": "PXWDXR",
+            "name": "57 Seat Coach Charter",
+            "productType": "CHARTER",
+            "price": 850
+          },
+          {
+            "productCode": "PVUZWD",
+            "name": "A Tale of Two Distilleries Gin Tour",
+            "productType": "PRIVATE_TOUR",
+            "price": 150
+          },
+          {
+            "productCode": "PQDX6V",
+            "name": "A Taste of Gourmet Tasting Experience ",
+            "productType": "DAYTOUR",
+            "price": 900
+          },
+          {
+            "productCode": "PKLDFV",
+            "name": "Brisbane Last Minute Deals",
+            "productType": "DAYTOUR",
+            "price": 135
+          },
+          {
+            "productCode": "PBMUT0",
+            "name": "Candice's Rainforest experience 2Hrs - Gourmet Two Course Meal - Door to Door Pickup from the Gold Coast",
+            "productType": "DAYTOUR",
+            "price": 159
+          },
+          {
+            "productCode": "PZM0SX",
+            "name": "Champagne Sunset Winery Tour",
+            "productType": "PRIVATE_TOUR",
+            "price": 199
+          },
+          {
+            "productCode": "PGG164",
+            "name": "Christmas Party - 6Hrs",
+            "productType": "DAYTOUR",
+            "price": 189
+          },
+          {
+            "productCode": "P0E7JV",
+            "name": "Early Bird - Full Day Mount Tamborine Winery Tour",
+            "productType": "DAYTOUR",
+            "price": 219
+          },
+          {
+            "productCode": "PU4NZ1",
+            "name": "Famil",
+            "productType": "DAYTOUR",
+            "price": 1
+          },
+          {
+            "productCode": "PMVZUK",
+            "name": "Gold Coast Last Minute Deals",
+            "productType": "DAYTOUR",
+            "price": 135
+          },
+          {
+            "productCode": "PNQHYB",
+            "name": "Gold Coast Wake Park - Private Session with Transfers",
+            "productType": "CUSTOM",
+            "price": 1520
+          },
+          {
+            "productCode": "P7WH5Q",
+            "name": "Hop on Hop Off  Wine Tour - Tamborine Mountain - From Brisbane - Flexi Pass",
+            "productType": "CUSTOM",
+            "price": 99
+          },
+          {
+            "productCode": "PTMB07",
+            "name": "Hop on Hop off Brewery adventure - Tamborine Mountain - From Brisbane",
+            "productType": "CUSTOM",
+            "price": 99
+          },
+          {
+            "productCode": "PTEFYF",
+            "name": "Hop on Hop off Brewery adventure - Tamborine Mountain - Gold Coast",
+            "productType": "CUSTOM",
+            "price": 99
+          },
+          {
+            "productCode": "PW1HTG",
+            "name": "Hop on Hop Off Bus - Movie World - from Brisbane",
+            "productType": "CUSTOM",
+            "price": 99
+          },
+          {
+            "productCode": "P0SVHC",
+            "name": "Hop on Hop Off Bus - Movie World - from Gold Coast",
+            "productType": "CUSTOM",
+            "price": 99
+          },
+          {
+            "productCode": "PKK5KB",
+            "name": "Hop on Hop Off Bus - Tamborine Mountain - from Gold Coast",
+            "productType": "CUSTOM",
+            "price": 99
+          },
+          {
+            "productCode": "PNYY7C",
+            "name": "Hop on Hop off Day Pass + Glow Worm Tour -  Brisbane Pickup",
+            "productType": "DAYTOUR",
+            "price": 135
+          },
+          {
+            "productCode": "PZ6FNP",
+            "name": "Hop on Hop off Day Pass + Glow Worm Tour - Gold Coast Pickup",
+            "productType": "DAYTOUR",
+            "price": 135
+          },
+          {
+            "productCode": "PKQL4P",
+            "name": "Hop on Hop off Distillery adventure - Tamborine Mountain - Brisbane",
+            "productType": "CUSTOM",
+            "price": 99
+          },
+          {
+            "productCode": "PFMGXB",
+            "name": "Hop on Hop off Distillery adventure - Tamborine Mountain - Gold Coast",
+            "productType": "CUSTOM",
+            "price": 99
+          },
+          {
+            "productCode": "PNP4S2",
+            "name": "Hop on Hop Off Wine Tour - Tamborine Mountain - from Gold Coast - Flexi Pass",
+            "productType": "CUSTOM",
+            "price": 99
+          },
+          {
+            "productCode": "PLKY3R",
+            "name": "Hop on Hop off Winery adventure - Tamborine Mountain - Brisbane",
+            "productType": "CUSTOM",
+            "price": 99
+          },
+          {
+            "productCode": "PBRFH9",
+            "name": "Hop on Hop off Winery adventure - Tamborine Mountain - Gold Coast",
+            "productType": "CUSTOM",
+            "price": 99
+          },
+          {
+            "productCode": "PFJYQ7",
+            "name": "Hot Air Balloon",
+            "productType": "CUSTOM",
+            "price": 450
+          },
+          {
+            "productCode": "P9JJWS",
+            "name": "Hybrid or EV Luxury SUV with Driver",
+            "productType": "RENTAL",
+            "price": 500
+          },
+          {
+            "productCode": "P6YWKK",
+            "name": "Jet Ski Safaris + Beer - Gold Coast - Visit Islands in the Broadwater and Gold Coasts best Breweries",
+            "productType": "DAYTOUR",
+            "price": 369
+          }
+        ]
+      }
+    },
+    "detailed": {
+      "Winery Tours": [
+        {
+          "product": {
+            "productCode": "PH1FEA",
+            "name": " Hop on Hop off Bus - Tamborine Mountain - From Brisbane",
+            "shortDescription": "Embark on an adventure from Brisbane to the enchanting heights of Tamborine Mountain with our exclusive hop-on, hop-off bus service. Departing every morning from Brisbane. Enjoy the flexibility to explore Tamborine Mountain.\r\n\r\n\r\n",
+            "productType": "CUSTOM",
+            "price": 99
+          },
+          "analysis": {
+            "matchedKeywords": [
+              "winery",
+              "wine",
+              "vineyard"
+            ],
+            "confidence": 0.42857142857142855
+          }
+        },
+        {
+          "product": {
+            "productCode": "PJGM0A",
+            "name": "$199 Gift Voucher - For Full Day Winery Tour",
+            "shortDescription": "This is a $199 Gift Voucher that can be used towards any product - This is perfect to book for our Full Day Winery Tour from Brisbane, Gold Coast or Tamborine Mountain",
+            "productType": "GIFT_CARD",
+            "price": 199
+          },
+          "analysis": {
+            "matchedKeywords": [
+              "winery",
+              "wine"
+            ],
+            "confidence": 0.2857142857142857
+          }
+        },
+        {
+          "product": {
+            "productCode": "PYUMZN",
+            "name": "$229 Gift Voucher",
+            "shortDescription": "This is a $229 Gift Voucher that can be used towards any product - This is perfect to book for our Full Day Winery Tour from Brisbane, Gold Coast or Tamborine Mountain",
+            "productType": "GIFT_CARD",
+            "price": 229
+          },
+          "analysis": {
+            "matchedKeywords": [
+              "winery",
+              "wine"
+            ],
+            "confidence": 0.2857142857142857
+          }
+        },
+        {
+          "product": {
+            "productCode": "PU8SCU",
+            "name": "$358 Gift Voucher",
+            "shortDescription": "This is a $358 Gift Voucher that can be used towards any product. - This is perfect for gifting two people on our Full Day Winery Tour from Brisbane, Gold Coast or Tamborine Mountain",
+            "productType": "GIFT_CARD",
+            "price": 358
+          },
+          "analysis": {
+            "matchedKeywords": [
+              "winery",
+              "wine"
+            ],
+            "confidence": 0.2857142857142857
+          }
+        },
+        {
+          "product": {
+            "productCode": "PN0S6R",
+            "name": "$398 Gift Voucher - Two people Full Day Wine Tour",
+            "shortDescription": "This is a $398 Gift Voucher that can be used towards any product. - This is perfect for gifting two people on our Full Day Winery Tour from Brisbane, Gold Coast or Tamborine Mountain",
+            "productType": "GIFT_CARD",
+            "price": 398
+          },
+          "analysis": {
+            "matchedKeywords": [
+              "winery",
+              "wine",
+              "wine tour"
+            ],
+            "confidence": 0.42857142857142855
+          }
+        },
+        {
+          "product": {
+            "productCode": "P30VE2",
+            "name": "$458 Gift Voucher - Two people Full Day Wine Tour including Pickup",
+            "shortDescription": "This is a $458 Gift Voucher that can be used towards any product. - This is perfect for gifting two people on our Full Day Winery Tour from Brisbane, Gold Coast or Tamborine Mountain",
+            "productType": "GIFT_CARD",
+            "price": 458
+          },
+          "analysis": {
+            "matchedKeywords": [
+              "winery",
+              "wine",
+              "wine tour"
+            ],
+            "confidence": 0.42857142857142855
+          }
+        },
+        {
+          "product": {
+            "productCode": "PWGSA9",
+            "name": "$598 Gift Voucher - Two people Premium Full Day Wine Tour including Pickup",
+            "shortDescription": "This is a $598 Gift Voucher that can be used towards any product. - This is perfect for gifting two people on our Full Day Winery Tour from Brisbane, Gold Coast or Tamborine Mountain",
+            "productType": "GIFT_CARD",
+            "price": 598
+          },
+          "analysis": {
+            "matchedKeywords": [
+              "winery",
+              "wine",
+              "wine tour"
+            ],
+            "confidence": 0.42857142857142855
+          }
+        },
+        {
+          "product": {
+            "productCode": "P3K9H2",
+            "name": "$998 Gift Voucher - Two people Premium Boutique Winery Tour ",
+            "shortDescription": "This is a $998 Gift Voucher that can be used towards any product. - This is perfect for gifting two people on our Premium Boutique Winery Tour from Brisbane, Gold Coast or Tamborine Mountain",
+            "productType": "GIFT_CARD",
+            "price": 998
+          },
+          "analysis": {
+            "matchedKeywords": [
+              "winery",
+              "wine"
+            ],
+            "confidence": 0.2857142857142857
+          }
+        },
+        {
+          "product": {
+            "productCode": "PHKGRW",
+            "name": "3 Day Luxury Brisbane - Gold Coast - Bryon Bay Experience",
+            "shortDescription": "A Private 3 Day tour of the Brisbane, The Gold Coast and Byron Bay and taste some of the areas best local produce, with a gourmet food, sightseeing and history along the way, this tour is personalised to suit your group. ",
+            "productType": "DAYTOUR",
+            "price": 1995
+          },
+          "analysis": {
+            "matchedKeywords": [
+              "wine"
+            ],
+            "confidence": 0.14285714285714285
+          }
+        },
+        {
+          "product": {
+            "productCode": "PUGMBV",
+            "name": "3 Day Luxury Hinterland Experience",
+            "shortDescription": "A Private 3 Day tour of the Gold Coast and Scenic Rim and taste some of Queensland's best produce, with a gourmet food, sightseeing and history along the way, this tour is personalised to suit your group. ",
+            "productType": "DAYTOUR",
+            "price": 1995
+          },
+          "analysis": {
+            "matchedKeywords": [
+              "wine",
+              "wine tasting"
+            ],
+            "confidence": 0.2857142857142857
+          }
+        },
+        {
+          "product": {
+            "productCode": "PQDX6V",
+            "name": "A Taste of Gourmet Tasting Experience ",
+            "shortDescription": "Take the morning or afternoon to Taste the region\r\nThis is a personalised experience of local gourmet food producers in the region, we will pair tastings with gourmet food and an unforgettable experience along the way.\r\n\r\n",
+            "productType": "DAYTOUR",
+            "price": 900
+          },
+          "analysis": {
+            "matchedKeywords": [
+              "winery",
+              "wine"
+            ],
+            "confidence": 0.2857142857142857
+          }
+        },
+        {
+          "product": {
+            "productCode": "PKLDFV",
+            "name": "Brisbane Last Minute Deals",
+            "shortDescription": "A tour of award winning wineries in Mount Tamborine and taste some of Queensland's best wines including guided tastings at a number of family owned boutique wineries, a two course lunch.",
+            "productType": "DAYTOUR",
+            "price": 135
+          },
+          "analysis": {
+            "matchedKeywords": [
+              "winery",
+              "wine",
+              "wine tasting"
+            ],
+            "confidence": 0.42857142857142855
+          }
+        },
+        {
+          "product": {
+            "productCode": "PJKCEW",
+            "name": "Brisbane to Tamborine Mountain Shuttle Service",
+            "shortDescription": "Choose one way if you would like to Stay in Tamborine Mountain or Unlimited Hop on Hop off with Return Ticket\r\n\r\n*Unlimited Hop on Hop off Option includes all transport around Tamborine Mountain for one day\r\n\r\n",
+            "productType": "CUSTOM",
+            "price": 99
+          },
+          "analysis": {
+            "matchedKeywords": [
+              "winery",
+              "wine",
+              "vineyard",
+              "cellar",
+              "wine tasting"
+            ],
+            "confidence": 0.7142857142857143
+          }
+        },
+        {
+          "product": {
+            "productCode": "PZY1HM",
+            "name": "BW Tastes of Tamborine",
+            "shortDescription": "Mt Tamborine Foodie Tour includes coffee Door to door service from the Cruise Terminal, Coffee Plantation tour and tasting, Time of shopping\r\nalong the gallery walk, Wine Tasting and Charcuterie Lunch, Gin Distillery Tour and tasting.\r\n",
+            "productType": "DAYTOUR",
+            "price": 174
+          },
+          "analysis": {
+            "matchedKeywords": [
+              "wine",
+              "wine tasting"
+            ],
+            "confidence": 0.2857142857142857
+          }
+        },
+        {
+          "product": {
+            "productCode": "PZM0SX",
+            "name": "Champagne Sunset Winery Tour",
+            "shortDescription": "Experience the winding trails of Mount Tamborine for one of the most spectacular sunsets on the Coast. You will enjoy guided tastings at two wineries and get to taste some fabulous local cheese platters with Champagne.",
+            "productType": "PRIVATE_TOUR",
+            "price": 199
+          },
+          "analysis": {
+            "matchedKeywords": [
+              "winery",
+              "wine",
+              "wine tour"
+            ],
+            "confidence": 0.42857142857142855
+          }
+        },
+        {
+          "product": {
+            "productCode": "PGG164",
+            "name": "Christmas Party - 6Hrs",
+            "shortDescription": "A tour of award winning wineries in Mount Tamborine and taste some of Queensland's best wines including Door to door pickup from Mount Tamborine, guided tastings at 3 destinations. Two course gourmet lunch",
+            "productType": "DAYTOUR",
+            "price": 189
+          },
+          "analysis": {
+            "matchedKeywords": [
+              "winery",
+              "wine",
+              "wine tour"
+            ],
+            "confidence": 0.42857142857142855
+          }
+        },
+        {
+          "product": {
+            "productCode": "PT1CFA",
+            "name": "Currumbin Wildlife Sanctuary - Southern Gold Coast - Northern NSW - Hop on Hop off Shuttle",
+            "shortDescription": "Explore Southern Gold Coast and Northern NSW with our Hop on Hop off Bus! Visit Currumbin Wildlife Sanctuary, Burleigh Heads National Park, Husk Distillery, Tropical Fruit World, and more, Unlimited Hop on Hop off pass to all attractions.",
+            "productType": "TRANSFER",
+            "price": 99
+          },
+          "analysis": {
+            "matchedKeywords": [
+              "cellar"
+            ],
+            "confidence": 0.14285714285714285
+          }
+        },
+        {
+          "product": {
+            "productCode": "PK4F35",
+            "name": "Currumbin Wildlife Sanctuary entry - Includes Unlimited Hop on Hop off - Southern Gold Coast / Northern NSW",
+            "shortDescription": "Explore Southern Gold Coast and Northern NSW with our Hop on Hop off Bus! Visit Currumbin Wildlife Sanctuary, Burleigh Heads National Park, Husk Distillery, Tropical Fruit World.\r\nThis is a return Ticket that includes entry to the park",
+            "productType": "ACTIVITY",
+            "price": 159
+          },
+          "analysis": {
+            "matchedKeywords": [
+              "cellar"
+            ],
+            "confidence": 0.14285714285714285
+          }
+        },
+        {
+          "product": {
+            "productCode": "P0E7JV",
+            "name": "Early Bird - Full Day Mount Tamborine Winery Tour",
+            "shortDescription": "A tour of award winning wineries in Mount Tamborine and taste some of Queensland's best wines including guided tastings at a number of family owned boutique wineries, a two course lunch.",
+            "productType": "DAYTOUR",
+            "price": 219
+          },
+          "analysis": {
+            "matchedKeywords": [
+              "winery",
+              "wine",
+              "wine tour"
+            ],
+            "confidence": 0.42857142857142855
+          }
+        },
+        {
+          "product": {
+            "productCode": "PLK0BC",
+            "name": "Early Bird - Hinterland Explorer Pass",
+            "shortDescription": "Shuttle Service to key tourist attractions and venues on Tamborine Mountain\r\n\r\nThis shuttle is a community effort and is made possible by the venues on Tamborine Mountain\r\n\r\nBrisbane and Gold Coast Shuttles will include this Service.\r\n\r\n\r\n",
+            "productType": "CUSTOM",
+            "price": 88
+          },
+          "analysis": {
+            "matchedKeywords": [
+              "wine"
+            ],
+            "confidence": 0.14285714285714285
+          }
+        },
+        {
+          "product": {
+            "productCode": "PUN2ZS",
+            "name": "FDWT Non Drinker BNE",
+            "shortDescription": "For Non drinking Passengers on the Full Day Wine Tour",
+            "productType": "DAYTOUR",
+            "price": 145
+          },
+          "analysis": {
+            "matchedKeywords": [
+              "wine",
+              "wine tour"
+            ],
+            "confidence": 0.2857142857142857
+          }
+        },
+        {
+          "product": {
+            "productCode": "P37WU0",
+            "name": "FDWT Non Drinker GC",
+            "shortDescription": "For Non drinking Passengers on the Full Day Wine Tour",
+            "productType": "DAYTOUR",
+            "price": 145
+          },
+          "analysis": {
+            "matchedKeywords": [
+              "wine",
+              "wine tour"
+            ],
+            "confidence": 0.2857142857142857
+          }
+        },
+        {
+          "product": {
+            "productCode": "PMP0H7",
+            "name": "Gold Coast - Tamborine Mountain Shuttle Service",
+            "shortDescription": "Choose one way if you would like to Stay in Tamborine Mountain or Unlimited Hop on Hop off with Return Ticket\r\n\r\n*Unlimited Hop on Hop off Option includes all transport around Tamborine Mountain for one day\r\n\r\n",
+            "productType": "CUSTOM",
+            "price": 99
+          },
+          "analysis": {
+            "matchedKeywords": [
+              "winery",
+              "wine",
+              "vineyard",
+              "cellar",
+              "wine tasting"
+            ],
+            "confidence": 0.7142857142857143
+          }
+        },
+        {
+          "product": {
+            "productCode": "PMVZUK",
+            "name": "Gold Coast Last Minute Deals",
+            "shortDescription": "A tour of award winning wineries in Mount Tamborine and taste some of Queensland's best wines including guided tastings at a number of family owned boutique wineries, a two course lunch.",
+            "productType": "DAYTOUR",
+            "price": 135
+          },
+          "analysis": {
+            "matchedKeywords": [
+              "winery",
+              "wine",
+              "wine tasting"
+            ],
+            "confidence": 0.42857142857142855
+          }
+        },
+        {
+          "product": {
+            "productCode": "P7JY1E",
+            "name": "Groups - Tamborine Mountain Rainforest Skywalk + Glow Worm Cave Tour + Waterfalls or Shopping",
+            "shortDescription": "Tour from Brisbane or Gold Coast Hotels to Tamborine Rainforest Skywalk, after you finish your morning adventures you will visit the famous Glow Worm Caves of Tamborine Mountain and some local lookouts.\r\n\r\n\r\n\r\n",
+            "productType": "CUSTOM",
+            "price": 159
+          },
+          "analysis": {
+            "matchedKeywords": [
+              "winery",
+              "wine",
+              "vineyard"
+            ],
+            "confidence": 0.42857142857142855
+          }
+        },
+        {
+          "product": {
+            "productCode": "P1T19K",
+            "name": "HDWT Non Drinker",
+            "shortDescription": "For Non drinking Passengers on the Full Day Wine Tour",
+            "productType": "DAYTOUR",
+            "price": 110
+          },
+          "analysis": {
+            "matchedKeywords": [
+              "wine",
+              "wine tour"
+            ],
+            "confidence": 0.2857142857142857
+          }
+        },
+        {
+          "product": {
+            "productCode": "P7WH5Q",
+            "name": "Hop on Hop Off  Wine Tour - Tamborine Mountain - From Brisbane - Flexi Pass",
+            "shortDescription": "Adventure from Brisbane to the enchanting heights of Tamborine Mountain with our exclusive hop-on, hop-off bus service. Departing every morning from Brisbane. Enjoy the flexibility to explore Tamborine Mountains best Vineyards\r\n\r\n\r\n",
+            "productType": "CUSTOM",
+            "price": 99
+          },
+          "analysis": {
+            "matchedKeywords": [
+              "winery",
+              "wine",
+              "vineyard",
+              "wine tour"
+            ],
+            "confidence": 0.5714285714285714
+          }
+        },
+        {
+          "product": {
+            "productCode": "PTMB07",
+            "name": "Hop on Hop off Brewery adventure - Tamborine Mountain - From Brisbane",
+            "shortDescription": "A beer lover’s dream adventure from Brisbane to the craft brewery haven of Tamborine Mountain with our hop-on, hop-off bus. This brewery-focused journey offers the flexibility to explore Tamborine Mountain’s best brews, one stop at a time.",
+            "productType": "CUSTOM",
+            "price": 99
+          },
+          "analysis": {
+            "matchedKeywords": [
+              "winery",
+              "wine",
+              "vineyard"
+            ],
+            "confidence": 0.42857142857142855
+          }
+        },
+        {
+          "product": {
+            "productCode": "PTEFYF",
+            "name": "Hop on Hop off Brewery adventure - Tamborine Mountain - Gold Coast",
+            "shortDescription": "A beer lover’s adventure from the Gold Coast to the craft brewery haven of Tamborine Mountain with our hop-on, hop-off bus. This brewery-focused journey offers the flexibility to explore Tamborine Mountain’s best brews, one stop at a time.",
+            "productType": "CUSTOM",
+            "price": 99
+          },
+          "analysis": {
+            "matchedKeywords": [
+              "winery",
+              "wine",
+              "vineyard"
+            ],
+            "confidence": 0.42857142857142855
+          }
+        },
+        {
+          "product": {
+            "productCode": "PW1HTG",
+            "name": "Hop on Hop Off Bus - Movie World - from Brisbane",
+            "shortDescription": "Embark on an adventure from theGold Coast to the enchanting heights of Tamborine Mountain with our exclusive hop-on, hop-off bus service. Departing every morning from Gold Coast. Enjoy the flexibility to explore Tamborine Mountain.\r\n\r\n\r\n",
+            "productType": "CUSTOM",
+            "price": 99
+          },
+          "analysis": {
+            "matchedKeywords": [
+              "winery",
+              "wine",
+              "vineyard"
+            ],
+            "confidence": 0.42857142857142855
+          }
+        },
+        {
+          "product": {
+            "productCode": "P0SVHC",
+            "name": "Hop on Hop Off Bus - Movie World - from Gold Coast",
+            "shortDescription": "Embark on an adventure from theGold Coast to the enchanting heights of Tamborine Mountain with our exclusive hop-on, hop-off bus service. Departing every morning from Gold Coast. Enjoy the flexibility to explore Tamborine Mountain.\r\n\r\n\r\n",
+            "productType": "CUSTOM",
+            "price": 99
+          },
+          "analysis": {
+            "matchedKeywords": [
+              "winery",
+              "wine",
+              "vineyard"
+            ],
+            "confidence": 0.42857142857142855
+          }
+        },
+        {
+          "product": {
+            "productCode": "P2UDGV",
+            "name": "Hop on Hop off Bus - Single Trip - Brisbane City Loop + Unlimited Hop on Hop off - Tamborine Mountain",
+            "shortDescription": "This is a Single Trip Brisbane City Loop + Unlimited Tamborine Mountain Pass. with the hop-on, hop-off bus! Preview of Brisbane City with our Brisbane City Loop then Hop-on Hop-off all day around the sites of Tamborine Mountain.\r\n\r\n\r\n",
+            "productType": "CUSTOM",
+            "price": 128
+          },
+          "analysis": {
+            "matchedKeywords": [
+              "wine"
+            ],
+            "confidence": 0.14285714285714285
+          }
+        },
+        {
+          "product": {
+            "productCode": "PKK5KB",
+            "name": "Hop on Hop Off Bus - Tamborine Mountain - from Gold Coast",
+            "shortDescription": "Embark on an adventure from theGold Coast to the enchanting heights of Tamborine Mountain with our exclusive hop-on, hop-off bus service. Departing every morning from Gold Coast. Enjoy the flexibility to explore Tamborine Mountain.\r\n\r\n\r\n",
+            "productType": "CUSTOM",
+            "price": 99
+          },
+          "analysis": {
+            "matchedKeywords": [
+              "winery",
+              "wine",
+              "vineyard"
+            ],
+            "confidence": 0.42857142857142855
+          }
+        },
+        {
+          "product": {
+            "productCode": "PJXQHN",
+            "name": "Hop on Hop off Bus with Rainforest Skywalk + Glow Worm Caves - From Brisbane",
+            "shortDescription": "Hop on Hop off to Tamborine Mountain and explore over 30 stops, including the Skywalk, Glow Worm Caves, stunning lookouts, lush rainforests, waterfalls, wineries, distilleries, and charming local shops and much much more.\r\n\r\n\r\n\r\n",
+            "productType": "CUSTOM",
+            "price": 165
+          },
+          "analysis": {
+            "matchedKeywords": [
+              "wine"
+            ],
+            "confidence": 0.14285714285714285
+          }
+        },
+        {
+          "product": {
+            "productCode": "P70YXP",
+            "name": "Hop on Hop off Bus with Rainforest Skywalk + Glow Worm Caves - From Gold Coast",
+            "shortDescription": "Hop on Hop off to Tamborine Mountain and explore over 30 stops, including the Skywalk, Glow Worm Caves, stunning lookouts, lush rainforests, waterfalls, wineries, distilleries, and charming local shops and much much more.\r\n\r\n\r\n\r\n",
+            "productType": "CUSTOM",
+            "price": 165
+          },
+          "analysis": {
+            "matchedKeywords": [
+              "wine"
+            ],
+            "confidence": 0.14285714285714285
+          }
+        },
+        {
+          "product": {
+            "productCode": "PKQL4P",
+            "name": "Hop on Hop off Distillery adventure - Tamborine Mountain - Brisbane",
+            "shortDescription": "A spirit lover’s journey from Brisbane to Tamborine Mountain’s finest distilleries with our hop-on, hop-off bus. Enjoy the freedom to explore handcrafted gins, rums, and liqueurs at your own pace, one exceptional distillery at a time.",
+            "productType": "CUSTOM",
+            "price": 99
+          },
+          "analysis": {
+            "matchedKeywords": [
+              "winery",
+              "wine",
+              "vineyard"
+            ],
+            "confidence": 0.42857142857142855
+          }
+        },
+        {
+          "product": {
+            "productCode": "PFMGXB",
+            "name": "Hop on Hop off Distillery adventure - Tamborine Mountain - Gold Coast",
+            "shortDescription": "A spirit lover’s journey from the Gold Coast to Tamborine Mountain’s finest distilleries with our hop-on, hop-off bus. Enjoy the freedom to explore handcrafted gins, rums, and liqueurs at your own pace, one exceptional distillery at a time.",
+            "productType": "CUSTOM",
+            "price": 99
+          },
+          "analysis": {
+            "matchedKeywords": [
+              "winery",
+              "wine",
+              "vineyard"
+            ],
+            "confidence": 0.42857142857142855
+          }
+        },
+        {
+          "product": {
+            "productCode": "PMRS95",
+            "name": "Hop on Hop off Wine Tasting Tour - From Brisbane",
+            "shortDescription": "Join our Hop on Hop off Bus to Explore the Wineries of Mount Tamborine, enjoy guided tastings at each venue and then explore the mountain at your own leisure. You can try some local food, do some shopping or visit a rainforest waterfall.",
+            "productType": "DAYTOUR",
+            "price": 165
+          },
+          "analysis": {
+            "matchedKeywords": [
+              "winery",
+              "wine",
+              "vintage",
+              "wine tasting",
+              "wine tour"
+            ],
+            "confidence": 0.7142857142857143
+          }
+        },
+        {
+          "product": {
+            "productCode": "PKCDT3",
+            "name": "Hop on Hop off Wine Tasting Tour - From Gold Coast",
+            "shortDescription": "Join our Hop on Hop off Bus to Explore the Wineries of Mount Tamborine, enjoy guided tastings at each venue and then explore the mountain at your own leisure. You can try some local food, do some shopping or visit a rainforest waterfall.",
+            "productType": "DAYTOUR",
+            "price": 165
+          },
+          "analysis": {
+            "matchedKeywords": [
+              "winery",
+              "wine",
+              "vintage",
+              "wine tasting",
+              "wine tour"
+            ],
+            "confidence": 0.7142857142857143
+          }
+        },
+        {
+          "product": {
+            "productCode": "PNP4S2",
+            "name": "Hop on Hop Off Wine Tour - Tamborine Mountain - from Gold Coast - Flexi Pass",
+            "shortDescription": "Adventure from the Gold Coast to the enchanting heights of Tamborine Mountain with our exclusive hop-on, hop-off bus service. Departing every morning from Gold Coast. Enjoy the flexibility to explore Tamborine Mountains best Vineyards.\r\n\r\n",
+            "productType": "CUSTOM",
+            "price": 99
+          },
+          "analysis": {
+            "matchedKeywords": [
+              "winery",
+              "wine",
+              "vineyard",
+              "wine tour"
+            ],
+            "confidence": 0.5714285714285714
+          }
+        },
+        {
+          "product": {
+            "productCode": "PLKY3R",
+            "name": "Hop on Hop off Winery adventure - Tamborine Mountain - Brisbane",
+            "shortDescription": "A wine lover’s journey to Tamborine Mountain’s finest wineries with our hop-on, hop-off bus. Enjoy the freedom to explore award-winning vineyards, sample exquisite local wines, and soak in the serene mountain scenery at your own pace.",
+            "productType": "CUSTOM",
+            "price": 99
+          },
+          "analysis": {
+            "matchedKeywords": [
+              "winery",
+              "wine",
+              "vineyard"
+            ],
+            "confidence": 0.42857142857142855
+          }
+        },
+        {
+          "product": {
+            "productCode": "PBRFH9",
+            "name": "Hop on Hop off Winery adventure - Tamborine Mountain - Gold Coast",
+            "shortDescription": "A wine lover’s journey to Tamborine Mountain’s finest wineries with our hop-on, hop-off bus. Enjoy the freedom to explore award-winning vineyards, sample exquisite local wines, and soak in the serene mountain scenery at your own pace.",
+            "productType": "CUSTOM",
+            "price": 99
+          },
+          "analysis": {
+            "matchedKeywords": [
+              "winery",
+              "wine",
+              "vineyard"
+            ],
+            "confidence": 0.42857142857142855
+          }
+        },
+        {
+          "product": {
+            "productCode": "PFJYQ7",
+            "name": "Hot Air Balloon",
+            "shortDescription": "Hot Air Balloon Flight with Champagne Breakfast",
+            "productType": "CUSTOM",
+            "price": 450
+          },
+          "analysis": {
+            "matchedKeywords": [
+              "vineyard"
+            ],
+            "confidence": 0.14285714285714285
+          }
+        },
+        {
+          "product": {
+            "productCode": "PZCW0V",
+            "name": "Husk Distillery - Unlimited Hop on Hop off Day Pass - Southern Gold Coast / Northern NSW",
+            "shortDescription": "Explore Southern Gold Coast and Northern NSW with our Hop on Hop off Bus! Visit Husk Distillery, Burleigh Heads National Park, Northern Rivers Rail Trail,  Tropical Fruit World, and more, Unlimited Hop on Hop off pass to all attractions.",
+            "productType": "CUSTOM",
+            "price": 99
+          },
+          "analysis": {
+            "matchedKeywords": [
+              "cellar"
+            ],
+            "confidence": 0.14285714285714285
+          }
+        },
+        {
+          "product": {
+            "productCode": "PSMW0S",
+            "name": "Internal - Currumbin Wildlife Sanctuary - Unlimited Hop on Hop off Day Pass - Southern Gold Coast / Northern NSW",
+            "shortDescription": "Explore Southern Gold Coast and Northern NSW with our Hop on Hop off Bus! Visit Currumbin Wildlife Sanctuary, Burleigh Heads National Park, Husk Distillery, Tropical Fruit World, and more, Unlimited Hop on Hop off pass to all attractions.\r\n",
+            "productType": "CUSTOM",
+            "price": 99
+          },
+          "analysis": {
+            "matchedKeywords": [
+              "cellar"
+            ],
+            "confidence": 0.14285714285714285
+          }
+        },
+        {
+          "product": {
+            "productCode": "PMHU1R",
+            "name": "Jellurgal Aboriginal Cultural Centre - Unlimited Hop on Hop off Day Pass - Southern Gold Coast / Northern NSW",
+            "shortDescription": "Explore Southern Gold Coast and Northern NSW with our Hop on Hop off Bus! Visit Currumbin Wildlife Sanctuary, Burleigh Heads National Park, Jellurgal, Tropical Fruit World, and more, Unlimited Hop on Hop off pass to all attractions.",
+            "productType": "DAYTOUR",
+            "price": 138
+          },
+          "analysis": {
+            "matchedKeywords": [
+              "cellar"
+            ],
+            "confidence": 0.14285714285714285
+          }
+        }
+      ],
+      "Brewery Tours": [
+        {
+          "product": {
+            "productCode": "PH1FEA",
+            "name": " Hop on Hop off Bus - Tamborine Mountain - From Brisbane",
+            "shortDescription": "Embark on an adventure from Brisbane to the enchanting heights of Tamborine Mountain with our exclusive hop-on, hop-off bus service. Departing every morning from Brisbane. Enjoy the flexibility to explore Tamborine Mountain.\r\n\r\n\r\n",
+            "productType": "CUSTOM",
+            "price": 99
+          },
+          "analysis": {
+            "matchedKeywords": [
+              "brewing",
+              "ale"
+            ],
+            "confidence": 0.25
+          }
+        },
+        {
+          "product": {
+            "productCode": "PHKGRW",
+            "name": "3 Day Luxury Brisbane - Gold Coast - Bryon Bay Experience",
+            "shortDescription": "A Private 3 Day tour of the Brisbane, The Gold Coast and Byron Bay and taste some of the areas best local produce, with a gourmet food, sightseeing and history along the way, this tour is personalised to suit your group. ",
+            "productType": "DAYTOUR",
+            "price": 1995
+          },
+          "analysis": {
+            "matchedKeywords": [
+              "ale"
+            ],
+            "confidence": 0.125
+          }
+        },
+        {
+          "product": {
+            "productCode": "PVUZWD",
+            "name": "A Tale of Two Distilleries Gin Tour",
+            "shortDescription": "Enjoy  the flavours of 2 Distilleries.  \r\nTour includes 2 Venues with Guided tours and tasting paddles    \r\nAvailable in 3 Regions  Gold Coast, Northern NSW and Mt Tamborine \r\n",
+            "productType": "PRIVATE_TOUR",
+            "price": 150
+          },
+          "analysis": {
+            "matchedKeywords": [
+              "ale"
+            ],
+            "confidence": 0.125
+          }
+        },
+        {
+          "product": {
+            "productCode": "PQDX6V",
+            "name": "A Taste of Gourmet Tasting Experience ",
+            "shortDescription": "Take the morning or afternoon to Taste the region\r\nThis is a personalised experience of local gourmet food producers in the region, we will pair tastings with gourmet food and an unforgettable experience along the way.\r\n\r\n",
+            "productType": "DAYTOUR",
+            "price": 900
+          },
+          "analysis": {
+            "matchedKeywords": [
+              "brewery"
+            ],
+            "confidence": 0.125
+          }
+        },
+        {
+          "product": {
+            "productCode": "PRVHY0",
+            "name": "Brewery Tour - (4 hours)",
+            "shortDescription": "A guided tour of the Gold Coast's best craft breweries. ",
+            "productType": "DAYTOUR",
+            "price": 100
+          },
+          "analysis": {
+            "matchedKeywords": [
+              "brewery",
+              "brewery tour"
+            ],
+            "confidence": 0.25
+          }
+        },
+        {
+          "product": {
+            "productCode": "PJKCEW",
+            "name": "Brisbane to Tamborine Mountain Shuttle Service",
+            "shortDescription": "Choose one way if you would like to Stay in Tamborine Mountain or Unlimited Hop on Hop off with Return Ticket\r\n\r\n*Unlimited Hop on Hop off Option includes all transport around Tamborine Mountain for one day\r\n\r\n",
+            "productType": "CUSTOM",
+            "price": 99
+          },
+          "analysis": {
+            "matchedKeywords": [
+              "brewery",
+              "beer",
+              "craft beer",
+              "brewing",
+              "beer tasting"
+            ],
+            "confidence": 0.625
+          }
+        },
+        {
+          "product": {
+            "productCode": "PTS7WT",
+            "name": "Build Your Own Brewery Tour",
+            "shortDescription": "A guided tour of the Gold Coast's best craft breweries. Step 1 Select How Many People. Step 2 Select inclusions. Step 3. Get ready for a great day out with your friends and some fantastic food and beer.",
+            "productType": "DAYTOUR",
+            "price": 45
+          },
+          "analysis": {
+            "matchedKeywords": [
+              "brewery",
+              "beer",
+              "brewery tour"
+            ],
+            "confidence": 0.375
+          }
+        },
+        {
+          "product": {
+            "productCode": "PDW319",
+            "name": "Byron Bay Day Tour - Signature Experience",
+            "shortDescription": "Stretching inland from Australia's most easterly point, Byron Bay's hinterland is filled with gorgeous villages, stunning scenery and a tranquillity that washes urban stresses from every visitor. ",
+            "productType": "PRIVATE_TOUR",
+            "price": 1295
+          },
+          "analysis": {
+            "matchedKeywords": [
+              "brewery",
+              "beer",
+              "brewing",
+              "ale"
+            ],
+            "confidence": 0.5
+          }
+        },
+        {
+          "product": {
+            "productCode": "PKL0XE",
+            "name": "Candice's Rainforest experience 1Hr Tour",
+            "shortDescription": "The most successful people follow their passions and not their pay checks and Candice has definitely found her passion. Meet us for a surprising experience of the Hinterlands subtropical rainforest. Choose from Daytime or evening tour",
+            "productType": "DAYTOUR",
+            "price": 49
+          },
+          "analysis": {
+            "matchedKeywords": [
+              "ale"
+            ],
+            "confidence": 0.125
+          }
+        },
+        {
+          "product": {
+            "productCode": "PBMUT0",
+            "name": "Candice's Rainforest experience 2Hrs - Gourmet Two Course Meal - Door to Door Pickup from the Gold Coast",
+            "shortDescription": "The most successful people follow their passions and not their paychecks and Candice has definitely found her passion. Let us take you on a surprising experience of the Hinterlands subtropical rainforest. Choose either Lunch or dinner tour",
+            "productType": "DAYTOUR",
+            "price": 159
+          },
+          "analysis": {
+            "matchedKeywords": [
+              "ale"
+            ],
+            "confidence": 0.125
+          }
+        },
+        {
+          "product": {
+            "productCode": "PT1CFA",
+            "name": "Currumbin Wildlife Sanctuary - Southern Gold Coast - Northern NSW - Hop on Hop off Shuttle",
+            "shortDescription": "Explore Southern Gold Coast and Northern NSW with our Hop on Hop off Bus! Visit Currumbin Wildlife Sanctuary, Burleigh Heads National Park, Husk Distillery, Tropical Fruit World, and more, Unlimited Hop on Hop off pass to all attractions.",
+            "productType": "TRANSFER",
+            "price": 99
+          },
+          "analysis": {
+            "matchedKeywords": [
+              "ale"
+            ],
+            "confidence": 0.125
+          }
+        },
+        {
+          "product": {
+            "productCode": "PK4F35",
+            "name": "Currumbin Wildlife Sanctuary entry - Includes Unlimited Hop on Hop off - Southern Gold Coast / Northern NSW",
+            "shortDescription": "Explore Southern Gold Coast and Northern NSW with our Hop on Hop off Bus! Visit Currumbin Wildlife Sanctuary, Burleigh Heads National Park, Husk Distillery, Tropical Fruit World.\r\nThis is a return Ticket that includes entry to the park",
+            "productType": "ACTIVITY",
+            "price": 159
+          },
+          "analysis": {
+            "matchedKeywords": [
+              "ale"
+            ],
+            "confidence": 0.125
+          }
+        },
+        {
+          "product": {
+            "productCode": "PMP0H7",
+            "name": "Gold Coast - Tamborine Mountain Shuttle Service",
+            "shortDescription": "Choose one way if you would like to Stay in Tamborine Mountain or Unlimited Hop on Hop off with Return Ticket\r\n\r\n*Unlimited Hop on Hop off Option includes all transport around Tamborine Mountain for one day\r\n\r\n",
+            "productType": "CUSTOM",
+            "price": 99
+          },
+          "analysis": {
+            "matchedKeywords": [
+              "brewery",
+              "beer",
+              "craft beer",
+              "brewing",
+              "beer tasting"
+            ],
+            "confidence": 0.625
+          }
+        },
+        {
+          "product": {
+            "productCode": "PTC5RK",
+            "name": "Hop on Hop Off  - Brisbane City Loop - ATE25 ",
+            "shortDescription": "Hop on Hop off City Loop – Brisbane\r\n\r\nDiscover Brisbane your way with the Hop on Hop off City Loop – the easiest and most flexible way to explore the River City!\r\n\r\n\r\n\r\n",
+            "productType": "CUSTOM",
+            "price": 99
+          },
+          "analysis": {
+            "matchedKeywords": [
+              "brewery"
+            ],
+            "confidence": 0.125
+          }
+        },
+        {
+          "product": {
+            "productCode": "P7WH5Q",
+            "name": "Hop on Hop Off  Wine Tour - Tamborine Mountain - From Brisbane - Flexi Pass",
+            "shortDescription": "Adventure from Brisbane to the enchanting heights of Tamborine Mountain with our exclusive hop-on, hop-off bus service. Departing every morning from Brisbane. Enjoy the flexibility to explore Tamborine Mountains best Vineyards\r\n\r\n\r\n",
+            "productType": "CUSTOM",
+            "price": 99
+          },
+          "analysis": {
+            "matchedKeywords": [
+              "brewing",
+              "ale"
+            ],
+            "confidence": 0.25
+          }
+        },
+        {
+          "product": {
+            "productCode": "PTMB07",
+            "name": "Hop on Hop off Brewery adventure - Tamborine Mountain - From Brisbane",
+            "shortDescription": "A beer lover’s dream adventure from Brisbane to the craft brewery haven of Tamborine Mountain with our hop-on, hop-off bus. This brewery-focused journey offers the flexibility to explore Tamborine Mountain’s best brews, one stop at a time.",
+            "productType": "CUSTOM",
+            "price": 99
+          },
+          "analysis": {
+            "matchedKeywords": [
+              "brewery",
+              "beer",
+              "craft beer",
+              "brewing"
+            ],
+            "confidence": 0.5
+          }
+        },
+        {
+          "product": {
+            "productCode": "PTEFYF",
+            "name": "Hop on Hop off Brewery adventure - Tamborine Mountain - Gold Coast",
+            "shortDescription": "A beer lover’s adventure from the Gold Coast to the craft brewery haven of Tamborine Mountain with our hop-on, hop-off bus. This brewery-focused journey offers the flexibility to explore Tamborine Mountain’s best brews, one stop at a time.",
+            "productType": "CUSTOM",
+            "price": 99
+          },
+          "analysis": {
+            "matchedKeywords": [
+              "brewery",
+              "beer",
+              "craft beer",
+              "brewing"
+            ],
+            "confidence": 0.5
+          }
+        },
+        {
+          "product": {
+            "productCode": "PW1HTG",
+            "name": "Hop on Hop Off Bus - Movie World - from Brisbane",
+            "shortDescription": "Embark on an adventure from theGold Coast to the enchanting heights of Tamborine Mountain with our exclusive hop-on, hop-off bus service. Departing every morning from Gold Coast. Enjoy the flexibility to explore Tamborine Mountain.\r\n\r\n\r\n",
+            "productType": "CUSTOM",
+            "price": 99
+          },
+          "analysis": {
+            "matchedKeywords": [
+              "brewing",
+              "ale"
+            ],
+            "confidence": 0.25
+          }
+        },
+        {
+          "product": {
+            "productCode": "P0SVHC",
+            "name": "Hop on Hop Off Bus - Movie World - from Gold Coast",
+            "shortDescription": "Embark on an adventure from theGold Coast to the enchanting heights of Tamborine Mountain with our exclusive hop-on, hop-off bus service. Departing every morning from Gold Coast. Enjoy the flexibility to explore Tamborine Mountain.\r\n\r\n\r\n",
+            "productType": "CUSTOM",
+            "price": 99
+          },
+          "analysis": {
+            "matchedKeywords": [
+              "brewing",
+              "ale"
+            ],
+            "confidence": 0.25
+          }
+        },
+        {
+          "product": {
+            "productCode": "PKK5KB",
+            "name": "Hop on Hop Off Bus - Tamborine Mountain - from Gold Coast",
+            "shortDescription": "Embark on an adventure from theGold Coast to the enchanting heights of Tamborine Mountain with our exclusive hop-on, hop-off bus service. Departing every morning from Gold Coast. Enjoy the flexibility to explore Tamborine Mountain.\r\n\r\n\r\n",
+            "productType": "CUSTOM",
+            "price": 99
+          },
+          "analysis": {
+            "matchedKeywords": [
+              "brewing",
+              "ale"
+            ],
+            "confidence": 0.25
+          }
+        },
+        {
+          "product": {
+            "productCode": "PNYY7C",
+            "name": "Hop on Hop off Day Pass + Glow Worm Tour -  Brisbane Pickup",
+            "shortDescription": "Glow worms only exist in Australia and New Zealand so come on a fantastic journey with is to meet these small but brightly glowing creatures, Guaranteed sightings and time for morning tea and scenic lookouts throughout the National Park.",
+            "productType": "DAYTOUR",
+            "price": 135
+          },
+          "analysis": {
+            "matchedKeywords": [
+              "ale"
+            ],
+            "confidence": 0.125
+          }
+        },
+        {
+          "product": {
+            "productCode": "PZ6FNP",
+            "name": "Hop on Hop off Day Pass + Glow Worm Tour - Gold Coast Pickup",
+            "shortDescription": "Glow worms only exist in Australia and New Zealand so come on a fantastic journey with is to meet these small but brightly glowing creatures, Guaranteed sightings and time for morning tea and scenic lookouts throughout the National Park.",
+            "productType": "DAYTOUR",
+            "price": 135
+          },
+          "analysis": {
+            "matchedKeywords": [
+              "ale"
+            ],
+            "confidence": 0.125
+          }
+        },
+        {
+          "product": {
+            "productCode": "P119KN",
+            "name": "Hop on Hop off Day Pass - Freesale - Book any date with this voucher",
+            "shortDescription": "Hop on Hop off Freesale Pass - Use this to book a Hop on Hop off Experience",
+            "productType": "GIFT_CARD",
+            "price": 29
+          },
+          "analysis": {
+            "matchedKeywords": [
+              "ale"
+            ],
+            "confidence": 0.125
+          }
+        },
+        {
+          "product": {
+            "productCode": "PKQL4P",
+            "name": "Hop on Hop off Distillery adventure - Tamborine Mountain - Brisbane",
+            "shortDescription": "A spirit lover’s journey from Brisbane to Tamborine Mountain’s finest distilleries with our hop-on, hop-off bus. Enjoy the freedom to explore handcrafted gins, rums, and liqueurs at your own pace, one exceptional distillery at a time.",
+            "productType": "CUSTOM",
+            "price": 99
+          },
+          "analysis": {
+            "matchedKeywords": [
+              "beer",
+              "craft beer",
+              "brewing"
+            ],
+            "confidence": 0.375
+          }
+        },
+        {
+          "product": {
+            "productCode": "PFMGXB",
+            "name": "Hop on Hop off Distillery adventure - Tamborine Mountain - Gold Coast",
+            "shortDescription": "A spirit lover’s journey from the Gold Coast to Tamborine Mountain’s finest distilleries with our hop-on, hop-off bus. Enjoy the freedom to explore handcrafted gins, rums, and liqueurs at your own pace, one exceptional distillery at a time.",
+            "productType": "CUSTOM",
+            "price": 99
+          },
+          "analysis": {
+            "matchedKeywords": [
+              "beer",
+              "craft beer",
+              "brewing"
+            ],
+            "confidence": 0.375
+          }
+        },
+        {
+          "product": {
+            "productCode": "PNP4S2",
+            "name": "Hop on Hop Off Wine Tour - Tamborine Mountain - from Gold Coast - Flexi Pass",
+            "shortDescription": "Adventure from the Gold Coast to the enchanting heights of Tamborine Mountain with our exclusive hop-on, hop-off bus service. Departing every morning from Gold Coast. Enjoy the flexibility to explore Tamborine Mountains best Vineyards.\r\n\r\n",
+            "productType": "CUSTOM",
+            "price": 99
+          },
+          "analysis": {
+            "matchedKeywords": [
+              "brewing",
+              "ale"
+            ],
+            "confidence": 0.25
+          }
+        },
+        {
+          "product": {
+            "productCode": "PLKY3R",
+            "name": "Hop on Hop off Winery adventure - Tamborine Mountain - Brisbane",
+            "shortDescription": "A wine lover’s journey to Tamborine Mountain’s finest wineries with our hop-on, hop-off bus. Enjoy the freedom to explore award-winning vineyards, sample exquisite local wines, and soak in the serene mountain scenery at your own pace.",
+            "productType": "CUSTOM",
+            "price": 99
+          },
+          "analysis": {
+            "matchedKeywords": [
+              "beer",
+              "brewing"
+            ],
+            "confidence": 0.25
+          }
+        },
+        {
+          "product": {
+            "productCode": "PBRFH9",
+            "name": "Hop on Hop off Winery adventure - Tamborine Mountain - Gold Coast",
+            "shortDescription": "A wine lover’s journey to Tamborine Mountain’s finest wineries with our hop-on, hop-off bus. Enjoy the freedom to explore award-winning vineyards, sample exquisite local wines, and soak in the serene mountain scenery at your own pace.",
+            "productType": "CUSTOM",
+            "price": 99
+          },
+          "analysis": {
+            "matchedKeywords": [
+              "beer",
+              "brewing"
+            ],
+            "confidence": 0.25
+          }
+        },
+        {
+          "product": {
+            "productCode": "PZCW0V",
+            "name": "Husk Distillery - Unlimited Hop on Hop off Day Pass - Southern Gold Coast / Northern NSW",
+            "shortDescription": "Explore Southern Gold Coast and Northern NSW with our Hop on Hop off Bus! Visit Husk Distillery, Burleigh Heads National Park, Northern Rivers Rail Trail,  Tropical Fruit World, and more, Unlimited Hop on Hop off pass to all attractions.",
+            "productType": "CUSTOM",
+            "price": 99
+          },
+          "analysis": {
+            "matchedKeywords": [
+              "ale"
+            ],
+            "confidence": 0.125
+          }
+        },
+        {
+          "product": {
+            "productCode": "PSMW0S",
+            "name": "Internal - Currumbin Wildlife Sanctuary - Unlimited Hop on Hop off Day Pass - Southern Gold Coast / Northern NSW",
+            "shortDescription": "Explore Southern Gold Coast and Northern NSW with our Hop on Hop off Bus! Visit Currumbin Wildlife Sanctuary, Burleigh Heads National Park, Husk Distillery, Tropical Fruit World, and more, Unlimited Hop on Hop off pass to all attractions.\r\n",
+            "productType": "CUSTOM",
+            "price": 99
+          },
+          "analysis": {
+            "matchedKeywords": [
+              "ale"
+            ],
+            "confidence": 0.125
+          }
+        },
+        {
+          "product": {
+            "productCode": "PMHU1R",
+            "name": "Jellurgal Aboriginal Cultural Centre - Unlimited Hop on Hop off Day Pass - Southern Gold Coast / Northern NSW",
+            "shortDescription": "Explore Southern Gold Coast and Northern NSW with our Hop on Hop off Bus! Visit Currumbin Wildlife Sanctuary, Burleigh Heads National Park, Jellurgal, Tropical Fruit World, and more, Unlimited Hop on Hop off pass to all attractions.",
+            "productType": "DAYTOUR",
+            "price": 138
+          },
+          "analysis": {
+            "matchedKeywords": [
+              "ale"
+            ],
+            "confidence": 0.125
+          }
+        },
+        {
+          "product": {
+            "productCode": "P6YWKK",
+            "name": "Jet Ski Safaris + Beer - Gold Coast - Visit Islands in the Broadwater and Gold Coasts best Breweries",
+            "shortDescription": "Looking for something different to do for your Bucks Party , Birthday or Special occasion? \r\nThis tour is great for those wanting to do something a bit different. \r\nThe tour includes  1.5Hr Jetski Safari followed by a boutique brewery tour",
+            "productType": "DAYTOUR",
+            "price": 369
+          },
+          "analysis": {
+            "matchedKeywords": [
+              "brewery",
+              "beer",
+              "craft beer",
+              "beer tasting",
+              "brewery tour"
+            ],
+            "confidence": 0.625
+          }
+        }
+      ],
+      "Hop-On Hop-Off": [
+        {
+          "product": {
+            "productCode": "PH1FEA",
+            "name": " Hop on Hop off Bus - Tamborine Mountain - From Brisbane",
+            "shortDescription": "Embark on an adventure from Brisbane to the enchanting heights of Tamborine Mountain with our exclusive hop-on, hop-off bus service. Departing every morning from Brisbane. Enjoy the flexibility to explore Tamborine Mountain.\r\n\r\n\r\n",
+            "productType": "CUSTOM",
+            "price": 99
+          },
+          "analysis": {
+            "matchedKeywords": [
+              "hop-on",
+              "hop off",
+              "hop on hop off"
+            ],
+            "confidence": 0.5
+          }
+        },
+        {
+          "product": {
+            "productCode": "PKLDFV",
+            "name": "Brisbane Last Minute Deals",
+            "shortDescription": "A tour of award winning wineries in Mount Tamborine and taste some of Queensland's best wines including guided tastings at a number of family owned boutique wineries, a two course lunch.",
+            "productType": "DAYTOUR",
+            "price": 135
+          },
+          "analysis": {
+            "matchedKeywords": [
+              "hop off",
+              "hop on hop off"
+            ],
+            "confidence": 0.3333333333333333
+          }
+        },
+        {
+          "product": {
+            "productCode": "PJKCEW",
+            "name": "Brisbane to Tamborine Mountain Shuttle Service",
+            "shortDescription": "Choose one way if you would like to Stay in Tamborine Mountain or Unlimited Hop on Hop off with Return Ticket\r\n\r\n*Unlimited Hop on Hop off Option includes all transport around Tamborine Mountain for one day\r\n\r\n",
+            "productType": "CUSTOM",
+            "price": 99
+          },
+          "analysis": {
+            "matchedKeywords": [
+              "hop off",
+              "hop on hop off"
+            ],
+            "confidence": 0.3333333333333333
+          }
+        },
+        {
+          "product": {
+            "productCode": "PT1CFA",
+            "name": "Currumbin Wildlife Sanctuary - Southern Gold Coast - Northern NSW - Hop on Hop off Shuttle",
+            "shortDescription": "Explore Southern Gold Coast and Northern NSW with our Hop on Hop off Bus! Visit Currumbin Wildlife Sanctuary, Burleigh Heads National Park, Husk Distillery, Tropical Fruit World, and more, Unlimited Hop on Hop off pass to all attractions.",
+            "productType": "TRANSFER",
+            "price": 99
+          },
+          "analysis": {
+            "matchedKeywords": [
+              "hop off",
+              "hop on hop off"
+            ],
+            "confidence": 0.3333333333333333
+          }
+        },
+        {
+          "product": {
+            "productCode": "PK4F35",
+            "name": "Currumbin Wildlife Sanctuary entry - Includes Unlimited Hop on Hop off - Southern Gold Coast / Northern NSW",
+            "shortDescription": "Explore Southern Gold Coast and Northern NSW with our Hop on Hop off Bus! Visit Currumbin Wildlife Sanctuary, Burleigh Heads National Park, Husk Distillery, Tropical Fruit World.\r\nThis is a return Ticket that includes entry to the park",
+            "productType": "ACTIVITY",
+            "price": 159
+          },
+          "analysis": {
+            "matchedKeywords": [
+              "hop off",
+              "hop on hop off"
+            ],
+            "confidence": 0.3333333333333333
+          }
+        },
+        {
+          "product": {
+            "productCode": "PMP0H7",
+            "name": "Gold Coast - Tamborine Mountain Shuttle Service",
+            "shortDescription": "Choose one way if you would like to Stay in Tamborine Mountain or Unlimited Hop on Hop off with Return Ticket\r\n\r\n*Unlimited Hop on Hop off Option includes all transport around Tamborine Mountain for one day\r\n\r\n",
+            "productType": "CUSTOM",
+            "price": 99
+          },
+          "analysis": {
+            "matchedKeywords": [
+              "hop off",
+              "hop on hop off"
+            ],
+            "confidence": 0.3333333333333333
+          }
+        },
+        {
+          "product": {
+            "productCode": "PMVZUK",
+            "name": "Gold Coast Last Minute Deals",
+            "shortDescription": "A tour of award winning wineries in Mount Tamborine and taste some of Queensland's best wines including guided tastings at a number of family owned boutique wineries, a two course lunch.",
+            "productType": "DAYTOUR",
+            "price": 135
+          },
+          "analysis": {
+            "matchedKeywords": [
+              "hop off",
+              "hop on hop off"
+            ],
+            "confidence": 0.3333333333333333
+          }
+        },
+        {
+          "product": {
+            "productCode": "PTC5RK",
+            "name": "Hop on Hop Off  - Brisbane City Loop - ATE25 ",
+            "shortDescription": "Hop on Hop off City Loop – Brisbane\r\n\r\nDiscover Brisbane your way with the Hop on Hop off City Loop – the easiest and most flexible way to explore the River City!\r\n\r\n\r\n\r\n",
+            "productType": "CUSTOM",
+            "price": 99
+          },
+          "analysis": {
+            "matchedKeywords": [
+              "hop off",
+              "hop on hop off"
+            ],
+            "confidence": 0.3333333333333333
+          }
+        },
+        {
+          "product": {
+            "productCode": "P7WH5Q",
+            "name": "Hop on Hop Off  Wine Tour - Tamborine Mountain - From Brisbane - Flexi Pass",
+            "shortDescription": "Adventure from Brisbane to the enchanting heights of Tamborine Mountain with our exclusive hop-on, hop-off bus service. Departing every morning from Brisbane. Enjoy the flexibility to explore Tamborine Mountains best Vineyards\r\n\r\n\r\n",
+            "productType": "CUSTOM",
+            "price": 99
+          },
+          "analysis": {
+            "matchedKeywords": [
+              "hop-on",
+              "hop off",
+              "hop on hop off"
+            ],
+            "confidence": 0.5
+          }
+        },
+        {
+          "product": {
+            "productCode": "PTMB07",
+            "name": "Hop on Hop off Brewery adventure - Tamborine Mountain - From Brisbane",
+            "shortDescription": "A beer lover’s dream adventure from Brisbane to the craft brewery haven of Tamborine Mountain with our hop-on, hop-off bus. This brewery-focused journey offers the flexibility to explore Tamborine Mountain’s best brews, one stop at a time.",
+            "productType": "CUSTOM",
+            "price": 99
+          },
+          "analysis": {
+            "matchedKeywords": [
+              "hop-on",
+              "hop off",
+              "hop on hop off"
+            ],
+            "confidence": 0.5
+          }
+        },
+        {
+          "product": {
+            "productCode": "PTEFYF",
+            "name": "Hop on Hop off Brewery adventure - Tamborine Mountain - Gold Coast",
+            "shortDescription": "A beer lover’s adventure from the Gold Coast to the craft brewery haven of Tamborine Mountain with our hop-on, hop-off bus. This brewery-focused journey offers the flexibility to explore Tamborine Mountain’s best brews, one stop at a time.",
+            "productType": "CUSTOM",
+            "price": 99
+          },
+          "analysis": {
+            "matchedKeywords": [
+              "hop-on",
+              "hop off",
+              "hop on hop off"
+            ],
+            "confidence": 0.5
+          }
+        },
+        {
+          "product": {
+            "productCode": "PEMLWN",
+            "name": "Hop on Hop off Bus - Brisbane City Loop",
+            "shortDescription": "Explore Brisbane City with our city loop hop-on, hop-off bus! Discover top attractions with the freedom to hop on and off all day, visiting key attractions around Brisbane City, There is also a Single Trip + Tamborine Mountain Pass\r\n\r\n\r\n",
+            "productType": "CUSTOM",
+            "price": 29
+          },
+          "analysis": {
+            "matchedKeywords": [
+              "hop-on",
+              "hop off",
+              "hop on hop off"
+            ],
+            "confidence": 0.5
+          }
+        },
+        {
+          "product": {
+            "productCode": "PNG5LL",
+            "name": "Hop on Hop off Bus - Brisbane City Loop - Resource ",
+            "shortDescription": "Explore Brisbane City with our city loop hop-on, hop-off bus! Discover top attractions with the freedom to hop on and off all day, visiting key attractions around Brisbane City, There is also a Single Trip + Tamborine Mountain Pass\r\n\r\n\r\n",
+            "productType": "CUSTOM",
+            "price": 29
+          },
+          "analysis": {
+            "matchedKeywords": [
+              "hop-on",
+              "hop off",
+              "hop on hop off"
+            ],
+            "confidence": 0.5
+          }
+        },
+        {
+          "product": {
+            "productCode": "PB2XAV",
+            "name": "Hop on Hop off Bus - Brisbane City Loop - The Heart of Brisbane- 24hrs",
+            "shortDescription": "Explore Brisbane City with our city loop hop-on, hop-off bus! Discover top attractions with the freedom to hop on and off all day, visiting key attractions around Brisbane City, 24hrs around the Heart of Brisbane City Loop.\r\n\r\n\r\n",
+            "productType": "CUSTOM",
+            "price": 99
+          },
+          "analysis": {
+            "matchedKeywords": [
+              "hop-on",
+              "hop off",
+              "hop on hop off"
+            ],
+            "confidence": 0.5
+          }
+        },
+        {
+          "product": {
+            "productCode": "PYRSK0",
+            "name": "Hop on Hop Off Bus - From Tamborine Mountain ",
+            "shortDescription": "Tourist Shuttle Service to key tourist attractions and venues on Tamborine Mountain - Pickup from Tamborine Mountain\r\n\r\nAlso available as a way for locals to get around Tamborine Mountain without the need to drive.\r\n\r\n\r\n\r\n",
+            "productType": "CUSTOM",
+            "price": 68
+          },
+          "analysis": {
+            "matchedKeywords": [
+              "hop off",
+              "hop on hop off"
+            ],
+            "confidence": 0.3333333333333333
+          }
+        },
+        {
+          "product": {
+            "productCode": "PW1HTG",
+            "name": "Hop on Hop Off Bus - Movie World - from Brisbane",
+            "shortDescription": "Embark on an adventure from theGold Coast to the enchanting heights of Tamborine Mountain with our exclusive hop-on, hop-off bus service. Departing every morning from Gold Coast. Enjoy the flexibility to explore Tamborine Mountain.\r\n\r\n\r\n",
+            "productType": "CUSTOM",
+            "price": 99
+          },
+          "analysis": {
+            "matchedKeywords": [
+              "hop-on",
+              "hop off",
+              "hop on hop off"
+            ],
+            "confidence": 0.5
+          }
+        },
+        {
+          "product": {
+            "productCode": "P0SVHC",
+            "name": "Hop on Hop Off Bus - Movie World - from Gold Coast",
+            "shortDescription": "Embark on an adventure from theGold Coast to the enchanting heights of Tamborine Mountain with our exclusive hop-on, hop-off bus service. Departing every morning from Gold Coast. Enjoy the flexibility to explore Tamborine Mountain.\r\n\r\n\r\n",
+            "productType": "CUSTOM",
+            "price": 99
+          },
+          "analysis": {
+            "matchedKeywords": [
+              "hop-on",
+              "hop off",
+              "hop on hop off"
+            ],
+            "confidence": 0.5
+          }
+        },
+        {
+          "product": {
+            "productCode": "P2UDGV",
+            "name": "Hop on Hop off Bus - Single Trip - Brisbane City Loop + Unlimited Hop on Hop off - Tamborine Mountain",
+            "shortDescription": "This is a Single Trip Brisbane City Loop + Unlimited Tamborine Mountain Pass. with the hop-on, hop-off bus! Preview of Brisbane City with our Brisbane City Loop then Hop-on Hop-off all day around the sites of Tamborine Mountain.\r\n\r\n\r\n",
+            "productType": "CUSTOM",
+            "price": 128
+          },
+          "analysis": {
+            "matchedKeywords": [
+              "hop-on",
+              "hop off",
+              "hop on hop off"
+            ],
+            "confidence": 0.5
+          }
+        },
+        {
+          "product": {
+            "productCode": "PKK5KB",
+            "name": "Hop on Hop Off Bus - Tamborine Mountain - from Gold Coast",
+            "shortDescription": "Embark on an adventure from theGold Coast to the enchanting heights of Tamborine Mountain with our exclusive hop-on, hop-off bus service. Departing every morning from Gold Coast. Enjoy the flexibility to explore Tamborine Mountain.\r\n\r\n\r\n",
+            "productType": "CUSTOM",
+            "price": 99
+          },
+          "analysis": {
+            "matchedKeywords": [
+              "hop-on",
+              "hop off",
+              "hop on hop off"
+            ],
+            "confidence": 0.5
+          }
+        },
+        {
+          "product": {
+            "productCode": "PJXQHN",
+            "name": "Hop on Hop off Bus with Rainforest Skywalk + Glow Worm Caves - From Brisbane",
+            "shortDescription": "Hop on Hop off to Tamborine Mountain and explore over 30 stops, including the Skywalk, Glow Worm Caves, stunning lookouts, lush rainforests, waterfalls, wineries, distilleries, and charming local shops and much much more.\r\n\r\n\r\n\r\n",
+            "productType": "CUSTOM",
+            "price": 165
+          },
+          "analysis": {
+            "matchedKeywords": [
+              "hop off",
+              "hop on hop off"
+            ],
+            "confidence": 0.3333333333333333
+          }
+        },
+        {
+          "product": {
+            "productCode": "P70YXP",
+            "name": "Hop on Hop off Bus with Rainforest Skywalk + Glow Worm Caves - From Gold Coast",
+            "shortDescription": "Hop on Hop off to Tamborine Mountain and explore over 30 stops, including the Skywalk, Glow Worm Caves, stunning lookouts, lush rainforests, waterfalls, wineries, distilleries, and charming local shops and much much more.\r\n\r\n\r\n\r\n",
+            "productType": "CUSTOM",
+            "price": 165
+          },
+          "analysis": {
+            "matchedKeywords": [
+              "hop off",
+              "hop on hop off"
+            ],
+            "confidence": 0.3333333333333333
+          }
+        },
+        {
+          "product": {
+            "productCode": "PNYY7C",
+            "name": "Hop on Hop off Day Pass + Glow Worm Tour -  Brisbane Pickup",
+            "shortDescription": "Glow worms only exist in Australia and New Zealand so come on a fantastic journey with is to meet these small but brightly glowing creatures, Guaranteed sightings and time for morning tea and scenic lookouts throughout the National Park.",
+            "productType": "DAYTOUR",
+            "price": 135
+          },
+          "analysis": {
+            "matchedKeywords": [
+              "hop-on",
+              "hop off",
+              "hop on hop off"
+            ],
+            "confidence": 0.5
+          }
+        },
+        {
+          "product": {
+            "productCode": "PZ6FNP",
+            "name": "Hop on Hop off Day Pass + Glow Worm Tour - Gold Coast Pickup",
+            "shortDescription": "Glow worms only exist in Australia and New Zealand so come on a fantastic journey with is to meet these small but brightly glowing creatures, Guaranteed sightings and time for morning tea and scenic lookouts throughout the National Park.",
+            "productType": "DAYTOUR",
+            "price": 135
+          },
+          "analysis": {
+            "matchedKeywords": [
+              "hop-on",
+              "hop off",
+              "hop on hop off"
+            ],
+            "confidence": 0.5
+          }
+        },
+        {
+          "product": {
+            "productCode": "P119KN",
+            "name": "Hop on Hop off Day Pass - Freesale - Book any date with this voucher",
+            "shortDescription": "Hop on Hop off Freesale Pass - Use this to book a Hop on Hop off Experience",
+            "productType": "GIFT_CARD",
+            "price": 29
+          },
+          "analysis": {
+            "matchedKeywords": [
+              "hop-on",
+              "hop off",
+              "hop on hop off"
+            ],
+            "confidence": 0.5
+          }
+        },
+        {
+          "product": {
+            "productCode": "PKQL4P",
+            "name": "Hop on Hop off Distillery adventure - Tamborine Mountain - Brisbane",
+            "shortDescription": "A spirit lover’s journey from Brisbane to Tamborine Mountain’s finest distilleries with our hop-on, hop-off bus. Enjoy the freedom to explore handcrafted gins, rums, and liqueurs at your own pace, one exceptional distillery at a time.",
+            "productType": "CUSTOM",
+            "price": 99
+          },
+          "analysis": {
+            "matchedKeywords": [
+              "hop-on",
+              "hop off",
+              "hop on hop off"
+            ],
+            "confidence": 0.5
+          }
+        },
+        {
+          "product": {
+            "productCode": "PFMGXB",
+            "name": "Hop on Hop off Distillery adventure - Tamborine Mountain - Gold Coast",
+            "shortDescription": "A spirit lover’s journey from the Gold Coast to Tamborine Mountain’s finest distilleries with our hop-on, hop-off bus. Enjoy the freedom to explore handcrafted gins, rums, and liqueurs at your own pace, one exceptional distillery at a time.",
+            "productType": "CUSTOM",
+            "price": 99
+          },
+          "analysis": {
+            "matchedKeywords": [
+              "hop-on",
+              "hop off",
+              "hop on hop off"
+            ],
+            "confidence": 0.5
+          }
+        },
+        {
+          "product": {
+            "productCode": "PMRS95",
+            "name": "Hop on Hop off Wine Tasting Tour - From Brisbane",
+            "shortDescription": "Join our Hop on Hop off Bus to Explore the Wineries of Mount Tamborine, enjoy guided tastings at each venue and then explore the mountain at your own leisure. You can try some local food, do some shopping or visit a rainforest waterfall.",
+            "productType": "DAYTOUR",
+            "price": 165
+          },
+          "analysis": {
+            "matchedKeywords": [
+              "hop off",
+              "hop on hop off"
+            ],
+            "confidence": 0.3333333333333333
+          }
+        },
+        {
+          "product": {
+            "productCode": "PKCDT3",
+            "name": "Hop on Hop off Wine Tasting Tour - From Gold Coast",
+            "shortDescription": "Join our Hop on Hop off Bus to Explore the Wineries of Mount Tamborine, enjoy guided tastings at each venue and then explore the mountain at your own leisure. You can try some local food, do some shopping or visit a rainforest waterfall.",
+            "productType": "DAYTOUR",
+            "price": 165
+          },
+          "analysis": {
+            "matchedKeywords": [
+              "hop off",
+              "hop on hop off"
+            ],
+            "confidence": 0.3333333333333333
+          }
+        },
+        {
+          "product": {
+            "productCode": "PNP4S2",
+            "name": "Hop on Hop Off Wine Tour - Tamborine Mountain - from Gold Coast - Flexi Pass",
+            "shortDescription": "Adventure from the Gold Coast to the enchanting heights of Tamborine Mountain with our exclusive hop-on, hop-off bus service. Departing every morning from Gold Coast. Enjoy the flexibility to explore Tamborine Mountains best Vineyards.\r\n\r\n",
+            "productType": "CUSTOM",
+            "price": 99
+          },
+          "analysis": {
+            "matchedKeywords": [
+              "hop-on",
+              "hop off",
+              "hop on hop off"
+            ],
+            "confidence": 0.5
+          }
+        },
+        {
+          "product": {
+            "productCode": "PLKY3R",
+            "name": "Hop on Hop off Winery adventure - Tamborine Mountain - Brisbane",
+            "shortDescription": "A wine lover’s journey to Tamborine Mountain’s finest wineries with our hop-on, hop-off bus. Enjoy the freedom to explore award-winning vineyards, sample exquisite local wines, and soak in the serene mountain scenery at your own pace.",
+            "productType": "CUSTOM",
+            "price": 99
+          },
+          "analysis": {
+            "matchedKeywords": [
+              "hop-on",
+              "hop off",
+              "hop on hop off"
+            ],
+            "confidence": 0.5
+          }
+        },
+        {
+          "product": {
+            "productCode": "PBRFH9",
+            "name": "Hop on Hop off Winery adventure - Tamborine Mountain - Gold Coast",
+            "shortDescription": "A wine lover’s journey to Tamborine Mountain’s finest wineries with our hop-on, hop-off bus. Enjoy the freedom to explore award-winning vineyards, sample exquisite local wines, and soak in the serene mountain scenery at your own pace.",
+            "productType": "CUSTOM",
+            "price": 99
+          },
+          "analysis": {
+            "matchedKeywords": [
+              "hop-on",
+              "hop off",
+              "hop on hop off"
+            ],
+            "confidence": 0.5
+          }
+        },
+        {
+          "product": {
+            "productCode": "PZCW0V",
+            "name": "Husk Distillery - Unlimited Hop on Hop off Day Pass - Southern Gold Coast / Northern NSW",
+            "shortDescription": "Explore Southern Gold Coast and Northern NSW with our Hop on Hop off Bus! Visit Husk Distillery, Burleigh Heads National Park, Northern Rivers Rail Trail,  Tropical Fruit World, and more, Unlimited Hop on Hop off pass to all attractions.",
+            "productType": "CUSTOM",
+            "price": 99
+          },
+          "analysis": {
+            "matchedKeywords": [
+              "hop off",
+              "hop on hop off"
+            ],
+            "confidence": 0.3333333333333333
+          }
+        },
+        {
+          "product": {
+            "productCode": "PSMW0S",
+            "name": "Internal - Currumbin Wildlife Sanctuary - Unlimited Hop on Hop off Day Pass - Southern Gold Coast / Northern NSW",
+            "shortDescription": "Explore Southern Gold Coast and Northern NSW with our Hop on Hop off Bus! Visit Currumbin Wildlife Sanctuary, Burleigh Heads National Park, Husk Distillery, Tropical Fruit World, and more, Unlimited Hop on Hop off pass to all attractions.\r\n",
+            "productType": "CUSTOM",
+            "price": 99
+          },
+          "analysis": {
+            "matchedKeywords": [
+              "hop off",
+              "hop on hop off"
+            ],
+            "confidence": 0.3333333333333333
+          }
+        },
+        {
+          "product": {
+            "productCode": "PMHU1R",
+            "name": "Jellurgal Aboriginal Cultural Centre - Unlimited Hop on Hop off Day Pass - Southern Gold Coast / Northern NSW",
+            "shortDescription": "Explore Southern Gold Coast and Northern NSW with our Hop on Hop off Bus! Visit Currumbin Wildlife Sanctuary, Burleigh Heads National Park, Jellurgal, Tropical Fruit World, and more, Unlimited Hop on Hop off pass to all attractions.",
+            "productType": "DAYTOUR",
+            "price": 138
+          },
+          "analysis": {
+            "matchedKeywords": [
+              "hop off",
+              "hop on hop off"
+            ],
+            "confidence": 0.3333333333333333
+          }
+        }
+      ],
+      "Bus Charter": [
+        {
+          "product": {
+            "productCode": "PRPEE2",
+            "name": "27 Seat Minibus Charter South East QLD and Northern NSW - Hourly Rate",
+            "shortDescription": "25 Seat Minibus - Hourly Rate",
+            "productType": "RENTAL",
+            "price": 240
+          },
+          "analysis": {
+            "matchedKeywords": [
+              "bus charter"
+            ],
+            "confidence": 0.2
+          }
+        },
+        {
+          "product": {
+            "productCode": "PXWDXR",
+            "name": "57 Seat Coach Charter",
+            "shortDescription": "57 Seat Minibus - Hourly Rate",
+            "productType": "CHARTER",
+            "price": 850
+          },
+          "analysis": {
+            "matchedKeywords": [
+              "coach charter"
+            ],
+            "confidence": 0.2
+          }
+        }
+      ],
+      "Day Tours": [
+        {
+          "product": {
+            "productCode": "PJGM0A",
+            "name": "$199 Gift Voucher - For Full Day Winery Tour",
+            "shortDescription": "This is a $199 Gift Voucher that can be used towards any product - This is perfect to book for our Full Day Winery Tour from Brisbane, Gold Coast or Tamborine Mountain",
+            "productType": "GIFT_CARD",
+            "price": 199
+          },
+          "analysis": {
+            "matchedKeywords": [
+              "full day"
+            ],
+            "confidence": 0.16666666666666666
+          }
+        },
+        {
+          "product": {
+            "productCode": "PYUMZN",
+            "name": "$229 Gift Voucher",
+            "shortDescription": "This is a $229 Gift Voucher that can be used towards any product - This is perfect to book for our Full Day Winery Tour from Brisbane, Gold Coast or Tamborine Mountain",
+            "productType": "GIFT_CARD",
+            "price": 229
+          },
+          "analysis": {
+            "matchedKeywords": [
+              "full day"
+            ],
+            "confidence": 0.16666666666666666
+          }
+        },
+        {
+          "product": {
+            "productCode": "PU8SCU",
+            "name": "$358 Gift Voucher",
+            "shortDescription": "This is a $358 Gift Voucher that can be used towards any product. - This is perfect for gifting two people on our Full Day Winery Tour from Brisbane, Gold Coast or Tamborine Mountain",
+            "productType": "GIFT_CARD",
+            "price": 358
+          },
+          "analysis": {
+            "matchedKeywords": [
+              "full day"
+            ],
+            "confidence": 0.16666666666666666
+          }
+        },
+        {
+          "product": {
+            "productCode": "PN0S6R",
+            "name": "$398 Gift Voucher - Two people Full Day Wine Tour",
+            "shortDescription": "This is a $398 Gift Voucher that can be used towards any product. - This is perfect for gifting two people on our Full Day Winery Tour from Brisbane, Gold Coast or Tamborine Mountain",
+            "productType": "GIFT_CARD",
+            "price": 398
+          },
+          "analysis": {
+            "matchedKeywords": [
+              "full day"
+            ],
+            "confidence": 0.16666666666666666
+          }
+        },
+        {
+          "product": {
+            "productCode": "P30VE2",
+            "name": "$458 Gift Voucher - Two people Full Day Wine Tour including Pickup",
+            "shortDescription": "This is a $458 Gift Voucher that can be used towards any product. - This is perfect for gifting two people on our Full Day Winery Tour from Brisbane, Gold Coast or Tamborine Mountain",
+            "productType": "GIFT_CARD",
+            "price": 458
+          },
+          "analysis": {
+            "matchedKeywords": [
+              "full day"
+            ],
+            "confidence": 0.16666666666666666
+          }
+        },
+        {
+          "product": {
+            "productCode": "PWGSA9",
+            "name": "$598 Gift Voucher - Two people Premium Full Day Wine Tour including Pickup",
+            "shortDescription": "This is a $598 Gift Voucher that can be used towards any product. - This is perfect for gifting two people on our Full Day Winery Tour from Brisbane, Gold Coast or Tamborine Mountain",
+            "productType": "GIFT_CARD",
+            "price": 598
+          },
+          "analysis": {
+            "matchedKeywords": [
+              "full day"
+            ],
+            "confidence": 0.16666666666666666
+          }
+        },
+        {
+          "product": {
+            "productCode": "PHKGRW",
+            "name": "3 Day Luxury Brisbane - Gold Coast - Bryon Bay Experience",
+            "shortDescription": "A Private 3 Day tour of the Brisbane, The Gold Coast and Byron Bay and taste some of the areas best local produce, with a gourmet food, sightseeing and history along the way, this tour is personalised to suit your group. ",
+            "productType": "DAYTOUR",
+            "price": 1995
+          },
+          "analysis": {
+            "matchedKeywords": [
+              "day tour"
+            ],
+            "confidence": 0.16666666666666666
+          }
+        },
+        {
+          "product": {
+            "productCode": "PUGMBV",
+            "name": "3 Day Luxury Hinterland Experience",
+            "shortDescription": "A Private 3 Day tour of the Gold Coast and Scenic Rim and taste some of Queensland's best produce, with a gourmet food, sightseeing and history along the way, this tour is personalised to suit your group. ",
+            "productType": "DAYTOUR",
+            "price": 1995
+          },
+          "analysis": {
+            "matchedKeywords": [
+              "day tour"
+            ],
+            "confidence": 0.16666666666666666
+          }
+        },
+        {
+          "product": {
+            "productCode": "PDW319",
+            "name": "Byron Bay Day Tour - Signature Experience",
+            "shortDescription": "Stretching inland from Australia's most easterly point, Byron Bay's hinterland is filled with gorgeous villages, stunning scenery and a tranquillity that washes urban stresses from every visitor. ",
+            "productType": "PRIVATE_TOUR",
+            "price": 1295
+          },
+          "analysis": {
+            "matchedKeywords": [
+              "day tour"
+            ],
+            "confidence": 0.16666666666666666
+          }
+        },
+        {
+          "product": {
+            "productCode": "P0E7JV",
+            "name": "Early Bird - Full Day Mount Tamborine Winery Tour",
+            "shortDescription": "A tour of award winning wineries in Mount Tamborine and taste some of Queensland's best wines including guided tastings at a number of family owned boutique wineries, a two course lunch.",
+            "productType": "DAYTOUR",
+            "price": 219
+          },
+          "analysis": {
+            "matchedKeywords": [
+              "full day"
+            ],
+            "confidence": 0.16666666666666666
+          }
+        },
+        {
+          "product": {
+            "productCode": "PUN2ZS",
+            "name": "FDWT Non Drinker BNE",
+            "shortDescription": "For Non drinking Passengers on the Full Day Wine Tour",
+            "productType": "DAYTOUR",
+            "price": 145
+          },
+          "analysis": {
+            "matchedKeywords": [
+              "full day"
+            ],
+            "confidence": 0.16666666666666666
+          }
+        },
+        {
+          "product": {
+            "productCode": "P37WU0",
+            "name": "FDWT Non Drinker GC",
+            "shortDescription": "For Non drinking Passengers on the Full Day Wine Tour",
+            "productType": "DAYTOUR",
+            "price": 145
+          },
+          "analysis": {
+            "matchedKeywords": [
+              "full day"
+            ],
+            "confidence": 0.16666666666666666
+          }
+        },
+        {
+          "product": {
+            "productCode": "P1T19K",
+            "name": "HDWT Non Drinker",
+            "shortDescription": "For Non drinking Passengers on the Full Day Wine Tour",
+            "productType": "DAYTOUR",
+            "price": 110
+          },
+          "analysis": {
+            "matchedKeywords": [
+              "full day"
+            ],
+            "confidence": 0.16666666666666666
+          }
+        },
+        {
+          "product": {
+            "productCode": "PTC5RK",
+            "name": "Hop on Hop Off  - Brisbane City Loop - ATE25 ",
+            "shortDescription": "Hop on Hop off City Loop – Brisbane\r\n\r\nDiscover Brisbane your way with the Hop on Hop off City Loop – the easiest and most flexible way to explore the River City!\r\n\r\n\r\n\r\n",
+            "productType": "CUSTOM",
+            "price": 99
+          },
+          "analysis": {
+            "matchedKeywords": [
+              "full day"
+            ],
+            "confidence": 0.16666666666666666
+          }
+        },
+        {
+          "product": {
+            "productCode": "PEMLWN",
+            "name": "Hop on Hop off Bus - Brisbane City Loop",
+            "shortDescription": "Explore Brisbane City with our city loop hop-on, hop-off bus! Discover top attractions with the freedom to hop on and off all day, visiting key attractions around Brisbane City, There is also a Single Trip + Tamborine Mountain Pass\r\n\r\n\r\n",
+            "productType": "CUSTOM",
+            "price": 29
+          },
+          "analysis": {
+            "matchedKeywords": [
+              "full day",
+              "all day"
+            ],
+            "confidence": 0.3333333333333333
+          }
+        },
+        {
+          "product": {
+            "productCode": "PNG5LL",
+            "name": "Hop on Hop off Bus - Brisbane City Loop - Resource ",
+            "shortDescription": "Explore Brisbane City with our city loop hop-on, hop-off bus! Discover top attractions with the freedom to hop on and off all day, visiting key attractions around Brisbane City, There is also a Single Trip + Tamborine Mountain Pass\r\n\r\n\r\n",
+            "productType": "CUSTOM",
+            "price": 29
+          },
+          "analysis": {
+            "matchedKeywords": [
+              "full day",
+              "all day"
+            ],
+            "confidence": 0.3333333333333333
+          }
+        },
+        {
+          "product": {
+            "productCode": "PB2XAV",
+            "name": "Hop on Hop off Bus - Brisbane City Loop - The Heart of Brisbane- 24hrs",
+            "shortDescription": "Explore Brisbane City with our city loop hop-on, hop-off bus! Discover top attractions with the freedom to hop on and off all day, visiting key attractions around Brisbane City, 24hrs around the Heart of Brisbane City Loop.\r\n\r\n\r\n",
+            "productType": "CUSTOM",
+            "price": 99
+          },
+          "analysis": {
+            "matchedKeywords": [
+              "full day",
+              "all day"
+            ],
+            "confidence": 0.3333333333333333
+          }
+        },
+        {
+          "product": {
+            "productCode": "P2UDGV",
+            "name": "Hop on Hop off Bus - Single Trip - Brisbane City Loop + Unlimited Hop on Hop off - Tamborine Mountain",
+            "shortDescription": "This is a Single Trip Brisbane City Loop + Unlimited Tamborine Mountain Pass. with the hop-on, hop-off bus! Preview of Brisbane City with our Brisbane City Loop then Hop-on Hop-off all day around the sites of Tamborine Mountain.\r\n\r\n\r\n",
+            "productType": "CUSTOM",
+            "price": 128
+          },
+          "analysis": {
+            "matchedKeywords": [
+              "full day",
+              "all day"
+            ],
+            "confidence": 0.3333333333333333
+          }
+        }
+      ],
+      "Corporate Tours": [
+        {
+          "product": {
+            "productCode": "PH1FEA",
+            "name": " Hop on Hop off Bus - Tamborine Mountain - From Brisbane",
+            "shortDescription": "Embark on an adventure from Brisbane to the enchanting heights of Tamborine Mountain with our exclusive hop-on, hop-off bus service. Departing every morning from Brisbane. Enjoy the flexibility to explore Tamborine Mountain.\r\n\r\n\r\n",
+            "productType": "CUSTOM",
+            "price": 99
+          },
+          "analysis": {
+            "matchedKeywords": [
+              "company"
+            ],
+            "confidence": 0.16666666666666666
+          }
+        },
+        {
+          "product": {
+            "productCode": "PRPEE2",
+            "name": "27 Seat Minibus Charter South East QLD and Northern NSW - Hourly Rate",
+            "shortDescription": "25 Seat Minibus - Hourly Rate",
+            "productType": "RENTAL",
+            "price": 240
+          },
+          "analysis": {
+            "matchedKeywords": [
+              "corporate"
+            ],
+            "confidence": 0.16666666666666666
+          }
+        },
+        {
+          "product": {
+            "productCode": "PXWDXR",
+            "name": "57 Seat Coach Charter",
+            "shortDescription": "57 Seat Minibus - Hourly Rate",
+            "productType": "CHARTER",
+            "price": 850
+          },
+          "analysis": {
+            "matchedKeywords": [
+              "corporate"
+            ],
+            "confidence": 0.16666666666666666
+          }
+        },
+        {
+          "product": {
+            "productCode": "PJKCEW",
+            "name": "Brisbane to Tamborine Mountain Shuttle Service",
+            "shortDescription": "Choose one way if you would like to Stay in Tamborine Mountain or Unlimited Hop on Hop off with Return Ticket\r\n\r\n*Unlimited Hop on Hop off Option includes all transport around Tamborine Mountain for one day\r\n\r\n",
+            "productType": "CUSTOM",
+            "price": 99
+          },
+          "analysis": {
+            "matchedKeywords": [
+              "company"
+            ],
+            "confidence": 0.16666666666666666
+          }
+        },
+        {
+          "product": {
+            "productCode": "PJVPPN",
+            "name": "Cocktail Social - Tamborine Mountain",
+            "shortDescription": "Explore your inner love of cocktails with our all inclusive Cocktail Social.\r\nPerfect for Hens Parties and Bucks Nights and Birthdays.",
+            "productType": "LESSON",
+            "price": 205
+          },
+          "analysis": {
+            "matchedKeywords": [
+              "corporate"
+            ],
+            "confidence": 0.16666666666666666
+          }
+        },
+        {
+          "product": {
+            "productCode": "PPYTS0",
+            "name": "Gin Blending Class - Tamborine Mountain",
+            "shortDescription": "Become a master of mixology with our all inclusive Cocktail Masterclass.\r\nEspresso Martinis to one of a kind wonders of the cocktail world this experience will suit everyone. \r\nPerfect for Hens Parties and Bucks Nights and Birthdays.",
+            "productType": "LESSON",
+            "price": 139
+          },
+          "analysis": {
+            "matchedKeywords": [
+              "corporate"
+            ],
+            "confidence": 0.16666666666666666
+          }
+        },
+        {
+          "product": {
+            "productCode": "PMP0H7",
+            "name": "Gold Coast - Tamborine Mountain Shuttle Service",
+            "shortDescription": "Choose one way if you would like to Stay in Tamborine Mountain or Unlimited Hop on Hop off with Return Ticket\r\n\r\n*Unlimited Hop on Hop off Option includes all transport around Tamborine Mountain for one day\r\n\r\n",
+            "productType": "CUSTOM",
+            "price": 99
+          },
+          "analysis": {
+            "matchedKeywords": [
+              "company"
+            ],
+            "confidence": 0.16666666666666666
+          }
+        },
+        {
+          "product": {
+            "productCode": "P7WH5Q",
+            "name": "Hop on Hop Off  Wine Tour - Tamborine Mountain - From Brisbane - Flexi Pass",
+            "shortDescription": "Adventure from Brisbane to the enchanting heights of Tamborine Mountain with our exclusive hop-on, hop-off bus service. Departing every morning from Brisbane. Enjoy the flexibility to explore Tamborine Mountains best Vineyards\r\n\r\n\r\n",
+            "productType": "CUSTOM",
+            "price": 99
+          },
+          "analysis": {
+            "matchedKeywords": [
+              "company"
+            ],
+            "confidence": 0.16666666666666666
+          }
+        },
+        {
+          "product": {
+            "productCode": "PTMB07",
+            "name": "Hop on Hop off Brewery adventure - Tamborine Mountain - From Brisbane",
+            "shortDescription": "A beer lover’s dream adventure from Brisbane to the craft brewery haven of Tamborine Mountain with our hop-on, hop-off bus. This brewery-focused journey offers the flexibility to explore Tamborine Mountain’s best brews, one stop at a time.",
+            "productType": "CUSTOM",
+            "price": 99
+          },
+          "analysis": {
+            "matchedKeywords": [
+              "company"
+            ],
+            "confidence": 0.16666666666666666
+          }
+        },
+        {
+          "product": {
+            "productCode": "PTEFYF",
+            "name": "Hop on Hop off Brewery adventure - Tamborine Mountain - Gold Coast",
+            "shortDescription": "A beer lover’s adventure from the Gold Coast to the craft brewery haven of Tamborine Mountain with our hop-on, hop-off bus. This brewery-focused journey offers the flexibility to explore Tamborine Mountain’s best brews, one stop at a time.",
+            "productType": "CUSTOM",
+            "price": 99
+          },
+          "analysis": {
+            "matchedKeywords": [
+              "company"
+            ],
+            "confidence": 0.16666666666666666
+          }
+        },
+        {
+          "product": {
+            "productCode": "PW1HTG",
+            "name": "Hop on Hop Off Bus - Movie World - from Brisbane",
+            "shortDescription": "Embark on an adventure from theGold Coast to the enchanting heights of Tamborine Mountain with our exclusive hop-on, hop-off bus service. Departing every morning from Gold Coast. Enjoy the flexibility to explore Tamborine Mountain.\r\n\r\n\r\n",
+            "productType": "CUSTOM",
+            "price": 99
+          },
+          "analysis": {
+            "matchedKeywords": [
+              "company"
+            ],
+            "confidence": 0.16666666666666666
+          }
+        },
+        {
+          "product": {
+            "productCode": "P0SVHC",
+            "name": "Hop on Hop Off Bus - Movie World - from Gold Coast",
+            "shortDescription": "Embark on an adventure from theGold Coast to the enchanting heights of Tamborine Mountain with our exclusive hop-on, hop-off bus service. Departing every morning from Gold Coast. Enjoy the flexibility to explore Tamborine Mountain.\r\n\r\n\r\n",
+            "productType": "CUSTOM",
+            "price": 99
+          },
+          "analysis": {
+            "matchedKeywords": [
+              "company"
+            ],
+            "confidence": 0.16666666666666666
+          }
+        },
+        {
+          "product": {
+            "productCode": "PKK5KB",
+            "name": "Hop on Hop Off Bus - Tamborine Mountain - from Gold Coast",
+            "shortDescription": "Embark on an adventure from theGold Coast to the enchanting heights of Tamborine Mountain with our exclusive hop-on, hop-off bus service. Departing every morning from Gold Coast. Enjoy the flexibility to explore Tamborine Mountain.\r\n\r\n\r\n",
+            "productType": "CUSTOM",
+            "price": 99
+          },
+          "analysis": {
+            "matchedKeywords": [
+              "company"
+            ],
+            "confidence": 0.16666666666666666
+          }
+        },
+        {
+          "product": {
+            "productCode": "PKQL4P",
+            "name": "Hop on Hop off Distillery adventure - Tamborine Mountain - Brisbane",
+            "shortDescription": "A spirit lover’s journey from Brisbane to Tamborine Mountain’s finest distilleries with our hop-on, hop-off bus. Enjoy the freedom to explore handcrafted gins, rums, and liqueurs at your own pace, one exceptional distillery at a time.",
+            "productType": "CUSTOM",
+            "price": 99
+          },
+          "analysis": {
+            "matchedKeywords": [
+              "company"
+            ],
+            "confidence": 0.16666666666666666
+          }
+        },
+        {
+          "product": {
+            "productCode": "PFMGXB",
+            "name": "Hop on Hop off Distillery adventure - Tamborine Mountain - Gold Coast",
+            "shortDescription": "A spirit lover’s journey from the Gold Coast to Tamborine Mountain’s finest distilleries with our hop-on, hop-off bus. Enjoy the freedom to explore handcrafted gins, rums, and liqueurs at your own pace, one exceptional distillery at a time.",
+            "productType": "CUSTOM",
+            "price": 99
+          },
+          "analysis": {
+            "matchedKeywords": [
+              "company"
+            ],
+            "confidence": 0.16666666666666666
+          }
+        },
+        {
+          "product": {
+            "productCode": "PNP4S2",
+            "name": "Hop on Hop Off Wine Tour - Tamborine Mountain - from Gold Coast - Flexi Pass",
+            "shortDescription": "Adventure from the Gold Coast to the enchanting heights of Tamborine Mountain with our exclusive hop-on, hop-off bus service. Departing every morning from Gold Coast. Enjoy the flexibility to explore Tamborine Mountains best Vineyards.\r\n\r\n",
+            "productType": "CUSTOM",
+            "price": 99
+          },
+          "analysis": {
+            "matchedKeywords": [
+              "company"
+            ],
+            "confidence": 0.16666666666666666
+          }
+        },
+        {
+          "product": {
+            "productCode": "PLKY3R",
+            "name": "Hop on Hop off Winery adventure - Tamborine Mountain - Brisbane",
+            "shortDescription": "A wine lover’s journey to Tamborine Mountain’s finest wineries with our hop-on, hop-off bus. Enjoy the freedom to explore award-winning vineyards, sample exquisite local wines, and soak in the serene mountain scenery at your own pace.",
+            "productType": "CUSTOM",
+            "price": 99
+          },
+          "analysis": {
+            "matchedKeywords": [
+              "company"
+            ],
+            "confidence": 0.16666666666666666
+          }
+        },
+        {
+          "product": {
+            "productCode": "PBRFH9",
+            "name": "Hop on Hop off Winery adventure - Tamborine Mountain - Gold Coast",
+            "shortDescription": "A wine lover’s journey to Tamborine Mountain’s finest wineries with our hop-on, hop-off bus. Enjoy the freedom to explore award-winning vineyards, sample exquisite local wines, and soak in the serene mountain scenery at your own pace.",
+            "productType": "CUSTOM",
+            "price": 99
+          },
+          "analysis": {
+            "matchedKeywords": [
+              "company"
+            ],
+            "confidence": 0.16666666666666666
+          }
+        },
+        {
+          "product": {
+            "productCode": "P9JJWS",
+            "name": "Hybrid or EV Luxury SUV with Driver",
+            "shortDescription": "Travel in the latest model Hybrid or Electric Vehicle (EV) SUV, combining cutting-edge technology with eco-friendly luxury. ",
+            "productType": "RENTAL",
+            "price": 500
+          },
+          "analysis": {
+            "matchedKeywords": [
+              "corporate",
+              "corporate event"
+            ],
+            "confidence": 0.3333333333333333
+          }
+        },
+        {
+          "product": {
+            "productCode": "P6YWKK",
+            "name": "Jet Ski Safaris + Beer - Gold Coast - Visit Islands in the Broadwater and Gold Coasts best Breweries",
+            "shortDescription": "Looking for something different to do for your Bucks Party , Birthday or Special occasion? \r\nThis tour is great for those wanting to do something a bit different. \r\nThe tour includes  1.5Hr Jetski Safari followed by a boutique brewery tour",
+            "productType": "DAYTOUR",
+            "price": 369
+          },
+          "analysis": {
+            "matchedKeywords": [
+              "corporate",
+              "corporate event"
+            ],
+            "confidence": 0.3333333333333333
+          }
+        }
+      ],
+      "Hens Party": [],
+      "Barefoot Luxury": [
+        {
+          "product": {
+            "productCode": "PH1FEA",
+            "name": " Hop on Hop off Bus - Tamborine Mountain - From Brisbane",
+            "shortDescription": "Embark on an adventure from Brisbane to the enchanting heights of Tamborine Mountain with our exclusive hop-on, hop-off bus service. Departing every morning from Brisbane. Enjoy the flexibility to explore Tamborine Mountain.\r\n\r\n\r\n",
+            "productType": "CUSTOM",
+            "price": 99
+          },
+          "analysis": {
+            "matchedKeywords": [
+              "exclusive"
+            ],
+            "confidence": 0.14285714285714285
+          }
+        },
+        {
+          "product": {
+            "productCode": "PWGSA9",
+            "name": "$598 Gift Voucher - Two people Premium Full Day Wine Tour including Pickup",
+            "shortDescription": "This is a $598 Gift Voucher that can be used towards any product. - This is perfect for gifting two people on our Full Day Winery Tour from Brisbane, Gold Coast or Tamborine Mountain",
+            "productType": "GIFT_CARD",
+            "price": 598
+          },
+          "analysis": {
+            "matchedKeywords": [
+              "premium"
+            ],
+            "confidence": 0.14285714285714285
+          }
+        },
+        {
+          "product": {
+            "productCode": "P3K9H2",
+            "name": "$998 Gift Voucher - Two people Premium Boutique Winery Tour ",
+            "shortDescription": "This is a $998 Gift Voucher that can be used towards any product. - This is perfect for gifting two people on our Premium Boutique Winery Tour from Brisbane, Gold Coast or Tamborine Mountain",
+            "productType": "GIFT_CARD",
+            "price": 998
+          },
+          "analysis": {
+            "matchedKeywords": [
+              "premium"
+            ],
+            "confidence": 0.14285714285714285
+          }
+        },
+        {
+          "product": {
+            "productCode": "PRPEE2",
+            "name": "27 Seat Minibus Charter South East QLD and Northern NSW - Hourly Rate",
+            "shortDescription": "25 Seat Minibus - Hourly Rate",
+            "productType": "RENTAL",
+            "price": 240
+          },
+          "analysis": {
+            "matchedKeywords": [
+              "luxury",
+              "premium"
+            ],
+            "confidence": 0.2857142857142857
+          }
+        },
+        {
+          "product": {
+            "productCode": "PHKGRW",
+            "name": "3 Day Luxury Brisbane - Gold Coast - Bryon Bay Experience",
+            "shortDescription": "A Private 3 Day tour of the Brisbane, The Gold Coast and Byron Bay and taste some of the areas best local produce, with a gourmet food, sightseeing and history along the way, this tour is personalised to suit your group. ",
+            "productType": "DAYTOUR",
+            "price": 1995
+          },
+          "analysis": {
+            "matchedKeywords": [
+              "luxury"
+            ],
+            "confidence": 0.14285714285714285
+          }
+        },
+        {
+          "product": {
+            "productCode": "PUGMBV",
+            "name": "3 Day Luxury Hinterland Experience",
+            "shortDescription": "A Private 3 Day tour of the Gold Coast and Scenic Rim and taste some of Queensland's best produce, with a gourmet food, sightseeing and history along the way, this tour is personalised to suit your group. ",
+            "productType": "DAYTOUR",
+            "price": 1995
+          },
+          "analysis": {
+            "matchedKeywords": [
+              "luxury"
+            ],
+            "confidence": 0.14285714285714285
+          }
+        },
+        {
+          "product": {
+            "productCode": "PWMH4N",
+            "name": "3hr Koala and Kangaroo Wildlife Experience - From Brisbane",
+            "shortDescription": "Embark on a wild adventure from Brisbane with our exclusive Koala and Kangaroo Wildlife Experience. Departing daily, this unique journey offers you the chance to get up close with Australia's iconic wildlife. \r\n\r\n",
+            "productType": "CUSTOM",
+            "price": 79
+          },
+          "analysis": {
+            "matchedKeywords": [
+              "exclusive"
+            ],
+            "confidence": 0.14285714285714285
+          }
+        },
+        {
+          "product": {
+            "productCode": "PXWDXR",
+            "name": "57 Seat Coach Charter",
+            "shortDescription": "57 Seat Minibus - Hourly Rate",
+            "productType": "CHARTER",
+            "price": 850
+          },
+          "analysis": {
+            "matchedKeywords": [
+              "luxury",
+              "premium"
+            ],
+            "confidence": 0.2857142857142857
+          }
+        },
+        {
+          "product": {
+            "productCode": "PVUZWD",
+            "name": "A Tale of Two Distilleries Gin Tour",
+            "shortDescription": "Enjoy  the flavours of 2 Distilleries.  \r\nTour includes 2 Venues with Guided tours and tasting paddles    \r\nAvailable in 3 Regions  Gold Coast, Northern NSW and Mt Tamborine \r\n",
+            "productType": "PRIVATE_TOUR",
+            "price": 150
+          },
+          "analysis": {
+            "matchedKeywords": [
+              "premium"
+            ],
+            "confidence": 0.14285714285714285
+          }
+        },
+        {
+          "product": {
+            "productCode": "PQDX6V",
+            "name": "A Taste of Gourmet Tasting Experience ",
+            "shortDescription": "Take the morning or afternoon to Taste the region\r\nThis is a personalised experience of local gourmet food producers in the region, we will pair tastings with gourmet food and an unforgettable experience along the way.\r\n\r\n",
+            "productType": "DAYTOUR",
+            "price": 900
+          },
+          "analysis": {
+            "matchedKeywords": [
+              "luxury"
+            ],
+            "confidence": 0.14285714285714285
+          }
+        },
+        {
+          "product": {
+            "productCode": "PKLDFV",
+            "name": "Brisbane Last Minute Deals",
+            "shortDescription": "A tour of award winning wineries in Mount Tamborine and taste some of Queensland's best wines including guided tastings at a number of family owned boutique wineries, a two course lunch.",
+            "productType": "DAYTOUR",
+            "price": 135
+          },
+          "analysis": {
+            "matchedKeywords": [
+              "premium"
+            ],
+            "confidence": 0.14285714285714285
+          }
+        },
+        {
+          "product": {
+            "productCode": "PBMUT0",
+            "name": "Candice's Rainforest experience 2Hrs - Gourmet Two Course Meal - Door to Door Pickup from the Gold Coast",
+            "shortDescription": "The most successful people follow their passions and not their paychecks and Candice has definitely found her passion. Let us take you on a surprising experience of the Hinterlands subtropical rainforest. Choose either Lunch or dinner tour",
+            "productType": "DAYTOUR",
+            "price": 159
+          },
+          "analysis": {
+            "matchedKeywords": [
+              "premium"
+            ],
+            "confidence": 0.14285714285714285
+          }
+        },
+        {
+          "product": {
+            "productCode": "PZM0SX",
+            "name": "Champagne Sunset Winery Tour",
+            "shortDescription": "Experience the winding trails of Mount Tamborine for one of the most spectacular sunsets on the Coast. You will enjoy guided tastings at two wineries and get to taste some fabulous local cheese platters with Champagne.",
+            "productType": "PRIVATE_TOUR",
+            "price": 199
+          },
+          "analysis": {
+            "matchedKeywords": [
+              "premium"
+            ],
+            "confidence": 0.14285714285714285
+          }
+        },
+        {
+          "product": {
+            "productCode": "PGG164",
+            "name": "Christmas Party - 6Hrs",
+            "shortDescription": "A tour of award winning wineries in Mount Tamborine and taste some of Queensland's best wines including Door to door pickup from Mount Tamborine, guided tastings at 3 destinations. Two course gourmet lunch",
+            "productType": "DAYTOUR",
+            "price": 189
+          },
+          "analysis": {
+            "matchedKeywords": [
+              "premium"
+            ],
+            "confidence": 0.14285714285714285
+          }
+        },
+        {
+          "product": {
+            "productCode": "P0E7JV",
+            "name": "Early Bird - Full Day Mount Tamborine Winery Tour",
+            "shortDescription": "A tour of award winning wineries in Mount Tamborine and taste some of Queensland's best wines including guided tastings at a number of family owned boutique wineries, a two course lunch.",
+            "productType": "DAYTOUR",
+            "price": 219
+          },
+          "analysis": {
+            "matchedKeywords": [
+              "premium"
+            ],
+            "confidence": 0.14285714285714285
+          }
+        },
+        {
+          "product": {
+            "productCode": "PU4NZ1",
+            "name": "Famil",
+            "shortDescription": "Organising a day out for one of your best friends can be hard work, let us do the heavy lifting for you so that we can make sure that you have the most memorable day out, without the headaches. Guided tastings included at each venue.\r\n",
+            "productType": "DAYTOUR",
+            "price": 1
+          },
+          "analysis": {
+            "matchedKeywords": [
+              "premium"
+            ],
+            "confidence": 0.14285714285714285
+          }
+        },
+        {
+          "product": {
+            "productCode": "PMVZUK",
+            "name": "Gold Coast Last Minute Deals",
+            "shortDescription": "A tour of award winning wineries in Mount Tamborine and taste some of Queensland's best wines including guided tastings at a number of family owned boutique wineries, a two course lunch.",
+            "productType": "DAYTOUR",
+            "price": 135
+          },
+          "analysis": {
+            "matchedKeywords": [
+              "premium"
+            ],
+            "confidence": 0.14285714285714285
+          }
+        },
+        {
+          "product": {
+            "productCode": "PNQHYB",
+            "name": "Gold Coast Wake Park - Private Session with Transfers",
+            "shortDescription": "Bring your friends and have the cable to yourself, or take advantage of this unique opportunity for a solo adventure. The cable can accommodate up to 50 people at a time, you'll have plenty of space to show off your skills.\r\n\r\n",
+            "productType": "CUSTOM",
+            "price": 1520
+          },
+          "analysis": {
+            "matchedKeywords": [
+              "exclusive"
+            ],
+            "confidence": 0.14285714285714285
+          }
+        },
+        {
+          "product": {
+            "productCode": "P7WH5Q",
+            "name": "Hop on Hop Off  Wine Tour - Tamborine Mountain - From Brisbane - Flexi Pass",
+            "shortDescription": "Adventure from Brisbane to the enchanting heights of Tamborine Mountain with our exclusive hop-on, hop-off bus service. Departing every morning from Brisbane. Enjoy the flexibility to explore Tamborine Mountains best Vineyards\r\n\r\n\r\n",
+            "productType": "CUSTOM",
+            "price": 99
+          },
+          "analysis": {
+            "matchedKeywords": [
+              "exclusive"
+            ],
+            "confidence": 0.14285714285714285
+          }
+        },
+        {
+          "product": {
+            "productCode": "PTMB07",
+            "name": "Hop on Hop off Brewery adventure - Tamborine Mountain - From Brisbane",
+            "shortDescription": "A beer lover’s dream adventure from Brisbane to the craft brewery haven of Tamborine Mountain with our hop-on, hop-off bus. This brewery-focused journey offers the flexibility to explore Tamborine Mountain’s best brews, one stop at a time.",
+            "productType": "CUSTOM",
+            "price": 99
+          },
+          "analysis": {
+            "matchedKeywords": [
+              "exclusive"
+            ],
+            "confidence": 0.14285714285714285
+          }
+        },
+        {
+          "product": {
+            "productCode": "PTEFYF",
+            "name": "Hop on Hop off Brewery adventure - Tamborine Mountain - Gold Coast",
+            "shortDescription": "A beer lover’s adventure from the Gold Coast to the craft brewery haven of Tamborine Mountain with our hop-on, hop-off bus. This brewery-focused journey offers the flexibility to explore Tamborine Mountain’s best brews, one stop at a time.",
+            "productType": "CUSTOM",
+            "price": 99
+          },
+          "analysis": {
+            "matchedKeywords": [
+              "exclusive"
+            ],
+            "confidence": 0.14285714285714285
+          }
+        },
+        {
+          "product": {
+            "productCode": "PW1HTG",
+            "name": "Hop on Hop Off Bus - Movie World - from Brisbane",
+            "shortDescription": "Embark on an adventure from theGold Coast to the enchanting heights of Tamborine Mountain with our exclusive hop-on, hop-off bus service. Departing every morning from Gold Coast. Enjoy the flexibility to explore Tamborine Mountain.\r\n\r\n\r\n",
+            "productType": "CUSTOM",
+            "price": 99
+          },
+          "analysis": {
+            "matchedKeywords": [
+              "exclusive"
+            ],
+            "confidence": 0.14285714285714285
+          }
+        },
+        {
+          "product": {
+            "productCode": "P0SVHC",
+            "name": "Hop on Hop Off Bus - Movie World - from Gold Coast",
+            "shortDescription": "Embark on an adventure from theGold Coast to the enchanting heights of Tamborine Mountain with our exclusive hop-on, hop-off bus service. Departing every morning from Gold Coast. Enjoy the flexibility to explore Tamborine Mountain.\r\n\r\n\r\n",
+            "productType": "CUSTOM",
+            "price": 99
+          },
+          "analysis": {
+            "matchedKeywords": [
+              "exclusive"
+            ],
+            "confidence": 0.14285714285714285
+          }
+        },
+        {
+          "product": {
+            "productCode": "PKK5KB",
+            "name": "Hop on Hop Off Bus - Tamborine Mountain - from Gold Coast",
+            "shortDescription": "Embark on an adventure from theGold Coast to the enchanting heights of Tamborine Mountain with our exclusive hop-on, hop-off bus service. Departing every morning from Gold Coast. Enjoy the flexibility to explore Tamborine Mountain.\r\n\r\n\r\n",
+            "productType": "CUSTOM",
+            "price": 99
+          },
+          "analysis": {
+            "matchedKeywords": [
+              "exclusive"
+            ],
+            "confidence": 0.14285714285714285
+          }
+        },
+        {
+          "product": {
+            "productCode": "PNYY7C",
+            "name": "Hop on Hop off Day Pass + Glow Worm Tour -  Brisbane Pickup",
+            "shortDescription": "Glow worms only exist in Australia and New Zealand so come on a fantastic journey with is to meet these small but brightly glowing creatures, Guaranteed sightings and time for morning tea and scenic lookouts throughout the National Park.",
+            "productType": "DAYTOUR",
+            "price": 135
+          },
+          "analysis": {
+            "matchedKeywords": [
+              "luxury"
+            ],
+            "confidence": 0.14285714285714285
+          }
+        },
+        {
+          "product": {
+            "productCode": "PZ6FNP",
+            "name": "Hop on Hop off Day Pass + Glow Worm Tour - Gold Coast Pickup",
+            "shortDescription": "Glow worms only exist in Australia and New Zealand so come on a fantastic journey with is to meet these small but brightly glowing creatures, Guaranteed sightings and time for morning tea and scenic lookouts throughout the National Park.",
+            "productType": "DAYTOUR",
+            "price": 135
+          },
+          "analysis": {
+            "matchedKeywords": [
+              "luxury"
+            ],
+            "confidence": 0.14285714285714285
+          }
+        },
+        {
+          "product": {
+            "productCode": "PKQL4P",
+            "name": "Hop on Hop off Distillery adventure - Tamborine Mountain - Brisbane",
+            "shortDescription": "A spirit lover’s journey from Brisbane to Tamborine Mountain’s finest distilleries with our hop-on, hop-off bus. Enjoy the freedom to explore handcrafted gins, rums, and liqueurs at your own pace, one exceptional distillery at a time.",
+            "productType": "CUSTOM",
+            "price": 99
+          },
+          "analysis": {
+            "matchedKeywords": [
+              "exclusive"
+            ],
+            "confidence": 0.14285714285714285
+          }
+        },
+        {
+          "product": {
+            "productCode": "PFMGXB",
+            "name": "Hop on Hop off Distillery adventure - Tamborine Mountain - Gold Coast",
+            "shortDescription": "A spirit lover’s journey from the Gold Coast to Tamborine Mountain’s finest distilleries with our hop-on, hop-off bus. Enjoy the freedom to explore handcrafted gins, rums, and liqueurs at your own pace, one exceptional distillery at a time.",
+            "productType": "CUSTOM",
+            "price": 99
+          },
+          "analysis": {
+            "matchedKeywords": [
+              "exclusive"
+            ],
+            "confidence": 0.14285714285714285
+          }
+        },
+        {
+          "product": {
+            "productCode": "PNP4S2",
+            "name": "Hop on Hop Off Wine Tour - Tamborine Mountain - from Gold Coast - Flexi Pass",
+            "shortDescription": "Adventure from the Gold Coast to the enchanting heights of Tamborine Mountain with our exclusive hop-on, hop-off bus service. Departing every morning from Gold Coast. Enjoy the flexibility to explore Tamborine Mountains best Vineyards.\r\n\r\n",
+            "productType": "CUSTOM",
+            "price": 99
+          },
+          "analysis": {
+            "matchedKeywords": [
+              "exclusive"
+            ],
+            "confidence": 0.14285714285714285
+          }
+        },
+        {
+          "product": {
+            "productCode": "PLKY3R",
+            "name": "Hop on Hop off Winery adventure - Tamborine Mountain - Brisbane",
+            "shortDescription": "A wine lover’s journey to Tamborine Mountain’s finest wineries with our hop-on, hop-off bus. Enjoy the freedom to explore award-winning vineyards, sample exquisite local wines, and soak in the serene mountain scenery at your own pace.",
+            "productType": "CUSTOM",
+            "price": 99
+          },
+          "analysis": {
+            "matchedKeywords": [
+              "premium",
+              "exclusive"
+            ],
+            "confidence": 0.2857142857142857
+          }
+        },
+        {
+          "product": {
+            "productCode": "PBRFH9",
+            "name": "Hop on Hop off Winery adventure - Tamborine Mountain - Gold Coast",
+            "shortDescription": "A wine lover’s journey to Tamborine Mountain’s finest wineries with our hop-on, hop-off bus. Enjoy the freedom to explore award-winning vineyards, sample exquisite local wines, and soak in the serene mountain scenery at your own pace.",
+            "productType": "CUSTOM",
+            "price": 99
+          },
+          "analysis": {
+            "matchedKeywords": [
+              "premium",
+              "exclusive"
+            ],
+            "confidence": 0.2857142857142857
+          }
+        },
+        {
+          "product": {
+            "productCode": "PFJYQ7",
+            "name": "Hot Air Balloon",
+            "shortDescription": "Hot Air Balloon Flight with Champagne Breakfast",
+            "productType": "CUSTOM",
+            "price": 450
+          },
+          "analysis": {
+            "matchedKeywords": [
+              "exclusive"
+            ],
+            "confidence": 0.14285714285714285
+          }
+        },
+        {
+          "product": {
+            "productCode": "P9JJWS",
+            "name": "Hybrid or EV Luxury SUV with Driver",
+            "shortDescription": "Travel in the latest model Hybrid or Electric Vehicle (EV) SUV, combining cutting-edge technology with eco-friendly luxury. ",
+            "productType": "RENTAL",
+            "price": 500
+          },
+          "analysis": {
+            "matchedKeywords": [
+              "luxury",
+              "premium",
+              "exclusive"
+            ],
+            "confidence": 0.42857142857142855
+          }
+        },
+        {
+          "product": {
+            "productCode": "P6YWKK",
+            "name": "Jet Ski Safaris + Beer - Gold Coast - Visit Islands in the Broadwater and Gold Coasts best Breweries",
+            "shortDescription": "Looking for something different to do for your Bucks Party , Birthday or Special occasion? \r\nThis tour is great for those wanting to do something a bit different. \r\nThe tour includes  1.5Hr Jetski Safari followed by a boutique brewery tour",
+            "productType": "DAYTOUR",
+            "price": 369
+          },
+          "analysis": {
+            "matchedKeywords": [
+              "luxury"
+            ],
+            "confidence": 0.14285714285714285
+          }
+        }
+      ]
+    },
+    "productTypes": [
+      "ACTIVITY",
+      "CHARTER",
+      "CUSTOM",
+      "DAYTOUR",
+      "GIFT_CARD",
+      "LESSON",
+      "MERCHANDISE",
+      "MULTIDAYTOUR",
+      "PRIVATE_TOUR",
+      "RENTAL",
+      "TICKET",
+      "TRANSFER"
+    ],
+    "allCategories": []
+  }
+}

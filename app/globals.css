@@ -25,6 +25,32 @@ body {
     touch-action: manipulation;
   }
   
+  /* Modal and popup utilities */
+  .modal-backdrop {
+    touch-action: none;
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  .modal-content {
+    touch-action: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  /* Prevent background scroll when modal is open */
+  .scroll-lock {
+    overflow: hidden !important;
+    position: fixed !important;
+    width: 100% !important;
+    height: 100% !important;
+  }
+  
+  /* Prevent touch scrolling on backdrop */
+  .no-touch-scroll {
+    touch-action: none;
+    overscroll-behavior: none;
+    -webkit-overflow-scrolling: auto;
+  }
+  
   .safe-area-inset {
     padding-left: env(safe-area-inset-left);
     padding-right: env(safe-area-inset-right);
@@ -36,6 +62,23 @@ body {
   
   .safe-area-inset-bottom {
     padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  /* Booking prompt animations */
+  .booking-prompt-enter {
+    animation: booking-prompt-fade-in 0.3s ease-out forwards;
+  }
+  
+  .booking-prompt-exit {
+    animation: booking-prompt-fade-out 0.3s ease-in forwards;
+  }
+  
+  .booking-prompt-backdrop-enter {
+    animation: backdrop-fade-in 0.3s ease-out forwards;
+  }
+  
+  .booking-prompt-backdrop-exit {
+    animation: backdrop-fade-out 0.3s ease-in forwards;
   }
 }
 
@@ -198,38 +241,160 @@ body {
       transform: scale(0.95) translateY(-8px);
     }
   }
+
+  /* Booking prompt animations */
+  @keyframes booking-prompt-fade-in {
+    from {
+      opacity: 0;
+      transform: translate(-50%, -45%) scale(0.95);
+    }
+    to {
+      opacity: 1;
+      transform: translate(-50%, -50%) scale(1);
+    }
+  }
   
+  @keyframes booking-prompt-fade-out {
+    from {
+      opacity: 1;
+      transform: translate(-50%, -50%) scale(1);
+    }
+    to {
+      opacity: 0;
+      transform: translate(-50%, -45%) scale(0.95);
+    }
+  }
+  
+  @keyframes backdrop-fade-in {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+  
+  @keyframes backdrop-fade-out {
+    from {
+      opacity: 1;
+    }
+    to {
+      opacity: 0;
+    }
+  }
+
+  /* Pulse animation for pre-populated fields */
+  @keyframes gentle-pulse {
+    0%, 100% {
+      box-shadow: 0 0 0 0 rgba(251, 191, 36, 0.4);
+    }
+    50% {
+      box-shadow: 0 0 0 4px rgba(251, 191, 36, 0.1);
+    }
+  }
+  
+  .animate-gentle-pulse {
+    animation: gentle-pulse 2s ease-in-out infinite;
+  }
+
   @keyframes fade-in-up {
     from {
       opacity: 0;
-      transform: translateY(20px);
+      transform: translateY(10px);
     }
     to {
       opacity: 1;
       transform: translateY(0);
     }
   }
-  
-  /* Dropdown menu specific styles */
+
   [data-radix-dropdown-menu-content] {
-    animation-duration: 300ms;
+    animation-duration: 0.2s;
     animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
   }
-  
+
   [data-radix-dropdown-menu-content][data-state="open"] {
     animation-name: dropdown-fade-in;
   }
-  
+
   [data-radix-dropdown-menu-content][data-state="closed"] {
     animation-name: dropdown-fade-out;
-    animation-duration: 200ms;
   }
-  
-  /* Mobile video optimization */
+
+  /* Mobile optimizations for booking prompt */
   @media (max-width: 768px) {
     iframe[src*="youtube"] {
+      height: 200px;
+    }
+    
+    /* Booking prompt mobile adjustments */
+    .booking-prompt-mobile {
+      max-width: calc(100vw - 2rem);
+      margin: 0 1rem;
+    }
+    
+    /* Ensure popup doesn't interfere with mobile navigation */
+    .booking-prompt-popup {
+      z-index: 9999;
+    }
+    
+    /* Better modal behavior on mobile */
+    .modal-backdrop {
+      padding: 0.5rem;
+    }
+    
+    .modal-content {
+      border-radius: 0.75rem;
+      max-height: calc(100vh - 1rem);
+      max-height: calc(100dvh - 1rem); /* Dynamic viewport height for mobile browsers */
+    }
+    
+    /* Prevent zoom on input focus */
+    input, select, textarea {
+      font-size: 16px !important;
+    }
+    
+    /* Better touch targets */
+    button, [role="button"] {
+      min-height: 44px;
+      min-width: 44px;
+    }
+    
+    /* Prevent overscroll bounce on iOS */
+    body.scroll-lock {
+      position: fixed !important;
+      width: 100% !important;
+      height: 100% !important;
+      overflow: hidden !important;
+      -webkit-overflow-scrolling: auto !important;
+    }
+  }
+  
+  /* Additional iOS Safari fixes */
+  @supports (-webkit-touch-callout: none) {
+    /* iOS specific modal fixes */
+    .modal-backdrop {
+      position: fixed !important;
+      top: 0 !important;
+      left: 0 !important;
+      right: 0 !important;
+      bottom: 0 !important;
       height: 100vh !important;
-      object-fit: cover;
+      height: 100dvh !important;
+    }
+    
+    /* Prevent iOS bounce scrolling */
+    body.scroll-lock {
+      position: fixed !important;
+      top: 0 !important;
+      left: 0 !important;
+      right: 0 !important;
+      bottom: 0 !important;
+      width: 100% !important;
+      height: 100% !important;
+      overflow: hidden !important;
+      -webkit-overflow-scrolling: auto !important;
+      overscroll-behavior: none !important;
     }
   }
 }

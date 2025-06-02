@@ -456,13 +456,20 @@ export class DataSegmentationEngine {
   }
 
   private isPriceInRange(price: number | undefined, priceRange: string): boolean {
-    if (!price) return priceRange === 'all';
+    if (!price || price <= 0) return priceRange === 'all';
     
     switch (priceRange) {
-      case 'budget': return price < 100;
-      case 'mid': return price >= 100 && price < 300;
-      case 'luxury': return price >= 300;
-      default: return true;
+      case 'under-99':
+        return price < 99;
+      case '99-159':
+        return price >= 99 && price < 159;
+      case '159-299':
+        return price >= 159 && price < 299;
+      case 'over-299':
+        return price >= 299;
+      case 'all':
+      default:
+        return true;
     }
   }
 

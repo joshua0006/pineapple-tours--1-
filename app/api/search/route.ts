@@ -191,17 +191,17 @@ export async function GET(request: NextRequest) {
       if (filters.priceRange && filters.priceRange !== 'all') {
         const price = product.advertisedPrice || 0;
         switch (filters.priceRange) {
-          case "under-500":
-            if (price >= 500) return false;
+          case "under-99":
+            if (price >= 99) return false;
             break;
-          case "500-1000":
-            if (price < 500 || price >= 1000) return false;
+          case "99-159":
+            if (price < 99 || price >= 159) return false;
             break;
-          case "1000-2000":
-            if (price < 1000 || price >= 2000) return false;
+          case "159-299":
+            if (price < 159 || price >= 299) return false;
             break;
-          case "over-2000":
-            if (price < 2000) return false;
+          case "over-299":
+            if (price < 299) return false;
             break;
         }
       }

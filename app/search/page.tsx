@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { useSearchParams, useRouter } from "next/navigation"
-import { Search, Filter, MapPin, Star, X, ArrowLeft, RefreshCw, Calendar } from "lucide-react"
+import { Search, Filter, MapPin, Star, X, ArrowLeft, RefreshCw, Calendar, Heart, Users } from "lucide-react"
 import { addDays, format } from "date-fns"
 
 import { Button } from "@/components/ui/button"
@@ -22,6 +22,7 @@ import { PaginationInfo } from "@/components/pagination-info"
 import { SearchCategoryDropdown } from "@/components/search-category-dropdown"
 import { useSearch } from "@/hooks/use-search"
 import { useCityProducts } from "@/hooks/use-city-products"
+import { useBookingPrompt } from "@/hooks/use-booking-prompt"
 import { getCategoryDisplayName } from "@/lib/constants/categories"
 import {
   Dialog,
@@ -34,6 +35,7 @@ import {
 export default function SearchPage() {
   const router = useRouter()
   const searchParams = useSearchParams()
+  const { promptData, hasPromptData } = useBookingPrompt()
   
   // Get city data for the dropdown
   const { cities, loading: citiesLoading } = useCityProducts()
@@ -52,6 +54,12 @@ export default function SearchPage() {
     page: parseInt(searchParams.get('page') || '1'),
     limit: 12,
   }
+
+  // Check if this search came from the booking prompt
+  const isFromBookingPrompt = hasPromptData && (
+    (searchParams.get('travelers') && searchParams.get('travelers') === promptData?.groupSize?.toString()) ||
+    (searchParams.get('checkIn') && promptData?.bookingDate)
+  )
 
   const {
     data,
@@ -109,10 +117,10 @@ export default function SearchPage() {
   const getFilterDisplayName = (key: string, value: string) => {
     const displayNames: Record<string, Record<string, string>> = {
       priceRange: {
-        'under-500': 'Under $500',
-        '500-1000': '$500 - $1,000',
-        '1000-2000': '$1,000 - $2,000',
-        'over-2000': 'Over $2,000',
+        'under-99': 'Under $99',
+        '99-159': '$99 - $159',
+        '159-299': '$159 - $299',
+        'over-299': 'Over $299',
       },
     }
 
@@ -143,17 +151,38 @@ export default function SearchPage() {
             </div>
             <div className="text-center text-white">
               <h1 className="text-4xl font-bold tracking-tight md:text-5xl">
-                Search Results
+                {isFromBookingPrompt ? 'Your Perfect Tours' : 'Search Results'}
               </h1>
               <p className="mx-auto mt-4 max-w-2xl text-xl">
-                {hasResults 
-                  ? `Found ${totalResults} tour${totalResults !== 1 ? 's' : ''} matching your search`
-                  : 'Find your perfect tour experience'
-                }
+                {isFromBookingPrompt ? (
+                  `Tours for ${filters.travelers} traveler${filters.travelers !== '1' ? 's' : ''}${filters.checkIn && filters.checkOut ? ` • ${format(new Date(filters.checkIn), 'MMM dd')} - ${format(new Date(filters.checkOut), 'MMM dd, yyyy')}` : ''}`
+                ) : hasResults ? (
+                  `Found ${totalResults} tour${totalResults !== 1 ? 's' : ''} matching your search`
+                ) : (
+                  'Find your perfect tour experience'
+                )}
               </p>
             </div>
           </div>
         </section>
+
+        {/* Booking Prompt Success Banner */}
+        {isFromBookingPrompt && (
+          <section className="bg-yellow-50 border-b border-yellow-200 py-4">
+            <div className="container">
+              <div className="flex items-center justify-center gap-3 text-yellow-800">
+                <Heart className="h-5 w-5 text-yellow-600" />
+                <span className="font-medium">Great choice!</span>
+                <span>We've found tours matching your preferences.</span>
+                {filters.checkIn && filters.checkOut && (
+                  <Badge variant="secondary" className="bg-yellow-200 text-yellow-800">
+                    Available for your dates
+                  </Badge>
+                )}
+              </div>
+            </div>
+          </section>
+        )}
 
         {/* Search and Filters */}
         <section className="border-b bg-white py-6">
@@ -203,7 +232,7 @@ export default function SearchPage() {
               </div>
 
               {/* Filter Grid */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-7 gap-4">
                 {/* Destination Filter */}
                 <div className="space-y-2">
                   <label className="text-sm font-medium text-muted-foreground">Destination</label>
@@ -241,7 +270,6 @@ export default function SearchPage() {
                 <div className="space-y-2">
                   <label className="text-sm font-medium text-muted-foreground">Check-in Date</label>
                   <div className="relative">
-                    <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground z-10" />
                     <DatePicker
                       date={filters.checkIn ? new Date(filters.checkIn) : undefined}
                       onDateChange={(date) => {
@@ -260,7 +288,7 @@ export default function SearchPage() {
                       placeholder="Select date"
                       minDate={new Date()}
                       maxDate={filters.checkOut ? addDays(new Date(filters.checkOut), -1) : addDays(new Date(), 365)}
-                      className="w-full h-10 pl-10"
+                      className="w-full h-10"
                     />
                   </div>
                 </div>
@@ -269,7 +297,6 @@ export default function SearchPage() {
                 <div className="space-y-2">
                   <label className="text-sm font-medium text-muted-foreground">Check-out Date</label>
                   <div className="relative">
-                    <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground z-10" />
                     <DatePicker
                       date={filters.checkOut ? new Date(filters.checkOut) : undefined}
                       onDateChange={(date) => {
@@ -282,9 +309,29 @@ export default function SearchPage() {
                       placeholder="Select date"
                       minDate={filters.checkIn ? addDays(new Date(filters.checkIn), 1) : addDays(new Date(), 1)}
                       maxDate={addDays(new Date(), 365)}
-                      className="w-full h-10 pl-10"
+                      className="w-full h-10"
                     />
                   </div>
+                </div>
+
+                {/* Travelers Filter */}
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-muted-foreground">Travelers</label>
+                  <Select value={filters.travelers} onValueChange={(value) => updateFilter('travelers', value)}>
+                    <SelectTrigger className={`w-full h-10 ${isFromBookingPrompt ? 'ring-2 ring-yellow-200 bg-yellow-50' : ''}`}>
+                      <div className="flex items-center gap-2">
+                        <Users className="h-4 w-4 text-muted-foreground" />
+                        <SelectValue placeholder="2 Travelers" />
+                      </div>
+                    </SelectTrigger>
+                    <SelectContent>
+                      {Array.from({ length: 10 }, (_, i) => i + 1).map(num => (
+                        <SelectItem key={num} value={num.toString()}>
+                          {num} {num === 1 ? 'Traveler' : 'Travelers'}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
 
                 {/* Category Filter */}
@@ -308,10 +355,10 @@ export default function SearchPage() {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="all">All Prices</SelectItem>
-                      <SelectItem value="under-500">Under $500</SelectItem>
-                      <SelectItem value="500-1000">$500 - $1,000</SelectItem>
-                      <SelectItem value="1000-2000">$1,000 - $2,000</SelectItem>
-                      <SelectItem value="over-2000">Over $2,000</SelectItem>
+                      <SelectItem value="under-99">Under $99</SelectItem>
+                      <SelectItem value="99-159">$99 - $159</SelectItem>
+                      <SelectItem value="159-299">$159 - $299</SelectItem>
+                      <SelectItem value="over-299">Over $299</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -432,25 +479,22 @@ export default function SearchPage() {
                     </button>
                   </Badge>
                 )}
+                {filters.travelers !== '2' && (
+                  <Badge variant="secondary" className="flex items-center gap-1 bg-orange-100 text-orange-800 border-orange-200">
+                    <Users className="h-3 w-3" />
+                    {filters.travelers} Travelers
+                    <button
+                      onClick={() => clearFilter('travelers')}
+                      className="ml-1 hover:text-destructive"
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                  </Badge>
+                )}
               </div>
             </div>
 
-            {/* Date filtering notice */}
-            {filters.checkIn && filters.checkOut && (
-              <div className="mt-4 p-4 bg-orange-50 border border-orange-200 rounded-lg">
-                <div className="flex items-center gap-2 text-sm text-orange-800">
-                  <Calendar className="h-4 w-4" />
-                  <span className="font-medium">Availability filtering active:</span>
-                  <span>Only showing tours with availability between {filters.checkIn} and {filters.checkOut}</span>
-                  {loading && (
-                    <span className="flex items-center gap-1 ml-2">
-                      <RefreshCw className="h-3 w-3 animate-spin" />
-                      Checking...
-                    </span>
-                  )}
-                </div>
-              </div>
-            )}
+          
           </div>
         </section>
 

@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import { addDays, format } from "date-fns"
 import { Search, MapPin, Calendar, Users, CalendarDays } from "lucide-react"
 
@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { DatePicker } from "@/components/ui/date-picker"
+import { useBookingPrompt } from "@/hooks/use-booking-prompt"
 
 // Static destinations data based on the provided image
 const STATIC_DESTINATIONS = [
@@ -32,6 +33,8 @@ interface SearchFormProps {
 
 export function SearchForm({ onSearch, showRedirect = true, onCityChange }: SearchFormProps) {
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const { promptData } = useBookingPrompt()
   
   // Static state management
   const [selectedCity, setSelectedCity] = useState<string>('all')
@@ -40,6 +43,36 @@ export function SearchForm({ onSearch, showRedirect = true, onCityChange }: Sear
   const [checkInDate, setCheckInDate] = useState<Date | undefined>()
   const [checkOutDate, setCheckOutDate] = useState<Date | undefined>()
   const [travelers, setTravelers] = useState("2")
+
+  // Initialize form with URL parameters or booking prompt data
+  useEffect(() => {
+    // Check URL parameters first (these take priority)
+    const urlTravelers = searchParams.get('travelers')
+    const urlCheckIn = searchParams.get('checkIn')
+    const urlCheckOut = searchParams.get('checkOut')
+    const urlCity = searchParams.get('city')
+
+    // Handle travelers parameter
+    if (urlTravelers) {
+      setTravelers(urlTravelers)
+    } else if (promptData?.groupSize) {
+      setTravelers(promptData.groupSize.toString())
+    }
+
+    // Handle date parameters
+    if (urlCheckIn && urlCheckOut) {
+      setCheckInDate(new Date(urlCheckIn))
+      setCheckOutDate(new Date(urlCheckOut))
+    } else if (promptData?.bookingDate) {
+      setCheckInDate(promptData.bookingDate)
+      setCheckOutDate(addDays(promptData.bookingDate, 1))
+    }
+
+    // Handle city parameter
+    if (urlCity) {
+      setSelectedCity(urlCity)
+    }
+  }, [searchParams, promptData])
 
   // Handle city selection change
   const handleCityChange = (city: string) => {
@@ -83,12 +116,21 @@ export function SearchForm({ onSearch, showRedirect = true, onCityChange }: Sear
     } else if (showRedirect) {
       // Redirect to search results page
       const params = new URLSearchParams()
+      
+      // Always include travelers parameter
+      params.append('travelers', travelers)
+      
+      // Include city if selected
       if (selectedCity && selectedCity !== 'all') {
         params.append('city', selectedCity)
       }
-      if (travelers !== '2') params.append('travelers', travelers)
+      
+      // Include dates if selected
       if (checkInDate) params.append('checkIn', format(checkInDate, 'yyyy-MM-dd'))
       if (checkOutDate) params.append('checkOut', format(checkOutDate, 'yyyy-MM-dd'))
+      
+      // Add default sort for better results
+      params.append('sortBy', 'relevance')
       
       router.push(`/search?${params.toString()}`)
     }
@@ -100,13 +142,21 @@ export function SearchForm({ onSearch, showRedirect = true, onCityChange }: Sear
     ? `${format(checkInDate!, 'MMM dd')} - ${format(checkOutDate!, 'MMM dd, yyyy')}`
     : null
 
+  // Check if form was pre-populated from booking prompt
+  const isPrePopulated = promptData && (promptData.groupSize > 0 || promptData.bookingDate)
+
   return (
     <div className="w-full bg-white rounded-lg shadow-sm border border-gray-200">
       <div className="p-6">
         <div className="mb-6">
-          <h2 className="text-xl font-semibold text-gray-900 mb-2">Find Your Perfect Vacation</h2>
+          <h2 className="text-xl font-semibold text-gray-900 mb-2">
+            {isPrePopulated ? "Complete Your Booking" : "Find Your Perfect Vacation"}
+          </h2>
           <p className="text-sm text-gray-600">
-            Search for tours and experiences by destination
+            {isPrePopulated 
+              ? "We've pre-filled your preferences. Adjust as needed and search for available tours."
+              : "Search for tours and experiences by destination"
+            }
             {hasDatesSelected && (
               <span className="ml-2 inline-flex items-center px-2 py-1 rounded-full text-xs bg-orange-100 text-orange-800">
                 <CalendarDays className="w-3 h-3 mr-1" />
@@ -150,7 +200,6 @@ export function SearchForm({ onSearch, showRedirect = true, onCityChange }: Sear
                 )}
               </Label>
               <div className="relative">
-                <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 z-10" />
                 <DatePicker
                   id="check-in"
                   date={checkInDate}
@@ -158,9 +207,9 @@ export function SearchForm({ onSearch, showRedirect = true, onCityChange }: Sear
                   placeholder="Select date"
                   minDate={new Date()}
                   maxDate={checkOutDate ? addDays(checkOutDate, -1) : addDays(new Date(), 365)}
-                  className={`pl-10 h-12 border-gray-300 text-sm focus:border-orange-500 focus:ring-orange-500 ${
+                  className={`h-12 border-gray-300 text-sm focus:border-orange-500 focus:ring-orange-500 ${
                     checkInDate ? 'border-orange-300 bg-orange-50' : ''
-                  }`}
+                  } ${isPrePopulated && checkInDate ? 'ring-2 ring-yellow-200' : ''}`}
                 />
               </div>
             </div>
@@ -176,7 +225,6 @@ export function SearchForm({ onSearch, showRedirect = true, onCityChange }: Sear
                 )}
               </Label>
               <div className="relative">
-                <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 z-10" />
                 <DatePicker
                   id="check-out"
                   date={checkOutDate}
@@ -184,9 +232,9 @@ export function SearchForm({ onSearch, showRedirect = true, onCityChange }: Sear
                   placeholder="Select date"
                   minDate={checkInDate ? addDays(checkInDate, 1) : addDays(new Date(), 1)}
                   maxDate={addDays(new Date(), 365)}
-                  className={`pl-10 h-12 border-gray-300 text-sm focus:border-orange-500 focus:ring-orange-500 ${
+                  className={`h-12 border-gray-300 text-sm focus:border-orange-500 focus:ring-orange-500 ${
                     checkOutDate ? 'border-orange-300 bg-orange-50' : ''
-                  }`}
+                  } ${isPrePopulated && checkOutDate ? 'ring-2 ring-yellow-200' : ''}`}
                 />
               </div>
             </div>
@@ -197,15 +245,20 @@ export function SearchForm({ onSearch, showRedirect = true, onCityChange }: Sear
               <div className="relative">
                 <Users className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 z-10" />
                 <Select value={travelers} onValueChange={setTravelers}>
-                  <SelectTrigger id="travelers" className="pl-10 h-12 border-gray-300 text-sm focus:border-orange-500 focus:ring-orange-500">
+                  <SelectTrigger 
+                    id="travelers" 
+                    className={`pl-10 h-12 border-gray-300 text-sm focus:border-orange-500 focus:ring-orange-500 ${
+                      isPrePopulated && promptData?.groupSize ? 'ring-2 ring-yellow-200 bg-yellow-50' : ''
+                    }`}
+                  >
                     <SelectValue placeholder="2 Travelers" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="1">1 Traveler</SelectItem>
-                    <SelectItem value="2">2 Travelers</SelectItem>
-                    <SelectItem value="3">3 Travelers</SelectItem>
-                    <SelectItem value="4">4 Travelers</SelectItem>
-                    <SelectItem value="5">5+ Travelers</SelectItem>
+                    {Array.from({ length: 10 }, (_, i) => i + 1).map(num => (
+                      <SelectItem key={num} value={num.toString()}>
+                        {num} {num === 1 ? 'Traveler' : 'Travelers'}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
@@ -219,32 +272,22 @@ export function SearchForm({ onSearch, showRedirect = true, onCityChange }: Sear
                   hasDatesSelected 
                     ? 'bg-orange-500 hover:bg-orange-600 text-white' 
                     : 'bg-orange-500 hover:bg-orange-600 text-white'
-                }`}
+                } ${isPrePopulated ? 'bg-yellow-500 hover:bg-yellow-600 text-black' : ''}`}
               >
                 <Search className="mr-2 h-4 w-4" />
                 <span className="hidden sm:inline">
-                  {hasDatesSelected ? 'Search Available Tours' : 'Search Vacations'}
+                  {isPrePopulated 
+                    ? 'Find My Tours' 
+                    : hasDatesSelected 
+                      ? 'Search Available Tours' 
+                      : 'Search Vacations'
+                  }
                 </span>
                 <span className="sm:hidden">Search</span>
               </Button>
             </div>
           </div>
 
-          {/* Date Range Summary */}
-          {hasDatesSelected && (
-            <div className="mt-4 p-3 bg-orange-50 border border-orange-200 rounded-lg">
-              <div className="flex items-center justify-between text-sm">
-                <div className="flex items-center text-orange-800">
-                  <CalendarDays className="w-4 h-4 mr-2" />
-                  <span className="font-medium">Selected dates:</span>
-                  <span className="ml-2">{dateRangeText}</span>
-                </div>
-                <div className="text-orange-600">
-                  {Math.ceil((checkOutDate!.getTime() - checkInDate!.getTime()) / (1000 * 60 * 60 * 24))} night{Math.ceil((checkOutDate!.getTime() - checkInDate!.getTime()) / (1000 * 60 * 60 * 24)) !== 1 ? 's' : ''}
-                </div>
-              </div>
-            </div>
-          )}
         </form>
       </div>
     </div>

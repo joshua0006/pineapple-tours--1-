@@ -1,0 +1,512 @@
+{
+  "Winery Tours": [
+    {
+      "product": {
+        "productCode": "PH1FEA",
+        "name": " Hop on Hop off Bus - Tamborine Mountain - From Brisbane",
+        "shortDescription": "Embark on an adventure from Brisbane to the enchanting heights of Tamborine Mountain with our exclusive hop-on, hop-off bus service. Departing every morning from Brisbane. Enjoy the flexibility to explore Tamborine Mountain.\r\n\r\n\r\n",
+        "productType": "CUSTOM",
+        "price": 99
+      },
+      "analysis": {
+        "matchedKeywords": [
+          "winery",
+          "wine",
+          "vineyard"
+        ],
+        "confidence": 0.42857142857142855
+      }
+    },
+    {
+      "product": {
+        "productCode": "PJGM0A",
+        "name": "$199 Gift Voucher - For Full Day Winery Tour",
+        "shortDescription": "This is a $199 Gift Voucher that can be used towards any product - This is perfect to book for our Full Day Winery Tour from Brisbane, Gold Coast or Tamborine Mountain",
+        "productType": "GIFT_CARD",
+        "price": 199
+      },
+      "analysis": {
+        "matchedKeywords": [
+          "winery",
+          "wine"
+        ],
+        "confidence": 0.2857142857142857
+      }
+    },
+    {
+      "product": {
+        "productCode": "PYUMZN",
+        "name": "$229 Gift Voucher",
+        "shortDescription": "This is a $229 Gift Voucher that can be used towards any product - This is perfect to book for our Full Day Winery Tour from Brisbane, Gold Coast or Tamborine Mountain",
+        "productType": "GIFT_CARD",
+        "price": 229
+      },
+      "analysis": {
+        "matchedKeywords": [
+          "winery",
+          "wine"
+        ],
+        "confidence": 0.2857142857142857
+      }
+    },
+    {
+      "product": {
+        "productCode": "PU8SCU",
+        "name": "$358 Gift Voucher",
+        "shortDescription": "This is a $358 Gift Voucher that can be used towards any product. - This is perfect for gifting two people on our Full Day Winery Tour from Brisbane, Gold Coast or Tamborine Mountain",
+        "productType": "GIFT_CARD",
+        "price": 358
+      },
+      "analysis": {
+        "matchedKeywords": [
+          "winery",
+          "wine"
+        ],
+        "confidence": 0.2857142857142857
+      }
+    },
+    {
+      "product": {
+        "productCode": "PN0S6R",
+        "name": "$398 Gift Voucher - Two people Full Day Wine Tour",
+        "shortDescription": "This is a $398 Gift Voucher that can be used towards any product. - This is perfect for gifting two people on our Full Day Winery Tour from Brisbane, Gold Coast or Tamborine Mountain",
+        "productType": "GIFT_CARD",
+        "price": 398
+      },
+      "analysis": {
+        "matchedKeywords": [
+          "winery",
+          "wine",
+          "wine tour"
+        ],
+        "confidence": 0.42857142857142855
+      }
+    }
+  ],
+  "Brewery Tours": [
+    {
+      "product": {
+        "productCode": "PH1FEA",
+        "name": " Hop on Hop off Bus - Tamborine Mountain - From Brisbane",
+        "shortDescription": "Embark on an adventure from Brisbane to the enchanting heights of Tamborine Mountain with our exclusive hop-on, hop-off bus service. Departing every morning from Brisbane. Enjoy the flexibility to explore Tamborine Mountain.\r\n\r\n\r\n",
+        "productType": "CUSTOM",
+        "price": 99
+      },
+      "analysis": {
+        "matchedKeywords": [
+          "brewing",
+          "ale"
+        ],
+        "confidence": 0.25
+      }
+    },
+    {
+      "product": {
+        "productCode": "PHKGRW",
+        "name": "3 Day Luxury Brisbane - Gold Coast - Bryon Bay Experience",
+        "shortDescription": "A Private 3 Day tour of the Brisbane, The Gold Coast and Byron Bay and taste some of the areas best local produce, with a gourmet food, sightseeing and history along the way, this tour is personalised to suit your group. ",
+        "productType": "DAYTOUR",
+        "price": 1995
+      },
+      "analysis": {
+        "matchedKeywords": [
+          "ale"
+        ],
+        "confidence": 0.125
+      }
+    },
+    {
+      "product": {
+        "productCode": "PVUZWD",
+        "name": "A Tale of Two Distilleries Gin Tour",
+        "shortDescription": "Enjoy  the flavours of 2 Distilleries.  \r\nTour includes 2 Venues with Guided tours and tasting paddles    \r\nAvailable in 3 Regions  Gold Coast, Northern NSW and Mt Tamborine \r\n",
+        "productType": "PRIVATE_TOUR",
+        "price": 150
+      },
+      "analysis": {
+        "matchedKeywords": [
+          "ale"
+        ],
+        "confidence": 0.125
+      }
+    },
+    {
+      "product": {
+        "productCode": "PQDX6V",
+        "name": "A Taste of Gourmet Tasting Experience ",
+        "shortDescription": "Take the morning or afternoon to Taste the region\r\nThis is a personalised experience of local gourmet food producers in the region, we will pair tastings with gourmet food and an unforgettable experience along the way.\r\n\r\n",
+        "productType": "DAYTOUR",
+        "price": 900
+      },
+      "analysis": {
+        "matchedKeywords": [
+          "brewery"
+        ],
+        "confidence": 0.125
+      }
+    },
+    {
+      "product": {
+        "productCode": "PRVHY0",
+        "name": "Brewery Tour - (4 hours)",
+        "shortDescription": "A guided tour of the Gold Coast's best craft breweries. ",
+        "productType": "DAYTOUR",
+        "price": 100
+      },
+      "analysis": {
+        "matchedKeywords": [
+          "brewery",
+          "brewery tour"
+        ],
+        "confidence": 0.25
+      }
+    }
+  ],
+  "Hop-On Hop-Off": [
+    {
+      "product": {
+        "productCode": "PH1FEA",
+        "name": " Hop on Hop off Bus - Tamborine Mountain - From Brisbane",
+        "shortDescription": "Embark on an adventure from Brisbane to the enchanting heights of Tamborine Mountain with our exclusive hop-on, hop-off bus service. Departing every morning from Brisbane. Enjoy the flexibility to explore Tamborine Mountain.\r\n\r\n\r\n",
+        "productType": "CUSTOM",
+        "price": 99
+      },
+      "analysis": {
+        "matchedKeywords": [
+          "hop-on",
+          "hop off",
+          "hop on hop off"
+        ],
+        "confidence": 0.5
+      }
+    },
+    {
+      "product": {
+        "productCode": "PKLDFV",
+        "name": "Brisbane Last Minute Deals",
+        "shortDescription": "A tour of award winning wineries in Mount Tamborine and taste some of Queensland's best wines including guided tastings at a number of family owned boutique wineries, a two course lunch.",
+        "productType": "DAYTOUR",
+        "price": 135
+      },
+      "analysis": {
+        "matchedKeywords": [
+          "hop off",
+          "hop on hop off"
+        ],
+        "confidence": 0.3333333333333333
+      }
+    },
+    {
+      "product": {
+        "productCode": "PJKCEW",
+        "name": "Brisbane to Tamborine Mountain Shuttle Service",
+        "shortDescription": "Choose one way if you would like to Stay in Tamborine Mountain or Unlimited Hop on Hop off with Return Ticket\r\n\r\n*Unlimited Hop on Hop off Option includes all transport around Tamborine Mountain for one day\r\n\r\n",
+        "productType": "CUSTOM",
+        "price": 99
+      },
+      "analysis": {
+        "matchedKeywords": [
+          "hop off",
+          "hop on hop off"
+        ],
+        "confidence": 0.3333333333333333
+      }
+    },
+    {
+      "product": {
+        "productCode": "PT1CFA",
+        "name": "Currumbin Wildlife Sanctuary - Southern Gold Coast - Northern NSW - Hop on Hop off Shuttle",
+        "shortDescription": "Explore Southern Gold Coast and Northern NSW with our Hop on Hop off Bus! Visit Currumbin Wildlife Sanctuary, Burleigh Heads National Park, Husk Distillery, Tropical Fruit World, and more, Unlimited Hop on Hop off pass to all attractions.",
+        "productType": "TRANSFER",
+        "price": 99
+      },
+      "analysis": {
+        "matchedKeywords": [
+          "hop off",
+          "hop on hop off"
+        ],
+        "confidence": 0.3333333333333333
+      }
+    },
+    {
+      "product": {
+        "productCode": "PK4F35",
+        "name": "Currumbin Wildlife Sanctuary entry - Includes Unlimited Hop on Hop off - Southern Gold Coast / Northern NSW",
+        "shortDescription": "Explore Southern Gold Coast and Northern NSW with our Hop on Hop off Bus! Visit Currumbin Wildlife Sanctuary, Burleigh Heads National Park, Husk Distillery, Tropical Fruit World.\r\nThis is a return Ticket that includes entry to the park",
+        "productType": "ACTIVITY",
+        "price": 159
+      },
+      "analysis": {
+        "matchedKeywords": [
+          "hop off",
+          "hop on hop off"
+        ],
+        "confidence": 0.3333333333333333
+      }
+    }
+  ],
+  "Bus Charter": [
+    {
+      "product": {
+        "productCode": "PRPEE2",
+        "name": "27 Seat Minibus Charter South East QLD and Northern NSW - Hourly Rate",
+        "shortDescription": "25 Seat Minibus - Hourly Rate",
+        "productType": "RENTAL",
+        "price": 240
+      },
+      "analysis": {
+        "matchedKeywords": [
+          "bus charter"
+        ],
+        "confidence": 0.2
+      }
+    },
+    {
+      "product": {
+        "productCode": "PXWDXR",
+        "name": "57 Seat Coach Charter",
+        "shortDescription": "57 Seat Minibus - Hourly Rate",
+        "productType": "CHARTER",
+        "price": 850
+      },
+      "analysis": {
+        "matchedKeywords": [
+          "coach charter"
+        ],
+        "confidence": 0.2
+      }
+    }
+  ],
+  "Day Tours": [
+    {
+      "product": {
+        "productCode": "PJGM0A",
+        "name": "$199 Gift Voucher - For Full Day Winery Tour",
+        "shortDescription": "This is a $199 Gift Voucher that can be used towards any product - This is perfect to book for our Full Day Winery Tour from Brisbane, Gold Coast or Tamborine Mountain",
+        "productType": "GIFT_CARD",
+        "price": 199
+      },
+      "analysis": {
+        "matchedKeywords": [
+          "full day"
+        ],
+        "confidence": 0.16666666666666666
+      }
+    },
+    {
+      "product": {
+        "productCode": "PYUMZN",
+        "name": "$229 Gift Voucher",
+        "shortDescription": "This is a $229 Gift Voucher that can be used towards any product - This is perfect to book for our Full Day Winery Tour from Brisbane, Gold Coast or Tamborine Mountain",
+        "productType": "GIFT_CARD",
+        "price": 229
+      },
+      "analysis": {
+        "matchedKeywords": [
+          "full day"
+        ],
+        "confidence": 0.16666666666666666
+      }
+    },
+    {
+      "product": {
+        "productCode": "PU8SCU",
+        "name": "$358 Gift Voucher",
+        "shortDescription": "This is a $358 Gift Voucher that can be used towards any product. - This is perfect for gifting two people on our Full Day Winery Tour from Brisbane, Gold Coast or Tamborine Mountain",
+        "productType": "GIFT_CARD",
+        "price": 358
+      },
+      "analysis": {
+        "matchedKeywords": [
+          "full day"
+        ],
+        "confidence": 0.16666666666666666
+      }
+    },
+    {
+      "product": {
+        "productCode": "PN0S6R",
+        "name": "$398 Gift Voucher - Two people Full Day Wine Tour",
+        "shortDescription": "This is a $398 Gift Voucher that can be used towards any product. - This is perfect for gifting two people on our Full Day Winery Tour from Brisbane, Gold Coast or Tamborine Mountain",
+        "productType": "GIFT_CARD",
+        "price": 398
+      },
+      "analysis": {
+        "matchedKeywords": [
+          "full day"
+        ],
+        "confidence": 0.16666666666666666
+      }
+    },
+    {
+      "product": {
+        "productCode": "P30VE2",
+        "name": "$458 Gift Voucher - Two people Full Day Wine Tour including Pickup",
+        "shortDescription": "This is a $458 Gift Voucher that can be used towards any product. - This is perfect for gifting two people on our Full Day Winery Tour from Brisbane, Gold Coast or Tamborine Mountain",
+        "productType": "GIFT_CARD",
+        "price": 458
+      },
+      "analysis": {
+        "matchedKeywords": [
+          "full day"
+        ],
+        "confidence": 0.16666666666666666
+      }
+    }
+  ],
+  "Corporate Tours": [
+    {
+      "product": {
+        "productCode": "PH1FEA",
+        "name": " Hop on Hop off Bus - Tamborine Mountain - From Brisbane",
+        "shortDescription": "Embark on an adventure from Brisbane to the enchanting heights of Tamborine Mountain with our exclusive hop-on, hop-off bus service. Departing every morning from Brisbane. Enjoy the flexibility to explore Tamborine Mountain.\r\n\r\n\r\n",
+        "productType": "CUSTOM",
+        "price": 99
+      },
+      "analysis": {
+        "matchedKeywords": [
+          "company"
+        ],
+        "confidence": 0.16666666666666666
+      }
+    },
+    {
+      "product": {
+        "productCode": "PRPEE2",
+        "name": "27 Seat Minibus Charter South East QLD and Northern NSW - Hourly Rate",
+        "shortDescription": "25 Seat Minibus - Hourly Rate",
+        "productType": "RENTAL",
+        "price": 240
+      },
+      "analysis": {
+        "matchedKeywords": [
+          "corporate"
+        ],
+        "confidence": 0.16666666666666666
+      }
+    },
+    {
+      "product": {
+        "productCode": "PXWDXR",
+        "name": "57 Seat Coach Charter",
+        "shortDescription": "57 Seat Minibus - Hourly Rate",
+        "productType": "CHARTER",
+        "price": 850
+      },
+      "analysis": {
+        "matchedKeywords": [
+          "corporate"
+        ],
+        "confidence": 0.16666666666666666
+      }
+    },
+    {
+      "product": {
+        "productCode": "PJKCEW",
+        "name": "Brisbane to Tamborine Mountain Shuttle Service",
+        "shortDescription": "Choose one way if you would like to Stay in Tamborine Mountain or Unlimited Hop on Hop off with Return Ticket\r\n\r\n*Unlimited Hop on Hop off Option includes all transport around Tamborine Mountain for one day\r\n\r\n",
+        "productType": "CUSTOM",
+        "price": 99
+      },
+      "analysis": {
+        "matchedKeywords": [
+          "company"
+        ],
+        "confidence": 0.16666666666666666
+      }
+    },
+    {
+      "product": {
+        "productCode": "PJVPPN",
+        "name": "Cocktail Social - Tamborine Mountain",
+        "shortDescription": "Explore your inner love of cocktails with our all inclusive Cocktail Social.\r\nPerfect for Hens Parties and Bucks Nights and Birthdays.",
+        "productType": "LESSON",
+        "price": 205
+      },
+      "analysis": {
+        "matchedKeywords": [
+          "corporate"
+        ],
+        "confidence": 0.16666666666666666
+      }
+    }
+  ],
+  "Barefoot Luxury": [
+    {
+      "product": {
+        "productCode": "PH1FEA",
+        "name": " Hop on Hop off Bus - Tamborine Mountain - From Brisbane",
+        "shortDescription": "Embark on an adventure from Brisbane to the enchanting heights of Tamborine Mountain with our exclusive hop-on, hop-off bus service. Departing every morning from Brisbane. Enjoy the flexibility to explore Tamborine Mountain.\r\n\r\n\r\n",
+        "productType": "CUSTOM",
+        "price": 99
+      },
+      "analysis": {
+        "matchedKeywords": [
+          "exclusive"
+        ],
+        "confidence": 0.14285714285714285
+      }
+    },
+    {
+      "product": {
+        "productCode": "PWGSA9",
+        "name": "$598 Gift Voucher - Two people Premium Full Day Wine Tour including Pickup",
+        "shortDescription": "This is a $598 Gift Voucher that can be used towards any product. - This is perfect for gifting two people on our Full Day Winery Tour from Brisbane, Gold Coast or Tamborine Mountain",
+        "productType": "GIFT_CARD",
+        "price": 598
+      },
+      "analysis": {
+        "matchedKeywords": [
+          "premium"
+        ],
+        "confidence": 0.14285714285714285
+      }
+    },
+    {
+      "product": {
+        "productCode": "P3K9H2",
+        "name": "$998 Gift Voucher - Two people Premium Boutique Winery Tour ",
+        "shortDescription": "This is a $998 Gift Voucher that can be used towards any product. - This is perfect for gifting two people on our Premium Boutique Winery Tour from Brisbane, Gold Coast or Tamborine Mountain",
+        "productType": "GIFT_CARD",
+        "price": 998
+      },
+      "analysis": {
+        "matchedKeywords": [
+          "premium"
+        ],
+        "confidence": 0.14285714285714285
+      }
+    },
+    {
+      "product": {
+        "productCode": "PRPEE2",
+        "name": "27 Seat Minibus Charter South East QLD and Northern NSW - Hourly Rate",
+        "shortDescription": "25 Seat Minibus - Hourly Rate",
+        "productType": "RENTAL",
+        "price": 240
+      },
+      "analysis": {
+        "matchedKeywords": [
+          "luxury",
+          "premium"
+        ],
+        "confidence": 0.2857142857142857
+      }
+    },
+    {
+      "product": {
+        "productCode": "PHKGRW",
+        "name": "3 Day Luxury Brisbane - Gold Coast - Bryon Bay Experience",
+        "shortDescription": "A Private 3 Day tour of the Brisbane, The Gold Coast and Byron Bay and taste some of the areas best local produce, with a gourmet food, sightseeing and history along the way, this tour is personalised to suit your group. ",
+        "productType": "DAYTOUR",
+        "price": 1995
+      },
+      "analysis": {
+        "matchedKeywords": [
+          "luxury"
+        ],
+        "confidence": 0.14285714285714285
+      }
+    }
+  ]
+}

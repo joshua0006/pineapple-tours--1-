@@ -22,6 +22,7 @@ import { PricingDisplay } from "@/components/ui/pricing-display"
 import { GuestManager, type GuestInfo } from "@/components/ui/guest-manager"
 import { ExtrasSelector } from "@/components/ui/extras-selector"
 import { useRezdyAvailability } from "@/hooks/use-rezdy"
+import { useScrollLock } from "@/hooks/use-scroll-lock"
 import { RezdyProduct, RezdySession, RezdyPickupLocation } from "@/lib/types/rezdy"
 import { formatPrice, getLocationString } from "@/lib/utils/product-utils"
 import { calculatePricing, formatCurrency, getPricingSummaryText, validatePricingOptions, type PricingBreakdown, type SelectedExtra } from "@/lib/utils/pricing-utils"
@@ -105,6 +106,12 @@ export function EnhancedBookingExperience({ product, onClose, onBookingComplete 
   })
   const [agreeToTerms, setAgreeToTerms] = useState(false)
   const [subscribeNewsletter, setSubscribeNewsletter] = useState(false)
+
+  // Use scroll lock hook to prevent background scrolling
+  useScrollLock({
+    enabled: true,
+    allowScrollInside: ['.modal-content', '[data-radix-popover-content]', '[data-radix-select-content]']
+  })
 
   // Date range for availability
   const today = new Date()

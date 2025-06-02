@@ -185,83 +185,153 @@ export function ImageGallery({
   if (layout === "grid") {
     return (
       <>
-        <div className={cn("grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4", className)}>
-          {/* Main large image */}
-          <div className="relative h-64 overflow-hidden rounded-lg md:col-span-2 md:row-span-2 md:h-full">
-            <ResponsiveImage
-              images={[displayImages[0]].filter(Boolean)}
-              alt={`${alt} - Main image`}
-              priority
-              aspectRatio="landscape"
-              className="h-full w-full"
-              onClick={() => handleImageClick(0)}
-              showNavigation={false}
-            />
-          </div>
-        
-        {/* Smaller gallery images - always showing exactly 4 small images */}
-        {Array.from({ length: 4 }).map((_, index) => {
-          // Cycle through available images starting from index 1, or use first image if only one available
-          const imageIndex = displayImages.length > 1 ? ((index % (displayImages.length - 1)) + 1) : 0;
-          const image = displayImages[imageIndex];
-          
-          if (!image) return null;
-          
-          // For the overlay: show on the 4th small image if there are remaining images
-          const isLastSmallImage = index === 3;
-          const shouldShowOverlay = isLastSmallImage && remainingCount > 0;
-          
-          return (
-            <div key={index} className="relative h-64 overflow-hidden rounded-lg">
+        <div className={cn("grid gap-2 sm:gap-4", className)}>
+          {/* Mobile Layout: 1 large image on top, 3 small images below */}
+          <div className="grid grid-cols-1 gap-2 sm:hidden">
+            {/* Main large image - mobile */}
+            <div className="relative h-48 overflow-hidden rounded-lg">
               <ResponsiveImage
-                images={[image]}
-                alt={`${alt} - Gallery image ${index + 2}`}
-                aspectRatio="square"
+                images={[displayImages[0]].filter(Boolean)}
+                alt={`${alt} - Main image`}
+                priority
+                aspectRatio="landscape"
                 className="h-full w-full"
-                onClick={() => handleImageClick(imageIndex)}
+                onClick={() => handleImageClick(0)}
                 showNavigation={false}
               />
-              {/* Show remaining count on last small image */}
-              {shouldShowOverlay && (
-                <div 
-                  className="absolute inset-0 bg-black/50 flex items-center justify-center cursor-pointer hover:bg-black/60 transition-colors"
-                  onClick={(e) => {
-                    e.stopPropagation(); // Prevent the underlying image click
-                    // Open modal starting from the first image not shown in the grid (maxImages index)
-                    handleImageClick(maxImages);
-                  }}
-                  role="button"
-                  tabIndex={0}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' || e.key === ' ') {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      handleImageClick(maxImages);
-                    }
-                  }}
-                  aria-label={`View ${remainingCount} more images`}
-                >
-                  <span className="text-white text-lg font-semibold">
-                    +{remainingCount} more
-                  </span>
-                </div>
-              )}
             </div>
-          )
-        })}
-      </div>
-      
-      {/* Image Modal */}
-      {enableModal && (
-        <ImageModal
-          images={images}
-          initialIndex={modalImageIndex}
-          isOpen={modalOpen}
-          onClose={() => setModalOpen(false)}
-          tourName={tourName}
-        />
-      )}
-    </>
+            
+            {/* Three smaller images in a row - mobile */}
+            <div className="grid grid-cols-3 gap-2">
+              {Array.from({ length: 3 }).map((_, index) => {
+                // Use images starting from index 1, or cycle through available images
+                const imageIndex = displayImages.length > 1 ? ((index % Math.max(1, displayImages.length - 1)) + 1) : 0;
+                const image = displayImages[imageIndex] || displayImages[0];
+                
+                if (!image) return null;
+                
+                // Show overlay on the last small image if there are remaining images
+                const isLastSmallImage = index === 2;
+                const shouldShowOverlay = isLastSmallImage && remainingCount > 0;
+                
+                return (
+                  <div key={index} className="relative h-24 overflow-hidden rounded-lg">
+                    <ResponsiveImage
+                      images={[image]}
+                      alt={`${alt} - Gallery image ${index + 2}`}
+                      aspectRatio="square"
+                      className="h-full w-full"
+                      onClick={() => handleImageClick(imageIndex)}
+                      showNavigation={false}
+                    />
+                    {/* Show remaining count on last small image */}
+                    {shouldShowOverlay && (
+                      <div 
+                        className="absolute inset-0 bg-black/60 flex items-center justify-center cursor-pointer hover:bg-black/70 transition-colors"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleImageClick(maxImages);
+                        }}
+                        role="button"
+                        tabIndex={0}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' || e.key === ' ') {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            handleImageClick(maxImages);
+                          }
+                        }}
+                        aria-label={`View ${remainingCount} more images`}
+                      >
+                        <span className="text-white text-xs font-semibold">
+                          +{remainingCount}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+
+          {/* Desktop/Tablet Layout: Original grid layout */}
+          <div className="hidden sm:grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            {/* Main large image - desktop */}
+            <div className="relative h-64 overflow-hidden rounded-lg md:col-span-2 md:row-span-2 md:h-full">
+              <ResponsiveImage
+                images={[displayImages[0]].filter(Boolean)}
+                alt={`${alt} - Main image`}
+                priority
+                aspectRatio="landscape"
+                className="h-full w-full"
+                onClick={() => handleImageClick(0)}
+                showNavigation={false}
+              />
+            </div>
+          
+            {/* Smaller gallery images - desktop (always showing exactly 4 small images) */}
+            {Array.from({ length: 4 }).map((_, index) => {
+              // Cycle through available images starting from index 1, or use first image if only one available
+              const imageIndex = displayImages.length > 1 ? ((index % (displayImages.length - 1)) + 1) : 0;
+              const image = displayImages[imageIndex];
+              
+              if (!image) return null;
+              
+              // For the overlay: show on the 4th small image if there are remaining images
+              const isLastSmallImage = index === 3;
+              const shouldShowOverlay = isLastSmallImage && remainingCount > 0;
+              
+              return (
+                <div key={index} className="relative h-64 overflow-hidden rounded-lg">
+                  <ResponsiveImage
+                    images={[image]}
+                    alt={`${alt} - Gallery image ${index + 2}`}
+                    aspectRatio="square"
+                    className="h-full w-full"
+                    onClick={() => handleImageClick(imageIndex)}
+                    showNavigation={false}
+                  />
+                  {/* Show remaining count on last small image */}
+                  {shouldShowOverlay && (
+                    <div 
+                      className="absolute inset-0 bg-black/50 flex items-center justify-center cursor-pointer hover:bg-black/60 transition-colors"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleImageClick(maxImages);
+                      }}
+                      role="button"
+                      tabIndex={0}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          handleImageClick(maxImages);
+                        }
+                      }}
+                      aria-label={`View ${remainingCount} more images`}
+                    >
+                      <span className="text-white text-lg font-semibold">
+                        +{remainingCount} more
+                      </span>
+                    </div>
+                  )}
+                </div>
+              )
+            })}
+          </div>
+        </div>
+        
+        {/* Image Modal */}
+        {enableModal && (
+          <ImageModal
+            images={images}
+            initialIndex={modalImageIndex}
+            isOpen={modalOpen}
+            onClose={() => setModalOpen(false)}
+            tourName={tourName}
+          />
+        )}
+      </>
     )
   }
 

@@ -73,7 +73,7 @@ export function EnhancedSearchForm({
   const [segmentedProducts, setSegmentedProducts] = useState<SegmentedProducts | null>(null);
   
   const [advancedFilters, setAdvancedFilters] = useState<AdvancedFilters>({
-    priceRange: [0, 1000],
+    priceRange: [0, 500],
     duration: 'any',
     groupSize: [1, 50],
     categories: [],
@@ -209,10 +209,10 @@ export function EnhancedSearchForm({
         setFilters(prev => ({ ...prev, productType: 'TOUR' }));
         break;
       case 'budget':
-        setFilters(prev => ({ ...prev, priceRange: 'budget' }));
+        setFilters(prev => ({ ...prev, priceRange: 'under-99' }));
         break;
       case 'premium':
-        setFilters(prev => ({ ...prev, priceRange: 'luxury' }));
+        setFilters(prev => ({ ...prev, priceRange: 'over-299' }));
         break;
       case 'family':
         setFilters(prev => ({ ...prev, searchTerm: 'family' }));
@@ -365,9 +365,10 @@ export function EnhancedSearchForm({
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="all">Any Price</SelectItem>
-                        <SelectItem value="budget">Under $100</SelectItem>
-                        <SelectItem value="mid">$100 - $300</SelectItem>
-                        <SelectItem value="luxury">$300+</SelectItem>
+                        <SelectItem value="under-99">Under $99</SelectItem>
+                        <SelectItem value="99-159">$99 - $159</SelectItem>
+                        <SelectItem value="159-299">$159 - $299</SelectItem>
+                        <SelectItem value="over-299">Over $299</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -469,7 +470,7 @@ export function EnhancedSearchForm({
                     ...prev, 
                     priceRange: value as [number, number] 
                   }))}
-                  max={1000}
+                  max={500}
                   step={10}
                   className="mt-2"
                 />

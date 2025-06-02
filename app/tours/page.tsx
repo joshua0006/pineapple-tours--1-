@@ -114,10 +114,10 @@ export default function ToursPage() {
         searchCategories.map(cat => [cat.id, cat.title])
       ),
       priceRange: {
-        'under-500': 'Under $500',
-        '500-1000': '$500 - $1,000',
-        '1000-2000': '$1,000 - $2,000',
-        'over-2000': 'Over $2,000',
+        'under-99': 'Under $99',
+        '99-159': '$99 - $159',
+        '159-299': '$159 - $299',
+        'over-299': 'Over $299',
       },
     }
 
@@ -231,7 +231,6 @@ export default function ToursPage() {
                 <div className="space-y-2">
                   <label className="text-sm font-medium text-muted-foreground">Check-in Date</label>
                   <div className="relative">
-                    <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground z-10" />
                     <DatePicker
                       date={filters.checkIn ? new Date(filters.checkIn) : undefined}
                       onDateChange={(date) => {
@@ -250,7 +249,7 @@ export default function ToursPage() {
                       placeholder="Select date"
                       minDate={new Date()}
                       maxDate={filters.checkOut ? addDays(new Date(filters.checkOut), -1) : addDays(new Date(), 365)}
-                      className="w-full h-10 pl-10"
+                      className="w-full h-10"
                     />
                   </div>
                 </div>
@@ -259,7 +258,6 @@ export default function ToursPage() {
                 <div className="space-y-2">
                   <label className="text-sm font-medium text-muted-foreground">Check-out Date</label>
                   <div className="relative">
-                    <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground z-10" />
                     <DatePicker
                       date={filters.checkOut ? new Date(filters.checkOut) : undefined}
                       onDateChange={(date) => {
@@ -272,7 +270,7 @@ export default function ToursPage() {
                       placeholder="Select date"
                       minDate={filters.checkIn ? addDays(new Date(filters.checkIn), 1) : addDays(new Date(), 1)}
                       maxDate={addDays(new Date(), 365)}
-                      className="w-full h-10 pl-10"
+                      className="w-full h-10"
                     />
                   </div>
                 </div>
@@ -310,10 +308,10 @@ export default function ToursPage() {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="all">All Prices</SelectItem>
-                      <SelectItem value="under-500">Under $500</SelectItem>
-                      <SelectItem value="500-1000">$500 - $1,000</SelectItem>
-                      <SelectItem value="1000-2000">$1,000 - $2,000</SelectItem>
-                      <SelectItem value="over-2000">Over $2,000</SelectItem>
+                      <SelectItem value="under-99">Under $99</SelectItem>
+                      <SelectItem value="99-159">$99 - $159</SelectItem>
+                      <SelectItem value="159-299">$159 - $299</SelectItem>
+                      <SelectItem value="over-299">Over $299</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -437,22 +435,7 @@ export default function ToursPage() {
               </div>
             </div>
 
-            {/* Date filtering notice */}
-            {filters.checkIn && filters.checkOut && (
-              <div className="mt-4 p-4 bg-orange-50 border border-orange-200 rounded-lg">
-                <div className="flex items-center gap-2 text-sm text-orange-800">
-                  <Calendar className="h-4 w-4" />
-                  <span className="font-medium">Availability filtering active:</span>
-                  <span>Only showing tours with availability between {filters.checkIn} and {filters.checkOut}</span>
-                  {loading && (
-                    <span className="flex items-center gap-1 ml-2">
-                      <RefreshCw className="h-3 w-3 animate-spin" />
-                      Checking...
-                    </span>
-                  )}
-                </div>
-              </div>
-            )}
+        
           </div>
         </section>
 

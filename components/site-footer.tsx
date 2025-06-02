@@ -9,7 +9,7 @@ export function SiteFooter() {
         <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-4">
           <div>
             <Link href="/" className="flex items-center gap-2 font-bold text-xl">
-              <img src="/pineapple-tour-logo.png" alt="Pineapple Tours Logo" className="" />
+              <img src="/pineapple-tour-logo.png" alt="Pineapple Tours Logo" className="h-10" />
               <span>Pineapple Tours</span>
             </Link>
             <p className="mt-4 text-gray-400">

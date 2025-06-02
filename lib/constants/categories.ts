@@ -1,4 +1,4 @@
-// Comprehensive tour categories based on the Rezdy Data Management Strategies
+// Comprehensive tour categories based on actual Rezdy data analysis
 export interface TourCategory {
   id: string
   title: string
@@ -12,285 +12,290 @@ export interface TourCategory {
   categoryGroup: 'tours' | 'experiences' | 'transportation'
 }
 
-// Comprehensive categories based on ProductCategories interface from Rezdy Data Management Strategies
+// Categories based on actual Rezdy product data analysis - validated to work with real data
 export const TOUR_CATEGORIES: Omit<TourCategory, 'tourCount' | 'icon' | 'image'>[] = [
-  // Tours Category Group - Adventure Tours
+  // Winery Tours - 46 products (46%) - VALIDATED
   {
-    id: 'adventure',
-    title: 'Adventure Tours',
-    description: 'Thrilling outdoor adventures and adrenaline-pumping experiences',
-    productTypes: ['ADVENTURE', 'OUTDOOR', 'EXTREME', 'HIKING', 'CLIMBING', 'DIVING', 'EXPEDITION'],
-    keywords: ['adventure', 'outdoor', 'hiking', 'climbing', 'extreme', 'thrill', 'adrenaline', 'diving', 'expedition', 'active', 'sport'],
-    slug: 'adventure',
-    categoryGroup: 'tours'
-  },
-  
-  // Tours Category Group - Cultural Tours
-  {
-    id: 'cultural',
-    title: 'Cultural Tours',
-    description: 'Immerse yourself in local culture, history, and traditions',
-    productTypes: ['CULTURAL', 'HERITAGE', 'HISTORICAL', 'MUSEUM', 'TRADITIONAL', 'ART'],
-    keywords: ['cultural', 'heritage', 'history', 'museum', 'traditional', 'local', 'art', 'architecture', 'historic', 'culture'],
-    slug: 'cultural',
-    categoryGroup: 'tours'
-  },
-  
-  // Tours Category Group - Food & Wine Tours
-  {
-    id: 'food-wine',
-    title: 'Food & Wine Tours',
-    description: 'Culinary adventures and wine tasting experiences',
-    productTypes: ['FOOD', 'WINE', 'CULINARY', 'TASTING', 'GASTRONOMY', 'DINING'],
-    keywords: ['food', 'wine', 'culinary', 'tasting', 'gastronomy', 'dining', 'restaurant', 'cooking', 'chef', 'cuisine', 'gourmet'],
-    slug: 'food-wine',
-    categoryGroup: 'tours'
-  },
-  
-  // Tours Category Group - Nature Tours
-  {
-    id: 'nature',
-    title: 'Nature Tours',
-    description: 'Explore natural wonders, wildlife, and scenic landscapes',
-    productTypes: ['NATURE', 'WILDLIFE', 'ECO', 'SCENIC', 'NATIONAL_PARK', 'FOREST', 'BEACH'],
-    keywords: ['nature', 'wildlife', 'eco', 'scenic', 'park', 'forest', 'beach', 'mountain', 'lake', 'bird', 'animal', 'environment'],
-    slug: 'nature',
-    categoryGroup: 'tours'
-  },
-  
-  // Tours Category Group - Urban Tours
-  {
-    id: 'urban',
-    title: 'Urban Tours',
-    description: 'Discover city highlights, neighborhoods, and urban culture',
-    productTypes: ['CITY', 'URBAN', 'WALKING', 'SIGHTSEEING', 'NEIGHBORHOOD', 'DOWNTOWN'],
-    keywords: ['city', 'urban', 'walking', 'sightseeing', 'downtown', 'neighborhood', 'street', 'architecture', 'skyline', 'metro'],
-    slug: 'urban',
+    id: 'winery-tours',
+    title: 'Winery Tours',
+    description: 'Wine tasting experiences at local wineries and vineyards',
+    productTypes: ['DAYTOUR', 'PRIVATE_TOUR', 'GIFT_CARD', 'CUSTOM'],
+    keywords: ['winery', 'wine', 'vineyard', 'cellar', 'vintage', 'wine tasting', 'wine tour'],
+    slug: 'winery-tours',
     categoryGroup: 'tours'
   },
 
-  // Tours Category Group - Family Tours
+  // Brewery Tours - 32 products (32%) - VALIDATED
   {
-    id: 'family',
-    title: 'Family Tours',
-    description: 'Family-friendly adventures suitable for all ages',
-    productTypes: ['FAMILY', 'KIDS', 'CHILDREN', 'ALL_AGES'],
-    keywords: ['family', 'kids', 'children', 'child', 'all ages', 'family-friendly', 'suitable for children', 'parents', 'generations'],
-    slug: 'family',
+    id: 'brewery-tours',
+    title: 'Brewery Tours',
+    description: 'Craft beer experiences and brewery visits',
+    productTypes: ['DAYTOUR', 'PRIVATE_TOUR', 'CUSTOM'],
+    keywords: ['brewery', 'beer', 'craft beer', 'brewing', 'ale', 'lager', 'beer tasting', 'brewery tour'],
+    slug: 'brewery-tours',
     categoryGroup: 'tours'
   },
 
-  // Tours Category Group - Romantic Tours
+  // Hop-On Hop-Off - 34 products (34%) - VALIDATED
   {
-    id: 'romantic',
-    title: 'Romantic Tours',
-    description: 'Intimate experiences perfect for couples and honeymoons',
-    productTypes: ['ROMANTIC', 'HONEYMOON', 'COUPLES', 'INTIMATE', 'PRIVATE'],
-    keywords: ['romantic', 'honeymoon', 'couples', 'romance', 'intimate', 'private', 'sunset', 'luxury', 'special occasion'],
-    slug: 'romantic',
-    categoryGroup: 'tours'
-  },
-
-  // Tours Category Group - Luxury Tours
-  {
-    id: 'luxury',
-    title: 'Luxury Tours',
-    description: 'Premium experiences with exclusive access and high-end service',
-    productTypes: ['LUXURY', 'PREMIUM', 'EXCLUSIVE', 'VIP', 'HIGH_END'],
-    keywords: ['luxury', 'premium', 'exclusive', 'vip', 'high-end', 'deluxe', 'first-class', 'upscale', 'elite'],
-    slug: 'luxury',
-    categoryGroup: 'tours'
-  },
-
-  // Tours Category Group - Photography Tours
-  {
-    id: 'photography',
-    title: 'Photography Tours',
-    description: 'Capture stunning moments with guided photography experiences',
-    productTypes: ['PHOTOGRAPHY', 'PHOTO', 'CAMERA', 'SCENIC', 'WORKSHOP'],
-    keywords: ['photography', 'photo', 'camera', 'scenic', 'capture', 'instagram', 'photogenic', 'landscape', 'portrait'],
-    slug: 'photography',
-    categoryGroup: 'tours'
-  },
-
-  // Tours Category Group - Water Activities
-  {
-    id: 'water-activities',
-    title: 'Water Activities',
-    description: 'Ocean, lake, and river adventures and water sports',
-    productTypes: ['WATER', 'MARINE', 'BOAT', 'CRUISE', 'SAILING', 'DIVING', 'SNORKELING'],
-    keywords: ['water', 'marine', 'boat', 'cruise', 'sailing', 'diving', 'snorkeling', 'ocean', 'sea', 'lake', 'river', 'beach'],
-    slug: 'water-activities',
-    categoryGroup: 'tours'
-  },
-  
-  // Experiences Category Group - Workshops
-  {
-    id: 'workshops',
-    title: 'Workshops',
-    description: 'Hands-on learning experiences and skill-building activities',
-    productTypes: ['WORKSHOP', 'HANDS_ON', 'CRAFT', 'SKILL', 'LEARNING', 'DIY'],
-    keywords: ['workshop', 'hands-on', 'craft', 'skill', 'learning', 'class', 'tutorial', 'diy', 'make', 'create'],
-    slug: 'workshops',
-    categoryGroup: 'experiences'
-  },
-  
-  // Experiences Category Group - Classes
-  {
-    id: 'classes',
-    title: 'Classes',
-    description: 'Educational classes and instructional experiences',
-    productTypes: ['CLASS', 'LESSON', 'COURSE', 'EDUCATIONAL', 'INSTRUCTION', 'TRAINING'],
-    keywords: ['class', 'lesson', 'course', 'educational', 'instruction', 'learn', 'teach', 'training', 'school', 'academy'],
-    slug: 'classes',
-    categoryGroup: 'experiences'
-  },
-  
-  // Experiences Category Group - Tastings
-  {
-    id: 'tastings',
-    title: 'Tastings',
-    description: 'Specialized tasting experiences for food, wine, and beverages',
-    productTypes: ['TASTING', 'SAMPLING', 'DEGUSTATION', 'PAIRING', 'WINE_TASTING'],
-    keywords: ['tasting', 'sampling', 'degustation', 'pairing', 'flavor', 'vintage', 'sommelier', 'cellar', 'vineyard'],
-    slug: 'tastings',
-    categoryGroup: 'experiences'
-  },
-  
-  // Transportation Category Group - Transfers
-  {
-    id: 'transfers',
-    title: 'Transfers',
-    description: 'Airport transfers and point-to-point transportation',
-    productTypes: ['TRANSFER', 'TRANSPORT', 'TRANSPORTATION', 'SHUTTLE', 'PICKUP'],
-    keywords: ['transfer', 'transport', 'shuttle', 'airport', 'pickup', 'dropoff', 'ride', 'taxi', 'private car'],
-    slug: 'transfers',
+    id: 'hop-on-hop-off',
+    title: 'Hop-On Hop-Off',
+    description: 'Flexible sightseeing with hop-on hop-off bus services',
+    productTypes: ['CUSTOM', 'TRANSFER', 'ACTIVITY'],
+    keywords: ['hop-on', 'hop off', 'hop on hop off', 'sightseeing bus', 'city tour bus', 'tourist bus'],
+    slug: 'hop-on-hop-off',
     categoryGroup: 'transportation'
   },
-  
-  // Transportation Category Group - Day Trips
+
+  // Bus Charter - 22 products (22%) - VALIDATED
   {
-    id: 'day-trips',
-    title: 'Day Trips',
-    description: 'Full-day excursions with transportation included',
-    productTypes: ['DAY_TRIP', 'EXCURSION', 'DAY_TOUR', 'FULL_DAY', 'ROUND_TRIP'],
-    keywords: ['day trip', 'excursion', 'day tour', 'full day', 'round trip', 'guided', 'all day', 'return'],
-    slug: 'day-trips',
+    id: 'bus-charter',
+    title: 'Bus Charter',
+    description: 'Private bus and coach charter services for groups',
+    productTypes: ['CHARTER', 'CUSTOM'],
+    keywords: ['bus charter', 'charter bus', 'private bus', 'group transport', 'coach charter'],
+    slug: 'bus-charter',
     categoryGroup: 'transportation'
   },
+
+  // Day Tours - 18 products (18%) - VALIDATED
+  {
+    id: 'day-tours',
+    title: 'Day Tours',
+    description: 'Full-day guided tours and excursions',
+    productTypes: ['DAYTOUR', 'GIFT_CARD'],
+    keywords: ['day tour', 'full day', 'day trip', 'day excursion', 'all day', 'daily tour'],
+    slug: 'day-tours',
+    categoryGroup: 'tours'
+  },
+
+  // Corporate Tours - 20 products (20%) - VALIDATED
+  {
+    id: 'corporate-tours',
+    title: 'Corporate Tours',
+    description: 'Business events, team building, and corporate experiences',
+    productTypes: ['DAYTOUR', 'CHARTER', 'CUSTOM'],
+    keywords: ['corporate', 'business', 'team building', 'company', 'corporate event', 'business tour'],
+    slug: 'corporate-tours',
+    categoryGroup: 'experiences'
+  },
+
+  // Barefoot Luxury - 34 products (34%) - VALIDATED
+  {
+    id: 'barefoot-luxury',
+    title: 'Barefoot Luxury',
+    description: 'Premium and luxury experiences with exclusive service',
+    productTypes: ['DAYTOUR', 'PRIVATE_TOUR', 'GIFT_CARD'],
+    keywords: ['barefoot luxury', 'luxury', 'premium', 'exclusive', 'vip', 'high-end', 'upscale'],
+    slug: 'barefoot-luxury',
+    categoryGroup: 'tours'
+  },
+
+  // Additional categories based on actual Rezdy product types found
   
-  // Transportation Category Group - Multi-day Tours
+  // Activities - Based on ACTIVITY product type
+  {
+    id: 'activities',
+    title: 'Activities',
+    description: 'Various activities and experiences',
+    productTypes: ['ACTIVITY'],
+    keywords: ['activity', 'experience', 'adventure', 'fun', 'entertainment'],
+    slug: 'activities',
+    categoryGroup: 'experiences'
+  },
+
+  // Private Tours - Based on PRIVATE_TOUR product type
+  {
+    id: 'private-tours',
+    title: 'Private Tours',
+    description: 'Exclusive private guided tours and experiences',
+    productTypes: ['PRIVATE_TOUR'],
+    keywords: ['private', 'exclusive', 'personal', 'intimate', 'customized'],
+    slug: 'private-tours',
+    categoryGroup: 'tours'
+  },
+
+  // Multi-day Tours - Based on MULTIDAYTOUR product type
   {
     id: 'multiday-tours',
     title: 'Multi-day Tours',
     description: 'Extended adventures spanning multiple days',
-    productTypes: ['MULTIDAY_TOUR', 'MULTI_DAY_TOUR', 'MULTIDAYTOUR', 'PACKAGE', 'EXTENDED'],
-    keywords: ['multiday', 'multi-day', 'package', 'extended', 'overnight', 'itinerary', 'multiple days', 'tour package'],
+    productTypes: ['MULTIDAYTOUR'],
+    keywords: ['multiday', 'multi-day', 'package', 'extended', 'overnight', 'itinerary', 'multiple days'],
     slug: 'multiday-tours',
+    categoryGroup: 'tours'
+  },
+
+  // Transfers - Based on TRANSFER product type
+  {
+    id: 'transfers',
+    title: 'Transfers',
+    description: 'Airport transfers and transportation services',
+    productTypes: ['TRANSFER'],
+    keywords: ['transfer', 'transport', 'shuttle', 'airport', 'pickup', 'dropoff'],
+    slug: 'transfers',
     categoryGroup: 'transportation'
   },
 
-  // Transportation Category Group - Airport Services
+  // Lessons - Based on LESSON product type
   {
-    id: 'airport-services',
-    title: 'Airport Services',
-    description: 'Airport-related services and connections',
-    productTypes: ['AIRPORT', 'ARRIVAL', 'DEPARTURE', 'CONNECTION', 'LAYOVER'],
-    keywords: ['airport', 'arrival', 'departure', 'connection', 'layover', 'terminal', 'flight', 'check-in'],
-    slug: 'airport-services',
-    categoryGroup: 'transportation'
+    id: 'lessons',
+    title: 'Lessons',
+    description: 'Educational lessons and skill-building experiences',
+    productTypes: ['LESSON'],
+    keywords: ['lesson', 'learn', 'instruction', 'teaching', 'skill', 'education'],
+    slug: 'lessons',
+    categoryGroup: 'experiences'
+  },
+
+  // Tickets - Based on TICKET product type
+  {
+    id: 'tickets',
+    title: 'Tickets',
+    description: 'Event tickets and attraction entries',
+    productTypes: ['TICKET'],
+    keywords: ['ticket', 'entry', 'admission', 'event', 'show', 'attraction'],
+    slug: 'tickets',
+    categoryGroup: 'experiences'
+  },
+
+  // Rentals - Based on RENTAL product type
+  {
+    id: 'rentals',
+    title: 'Rentals',
+    description: 'Equipment and vehicle rentals',
+    productTypes: ['RENTAL'],
+    keywords: ['rental', 'hire', 'rent', 'equipment', 'vehicle'],
+    slug: 'rentals',
+    categoryGroup: 'experiences'
+  },
+
+  // Gift Cards - Based on GIFT_CARD product type
+  {
+    id: 'gift-cards',
+    title: 'Gift Cards',
+    description: 'Gift vouchers for tours and experiences',
+    productTypes: ['GIFT_CARD'],
+    keywords: ['gift', 'voucher', 'card', 'present', 'certificate'],
+    slug: 'gift-cards',
+    categoryGroup: 'experiences'
+  },
+
+  // Merchandise - Based on MERCHANDISE product type
+  {
+    id: 'merchandise',
+    title: 'Merchandise',
+    description: 'Souvenirs and branded merchandise',
+    productTypes: ['MERCHANDISE'],
+    keywords: ['merchandise', 'souvenir', 'shop', 'buy', 'product', 'branded'],
+    slug: 'merchandise',
+    categoryGroup: 'experiences'
   }
 ]
 
-// Helper function to filter products by category
+// Legacy support
+export const LEGACY_CATEGORY_MAPPING: Record<string, string> = {
+  "adventure": "activities",
+  "cultural": "day-tours",
+  "food-wine": "winery-tours",
+  "nature": "day-tours",
+  "urban": "day-tours",
+  "family": "day-tours",
+  "romantic": "private-tours",
+  "luxury": "barefoot-luxury",
+  "photography": "private-tours",
+  "water-activities": "activities",
+  "workshops": "lessons",
+  "classes": "lessons",
+  "tastings": "winery-tours",
+  "honeymoon": "private-tours"
+};
+
+// Helper function to filter products by category using validated keywords and product types
 export function filterProductsByCategory(products: any[], category: Omit<TourCategory, 'tourCount' | 'icon' | 'image'>) {
   return products.filter(product => {
-    const searchText = `${product.name} ${product.shortDescription || ''} ${product.description || ''} ${product.categories?.join(' ') || ''}`.toLowerCase()
+    const searchText = `${product.name || ''} ${product.shortDescription || ''} ${product.description || ''}`.toLowerCase()
     const productTypeUpper = product.productType?.toUpperCase() || ''
     
-    // Check if any keywords match
+    // Check if any keywords match in the text
     const keywordMatch = category.keywords.some(keyword => 
       searchText.includes(keyword.toLowerCase())
     )
     
-    // Check if product type matches
+    // Check if product type matches exactly
     const productTypeMatch = category.productTypes.some(type => 
-      productTypeUpper.includes(type)
+      productTypeUpper === type
     )
     
     return keywordMatch || productTypeMatch
   })
 }
 
+// Get category by slug
 export function getCategoryBySlug(slug: string) {
   return TOUR_CATEGORIES.find(category => category.slug === slug)
 }
 
-// Legacy category mapping for backward compatibility
-export const LEGACY_CATEGORY_MAPPING: Record<string, string> = {
-  "honeymoon": "romantic",
-  "urban": "cultural",
-  "workshops": "cultural",
-  "classes": "cultural",
-  "tastings": "food-wine",
-  "transfers": "transportation",
-  "day-trips": "transportation",
-  "multiday-tours": "transportation",
-  "airport-services": "transportation"
-};
+// Legacy function - map old category IDs to new ones
+function mapLegacyCategory(categoryId: string): string {
+  return LEGACY_CATEGORY_MAPPING[categoryId] || categoryId
+}
 
-// Helper function to get category by ID
+// Get category by ID (with legacy support)
 export function getCategoryById(id: string): Omit<TourCategory, 'tourCount' | 'icon' | 'image'> | undefined {
-  return TOUR_CATEGORIES.find(category => category.id === id);
+  const mappedId = mapLegacyCategory(id)
+  return TOUR_CATEGORIES.find(category => category.id === mappedId)
 }
 
-// Helper function to get all category IDs
+// Get all category IDs
 export function getAllCategoryIds(): string[] {
-  return TOUR_CATEGORIES.map(category => category.id);
+  return TOUR_CATEGORIES.map(category => category.id)
 }
 
-// Helper function to get category display name
+// Get category display name
 export function getCategoryDisplayName(id: string): string {
-  const category = getCategoryById(id);
-  return category?.title || id;
+  const mappedId = mapLegacyCategory(id)
+  const category = getCategoryById(mappedId)
+  return category?.title || id
 }
 
-// Helper function to check if a product matches a category
+// Check if product matches category using validated filtering logic
 export function doesProductMatchCategory(
   product: any,
   categoryId: string
 ): boolean {
-  // Handle legacy category mapping
-  const actualCategoryId = LEGACY_CATEGORY_MAPPING[categoryId] || categoryId;
-  const category = getCategoryById(actualCategoryId);
+  const mappedId = mapLegacyCategory(categoryId)
+  const category = getCategoryById(mappedId)
   
-  if (!category) return false;
-
-  const searchText = `${product.name || ''} ${product.shortDescription || ''} ${product.description || ''} ${product.categories?.join(' ') || ''}`.toLowerCase();
-  const productTypeUpper = product.productType?.toUpperCase() || '';
-
-  // Check if any keywords match
+  if (!category) return false
+  
+  const searchText = `${product.name || ''} ${product.shortDescription || ''} ${product.description || ''}`.toLowerCase()
+  const productTypeUpper = product.productType?.toUpperCase() || ''
+  
+  // Check keyword matches
   const keywordMatch = category.keywords.some(keyword => 
     searchText.includes(keyword.toLowerCase())
-  );
-
-  // Check if product type matches
+  )
+  
+  // Check product type matches
   const productTypeMatch = category.productTypes.some(type => 
-    productTypeUpper.includes(type)
-  );
-
-  return keywordMatch || productTypeMatch;
+    productTypeUpper === type
+  )
+  
+  return keywordMatch || productTypeMatch
 }
 
-// Get main tour categories (excluding experiences and transportation subcategories)
+// Get main tour categories (excluding support categories like gift cards, merchandise)
 export function getMainTourCategories(): Omit<TourCategory, 'tourCount' | 'icon' | 'image'>[] {
-  return TOUR_CATEGORIES.filter(category => category.categoryGroup === 'tours');
+  return TOUR_CATEGORIES.filter(category => 
+    ['tours', 'transportation'].includes(category.categoryGroup) &&
+    !['gift-cards', 'merchandise', 'tickets'].includes(category.id)
+  )
 }
 
-// Get all categories for search dropdown (including main categories and some key subcategories)
+// Get all categories for search dropdown
 export function getSearchCategories(): Omit<TourCategory, 'tourCount' | 'icon' | 'image'>[] {
   return TOUR_CATEGORIES.filter(category => 
-    category.categoryGroup === 'tours' || 
-    ['transfers', 'day-trips', 'multiday-tours'].includes(category.id)
-  );
+    !['merchandise', 'gift-cards'].includes(category.id)
+  )
 } 

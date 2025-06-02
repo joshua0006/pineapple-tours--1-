@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { ChevronDown, ChevronRight, MapPin, Mountain, Camera, Utensils, Heart, Users, Sparkles, Waves, Car, Plane, Calendar, GraduationCap } from "lucide-react"
+import { ChevronDown, ChevronRight, MapPin, Mountain, Camera, Utensils, Heart, Users, Sparkles, Waves, Car, Plane, Calendar, GraduationCap, Wine, Beer, Bus, Building, Activity, Ticket, Package, Gift } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 interface SubCategory {
@@ -22,139 +22,193 @@ interface Category {
   featured?: boolean
 }
 
-// Updated categories to match the search system
+// Updated categories based on validated Rezdy data analysis
 const tourCategories: Category[] = [
   {
-    id: "adventure",
-    name: "Adventure Tours",
-    icon: <Mountain className="w-4 h-4" />,
-    href: "/search?category=adventure",
+    id: "winery-tours",
+    name: "Winery Tours",
+    icon: <Wine className="w-4 h-4" />,
+    href: "/search?category=winery-tours",
     featured: true,
     subcategories: [
-      { id: "hiking", name: "Hiking & Trekking", href: "/search?category=adventure&type=hiking", description: "Mountain trails and nature walks" },
-      { id: "climbing", name: "Rock Climbing", href: "/search?category=adventure&type=climbing", description: "Guided climbing experiences" },
-      { id: "cycling", name: "Cycling Tours", href: "/search?category=adventure&type=cycling", description: "Bike tours and mountain biking" },
-      { id: "extreme", name: "Extreme Sports", href: "/search?category=adventure&type=extreme", description: "Bungee, skydiving, and more" },
-      { id: "safari", name: "Wildlife Safari", href: "/search?category=adventure&type=safari", description: "Animal watching expeditions" }
+      { id: "wine-tasting", name: "Wine Tasting", href: "/search?category=winery-tours&type=wine-tasting", description: "Vineyard visits and tastings" },
+      { id: "cellar-tours", name: "Cellar Tours", href: "/search?category=winery-tours&type=cellar-tours", description: "Behind-the-scenes winery experiences" },
+      { id: "vintage-tours", name: "Vintage Tours", href: "/search?category=winery-tours&type=vintage-tours", description: "Seasonal harvest experiences" },
+      { id: "private-wine", name: "Private Wine Tours", href: "/search?category=winery-tours&type=private-wine", description: "Exclusive wine experiences" },
+      { id: "wine-education", name: "Wine Education", href: "/search?category=winery-tours&type=wine-education", description: "Learn about wine making" }
     ]
   },
   {
-    id: "cultural",
-    name: "Cultural Tours",
-    icon: <GraduationCap className="w-4 h-4" />,
-    href: "/search?category=cultural",
+    id: "brewery-tours",
+    name: "Brewery Tours",
+    icon: <Beer className="w-4 h-4" />,
+    href: "/search?category=brewery-tours",
     featured: true,
     subcategories: [
-      { id: "historical", name: "Historical Sites", href: "/search?category=cultural&type=historical", description: "Ancient ruins and monuments" },
-      { id: "museums", name: "Museums & Galleries", href: "/search?category=cultural&type=museums", description: "Art and cultural exhibitions" },
-      { id: "local-life", name: "Local Life", href: "/search?category=cultural&type=local-life", description: "Authentic local experiences" },
-      { id: "festivals", name: "Festivals & Events", href: "/search?category=cultural&type=festivals", description: "Cultural celebrations" },
-      { id: "architecture", name: "Architecture Tours", href: "/search?category=cultural&type=architecture", description: "Iconic buildings and design" }
+      { id: "craft-beer", name: "Craft Beer Tours", href: "/search?category=brewery-tours&type=craft-beer", description: "Local craft brewery experiences" },
+      { id: "beer-tasting", name: "Beer Tasting", href: "/search?category=brewery-tours&type=beer-tasting", description: "Guided beer tasting sessions" },
+      { id: "brewing-process", name: "Brewing Process", href: "/search?category=brewery-tours&type=brewing-process", description: "Learn how beer is made" },
+      { id: "brewery-hopping", name: "Brewery Hopping", href: "/search?category=brewery-tours&type=brewery-hopping", description: "Multiple brewery visits" },
+      { id: "ale-lager", name: "Ale & Lager Tours", href: "/search?category=brewery-tours&type=ale-lager", description: "Traditional beer styles" }
     ]
   },
   {
-    id: "food-wine",
-    name: "Food & Wine",
-    icon: <Utensils className="w-4 h-4" />,
-    href: "/search?category=food-wine",
-    subcategories: [
-      { id: "culinary", name: "Culinary Tours", href: "/search?category=food-wine&type=culinary", description: "Local cuisine experiences" },
-      { id: "wine-tasting", name: "Wine Tasting", href: "/search?category=food-wine&type=wine-tasting", description: "Vineyard visits and tastings" },
-      { id: "cooking-classes", name: "Cooking Classes", href: "/search?category=food-wine&type=cooking-classes", description: "Learn to cook local dishes" },
-      { id: "food-markets", name: "Food Markets", href: "/search?category=food-wine&type=food-markets", description: "Local market explorations" },
-      { id: "brewery", name: "Brewery Tours", href: "/search?category=food-wine&type=brewery", description: "Craft beer experiences" }
-    ]
-  },
-  {
-    id: "nature",
-    name: "Nature Tours",
-    icon: <MapPin className="w-4 h-4" />,
-    href: "/search?category=nature",
+    id: "hop-on-hop-off",
+    name: "Hop-On Hop-Off",
+    icon: <Bus className="w-4 h-4" />,
+    href: "/search?category=hop-on-hop-off",
     featured: true,
     subcategories: [
-      { id: "national-parks", name: "National Parks", href: "/search?category=nature&type=national-parks", description: "Protected natural areas" },
-      { id: "wildlife", name: "Wildlife Watching", href: "/search?category=nature&type=wildlife", description: "Animal observation tours" },
-      { id: "botanical", name: "Botanical Gardens", href: "/search?category=nature&type=botanical", description: "Plant and garden tours" },
-      { id: "eco-tours", name: "Eco Tours", href: "/search?category=nature&type=eco-tours", description: "Sustainable nature experiences" },
-      { id: "bird-watching", name: "Bird Watching", href: "/search?category=nature&type=bird-watching", description: "Birding expeditions" }
+      { id: "city-tours", name: "City Tours", href: "/search?category=hop-on-hop-off&type=city-tours", description: "Flexible city sightseeing" },
+      { id: "sightseeing-bus", name: "Sightseeing Bus", href: "/search?category=hop-on-hop-off&type=sightseeing-bus", description: "Tourist bus services" },
+      { id: "mountain-tours", name: "Mountain Tours", href: "/search?category=hop-on-hop-off&type=mountain-tours", description: "Scenic mountain routes" },
+      { id: "coastal-routes", name: "Coastal Routes", href: "/search?category=hop-on-hop-off&type=coastal-routes", description: "Beautiful coastal journeys" },
+      { id: "tourist-bus", name: "Tourist Bus", href: "/search?category=hop-on-hop-off&type=tourist-bus", description: "Convenient tourist transport" }
     ]
   },
   {
-    id: "water-activities",
-    name: "Water Activities",
-    icon: <Waves className="w-4 h-4" />,
-    href: "/search?category=water-activities",
+    id: "day-tours",
+    name: "Day Tours",
+    icon: <Calendar className="w-4 h-4" />,
+    href: "/search?category=day-tours",
+    featured: true,
     subcategories: [
-      { id: "snorkeling", name: "Snorkeling", href: "/search?category=water-activities&type=snorkeling", description: "Underwater exploration" },
-      { id: "diving", name: "Scuba Diving", href: "/search?category=water-activities&type=diving", description: "Deep sea adventures" },
-      { id: "boat-tours", name: "Boat Tours", href: "/search?category=water-activities&type=boat-tours", description: "Sailing and cruising" },
-      { id: "fishing", name: "Fishing Tours", href: "/search?category=water-activities&type=fishing", description: "Sport and deep sea fishing" },
-      { id: "water-sports", name: "Water Sports", href: "/search?category=water-activities&type=water-sports", description: "Surfing, kayaking, and more" }
+      { id: "full-day", name: "Full Day Tours", href: "/search?category=day-tours&type=full-day", description: "Complete day experiences" },
+      { id: "day-trips", name: "Day Trips", href: "/search?category=day-tours&type=day-trips", description: "Single day excursions" },
+      { id: "guided-tours", name: "Guided Tours", href: "/search?category=day-tours&type=guided-tours", description: "Professional guide included" },
+      { id: "all-day", name: "All Day Adventures", href: "/search?category=day-tours&type=all-day", description: "Dawn to dusk experiences" },
+      { id: "day-excursions", name: "Day Excursions", href: "/search?category=day-tours&type=day-excursions", description: "Memorable day trips" }
     ]
   },
   {
-    id: "family",
-    name: "Family Tours",
-    icon: <Users className="w-4 h-4" />,
-    href: "/search?category=family",
+    id: "corporate-tours",
+    name: "Corporate Tours",
+    icon: <Building className="w-4 h-4" />,
+    href: "/search?category=corporate-tours",
     subcategories: [
-      { id: "kid-friendly", name: "Kid-Friendly", href: "/search?category=family&type=kid-friendly", description: "Perfect for children" },
-      { id: "educational", name: "Educational Tours", href: "/search?category=family&type=educational", description: "Learning experiences for all ages" },
-      { id: "theme-parks", name: "Theme Parks", href: "/search?category=family&type=theme-parks", description: "Amusement and entertainment" },
-      { id: "interactive", name: "Interactive Experiences", href: "/search?category=family&type=interactive", description: "Hands-on activities" },
-      { id: "multi-generation", name: "Multi-Generation", href: "/search?category=family&type=multi-generation", description: "Fun for all ages" }
+      { id: "team-building", name: "Team Building", href: "/search?category=corporate-tours&type=team-building", description: "Corporate team activities" },
+      { id: "business-events", name: "Business Events", href: "/search?category=corporate-tours&type=business-events", description: "Professional event experiences" },
+      { id: "company-outings", name: "Company Outings", href: "/search?category=corporate-tours&type=company-outings", description: "Group corporate activities" },
+      { id: "corporate-events", name: "Corporate Events", href: "/search?category=corporate-tours&type=corporate-events", description: "Business entertainment" },
+      { id: "business-tours", name: "Business Tours", href: "/search?category=corporate-tours&type=business-tours", description: "Professional tour experiences" }
     ]
   },
   {
-    id: "romantic",
-    name: "Romantic Tours",
-    icon: <Heart className="w-4 h-4" />,
-    href: "/search?category=romantic",
-    subcategories: [
-      { id: "honeymoon", name: "Honeymoon Packages", href: "/search?category=romantic&type=honeymoon", description: "Perfect for newlyweds" },
-      { id: "sunset", name: "Sunset Tours", href: "/search?category=romantic&type=sunset", description: "Romantic evening experiences" },
-      { id: "couples", name: "Couples Activities", href: "/search?category=romantic&type=couples", description: "Intimate shared experiences" },
-      { id: "spa", name: "Spa & Wellness", href: "/search?category=romantic&type=spa", description: "Relaxation and rejuvenation" },
-      { id: "private", name: "Private Tours", href: "/search?category=romantic&type=private", description: "Exclusive romantic experiences" }
-    ]
-  },
-  {
-    id: "luxury",
-    name: "Luxury Tours",
+    id: "barefoot-luxury",
+    name: "Barefoot Luxury",
     icon: <Sparkles className="w-4 h-4" />,
-    href: "/search?category=luxury",
+    href: "/search?category=barefoot-luxury",
+    featured: true,
     subcategories: [
-      { id: "vip", name: "VIP Experiences", href: "/search?category=luxury&type=vip", description: "Exclusive access and service" },
-      { id: "helicopter", name: "Helicopter Tours", href: "/search?category=luxury&type=helicopter", description: "Aerial sightseeing" },
-      { id: "yacht", name: "Yacht Charters", href: "/search?category=luxury&type=yacht", description: "Private boat experiences" },
-      { id: "fine-dining", name: "Fine Dining", href: "/search?category=luxury&type=fine-dining", description: "Michelin-starred restaurants" },
-      { id: "concierge", name: "Concierge Services", href: "/search?category=luxury&type=concierge", description: "Personalized assistance" }
+      { id: "luxury-tours", name: "Luxury Tours", href: "/search?category=barefoot-luxury&type=luxury-tours", description: "Premium tour experiences" },
+      { id: "exclusive", name: "Exclusive Experiences", href: "/search?category=barefoot-luxury&type=exclusive", description: "VIP access and service" },
+      { id: "premium", name: "Premium Services", href: "/search?category=barefoot-luxury&type=premium", description: "High-end tour options" },
+      { id: "vip", name: "VIP Experiences", href: "/search?category=barefoot-luxury&type=vip", description: "Exclusive VIP treatment" },
+      { id: "upscale", name: "Upscale Tours", href: "/search?category=barefoot-luxury&type=upscale", description: "Sophisticated experiences" }
     ]
   },
   {
-    id: "photography",
-    name: "Photography Tours",
-    icon: <Camera className="w-4 h-4" />,
-    href: "/search?category=photography",
+    id: "bus-charter",
+    name: "Bus Charter",
+    icon: <Bus className="w-4 h-4" />,
+    href: "/search?category=bus-charter",
     subcategories: [
-      { id: "landscape", name: "Landscape Photography", href: "/search?category=photography&type=landscape", description: "Scenic photo opportunities" },
-      { id: "wildlife-photo", name: "Wildlife Photography", href: "/search?category=photography&type=wildlife-photo", description: "Animal photography tours" },
-      { id: "street", name: "Street Photography", href: "/search?category=photography&type=street", description: "Urban photo walks" },
-      { id: "workshops", name: "Photo Workshops", href: "/search?category=photography&type=workshops", description: "Learn photography skills" },
-      { id: "golden-hour", name: "Golden Hour Tours", href: "/search?category=photography&type=golden-hour", description: "Perfect lighting conditions" }
+      { id: "private-bus", name: "Private Bus", href: "/search?category=bus-charter&type=private-bus", description: "Dedicated bus services" },
+      { id: "group-transport", name: "Group Transport", href: "/search?category=bus-charter&type=group-transport", description: "Large group transportation" },
+      { id: "coach-charter", name: "Coach Charter", href: "/search?category=bus-charter&type=coach-charter", description: "Comfortable coach services" },
+      { id: "charter-bus", name: "Charter Bus", href: "/search?category=bus-charter&type=charter-bus", description: "Custom bus rentals" },
+      { id: "minibus", name: "Minibus Charter", href: "/search?category=bus-charter&type=minibus", description: "Smaller group transport" }
+    ]
+  },
+  {
+    id: "activities",
+    name: "Activities",
+    icon: <Activity className="w-4 h-4" />,
+    href: "/search?category=activities",
+    subcategories: [
+      { id: "adventure", name: "Adventure Activities", href: "/search?category=activities&type=adventure", description: "Exciting outdoor adventures" },
+      { id: "entertainment", name: "Entertainment", href: "/search?category=activities&type=entertainment", description: "Fun entertainment options" },
+      { id: "experiences", name: "Unique Experiences", href: "/search?category=activities&type=experiences", description: "Memorable activity experiences" },
+      { id: "fun", name: "Fun Activities", href: "/search?category=activities&type=fun", description: "Enjoyable group activities" },
+      { id: "outdoor", name: "Outdoor Activities", href: "/search?category=activities&type=outdoor", description: "Nature-based activities" }
+    ]
+  },
+  {
+    id: "private-tours",
+    name: "Private Tours",
+    icon: <Users className="w-4 h-4" />,
+    href: "/search?category=private-tours",
+    subcategories: [
+      { id: "exclusive", name: "Exclusive Tours", href: "/search?category=private-tours&type=exclusive", description: "Private exclusive experiences" },
+      { id: "personal", name: "Personal Tours", href: "/search?category=private-tours&type=personal", description: "Personalized tour experiences" },
+      { id: "intimate", name: "Intimate Experiences", href: "/search?category=private-tours&type=intimate", description: "Small group private tours" },
+      { id: "customized", name: "Customized Tours", href: "/search?category=private-tours&type=customized", description: "Tailored tour experiences" },
+      { id: "romantic", name: "Romantic Tours", href: "/search?category=private-tours&type=romantic", description: "Perfect for couples" }
     ]
   },
   {
     id: "transfers",
-    name: "Transportation",
+    name: "Transfers",
     icon: <Car className="w-4 h-4" />,
     href: "/search?category=transfers",
     subcategories: [
-      { id: "transfers", name: "Airport Transfers", href: "/search?category=transfers&type=transfers", description: "Convenient airport transport" },
-      { id: "day-trips", name: "Day Trips", href: "/search?category=day-trips", description: "Full-day excursions" },
-      { id: "multi-day", name: "Multi-day Tours", href: "/search?category=multiday-tours", description: "Extended travel packages" },
-      { id: "private-transport", name: "Private Transport", href: "/search?category=transfers&type=private-transport", description: "Dedicated vehicles" },
-      { id: "group-transport", name: "Group Transport", href: "/search?category=transfers&type=group-transport", description: "Shared transportation" }
+      { id: "airport", name: "Airport Transfers", href: "/search?category=transfers&type=airport", description: "Convenient airport transport" },
+      { id: "shuttle", name: "Shuttle Services", href: "/search?category=transfers&type=shuttle", description: "Regular shuttle transport" },
+      { id: "transport", name: "Transport Services", href: "/search?category=transfers&type=transport", description: "General transportation" },
+      { id: "pickup", name: "Pickup Services", href: "/search?category=transfers&type=pickup", description: "Door-to-door pickup" },
+      { id: "dropoff", name: "Drop-off Services", href: "/search?category=transfers&type=dropoff", description: "Convenient drop-off points" }
+    ]
+  },
+  {
+    id: "multiday-tours",
+    name: "Multi-day Tours",
+    icon: <Package className="w-4 h-4" />,
+    href: "/search?category=multiday-tours",
+    subcategories: [
+      { id: "packages", name: "Tour Packages", href: "/search?category=multiday-tours&type=packages", description: "Complete multi-day packages" },
+      { id: "extended", name: "Extended Tours", href: "/search?category=multiday-tours&type=extended", description: "Longer tour experiences" },
+      { id: "overnight", name: "Overnight Tours", href: "/search?category=multiday-tours&type=overnight", description: "Tours with accommodation" },
+      { id: "itinerary", name: "Planned Itineraries", href: "/search?category=multiday-tours&type=itinerary", description: "Structured multi-day plans" },
+      { id: "multiple-days", name: "Multiple Days", href: "/search?category=multiday-tours&type=multiple-days", description: "Several day experiences" }
+    ]
+  },
+  {
+    id: "lessons",
+    name: "Lessons",
+    icon: <GraduationCap className="w-4 h-4" />,
+    href: "/search?category=lessons",
+    subcategories: [
+      { id: "education", name: "Educational Lessons", href: "/search?category=lessons&type=education", description: "Learning experiences" },
+      { id: "instruction", name: "Instruction", href: "/search?category=lessons&type=instruction", description: "Professional instruction" },
+      { id: "teaching", name: "Teaching Sessions", href: "/search?category=lessons&type=teaching", description: "Guided teaching experiences" },
+      { id: "skills", name: "Skill Building", href: "/search?category=lessons&type=skills", description: "Develop new skills" },
+      { id: "workshops", name: "Workshops", href: "/search?category=lessons&type=workshops", description: "Hands-on learning workshops" }
+    ]
+  },
+  {
+    id: "tickets",
+    name: "Tickets",
+    icon: <Ticket className="w-4 h-4" />,
+    href: "/search?category=tickets",
+    subcategories: [
+      { id: "events", name: "Event Tickets", href: "/search?category=tickets&type=events", description: "Special event access" },
+      { id: "attractions", name: "Attraction Tickets", href: "/search?category=tickets&type=attractions", description: "Popular attraction entry" },
+      { id: "shows", name: "Show Tickets", href: "/search?category=tickets&type=shows", description: "Entertainment show access" },
+      { id: "admission", name: "Admission Tickets", href: "/search?category=tickets&type=admission", description: "General admission passes" },
+      { id: "entry", name: "Entry Passes", href: "/search?category=tickets&type=entry", description: "Venue entry tickets" }
+    ]
+  },
+  {
+    id: "gift-cards",
+    name: "Gift Cards",
+    icon: <Gift className="w-4 h-4" />,
+    href: "/search?category=gift-cards",
+    subcategories: [
+      { id: "vouchers", name: "Gift Vouchers", href: "/search?category=gift-cards&type=vouchers", description: "Flexible gift vouchers" },
+      { id: "certificates", name: "Gift Certificates", href: "/search?category=gift-cards&type=certificates", description: "Experience certificates" },
+      { id: "presents", name: "Gift Presents", href: "/search?category=gift-cards&type=presents", description: "Perfect gift options" },
+      { id: "cards", name: "Gift Cards", href: "/search?category=gift-cards&type=cards", description: "Redeemable gift cards" },
+      { id: "experiences", name: "Experience Gifts", href: "/search?category=gift-cards&type=experiences", description: "Memorable experience gifts" }
     ]
   }
 ]

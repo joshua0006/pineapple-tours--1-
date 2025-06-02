@@ -75,7 +75,7 @@ export function SiteHeader() {
             Pineapple Tours
           </span>
           <span className="sm:hidden text-sm">
-            Pineapple
+            Pineapple Tours
           </span>
         </Link>
 

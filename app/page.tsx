@@ -83,11 +83,11 @@ export default function Home() {
               <iframe
                 src="https://www.youtube.com/embed/KoabrcWfI_I?autoplay=1&mute=1&loop=1&playlist=KoabrcWfI_I&controls=0&showinfo=0&rel=0&iv_load_policy=3&modestbranding=1&playsinline=1&hd=1&vq=hd1080&disablekb=1&fs=0&cc_load_policy=0&start=0&end=0"
                 title="Tourism Background Video"
-                className="absolute top-1/2 left-1/2 min-w-full min-h-full w-auto h-auto transform -translate-x-1/2 -translate-y-1/2 brightness-[0.6] pointer-events-none"
+                className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 brightness-[0.6] pointer-events-none
+                          sm:min-w-full sm:min-h-full sm:w-auto sm:h-auto
+                          max-sm:w-[150%] max-sm:h-[150%] max-sm:min-w-[150%] max-sm:min-h-[150%]"
                 style={{
                   aspectRatio: '16/9',
-                  minWidth: '100vw',
-                  minHeight: '100vh',
                 }}
                 allow="autoplay; encrypted-media"
                 allowFullScreen={false}
@@ -98,7 +98,7 @@ export default function Home() {
               <div className="absolute inset-0 bg-black/30"></div>
             </div>
           </div>
-          <div className="container relative z-10 flex-1 flex items-center justify-start px-4 sm:px-6 lg:px-8">
+          <div className="container relative z-10 flex-1 flex items-center justify-start px-4 pb-12 sm:px-6 lg:px-8">
             <div className="max-w-3xl space-y-4 sm:space-y-5 text-center sm:text-left">
               <Badge className="bg-yellow-500 text-black hover:bg-yellow-600 text-xs sm:text-sm">Best Tropical Getaways</Badge>
               <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight text-white leading-tight drop-shadow-lg">
@@ -109,12 +109,16 @@ export default function Home() {
                 packages.
               </p>
               <div className="flex flex-col space-y-3 sm:flex-row sm:space-x-3 sm:space-y-0 pt-2">
-                <Button size="lg" className="bg-yellow-500 text-black hover:bg-yellow-600 w-full sm:w-auto shadow-lg">
-                  Explore Tours
-                </Button>
-                <Button size="lg" variant="outline" className="border-white text-black hover:bg-white/20 hover:text-white w-full sm:w-auto shadow-lg">
-                  View Special Offers
-                </Button>
+                <Link href="/tours">
+                  <Button size="lg" className="bg-yellow-500 text-black hover:bg-yellow-600 w-full sm:w-auto shadow-lg">
+                    Explore Tours
+                  </Button>
+                </Link>
+                <Link href="/tours">
+                  <Button size="lg" variant="outline" className="border-white text-black hover:bg-white/20 hover:text-white w-full sm:w-auto shadow-lg">
+                    View Special Offers
+                  </Button>
+                </Link>
               </div>
             </div>
           </div>
@@ -397,91 +401,6 @@ export default function Home() {
                 </p>
               </div>
             </div>
-          </div>
-        </section>
-
-        {/* Blog Preview */}
-        <section className="container py-16">
-          <div className="flex flex-col items-center justify-between gap-4 sm:flex-row">
-            <div>
-              <h2 className="text-3xl font-bold tracking-tight">Travel Blog</h2>
-              <p className="text-muted-foreground">Tips, guides, and inspiration for your next adventure</p>
-            </div>
-            <Link href="/blog" className="flex items-center text-sm font-medium text-primary">
-              View all posts
-              <ChevronRight className="ml-1 h-4 w-4" />
-            </Link>
-          </div>
-          <div className="mt-8 grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
-            <Card className="overflow-hidden">
-              <div className="relative h-48 w-full">
-                <Image src="/placeholder.svg?height=300&width=500" alt="Blog post" fill className="object-cover" />
-              </div>
-              <CardContent className="p-6">
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <Calendar className="h-4 w-4" />
-                  <span>May 15, 2023</span>
-                </div>
-                <h3 className="mt-2 text-xl font-bold">10 Must-Visit Beaches in Hawaii</h3>
-                <p className="mt-2 line-clamp-2 text-muted-foreground">
-                  Discover the most stunning beaches across the Hawaiian islands, from hidden coves to popular stretches
-                  of sand.
-                </p>
-                <Link
-                  href="/blog/must-visit-beaches-hawaii"
-                  className="mt-4 inline-flex items-center text-sm font-medium text-primary"
-                >
-                  Read more
-                  <ChevronRight className="ml-1 h-4 w-4" />
-                </Link>
-              </CardContent>
-            </Card>
-            <Card className="overflow-hidden">
-              <div className="relative h-48 w-full">
-                <Image src="/placeholder.svg?height=300&width=500" alt="Blog post" fill className="object-cover" />
-              </div>
-              <CardContent className="p-6">
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <Calendar className="h-4 w-4" />
-                  <span>April 28, 2023</span>
-                </div>
-                <h3 className="mt-2 text-xl font-bold">Caribbean Food Guide: Must-Try Dishes</h3>
-                <p className="mt-2 line-clamp-2 text-muted-foreground">
-                  Explore the rich culinary traditions of the Caribbean islands and learn about the must-try dishes in
-                  each tour.
-                </p>
-                <Link
-                  href="/blog/caribbean-food-guide"
-                  className="mt-4 inline-flex items-center text-sm font-medium text-primary"
-                >
-                  Read more
-                  <ChevronRight className="ml-1 h-4 w-4" />
-                </Link>
-              </CardContent>
-            </Card>
-            <Card className="overflow-hidden">
-              <div className="relative h-48 w-full">
-                <Image src="/placeholder.svg?height=300&width=500" alt="Blog post" fill className="object-cover" />
-              </div>
-              <CardContent className="p-6">
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <Calendar className="h-4 w-4" />
-                  <span>March 10, 2023</span>
-                </div>
-                <h3 className="mt-2 text-xl font-bold">Packing Tips for Tropical Vacations</h3>
-                <p className="mt-2 line-clamp-2 text-muted-foreground">
-                  Essential packing tips and must-have items for your tropical getaway to ensure you're prepared for
-                  paradise.
-                </p>
-                <Link
-                  href="/blog/packing-tips-tropical"
-                  className="mt-4 inline-flex items-center text-sm font-medium text-primary"
-                >
-                  Read more
-                  <ChevronRight className="ml-1 h-4 w-4" />
-                </Link>
-              </CardContent>
-            </Card>
           </div>
         </section>
       </main>

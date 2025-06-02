@@ -9,32 +9,12 @@ export function SiteFooter() {
         <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-4">
           <div>
             <Link href="/" className="flex items-center gap-2 font-bold text-xl">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                className="h-6 w-6 text-yellow-500"
-              >
-                <path d="M17 14c.889-.889 2.111.889 3-1s1-6-4-7c-3.5-.7-5.5.7-7 2" />
-                <path d="M17 14s-1 1-2 1-2-1-2-2c0-4 4-2 4-2" />
-                <path d="M14 7c.889-.889 2.111.889 3-1s1-6-4-7c-3.5-.7-5.5.7-7 2" />
-                <path d="M14 7s-1 1-2 1-2-1-2-2c0-4 4-2 4-2" />
-                <path d="M5 22v-3" />
-                <path d="M9 22v-3" />
-                <path d="M9 12v3" />
-                <path d="M5 12v3" />
-                <path d="M5 15h4" />
-                <path d="M5 19h4" />
-              </svg>
+              <img src="/pineapple-tour-logo.png" alt="Pineapple Tours Logo" className="" />
               <span>Pineapple Tours</span>
             </Link>
             <p className="mt-4 text-gray-400">
               Discover paradise with Pineapple Tours. We specialize in creating unforgettable tropical vacation
-              experiences in Hawaii, the Caribbean, Fiji, and beyond.
+              experiences with real-time booking and local expertise.
             </p>
             <div className="mt-6 flex gap-4">
               <Link href="#" className="text-gray-400 hover:text-white">
@@ -59,13 +39,19 @@ export function SiteFooter() {
             <h3 className="text-lg font-medium">Quick Links</h3>
             <nav className="mt-4 flex flex-col gap-2">
               <Link href="/tours" className="text-gray-400 hover:text-white">
-                Tours
+                All Tours
               </Link>
-              <Link href="/special-offers" className="text-gray-400 hover:text-white">
-                Special Offers
+              <Link href="/search?category=adventure" className="text-gray-400 hover:text-white">
+                Adventure Tours
               </Link>
-              <Link href="/blog" className="text-gray-400 hover:text-white">
-                Travel Blog
+              <Link href="/search?category=cultural" className="text-gray-400 hover:text-white">
+                Cultural Tours
+              </Link>
+              <Link href="/search?category=nature" className="text-gray-400 hover:text-white">
+                Nature Tours
+              </Link>
+              <Link href="/search?category=water-activities" className="text-gray-400 hover:text-white">
+                Water Activities
               </Link>
               <Link href="/about" className="text-gray-400 hover:text-white">
                 About Us
@@ -76,57 +62,67 @@ export function SiteFooter() {
             </nav>
           </div>
           <div>
-            <h3 className="text-lg font-medium">Popular Tours</h3>
+            <h3 className="text-lg font-medium">Tour Categories</h3>
             <nav className="mt-4 flex flex-col gap-2">
-              <Link href="/tours/hawaii" className="text-gray-400 hover:text-white">
-                Hawaii
+              <Link href="/search?category=family" className="text-gray-400 hover:text-white">
+                Family Tours
               </Link>
-              <Link href="/tours/caribbean" className="text-gray-400 hover:text-white">
-                Caribbean
+              <Link href="/search?category=romantic" className="text-gray-400 hover:text-white">
+                Romantic Tours
               </Link>
-              <Link href="/tours/fiji" className="text-gray-400 hover:text-white">
-                Fiji
+              <Link href="/search?category=luxury" className="text-gray-400 hover:text-white">
+                Luxury Tours
               </Link>
-              <Link href="/tours/bali" className="text-gray-400 hover:text-white">
-                Bali
+              <Link href="/search?category=food-wine" className="text-gray-400 hover:text-white">
+                Food & Wine
               </Link>
-              <Link href="/tours/maldives" className="text-gray-400 hover:text-white">
-                Maldives
+              <Link href="/search?category=photography" className="text-gray-400 hover:text-white">
+                Photography Tours
               </Link>
-              <Link href="/tours/tahiti" className="text-gray-400 hover:text-white">
-                Tahiti
+              <Link href="/search?category=transfers" className="text-gray-400 hover:text-white">
+                Transportation
               </Link>
             </nav>
           </div>
           <div>
-            <h3 className="text-lg font-medium">Contact Us</h3>
+            <h3 className="text-lg font-medium">Contact & Support</h3>
             <div className="mt-4 flex flex-col gap-4">
               <div className="flex items-start gap-3">
-                <MapPin className="h-5 w-5 text-yellow-500" />
-                <p className="text-gray-400">
-                  123 Paradise Lane
-                  <br />
-                  Honolulu, HI 96815
-                  <br />
-                  United States
-                </p>
+                <MapPin className="h-5 w-5 text-yellow-500 mt-0.5" />
+                <div className="text-gray-400">
+                  <p className="font-medium">Pineapple Tours HQ</p>
+                  <p>123 Paradise Lane</p>
+                  <p>Honolulu, HI 96815</p>
+                  <p>United States</p>
+                </div>
               </div>
               <div className="flex items-center gap-3">
                 <Phone className="h-5 w-5 text-yellow-500" />
-                <p className="text-gray-400">1-800-PINEAPPLE</p>
+                <div className="text-gray-400">
+                  <p className="font-medium">1-800-PINEAPPLE</p>
+                  <p className="text-sm">24/7 Customer Support</p>
+                </div>
               </div>
               <div className="flex items-center gap-3">
                 <Mail className="h-5 w-5 text-yellow-500" />
-                <p className="text-gray-400">info@pineappletours.com</p>
+                <div className="text-gray-400">
+                  <p className="font-medium">info@pineappletours.com</p>
+                  <p className="text-sm">Booking & Inquiries</p>
+                </div>
               </div>
             </div>
           </div>
         </div>
         <Separator className="my-8 bg-gray-800" />
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-          <p className="text-sm text-gray-400">
-            &copy; {new Date().getFullYear()} Pineapple Tours. All rights reserved.
-          </p>
+          <div className="flex flex-col gap-2 md:flex-row md:items-center md:gap-4">
+            <p className="text-sm text-gray-400">
+              &copy; {new Date().getFullYear()} Pineapple Tours. All rights reserved.
+            </p>
+            <p className="text-xs text-gray-500">
+              Powered by Rezdy • Real-time booking system
+            </p>
+          </div>
           <div className="flex gap-4">
             <Link href="/terms" className="text-sm text-gray-400 hover:text-white">
               Terms & Conditions
@@ -136,6 +132,9 @@ export function SiteFooter() {
             </Link>
             <Link href="/faq" className="text-sm text-gray-400 hover:text-white">
               FAQ
+            </Link>
+            <Link href="/support" className="text-sm text-gray-400 hover:text-white">
+              Support
             </Link>
           </div>
         </div>

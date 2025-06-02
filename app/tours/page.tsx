@@ -85,6 +85,32 @@ export default function ToursPage() {
     search()
   }, []) // Only run on mount
 
+  // Sync URL parameters with filters when searchParams change
+  useEffect(() => {
+    const urlFilters = {
+      query: searchParams.get('query') || '',
+      category: searchParams.get('category') || 'all',
+      priceRange: searchParams.get('priceRange') || 'all',
+      travelers: searchParams.get('travelers') || '2',
+      sortBy: searchParams.get('sortBy') || 'relevance',
+      checkIn: searchParams.get('checkIn') || '',
+      checkOut: searchParams.get('checkOut') || '',
+      city: searchParams.get('city') || '',
+      location: searchParams.get('location') || '',
+      page: parseInt(searchParams.get('page') || '1'),
+    }
+
+    // Only update if there are actual differences to avoid infinite loops
+    const hasChanges = Object.entries(urlFilters).some(([key, value]) => {
+      return filters[key as keyof typeof filters] !== value
+    })
+
+    if (hasChanges) {
+      updateFilters(urlFilters)
+      setLocalQuery(urlFilters.query)
+    }
+  }, [searchParams, updateFilters]) // React to searchParams changes
+
   // Update URL when filters change
   useEffect(() => {
     const params = new URLSearchParams()

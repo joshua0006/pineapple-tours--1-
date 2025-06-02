@@ -921,27 +921,13 @@ export default function TourDetailPage({ params }: { params: Promise<{ slug: str
       {/* Booking Modal */}
       {showBooking && (
         <div 
-          className="fixed inset-0 bg-black/50 flex items-start justify-center p-2 sm:p-4 z-50 overflow-y-auto modal-backdrop no-touch-scroll"
+          className="fixed inset-0 bg-black/50 z-50 overflow-y-auto"
           role="dialog"
           aria-modal="true"
           aria-labelledby="booking-modal-title"
-          onTouchMove={(e) => {
-            // Prevent background scrolling on touch devices
-            if (e.target === e.currentTarget) {
-              e.preventDefault()
-            }
-          }}
-          onClick={(e) => {
-            // Close modal when clicking backdrop
-            if (e.target === e.currentTarget) {
-              setShowBooking(false)
-            }
-          }}
         >
-          <div 
-            className="bg-white rounded-lg w-full max-w-none mx-2 sm:mx-4 my-4 sm:my-8 max-h-[calc(100vh-2rem)] sm:max-h-[calc(100vh-4rem)] overflow-hidden modal-content"
-          >
-            <div className="h-full overflow-y-auto">
+          <div className="min-h-screen flex items-start justify-center p-2 sm:p-4">
+            <div className="bg-white rounded-lg w-full max-w-none mx-auto my-4 sm:my-8 shadow-xl">
               <EnhancedBookingExperience 
                 product={selectedProduct}
                 onClose={() => setShowBooking(false)}

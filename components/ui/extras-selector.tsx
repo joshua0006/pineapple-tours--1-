@@ -144,21 +144,7 @@ export function ExtrasSelector({
             >
               <CardContent className="p-4">
                 <div className="flex items-start gap-4">
-                  {/* Extra Image */}
-                  {extra.image && (
-                    <div className="flex-shrink-0">
-                      <div className="w-16 h-16 rounded-lg overflow-hidden bg-gray-100">
-                        <Image
-                          src={extra.image.thumbnailUrl || extra.image.itemUrl}
-                          alt={extra.name}
-                          width={64}
-                          height={64}
-                          className="w-full h-full object-cover"
-                        />
-                      </div>
-                    </div>
-                  )}
-                  
+               
                   {/* Extra Details */}
                   <div className="flex-1 min-w-0">
                     <div className="flex items-start justify-between mb-2">

@@ -50,9 +50,6 @@ export function SiteHeader() {
 
   const navigationItems = [
     { href: "/tours", label: "Tours", icon: <MapPin className="w-5 h-5" /> },
-    { href: "/search/enhanced", label: "Enhanced Search", icon: <Database className="w-5 h-5" /> },
-    { href: "/demo/data-management", label: "Data Demo", icon: <Database className="w-5 h-5" /> },
-    { href: "/blog", label: "Blog", icon: <Calendar className="w-5 h-5" /> },
     { href: "/about", label: "About Us", icon: <Users className="w-5 h-5" /> },
     { href: "/contact", label: "Contact", icon: <MessageCircle className="w-5 h-5" /> }
   ]
@@ -66,16 +63,19 @@ export function SiteHeader() {
           : "bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60"
       )}
     >
-      <div className="container flex h-16 items-center justify-between">
+      <div className="container flex h-16 items-center justify-between px-4 sm:px-6 lg:px-8">
         {/* Logo */}
         <Link 
           href="/" 
-          className="flex items-center gap-2 font-bold text-xl hover:opacity-80 transition-opacity focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:ring-offset-2 rounded-md"
+          className="flex items-center gap-2 font-bold text-lg sm:text-xl hover:opacity-80 transition-opacity focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:ring-offset-2 rounded-md"
           aria-label="Pineapple Tours - Home"
         >
-         <img src="/pineapple-tour-logo.png" alt="Pineapple Tours" className="h-10" />
-          <span>
+         <img src="/pineapple-tour-logo.png" alt="Pineapple Tours" className="h-8 sm:h-10" />
+          <span className="hidden sm:inline">
             Pineapple Tours
+          </span>
+          <span className="sm:hidden text-sm">
+            Pineapple
           </span>
         </Link>
 

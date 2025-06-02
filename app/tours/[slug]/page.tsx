@@ -567,9 +567,92 @@ export default function TourDetailPage({ params }: { params: Promise<{ slug: str
                   <div className="space-y-6">
                     <GoogleMaps
                       address={selectedProduct.locationAddress}
-                      pickupLocations={availableSessions.length > 0 ? availableSessions[0]?.pickupLocations : []}
+                      pickupLocations={availableSessions.length > 0 ? availableSessions[0]?.pickupLocations || [] : []}
                       tourName={selectedProduct.name}
                     />
+                    
+                    {/* Additional Location Information */}
+                    {selectedProduct.locationAddress && (
+                      <div className="bg-gray-50 rounded-lg p-4">
+                        <h3 className="font-medium mb-2 flex items-center">
+                          <MapPin className="h-4 w-4 mr-2 text-yellow-500" />
+                          Location Details
+                        </h3>
+                        <div className="text-sm text-muted-foreground space-y-1">
+                          {typeof selectedProduct.locationAddress === 'string' ? (
+                            <p>{selectedProduct.locationAddress}</p>
+                          ) : (
+                            <div className="space-y-1">
+                              {selectedProduct.locationAddress.addressLine && (
+                                <p>{selectedProduct.locationAddress.addressLine}</p>
+                              )}
+                              <p>
+                                {[
+                                  selectedProduct.locationAddress.city,
+                                  selectedProduct.locationAddress.state,
+                                  selectedProduct.locationAddress.postCode
+                                ].filter(Boolean).join(', ')}
+                              </p>
+                              {selectedProduct.locationAddress.countryCode && (
+                                <p>{selectedProduct.locationAddress.countryCode}</p>
+                              )}
+                              {selectedProduct.locationAddress.latitude && selectedProduct.locationAddress.longitude && (
+                                <p className="text-xs">
+                                  Coordinates: {selectedProduct.locationAddress.latitude.toFixed(6)}, {selectedProduct.locationAddress.longitude.toFixed(6)}
+                                </p>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Pickup Information */}
+                    {availableSessions.length > 0 && availableSessions[0]?.pickupLocations && availableSessions[0].pickupLocations.length > 0 && (
+                      <div className="bg-blue-50 rounded-lg p-4">
+                        <h3 className="font-medium mb-3 flex items-center">
+                          <Users className="h-4 w-4 mr-2 text-blue-500" />
+                          Pickup Information
+                        </h3>
+                        <div className="text-sm text-muted-foreground space-y-2">
+                          <p>This tour offers pickup from multiple locations. Select your preferred pickup point during booking.</p>
+                          <div className="grid gap-2">
+                            {availableSessions[0].pickupLocations.slice(0, 3).map((pickup, index) => (
+                              <div key={pickup.id || index} className="flex items-center gap-2">
+                                <div className="w-2 h-2 bg-blue-500 rounded-full flex-shrink-0"></div>
+                                <span className="font-medium">{pickup.name}</span>
+                                {pickup.pickupTime && (
+                                  <span className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded">
+                                    {pickup.pickupTime}
+                                  </span>
+                                )}
+                              </div>
+                            ))}
+                            {availableSessions[0].pickupLocations.length > 3 && (
+                              <div className="text-xs text-blue-600">
+                                +{availableSessions[0].pickupLocations.length - 3} more pickup locations available
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Transportation Notes */}
+                    <div className="bg-yellow-50 rounded-lg p-4">
+                      <h3 className="font-medium mb-2 flex items-center">
+                        <Info className="h-4 w-4 mr-2 text-yellow-500" />
+                        Transportation Notes
+                      </h3>
+                      <div className="text-sm text-muted-foreground space-y-1">
+                        <p>• Meeting point and pickup details will be confirmed in your booking confirmation</p>
+                        <p>• Please arrive 15 minutes before the scheduled departure time</p>
+                        <p>• Contact us if you need assistance with transportation arrangements</p>
+                        {availableSessions.length > 0 && availableSessions[0]?.pickupLocations && availableSessions[0].pickupLocations.length === 0 && (
+                          <p>• This tour uses a central meeting point - no hotel pickup available</p>
+                        )}
+                      </div>
+                    </div>
                   </div>
                 </TabsContent>
                 
@@ -716,16 +799,34 @@ export default function TourDetailPage({ params }: { params: Promise<{ slug: str
                         variant="outline" 
                         className="w-full mb-4"
                         onClick={() => {
-                          // Switch to location tab
-                          const locationTab = document.querySelector('[value="location"]') as HTMLElement
-                          if (locationTab) {
-                            locationTab.click()
-                            // Scroll to tabs section
-                            const tabsSection = document.querySelector('[role="tablist"]')
-                            if (tabsSection) {
-                              tabsSection.scrollIntoView({ behavior: 'smooth' })
+                          // Create Google Maps URL for directions
+                          let destination = '';
+                          
+                          if (typeof selectedProduct.locationAddress === 'string') {
+                            destination = encodeURIComponent(selectedProduct.locationAddress);
+                          } else if (selectedProduct.locationAddress && typeof selectedProduct.locationAddress === 'object') {
+                            // If we have coordinates, use them for more precise directions
+                            if (selectedProduct.locationAddress.latitude && selectedProduct.locationAddress.longitude) {
+                              destination = `${selectedProduct.locationAddress.latitude},${selectedProduct.locationAddress.longitude}`;
+                            } else {
+                              // Build address string from object
+                              const addressParts = [
+                                selectedProduct.locationAddress.addressLine,
+                                selectedProduct.locationAddress.city,
+                                selectedProduct.locationAddress.state,
+                                selectedProduct.locationAddress.postCode,
+                                selectedProduct.locationAddress.countryCode
+                              ].filter(Boolean);
+                              destination = encodeURIComponent(addressParts.join(', '));
                             }
+                          } else {
+                            // Fallback to tour name if no location available
+                            destination = encodeURIComponent(selectedProduct.name);
                           }
+                          
+                          // Open Google Maps in new tab with directions
+                          const mapsUrl = `https://www.google.com/maps/dir/?api=1&destination=${destination}`;
+                          window.open(mapsUrl, '_blank', 'noopener,noreferrer');
                         }}
                       >
                         <MapPin className="h-4 w-4 mr-2" />

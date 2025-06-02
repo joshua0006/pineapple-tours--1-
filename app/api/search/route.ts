@@ -21,6 +21,61 @@ interface SearchFilters {
   limit?: number;
 }
 
+// Helper function to check product availability for specific dates
+async function checkProductAvailability(productCode: string, checkIn: string, checkOut: string, travelers: string = '1'): Promise<boolean> {
+  try {
+    if (!API_KEY) return true; // If no API key, assume available
+    
+    // Format dates for Rezdy API (YYYY-MM-DD)
+    const formatDate = (dateStr: string) => {
+      const date = new Date(dateStr);
+      if (isNaN(date.getTime())) return null;
+      return date.toISOString().split('T')[0];
+    };
+
+    const formattedCheckIn = formatDate(checkIn);
+    const formattedCheckOut = formatDate(checkOut);
+    
+    if (!formattedCheckIn || !formattedCheckOut) return false;
+
+    // Prepare participants parameter (default to adult travelers)
+    const participants = `ADULT:${travelers}`;
+    
+    const url = `${REZDY_BASE_URL}/availability?apiKey=${API_KEY}&productCode=${encodeURIComponent(productCode)}&startTime=${formattedCheckIn}&endTime=${formattedCheckOut}&participants=${encodeURIComponent(participants)}`;
+    
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      console.warn(`Availability check failed for ${productCode}: ${response.status}`);
+      return true; // If availability check fails, assume available to not exclude products
+    }
+
+    const data = await response.json();
+    
+    // Check if there are any available sessions in the date range
+    const sessions = data.sessions || [];
+    const hasAvailableSessions = sessions.some((session: any) => {
+      const sessionDate = new Date(session.startTimeLocal);
+      const checkInDate = new Date(checkIn);
+      const checkOutDate = new Date(checkOut);
+      
+      return sessionDate >= checkInDate && 
+             sessionDate <= checkOutDate && 
+             (session.seatsAvailable || 0) > 0;
+    });
+
+    return hasAvailableSessions;
+  } catch (error) {
+    console.warn(`Error checking availability for ${productCode}:`, error);
+    return true; // If error occurs, assume available to not exclude products
+  }
+}
+
 export async function GET(request: NextRequest) {
   try {
     if (!API_KEY) {
@@ -67,7 +122,7 @@ export async function GET(request: NextRequest) {
     let products = data.products || data.data || [];
 
     // Filter products based on search criteria
-    const filteredProducts = products.filter((product: any) => {
+    let filteredProducts = products.filter((product: any) => {
       // Exclude GIFT_CARD products
       if (product.productType === "GIFT_CARD") {
         return false;
@@ -171,25 +226,54 @@ export async function GET(request: NextRequest) {
         }
       }
 
-      // Date filtering (basic validation - for full availability checking, 
-      // you would need to call the availability API for each product)
+      // Basic date validation (dates must be in the future and check-out after check-in)
       if (filters.checkIn && filters.checkOut) {
         const checkInDate = new Date(filters.checkIn);
         const checkOutDate = new Date(filters.checkOut);
         const today = new Date();
+        today.setHours(0, 0, 0, 0); // Reset time to start of day for comparison
         
         // Basic date validation
         if (checkInDate < today || checkOutDate <= checkInDate) {
           return false;
         }
-        
-        // Note: For real-world implementation, you would check actual availability
-        // by calling the Rezdy availability API for each product with these dates
-        // This is a simplified implementation that just validates the date range
       }
 
       return true;
     });
+
+    // Enhanced date filtering with availability checking
+    if (filters.checkIn && filters.checkOut && filteredProducts.length > 0) {
+      console.log(`Checking availability for ${filteredProducts.length} products between ${filters.checkIn} and ${filters.checkOut}`);
+      
+      // Check availability for each product (with concurrency limit to avoid overwhelming the API)
+      const BATCH_SIZE = 10; // Process products in batches to avoid rate limiting
+      const availableProducts = [];
+      
+      for (let i = 0; i < filteredProducts.length; i += BATCH_SIZE) {
+        const batch = filteredProducts.slice(i, i + BATCH_SIZE);
+        
+        const availabilityPromises = batch.map(async (product: any) => {
+          const isAvailable = await checkProductAvailability(
+            product.productCode, 
+            filters.checkIn!, 
+            filters.checkOut!, 
+            filters.travelers || '1'
+          );
+          return { product, isAvailable };
+        });
+        
+        const batchResults = await Promise.all(availabilityPromises);
+        const availableBatch = batchResults
+          .filter(result => result.isAvailable)
+          .map(result => result.product);
+        
+        availableProducts.push(...availableBatch);
+      }
+      
+      filteredProducts = availableProducts;
+      console.log(`Found ${filteredProducts.length} products with availability`);
+    }
 
     // Sort products
     const sortedProducts = [...filteredProducts].sort((a: any, b: any) => {
@@ -241,6 +325,10 @@ export async function GET(request: NextRequest) {
           productType: filters.productType !== 'all' ? filters.productType : null,
           priceRange: filters.priceRange !== 'all' ? filters.priceRange : null,
           duration: filters.duration !== 'any' ? filters.duration : null,
+          checkIn: filters.checkIn || null,
+          checkOut: filters.checkOut || null,
+          city: filters.city || null,
+          location: filters.location || null,
         }
       }
     };

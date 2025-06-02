@@ -77,13 +77,13 @@ export default function Home() {
       <SiteHeader />
       <main className="flex-1">
         {/* Hero Section */}
-        <section className="relative">
+        <section className="relative min-h-screen flex flex-col">
           <div className="absolute inset-0 z-0">
             <div className="relative h-full w-full overflow-hidden">
               <iframe
-                src="https://www.youtube.com/embed/KoabrcWfI_I?autoplay=1&mute=1&loop=1&playlist=KoabrcWfI_I&controls=0&showinfo=0&rel=0&iv_load_policy=3&modestbranding=1&playsinline=1&hd=1&vq=hd1080"
+                src="https://www.youtube.com/embed/KoabrcWfI_I?autoplay=1&mute=1&loop=1&playlist=KoabrcWfI_I&controls=0&showinfo=0&rel=0&iv_load_policy=3&modestbranding=1&playsinline=1&hd=1&vq=hd1080&disablekb=1&fs=0&cc_load_policy=0&start=0&end=0"
                 title="Tourism Background Video"
-                className="absolute top-1/2 left-1/2 min-w-full min-h-full w-auto h-auto transform -translate-x-1/2 -translate-y-1/2 brightness-[0.7]"
+                className="absolute top-1/2 left-1/2 min-w-full min-h-full w-auto h-auto transform -translate-x-1/2 -translate-y-1/2 brightness-[0.6] pointer-events-none"
                 style={{
                   aspectRatio: '16/9',
                   minWidth: '100vw',
@@ -92,32 +92,34 @@ export default function Home() {
                 allow="autoplay; encrypted-media"
                 allowFullScreen={false}
                 frameBorder="0"
+                tabIndex={-1}
               />
-            
+              {/* Dark overlay for better text readability */}
+              <div className="absolute inset-0 bg-black/30"></div>
             </div>
           </div>
-          <div className="container relative z-10 pb-16 md:py-20 lg:py-28">
-            <div className="max-w-3xl space-y-5 text-center sm:text-left">
-              <Badge className="bg-yellow-500 text-black hover:bg-yellow-600">Best Tropical Getaways</Badge>
-              <h1 className="text-4xl font-bold tracking-tight text-white sm:text-5xl md:text-6xl">
+          <div className="container relative z-10 flex-1 flex items-center justify-start px-4 sm:px-6 lg:px-8">
+            <div className="max-w-3xl space-y-4 sm:space-y-5 text-center sm:text-left">
+              <Badge className="bg-yellow-500 text-black hover:bg-yellow-600 text-xs sm:text-sm">Best Tropical Getaways</Badge>
+              <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight text-white leading-tight drop-shadow-lg">
                 Discover Paradise with Pineapple Tours
               </h1>
-              <p className="text-xl text-white/90">
+              <p className="text-lg sm:text-xl text-white/95 max-w-2xl drop-shadow-md">
                 Experience the vacation of a lifetime with our handpicked tropical tours and exclusive tour
                 packages.
               </p>
-              <div className="flex flex-col space-y-3 sm:flex-row sm:space-x-3 sm:space-y-0">
-                <Button size="lg" className="bg-yellow-500 text-black hover:bg-yellow-600">
+              <div className="flex flex-col space-y-3 sm:flex-row sm:space-x-3 sm:space-y-0 pt-2">
+                <Button size="lg" className="bg-yellow-500 text-black hover:bg-yellow-600 w-full sm:w-auto shadow-lg">
                   Explore Tours
                 </Button>
-                <Button size="lg" variant="outline" className="border-white text-black hover:bg-white/20">
+                <Button size="lg" variant="outline" className="border-white text-black hover:bg-white/20 hover:text-white w-full sm:w-auto shadow-lg">
                   View Special Offers
                 </Button>
               </div>
             </div>
           </div>
-          <div className="container relative z-10 -mt-10 mb-0">
-            <Card className="overflow-hidden border-none shadow-lg">
+          <div className="container relative z-10 pb-8 sm:pb-16 -mt-4 sm:-mt-8 px-4 sm:px-6 lg:px-8">
+            <Card className="overflow-hidden border-none shadow-lg bg-white/95 backdrop-blur-sm">
               <CardContent className="p-0">
                 <SearchForm />
               </CardContent>
@@ -129,12 +131,12 @@ export default function Home() {
         <CategoriesSection />
 
         {/* Featured Tour Packages */}
-        <section className="bg-muted py-16">
-          <div className="container">
-            <div className="flex flex-col items-center justify-between gap-4 sm:flex-row mb-8">
-              <div>
-                <h2 className="text-3xl font-bold tracking-tight">Featured Tour Packages</h2>
-                <p className="text-muted-foreground">
+        <section className="bg-muted py-8 sm:py-16">
+          <div className="container px-4 sm:px-6 lg:px-8">
+            <div className="flex flex-col items-center justify-between gap-4 sm:flex-row mb-6 sm:mb-8">
+              <div className="text-center sm:text-left">
+                <h2 className="text-2xl sm:text-3xl font-bold tracking-tight">Featured Tour Packages</h2>
+                <p className="text-muted-foreground text-sm sm:text-base">
                   Discover our handpicked selection of amazing tropical tours
                 </p>
               </div>
@@ -144,66 +146,27 @@ export default function Home() {
               </Link>
             </div>
 
-            {/* Budget Analysis Section */}
-            {!loading && !error && products && products.length > 0 && (
-              <div className="mb-8">
-                <BudgetAnalysisCard
-                  products={products}
-                  onCategorySelect={handleBudgetCategorySelect}
-                  selectedCategory={selectedBudget}
-                  compact={true}
-                />
-              </div>
-            )}
-
             {/* Budget Range Filter Tabs */}
-            <Tabs value={selectedBudget} onValueChange={setSelectedBudget} className="mb-8">
-              <TabsList className="grid w-full grid-cols-2 lg:grid-cols-5">
-                <TabsTrigger value="all" className="flex items-center gap-2">
-                  All Budgets
-                  {products && <Badge variant="secondary">{products.filter(p => p.productType !== "GIFT_CARD").length}</Badge>}
+            <Tabs value={selectedBudget} onValueChange={setSelectedBudget} className="mb-6 sm:mb-8">
+              <TabsList className="grid w-full grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 h-auto">
+                <TabsTrigger value="all" className="flex flex-col sm:flex-row items-center gap-1 sm:gap-2 p-2 sm:p-3 text-xs sm:text-sm">
+                  <span>All Budgets</span>
+                  {products && <Badge variant="secondary" className="text-xs">{products.filter(p => p.productType !== "GIFT_CARD").length}</Badge>}
                 </TabsTrigger>
-                <TabsTrigger value="budget" className="flex items-center gap-2">
-                  Budget (Under $100)
-                  <Badge variant="secondary">{budgetStats.budget}</Badge>
+                <TabsTrigger value="budget" className="flex flex-col sm:flex-row items-center gap-1 sm:gap-2 p-2 sm:p-3 text-xs sm:text-sm">
+                  <span className="text-center">Budget<br className="sm:hidden" />(Under $100)</span>
+                  <Badge variant="secondary" className="text-xs">{budgetStats.budget}</Badge>
                 </TabsTrigger>
-                <TabsTrigger value="mid-range" className="flex items-center gap-2">
-                  Mid-Range ($100-$299)
-                  <Badge variant="secondary">{budgetStats['mid-range']}</Badge>
+                <TabsTrigger value="mid-range" className="flex flex-col sm:flex-row items-center gap-1 sm:gap-2 p-2 sm:p-3 text-xs sm:text-sm">
+                  <span className="text-center">Mid-Range<br className="sm:hidden" />($100-$299)</span>
+                  <Badge variant="secondary" className="text-xs">{budgetStats['mid-range']}</Badge>
                 </TabsTrigger>
-                <TabsTrigger value="luxury" className="flex items-center gap-2">
-                  Luxury ($300+)
-                  <Badge variant="secondary">{budgetStats.luxury}</Badge>
-                </TabsTrigger>
-                <TabsTrigger value="unknown" className="flex items-center gap-2">
-                  No Price Set
-                  <Badge variant="secondary">{budgetStats.unknown}</Badge>
+                <TabsTrigger value="luxury" className="flex flex-col sm:flex-row items-center gap-1 sm:gap-2 p-2 sm:p-3 text-xs sm:text-sm">
+                  <span className="text-center">Luxury<br className="sm:hidden" />($300+)</span>
+                  <Badge variant="secondary" className="text-xs">{budgetStats.luxury}</Badge>
                 </TabsTrigger>
               </TabsList>
             </Tabs>
-
-            {/* Active Filters Display */}
-            {(selectedBudget !== "all") && (
-              <div className="mb-6 p-4 bg-background rounded-lg border">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm font-medium">Active Filters:</span>
-                    <Badge variant="secondary" className="capitalize">
-                      {selectedBudget === "mid-range" ? "Mid-Range" : selectedBudget}
-                    </Badge>
-                  </div>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => {
-                      setSelectedBudget("all")
-                    }}
-                  >
-                    Clear All
-                  </Button>
-                </div>
-              </div>
-            )}
 
             {/* Loading State */}
             {loading && <TourGridSkeleton count={12} />}
@@ -219,17 +182,17 @@ export default function Home() {
 
             {/* Tours Grid */}
             {!loading && !error && filteredProducts.length > 0 && (
-              <div className="space-y-6">
+              <div className="space-y-4 sm:space-y-6">
                 {/* Results Summary */}
                 <div className="flex items-center justify-between">
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-xs sm:text-sm text-muted-foreground">
                     Showing {filteredProducts.length} tour{filteredProducts.length !== 1 ? 's' : ''}
                     {selectedBudget !== "all" && ` • ${selectedBudget === "mid-range" ? "Mid-Range" : selectedBudget.charAt(0).toUpperCase() + selectedBudget.slice(1)} budget`}
                   </p>
                 </div>
                 
                 {/* Products Grid */}
-                <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                <div className="grid gap-4 sm:gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                   {filteredProducts.slice(0, 12).map((product) => (
                     <DynamicTourCard
                       key={product.productCode}
@@ -240,9 +203,9 @@ export default function Home() {
                 
                 {/* Show More Button */}
                 {filteredProducts.length > 12 && (
-                  <div className="text-center pt-6">
+                  <div className="text-center pt-4 sm:pt-6">
                     <Link href="/tours">
-                      <Button variant="outline" size="lg">
+                      <Button variant="outline" size="lg" className="w-full sm:w-auto">
                         View All {filteredProducts.length} Tours
                         <ChevronRight className="ml-2 h-4 w-4" />
                       </Button>
@@ -254,16 +217,17 @@ export default function Home() {
 
             {/* Empty State */}
             {!loading && !error && filteredProducts.length === 0 && (
-              <div className="text-center py-12">
-                <Package className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
-                <h3 className="text-lg font-medium mb-2">No tours found</h3>
-                <p className="text-muted-foreground mb-4">
+              <div className="text-center py-8 sm:py-12">
+                <Package className="mx-auto h-10 w-10 sm:h-12 sm:w-12 text-muted-foreground mb-3 sm:mb-4" />
+                <h3 className="text-base sm:text-lg font-medium mb-2">No tours found</h3>
+                <p className="text-muted-foreground mb-3 sm:mb-4 text-sm sm:text-base">
                   No tours match your selected filters. Try adjusting your budget selection.
                 </p>
                 <div className="flex flex-col sm:flex-row gap-2 justify-center">
                   <Button 
                     variant="outline" 
                     onClick={() => setSelectedBudget("all")}
+                    className="w-full sm:w-auto"
                   >
                     Show All Budgets
                   </Button>
@@ -274,23 +238,23 @@ export default function Home() {
         </section>
 
         {/* Why Choose Us */}
-        <section className="container py-16">
+        <section className="container py-8 sm:py-16 px-4 sm:px-6 lg:px-8">
           <div className="text-center">
-            <h2 className="text-3xl font-bold tracking-tight">Why Choose Pineapple Tours</h2>
-            <p className="mx-auto mt-2 max-w-2xl text-muted-foreground">
+            <h2 className="text-2xl sm:text-3xl font-bold tracking-tight">Why Choose Pineapple Tours</h2>
+            <p className="mx-auto mt-2 max-w-2xl text-muted-foreground text-sm sm:text-base">
               We're dedicated to creating unforgettable tropical experiences with exceptional service
             </p>
           </div>
-          <div className="mt-12 grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="mt-8 sm:mt-12 grid gap-6 sm:gap-8 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
             <div className="flex flex-col items-center text-center">
-              <div className="flex h-16 w-16 items-center justify-center rounded-full bg-yellow-100">
+              <div className="flex h-12 w-12 sm:h-16 sm:w-16 items-center justify-center rounded-full bg-yellow-100">
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
                   fill="none"
                   viewBox="0 0 24 24"
                   strokeWidth={1.5}
                   stroke="currentColor"
-                  className="h-8 w-8 text-yellow-600"
+                  className="h-6 w-6 sm:h-8 sm:w-8 text-yellow-600"
                 >
                   <path
                     strokeLinecap="round"
@@ -299,20 +263,20 @@ export default function Home() {
                   />
                 </svg>
               </div>
-              <h3 className="mt-4 text-lg font-medium">Real-Time Availability</h3>
-              <p className="mt-2 text-sm text-muted-foreground">
+              <h3 className="mt-3 sm:mt-4 text-base sm:text-lg font-medium">Real-Time Availability</h3>
+              <p className="mt-2 text-xs sm:text-sm text-muted-foreground">
                 Live booking system with instant confirmation and real-time availability updates.
               </p>
             </div>
             <div className="flex flex-col items-center text-center">
-              <div className="flex h-16 w-16 items-center justify-center rounded-full bg-yellow-100">
+              <div className="flex h-12 w-12 sm:h-16 sm:w-16 items-center justify-center rounded-full bg-yellow-100">
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
                   fill="none"
                   viewBox="0 0 24 24"
                   strokeWidth={1.5}
                   stroke="currentColor"
-                  className="h-8 w-8 text-yellow-600"
+                  className="h-6 w-6 sm:h-8 sm:w-8 text-yellow-600"
                 >
                   <path
                     strokeLinecap="round"
@@ -321,20 +285,20 @@ export default function Home() {
                   />
                 </svg>
               </div>
-              <h3 className="mt-4 text-lg font-medium">Best Price Guarantee</h3>
-              <p className="mt-2 text-sm text-muted-foreground">
+              <h3 className="mt-3 sm:mt-4 text-base sm:text-lg font-medium">Best Price Guarantee</h3>
+              <p className="mt-2 text-xs sm:text-sm text-muted-foreground">
                 We promise the best rates with no hidden fees or unexpected charges.
               </p>
             </div>
             <div className="flex flex-col items-center text-center">
-              <div className="flex h-16 w-16 items-center justify-center rounded-full bg-yellow-100">
+              <div className="flex h-12 w-12 sm:h-16 sm:w-16 items-center justify-center rounded-full bg-yellow-100">
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
                   fill="none"
                   viewBox="0 0 24 24"
                   strokeWidth={1.5}
                   stroke="currentColor"
-                  className="h-8 w-8 text-yellow-600"
+                  className="h-6 w-6 sm:h-8 sm:w-8 text-yellow-600"
                 >
                   <path
                     strokeLinecap="round"
@@ -343,20 +307,20 @@ export default function Home() {
                   />
                 </svg>
               </div>
-              <h3 className="mt-4 text-lg font-medium">Local Expertise</h3>
-              <p className="mt-2 text-sm text-muted-foreground">
+              <h3 className="mt-3 sm:mt-4 text-base sm:text-lg font-medium">Local Expertise</h3>
+              <p className="mt-2 text-xs sm:text-sm text-muted-foreground">
                 Our guides are locals with deep knowledge of each tour's culture and hidden gems.
               </p>
             </div>
             <div className="flex flex-col items-center text-center">
-              <div className="flex h-16 w-16 items-center justify-center rounded-full bg-yellow-100">
+              <div className="flex h-12 w-12 sm:h-16 sm:w-16 items-center justify-center rounded-full bg-yellow-100">
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
                   fill="none"
                   viewBox="0 0 24 24"
                   strokeWidth={1.5}
                   stroke="currentColor"
-                  className="h-8 w-8 text-yellow-600"
+                  className="h-6 w-6 sm:h-8 sm:w-8 text-yellow-600"
                 >
                   <path
                     strokeLinecap="round"
@@ -365,8 +329,8 @@ export default function Home() {
                   />
                 </svg>
               </div>
-              <h3 className="mt-4 text-lg font-medium">24/7 Support</h3>
-              <p className="mt-2 text-sm text-muted-foreground">
+              <h3 className="mt-3 sm:mt-4 text-base sm:text-lg font-medium">24/7 Support</h3>
+              <p className="mt-2 text-xs sm:text-sm text-muted-foreground">
                 Our dedicated team is available around the clock to assist with any needs during your trip.
               </p>
             </div>
@@ -374,15 +338,15 @@ export default function Home() {
         </section>
 
         {/* Testimonials */}
-        <section className="bg-gradient-to-b from-white to-yellow-50 py-16">
-          <div className="container">
+        <section className="bg-gradient-to-b from-white to-yellow-50 py-8 sm:py-16">
+          <div className="container px-4 sm:px-6 lg:px-8">
             <div className="text-center">
-              <h2 className="text-3xl font-bold tracking-tight">What Our Travelers Say</h2>
-              <p className="mx-auto mt-2 max-w-2xl text-muted-foreground">
+              <h2 className="text-2xl sm:text-3xl font-bold tracking-tight">What Our Travelers Say</h2>
+              <p className="mx-auto mt-2 max-w-2xl text-muted-foreground text-sm sm:text-base">
                 Read about the experiences of our satisfied customers
               </p>
             </div>
-            <div className="mt-12 grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="mt-8 sm:mt-12 grid gap-6 sm:gap-8 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
               <TestimonialCard
                 name="Sarah Johnson"
                 location="New York, USA"

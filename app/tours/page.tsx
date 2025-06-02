@@ -1,14 +1,17 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useEffect, useState } from "react"
 import { useSearchParams, useRouter } from "next/navigation"
-import { Search, Filter, MapPin, Star, X } from "lucide-react"
+import { Search, Filter, MapPin, Star, X, ArrowLeft, RefreshCw, Calendar } from "lucide-react"
+import { addDays, format } from "date-fns"
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
+import { Alert, AlertDescription } from "@/components/ui/alert"
+import { DatePicker } from "@/components/ui/date-picker"
 import { SiteHeader } from "@/components/site-header"
 import { SiteFooter } from "@/components/site-footer"
 import { DynamicTourCard } from "@/components/dynamic-tour-card"
@@ -17,22 +20,37 @@ import { ErrorState } from "@/components/error-state"
 import { TourPagination } from "@/components/tour-pagination"
 import { PaginationInfo } from "@/components/pagination-info"
 import { useSearch } from "@/hooks/use-search"
+import { useCityProducts } from "@/hooks/use-city-products"
+import { getSearchCategories, getCategoryDisplayName } from "@/lib/constants/categories"
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog"
 
 export default function ToursPage() {
   const router = useRouter()
   const searchParams = useSearchParams()
   
-  // Initialize with URL parameters if any
+  // Get city data for the dropdown
+  const { cities, loading: citiesLoading } = useCityProducts()
+  
+  // Get search categories for the dropdown
+  const searchCategories = getSearchCategories()
+  
+  // Initialize search with URL parameters (removed duration)
   const initialFilters = {
     query: searchParams.get('query') || '',
     category: searchParams.get('category') || 'all',
-    productType: searchParams.get('productType') || 'all',
     priceRange: searchParams.get('priceRange') || 'all',
-    duration: searchParams.get('duration') || 'any',
     travelers: searchParams.get('travelers') || '2',
-    sortBy: searchParams.get('sortBy') || 'name',
+    sortBy: searchParams.get('sortBy') || 'relevance',
     checkIn: searchParams.get('checkIn') || '',
     checkOut: searchParams.get('checkOut') || '',
+    city: searchParams.get('city') || '',
+    location: searchParams.get('location') || '',
     page: parseInt(searchParams.get('page') || '1'),
     limit: 12,
   }
@@ -43,6 +61,7 @@ export default function ToursPage() {
     error,
     filters,
     updateFilter,
+    updateFilters,
     search,
     clearFilter,
     clearSearch,
@@ -59,8 +78,9 @@ export default function ToursPage() {
   } = useSearch(initialFilters)
 
   const [localQuery, setLocalQuery] = useState(filters.query)
+  const [isFilterOpen, setIsFilterOpen] = useState(false)
 
-  // Auto-search on component mount to show all tours
+  // Trigger search on component mount to show all products
   useEffect(() => {
     search()
   }, []) // Only run on mount
@@ -90,31 +110,14 @@ export default function ToursPage() {
 
   const getFilterDisplayName = (key: string, value: string) => {
     const displayNames: Record<string, Record<string, string>> = {
-      category: {
-        family: 'Family',
-        honeymoon: 'Honeymoon',
-        adventure: 'Adventure',
-        cultural: 'Cultural',
-        nature: 'Nature',
-        luxury: 'Luxury',
-      },
-      productType: {
-        'day-tour': 'Day Tour',
-        'multiday-tour': 'Multiday Tour',
-        'private-tour': 'Private Tour',
-        'transfer': 'Transfer',
-      },
+      category: Object.fromEntries(
+        searchCategories.map(cat => [cat.id, cat.title])
+      ),
       priceRange: {
         'under-500': 'Under $500',
         '500-1000': '$500 - $1,000',
         '1000-2000': '$1,000 - $2,000',
         'over-2000': 'Over $2,000',
-      },
-      duration: {
-        '1-3': '1-3 Days',
-        '4-7': '4-7 Days',
-        '8-14': '8-14 Days',
-        '15+': '15+ Days',
       },
     }
 
@@ -125,135 +128,58 @@ export default function ToursPage() {
     <div className="flex min-h-screen flex-col">
       <SiteHeader />
       <main className="flex-1">
-        {/* Hero Section */}
-        <section className="bg-gradient-to-r from-yellow-500 to-orange-500 py-16">
+        {/* Header */}
+        <section className="bg-gradient-to-r from-yellow-500 to-orange-500 py-12">
           <div className="container">
             <div className="text-center text-white">
               <h1 className="text-4xl font-bold tracking-tight md:text-5xl">
                 Discover Amazing Tours
               </h1>
               <p className="mx-auto mt-4 max-w-2xl text-xl">
-                Explore our collection of handpicked tours and experiences from around the world
+                {hasResults 
+                  ? `Found ${totalResults} tour${totalResults !== 1 ? 's' : ''} for your perfect adventure`
+                  : 'Explore our collection of handpicked tours and experiences from around the world'
+                }
               </p>
             </div>
           </div>
         </section>
 
-        {/* Filters and Search */}
+        {/* Search and Filters */}
         <section className="border-b bg-white py-6">
           <div className="container">
-            <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-              <form onSubmit={handleSearchSubmit} className="flex flex-1 items-center space-x-2">
-                <div className="relative flex-1 max-w-md">
-                  <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    placeholder="Search tours, locations, activities..."
-                    value={localQuery}
-                    onChange={(e) => setLocalQuery(e.target.value)}
-                    className="pl-9"
-                  />
-                </div>
-                <Button type="submit" size="sm">
+            {/* Search Bar */}
+            <form onSubmit={handleSearchSubmit} className="mb-6">
+              <div className="relative max-w-2xl mx-auto">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Search tours, locations, activities..."
+                  value={localQuery}
+                  onChange={(e) => setLocalQuery(e.target.value)}
+                  className="pl-10 pr-20 h-12 text-base"
+                />
+                <Button type="submit" size="sm" className="absolute right-2 top-1/2 transform -translate-y-1/2">
                   Search
                 </Button>
-              </form>
-              
-              <div className="flex flex-wrap gap-2">
-                <Select value={filters.category} onValueChange={(value) => updateFilter('category', value)}>
-                  <SelectTrigger className="w-[140px]">
-                    <Filter className="mr-2 h-4 w-4" />
-                    <SelectValue placeholder="Category" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Categories</SelectItem>
-                    {/* Tours Categories */}
-                    <SelectItem value="adventure">Adventure</SelectItem>
-                    <SelectItem value="cultural">Cultural</SelectItem>
-                    <SelectItem value="food-wine">Food & Wine</SelectItem>
-                    <SelectItem value="nature">Nature</SelectItem>
-                    <SelectItem value="urban">Urban</SelectItem>
-                    <SelectItem value="family">Family</SelectItem>
-                    <SelectItem value="romantic">Romantic</SelectItem>
-                    <SelectItem value="luxury">Luxury</SelectItem>
-                    <SelectItem value="photography">Photography</SelectItem>
-                    <SelectItem value="water-activities">Water Activities</SelectItem>
-                    {/* Experiences Categories */}
-                    <SelectItem value="workshops">Workshops</SelectItem>
-                    <SelectItem value="classes">Classes</SelectItem>
-                    <SelectItem value="tastings">Tastings</SelectItem>
-                    {/* Transportation Categories */}
-                    <SelectItem value="transfers">Transfers</SelectItem>
-                    <SelectItem value="day-trips">Day Trips</SelectItem>
-                    <SelectItem value="multiday-tours">Multi-day Tours</SelectItem>
-                    <SelectItem value="airport-services">Airport Services</SelectItem>
-                  </SelectContent>
-                </Select>
-
-                <Select value={filters.productType} onValueChange={(value) => updateFilter('productType', value)}>
-                  <SelectTrigger className="w-[140px]">
-                    <SelectValue placeholder="Tour Type" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Types</SelectItem>
-                    <SelectItem value="day-tour">Day Tour</SelectItem>
-                    <SelectItem value="multiday-tour">Multiday Tour</SelectItem>
-                    <SelectItem value="private-tour">Private Tour</SelectItem>
-                    <SelectItem value="transfer">Transfer</SelectItem>
-                  </SelectContent>
-                </Select>
-
-                <Select value={filters.priceRange} onValueChange={(value) => updateFilter('priceRange', value)}>
-                  <SelectTrigger className="w-[140px]">
-                    <SelectValue placeholder="Price Range" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Prices</SelectItem>
-                    <SelectItem value="under-500">Under $500</SelectItem>
-                    <SelectItem value="500-1000">$500 - $1,000</SelectItem>
-                    <SelectItem value="1000-2000">$1,000 - $2,000</SelectItem>
-                    <SelectItem value="over-2000">Over $2,000</SelectItem>
-                  </SelectContent>
-                </Select>
-
-                <Select value={filters.duration} onValueChange={(value) => updateFilter('duration', value)}>
-                  <SelectTrigger className="w-[140px]">
-                    <SelectValue placeholder="Duration" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="any">Any Duration</SelectItem>
-                    <SelectItem value="1-3">1-3 Days</SelectItem>
-                    <SelectItem value="4-7">4-7 Days</SelectItem>
-                    <SelectItem value="8-14">8-14 Days</SelectItem>
-                    <SelectItem value="15+">15+ Days</SelectItem>
-                  </SelectContent>
-                </Select>
-
-                <Select value={filters.sortBy} onValueChange={(value) => updateFilter('sortBy', value)}>
-                  <SelectTrigger className="w-[140px]">
-                    <SelectValue placeholder="Sort by" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="relevance">Relevance</SelectItem>
-                    <SelectItem value="name">Name A-Z</SelectItem>
-                    <SelectItem value="price-low">Price: Low to High</SelectItem>
-                    <SelectItem value="price-high">Price: High to Low</SelectItem>
-                    <SelectItem value="newest">Newest First</SelectItem>
-                  </SelectContent>
-                </Select>
               </div>
-            </div>
+            </form>
 
-            {/* Results count and active filters */}
-            <div className="mt-4 flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <p className="text-sm text-muted-foreground">
-                  {loading ? "Loading..." : (
-                    totalPages > 1 
-                      ? `${totalResults} tours found • Page ${currentPage} of ${totalPages}`
-                      : `${totalResults} tours found`
+            {/* Filter Section */}
+            <div className="space-y-4">
+              {/* Filter Header */}
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg font-semibold flex items-center gap-2">
+                  <Filter className="h-5 w-5" />
+                  Filters
+                  {hasActiveFilters && (
+                    <Badge variant="secondary" className="ml-2">
+                      {Object.values(filters).filter(value => 
+                        value && value !== '' && value !== 'all' && value !== 'any' && 
+                        value !== 2 && value !== 12 && value !== 1 && value !== 'relevance'
+                      ).length} active
+                    </Badge>
                   )}
-                </p>
-                
+                </h3>
                 {hasActiveFilters && (
                   <Button
                     variant="ghost"
@@ -264,6 +190,171 @@ export default function ToursPage() {
                     Clear all filters
                   </Button>
                 )}
+              </div>
+
+              {/* Filter Grid */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
+                {/* Destination Filter */}
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-muted-foreground">Destination</label>
+                  <Select 
+                    value={filters.city || filters.location || 'all'} 
+                    onValueChange={(value) => {
+                      if (value === 'all') {
+                        clearFilter('city')
+                        clearFilter('location')
+                      } else {
+                        updateFilter('city', value)
+                        clearFilter('location')
+                      }
+                    }}
+                    disabled={citiesLoading}
+                  >
+                    <SelectTrigger className="w-full h-10">
+                      <div className="flex items-center gap-2">
+                        <MapPin className="h-4 w-4 text-muted-foreground" />
+                        <SelectValue placeholder={citiesLoading ? "Loading..." : "All Destinations"} />
+                      </div>
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Destinations</SelectItem>
+                      {cities.map((city) => (
+                        <SelectItem key={city} value={city}>
+                          {city}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Check-in Date Filter */}
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-muted-foreground">Check-in Date</label>
+                  <div className="relative">
+                    <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground z-10" />
+                    <DatePicker
+                      date={filters.checkIn ? new Date(filters.checkIn) : undefined}
+                      onDateChange={(date) => {
+                        if (date) {
+                          updateFilter('checkIn', format(date, 'yyyy-MM-dd'))
+                          if (filters.checkOut) {
+                            const checkOutDate = new Date(filters.checkOut)
+                            if (checkOutDate <= date) {
+                              updateFilter('checkOut', format(addDays(date, 1), 'yyyy-MM-dd'))
+                            }
+                          }
+                        } else {
+                          clearFilter('checkIn')
+                        }
+                      }}
+                      placeholder="Select date"
+                      minDate={new Date()}
+                      maxDate={filters.checkOut ? addDays(new Date(filters.checkOut), -1) : addDays(new Date(), 365)}
+                      className="w-full h-10 pl-10"
+                    />
+                  </div>
+                </div>
+
+                {/* Check-out Date Filter */}
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-muted-foreground">Check-out Date</label>
+                  <div className="relative">
+                    <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground z-10" />
+                    <DatePicker
+                      date={filters.checkOut ? new Date(filters.checkOut) : undefined}
+                      onDateChange={(date) => {
+                        if (date) {
+                          updateFilter('checkOut', format(date, 'yyyy-MM-dd'))
+                        } else {
+                          clearFilter('checkOut')
+                        }
+                      }}
+                      placeholder="Select date"
+                      minDate={filters.checkIn ? addDays(new Date(filters.checkIn), 1) : addDays(new Date(), 1)}
+                      maxDate={addDays(new Date(), 365)}
+                      className="w-full h-10 pl-10"
+                    />
+                  </div>
+                </div>
+
+                {/* Category Filter */}
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-muted-foreground">Category</label>
+                  <Select value={filters.category} onValueChange={(value) => updateFilter('category', value)}>
+                    <SelectTrigger className="w-full h-10">
+                      <div className="flex items-center gap-2">
+                        <Filter className="h-4 w-4 text-muted-foreground" />
+                        <SelectValue placeholder="All Categories" />
+                      </div>
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Categories</SelectItem>
+                      {searchCategories.map((category) => (
+                        <SelectItem key={category.id} value={category.id}>
+                          {category.title}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Price Range Filter */}
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-muted-foreground">Price Range</label>
+                  <Select value={filters.priceRange} onValueChange={(value) => updateFilter('priceRange', value)}>
+                    <SelectTrigger className="w-full h-10">
+                      <div className="flex items-center gap-2">
+                        <span className="text-muted-foreground">$</span>
+                        <SelectValue placeholder="All Prices" />
+                      </div>
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Prices</SelectItem>
+                      <SelectItem value="under-500">Under $500</SelectItem>
+                      <SelectItem value="500-1000">$500 - $1,000</SelectItem>
+                      <SelectItem value="1000-2000">$1,000 - $2,000</SelectItem>
+                      <SelectItem value="over-2000">Over $2,000</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Sort By Filter */}
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-muted-foreground">Sort By</label>
+                  <Select value={filters.sortBy} onValueChange={(value) => updateFilter('sortBy', value)}>
+                    <SelectTrigger className="w-full h-10">
+                      <div className="flex items-center gap-2">
+                        <ArrowLeft className="h-4 w-4 text-muted-foreground rotate-90" />
+                        <SelectValue placeholder="Relevance" />
+                      </div>
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="relevance">Relevance</SelectItem>
+                      <SelectItem value="name">Name A-Z</SelectItem>
+                      <SelectItem value="price-low">Price: Low to High</SelectItem>
+                      <SelectItem value="price-high">Price: High to Low</SelectItem>
+                      <SelectItem value="newest">Newest First</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            </div>
+
+            {/* Active filters and results count */}
+            <div className="mt-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+              <div className="flex items-center gap-2">
+                <p className="text-sm text-muted-foreground">
+                  {loading ? (
+                    <span className="flex items-center gap-2">
+                      <RefreshCw className="h-4 w-4 animate-spin" />
+                      {filters.checkIn && filters.checkOut ? "Checking availability..." : "Searching..."}
+                    </span>
+                  ) : (
+                    totalPages > 1 
+                      ? `${totalResults} tours found • Page ${currentPage} of ${totalPages}`
+                      : `${totalResults} tours found`
+                  )}
+                </p>
               </div>
               
               {/* Active filters */}
@@ -282,9 +373,24 @@ export default function ToursPage() {
                     </button>
                   </Badge>
                 )}
+                {(filters.city || filters.location) && (
+                  <Badge variant="secondary" className="flex items-center gap-1">
+                    <MapPin className="h-3 w-3" />
+                    {filters.city || filters.location}
+                    <button
+                      onClick={() => {
+                        clearFilter('city')
+                        clearFilter('location')
+                      }}
+                      className="ml-1 hover:text-destructive"
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                  </Badge>
+                )}
                 {filters.category !== 'all' && (
                   <Badge variant="secondary" className="flex items-center gap-1">
-                    Category: {getFilterDisplayName('category', filters.category)}
+                    {getFilterDisplayName('category', filters.category)}
                     <button
                       onClick={() => clearFilter('category')}
                       className="ml-1 hover:text-destructive"
@@ -293,20 +399,9 @@ export default function ToursPage() {
                     </button>
                   </Badge>
                 )}
-                {filters.productType !== 'all' && (
-                  <Badge variant="secondary" className="flex items-center gap-1">
-                    Type: {getFilterDisplayName('productType', filters.productType)}
-                    <button
-                      onClick={() => clearFilter('productType')}
-                      className="ml-1 hover:text-destructive"
-                    >
-                      <X className="h-3 w-3" />
-                    </button>
-                  </Badge>
-                )}
                 {filters.priceRange !== 'all' && (
                   <Badge variant="secondary" className="flex items-center gap-1">
-                    Price: {getFilterDisplayName('priceRange', filters.priceRange)}
+                    {getFilterDisplayName('priceRange', filters.priceRange)}
                     <button
                       onClick={() => clearFilter('priceRange')}
                       className="ml-1 hover:text-destructive"
@@ -315,19 +410,9 @@ export default function ToursPage() {
                     </button>
                   </Badge>
                 )}
-                {filters.duration !== 'any' && (
-                  <Badge variant="secondary" className="flex items-center gap-1">
-                    Duration: {getFilterDisplayName('duration', filters.duration)}
-                    <button
-                      onClick={() => clearFilter('duration')}
-                      className="ml-1 hover:text-destructive"
-                    >
-                      <X className="h-3 w-3" />
-                    </button>
-                  </Badge>
-                )}
                 {filters.checkIn && (
-                  <Badge variant="secondary" className="flex items-center gap-1">
+                  <Badge variant="secondary" className="flex items-center gap-1 bg-orange-100 text-orange-800 border-orange-200">
+                    <Calendar className="h-3 w-3" />
                     Check-in: {filters.checkIn}
                     <button
                       onClick={() => clearFilter('checkIn')}
@@ -338,7 +423,8 @@ export default function ToursPage() {
                   </Badge>
                 )}
                 {filters.checkOut && (
-                  <Badge variant="secondary" className="flex items-center gap-1">
+                  <Badge variant="secondary" className="flex items-center gap-1 bg-orange-100 text-orange-800 border-orange-200">
+                    <Calendar className="h-3 w-3" />
                     Check-out: {filters.checkOut}
                     <button
                       onClick={() => clearFilter('checkOut')}
@@ -350,22 +436,41 @@ export default function ToursPage() {
                 )}
               </div>
             </div>
+
+            {/* Date filtering notice */}
+            {filters.checkIn && filters.checkOut && (
+              <div className="mt-4 p-4 bg-orange-50 border border-orange-200 rounded-lg">
+                <div className="flex items-center gap-2 text-sm text-orange-800">
+                  <Calendar className="h-4 w-4" />
+                  <span className="font-medium">Availability filtering active:</span>
+                  <span>Only showing tours with availability between {filters.checkIn} and {filters.checkOut}</span>
+                  {loading && (
+                    <span className="flex items-center gap-1 ml-2">
+                      <RefreshCw className="h-3 w-3 animate-spin" />
+                      Checking...
+                    </span>
+                  )}
+                </div>
+              </div>
+            )}
           </div>
         </section>
 
-        {/* Tours Grid */}
-        <section className="py-12">
+        {/* Results */}
+        <section className="py-8">
           <div className="container">
-            {loading && <TourGridSkeleton count={9} />}
-            
             {error && (
               <ErrorState
-                title="Unable to load tours"
-                message="We're having trouble connecting to our booking system. Please try again in a moment."
+                title="Tour Loading Error"
+                message={error}
                 onRetry={handleRetry}
               />
             )}
-            
+
+            {loading && (
+              <TourGridSkeleton count={6} />
+            )}
+
             {!loading && !error && data && (
               <>
                 {hasResults ? (
@@ -396,40 +501,31 @@ export default function ToursPage() {
                     </div>
                   </>
                 ) : (
-                  <Card className="p-12 text-center">
-                    <CardContent>
-                      <div className="mx-auto mb-4 h-12 w-12 rounded-full bg-muted flex items-center justify-center">
-                        <Search className="h-6 w-6 text-muted-foreground" />
-                      </div>
+                  <div className="text-center py-12">
+                    <div className="mx-auto max-w-md">
+                      <Search className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
                       <h3 className="text-lg font-semibold mb-2">No tours found</h3>
                       <p className="text-muted-foreground mb-4">
                         We couldn't find any tours matching your search criteria. Try adjusting your filters or search terms.
                       </p>
-                      <div className="flex flex-wrap gap-2 justify-center">
-                        <Button 
-                          variant="outline" 
-                          onClick={clearSearch}
-                        >
+                      <div className="space-y-2">
+                        <Button onClick={clearSearch} variant="outline" className="w-full">
                           Clear all filters
                         </Button>
-                        <Button 
-                          onClick={() => router.push('/')}
-                        >
+                        <Button onClick={() => router.push('/')} className="w-full">
                           Browse featured tours
                         </Button>
                       </div>
-                    </CardContent>
-                  </Card>
+                    </div>
+                  </div>
                 )}
               </>
             )}
 
-            {!loading && !error && !data && (
-              <Card className="p-12 text-center">
-                <CardContent>
-                  <div className="mx-auto mb-4 h-12 w-12 rounded-full bg-muted flex items-center justify-center">
-                    <Search className="h-6 w-6 text-muted-foreground" />
-                  </div>
+            {!loading && !error && !data && !hasActiveFilters && (
+              <div className="text-center py-12">
+                <div className="mx-auto max-w-md">
+                  <Search className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
                   <h3 className="text-lg font-semibold mb-2">Start exploring tours</h3>
                   <p className="text-muted-foreground mb-4">
                     Use the search and filters above to find your perfect tour experience.
@@ -437,8 +533,8 @@ export default function ToursPage() {
                   <Button onClick={() => search()}>
                     Load all tours
                   </Button>
-                </CardContent>
-              </Card>
+                </div>
+              </div>
             )}
           </div>
         </section>

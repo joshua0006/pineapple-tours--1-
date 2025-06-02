@@ -22,6 +22,7 @@ interface Category {
   featured?: boolean
 }
 
+// Updated categories to match the search system
 const tourCategories: Category[] = [
   {
     id: "adventure",
@@ -110,7 +111,7 @@ const tourCategories: Category[] = [
     icon: <Heart className="w-4 h-4" />,
     href: "/search?category=romantic",
     subcategories: [
-      { id: "honeymoon", name: "Honeymoon Packages", href: "/search?category=honeymoon", description: "Perfect for newlyweds" },
+      { id: "honeymoon", name: "Honeymoon Packages", href: "/search?category=romantic&type=honeymoon", description: "Perfect for newlyweds" },
       { id: "sunset", name: "Sunset Tours", href: "/search?category=romantic&type=sunset", description: "Romantic evening experiences" },
       { id: "couples", name: "Couples Activities", href: "/search?category=romantic&type=couples", description: "Intimate shared experiences" },
       { id: "spa", name: "Spa & Wellness", href: "/search?category=romantic&type=spa", description: "Relaxation and rejuvenation" },
@@ -144,16 +145,16 @@ const tourCategories: Category[] = [
     ]
   },
   {
-    id: "transportation",
+    id: "transfers",
     name: "Transportation",
     icon: <Car className="w-4 h-4" />,
-    href: "/search?category=transportation",
+    href: "/search?category=transfers",
     subcategories: [
-      { id: "transfers", name: "Airport Transfers", href: "/search?category=transportation&type=transfers", description: "Convenient airport transport" },
-      { id: "day-trips", name: "Day Trips", href: "/search?category=transportation&type=day-trips", description: "Full-day excursions" },
-      { id: "multi-day", name: "Multi-day Tours", href: "/search?category=transportation&type=multi-day", description: "Extended travel packages" },
-      { id: "private-transport", name: "Private Transport", href: "/search?category=transportation&type=private-transport", description: "Dedicated vehicles" },
-      { id: "group-transport", name: "Group Transport", href: "/search?category=transportation&type=group-transport", description: "Shared transportation" }
+      { id: "transfers", name: "Airport Transfers", href: "/search?category=transfers&type=transfers", description: "Convenient airport transport" },
+      { id: "day-trips", name: "Day Trips", href: "/search?category=day-trips", description: "Full-day excursions" },
+      { id: "multi-day", name: "Multi-day Tours", href: "/search?category=multiday-tours", description: "Extended travel packages" },
+      { id: "private-transport", name: "Private Transport", href: "/search?category=transfers&type=private-transport", description: "Dedicated vehicles" },
+      { id: "group-transport", name: "Group Transport", href: "/search?category=transfers&type=group-transport", description: "Shared transportation" }
     ]
   }
 ]
@@ -166,9 +167,7 @@ interface TourCategoriesDropdownProps {
 export function TourCategoriesDropdown({ className, isMobile = false }: TourCategoriesDropdownProps) {
   const [isOpen, setIsOpen] = useState(false)
   const [activeCategory, setActiveCategory] = useState<string | null>(null)
-  const [hoveredCategory, setHoveredCategory] = useState<string | null>(null)
   const dropdownRef = useRef<HTMLDivElement>(null)
-  const timeoutRef = useRef<NodeJS.Timeout | undefined>(undefined)
   const router = useRouter()
 
   // Close dropdown when clicking outside
@@ -177,7 +176,6 @@ export function TourCategoriesDropdown({ className, isMobile = false }: TourCate
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
         setIsOpen(false)
         setActiveCategory(null)
-        setHoveredCategory(null)
       }
     }
 
@@ -191,7 +189,6 @@ export function TourCategoriesDropdown({ className, isMobile = false }: TourCate
       if (e.key === 'Escape') {
         setIsOpen(false)
         setActiveCategory(null)
-        setHoveredCategory(null)
       }
     }
 
@@ -201,21 +198,6 @@ export function TourCategoriesDropdown({ className, isMobile = false }: TourCate
 
     return () => document.removeEventListener('keydown', handleKeyDown)
   }, [isOpen])
-
-  const handleMouseEnter = (categoryId: string) => {
-    if (timeoutRef.current) {
-      clearTimeout(timeoutRef.current)
-    }
-    setHoveredCategory(categoryId)
-    setActiveCategory(categoryId)
-  }
-
-  const handleMouseLeave = () => {
-    timeoutRef.current = setTimeout(() => {
-      setHoveredCategory(null)
-      setActiveCategory(null)
-    }, 150)
-  }
 
   const handleCategoryClick = (category: Category) => {
     if (isMobile) {
@@ -233,7 +215,13 @@ export function TourCategoriesDropdown({ className, isMobile = false }: TourCate
   const handleSubcategoryClick = () => {
     setIsOpen(false)
     setActiveCategory(null)
-    setHoveredCategory(null)
+  }
+
+  const handleCategoryHover = (categoryId: string) => {
+    // Only set active category on hover for desktop, not mobile
+    if (!isMobile) {
+      setActiveCategory(categoryId)
+    }
   }
 
   if (isMobile) {
@@ -306,7 +294,6 @@ export function TourCategoriesDropdown({ className, isMobile = false }: TourCate
     <div ref={dropdownRef} className={cn("relative", className)}>
       <button
         onClick={() => setIsOpen(!isOpen)}
-        onMouseEnter={() => setIsOpen(true)}
         className="flex items-center gap-1 px-3 py-2 text-sm font-medium rounded-md transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:ring-offset-2"
         aria-expanded={isOpen}
         aria-haspopup="true"
@@ -316,10 +303,7 @@ export function TourCategoriesDropdown({ className, isMobile = false }: TourCate
       </button>
 
       {isOpen && (
-        <div
-          className="absolute top-full left-0 mt-1 w-screen max-w-4xl bg-popover border rounded-lg shadow-lg z-50"
-          onMouseLeave={handleMouseLeave}
-        >
+        <div className="absolute top-full left-0 mt-1 w-screen max-w-4xl bg-popover border rounded-lg shadow-lg z-50">
           <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-0">
             {/* Categories List */}
             <div className="col-span-1 md:col-span-1 border-r border-border">
@@ -329,7 +313,7 @@ export function TourCategoriesDropdown({ className, isMobile = false }: TourCate
                   {tourCategories.map((category) => (
                     <div
                       key={category.id}
-                      onMouseEnter={() => handleMouseEnter(category.id)}
+                      onMouseEnter={() => handleCategoryHover(category.id)}
                       className="relative"
                     >
                       <Link
@@ -338,7 +322,7 @@ export function TourCategoriesDropdown({ className, isMobile = false }: TourCate
                         className={cn(
                           "flex items-center gap-2 px-3 py-2 text-sm rounded-md transition-colors group",
                           "hover:bg-accent hover:text-accent-foreground",
-                          hoveredCategory === category.id && "bg-accent text-accent-foreground"
+                          activeCategory === category.id && "bg-accent text-accent-foreground"
                         )}
                       >
                         <span className="text-yellow-500">{category.icon}</span>

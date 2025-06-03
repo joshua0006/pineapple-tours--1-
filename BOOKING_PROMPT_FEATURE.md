@@ -238,7 +238,7 @@ Visit `/demo/booking-prompt` to:
 
 ### Planned Features
 - **A/B Testing**: Different trigger timings and designs
-- **Personalization**: Location-based destination suggestions
+- **Personalization**: Location-based location suggestions
 - **Analytics**: Detailed interaction tracking
 - **Smart Timing**: ML-based optimal trigger timing
 - **Exit Intent**: Additional trigger on mouse leave

@@ -31,6 +31,14 @@ interface EnhancedBookingExperienceProps {
   product: RezdyProduct
   onClose?: () => void
   onBookingComplete?: (bookingData: any) => void
+  // Optional cart item data for pre-populating the form
+  preSelectedSession?: RezdySession
+  preSelectedParticipants?: {
+    adults: number
+    children?: number
+    infants?: number
+  }
+  preSelectedExtras?: SelectedExtra[]
 }
 
 interface ContactInfo {
@@ -68,19 +76,19 @@ const COUNTRIES = [
   "United States", "Canada", "United Kingdom", "Australia", "Germany", "France", "Italy", "Spain", "Japan", "South Korea", "China", "India", "Brazil", "Mexico", "Argentina", "Other"
 ]
 
-export function EnhancedBookingExperience({ product, onClose, onBookingComplete }: EnhancedBookingExperienceProps) {
+export function EnhancedBookingExperience({ product, onClose, onBookingComplete, preSelectedSession, preSelectedParticipants, preSelectedExtras }: EnhancedBookingExperienceProps) {
   const [currentStep, setCurrentStep] = useState(1)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [bookingErrors, setBookingErrors] = useState<string[]>([])
   
   // Booking state
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined)
-  const [selectedSession, setSelectedSession] = useState<RezdySession | null>(null)
+  const [selectedSession, setSelectedSession] = useState<RezdySession | null>(preSelectedSession || null)
   const [selectedPickupLocation, setSelectedPickupLocation] = useState<RezdyPickupLocation | null>(null)
   const [guests, setGuests] = useState<GuestInfo[]>([
     { id: '1', firstName: '', lastName: '', age: 25, type: 'ADULT' }
   ])
-  const [selectedExtras, setSelectedExtras] = useState<SelectedExtra[]>([])
+  const [selectedExtras, setSelectedExtras] = useState<SelectedExtra[]>(preSelectedExtras || [])
   const [contactInfo, setContactInfo] = useState<ContactInfo>({
     firstName: '',
     lastName: '',
@@ -105,6 +113,70 @@ export function EnhancedBookingExperience({ product, onClose, onBookingComplete 
   })
   const [agreeToTerms, setAgreeToTerms] = useState(false)
   const [subscribeNewsletter, setSubscribeNewsletter] = useState(false)
+
+  // Initialize form data from cart item if provided
+  useEffect(() => {
+    if (preSelectedSession) {
+      // Set the selected date from the session
+      const sessionDate = new Date(preSelectedSession.startTimeLocal)
+      setSelectedDate(sessionDate)
+      
+      // Auto-select first pickup location if available
+      if (preSelectedSession.pickupLocations && preSelectedSession.pickupLocations.length > 0) {
+        setSelectedPickupLocation(preSelectedSession.pickupLocations[0])
+      }
+    }
+    
+    if (preSelectedParticipants) {
+      // Create guest list based on participant counts
+      const newGuests: GuestInfo[] = []
+      let guestId = 1
+      
+      // Add adults
+      for (let i = 0; i < preSelectedParticipants.adults; i++) {
+        newGuests.push({
+          id: guestId.toString(),
+          firstName: '',
+          lastName: '',
+          age: 25,
+          type: 'ADULT'
+        })
+        guestId++
+      }
+      
+      // Add children
+      if (preSelectedParticipants.children) {
+        for (let i = 0; i < preSelectedParticipants.children; i++) {
+          newGuests.push({
+            id: guestId.toString(),
+            firstName: '',
+            lastName: '',
+            age: 12,
+            type: 'CHILD'
+          })
+          guestId++
+        }
+      }
+      
+      // Add infants
+      if (preSelectedParticipants.infants) {
+        for (let i = 0; i < preSelectedParticipants.infants; i++) {
+          newGuests.push({
+            id: guestId.toString(),
+            firstName: '',
+            lastName: '',
+            age: 1,
+            type: 'INFANT'
+          })
+          guestId++
+        }
+      }
+      
+      if (newGuests.length > 0) {
+        setGuests(newGuests)
+      }
+    }
+  }, [preSelectedSession, preSelectedParticipants])
 
   // Date range for availability
   const today = new Date()
@@ -716,12 +788,15 @@ export function EnhancedBookingExperience({ product, onClose, onBookingComplete 
                                       <div className="text-sm text-muted-foreground">{location.address}</div>
                                     ) : location.address && (
                                       <div className="text-sm text-muted-foreground">
-                                        {[
-                                          location.address.addressLine,
-                                          location.address.city,
-                                          location.address.state,
-                                          location.address.postCode
-                                        ].filter(Boolean).join(', ')}
+                                        {(() => {
+                                          const addressParts = [
+                                            location.address.addressLine,
+                                            location.address.city,
+                                            location.address.state,
+                                            location.address.postCode
+                                          ].filter(Boolean)
+                                          return addressParts.join(', ')
+                                        })()}
                                       </div>
                                     )}
                                     {location.pickupTime && (

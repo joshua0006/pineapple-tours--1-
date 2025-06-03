@@ -17,6 +17,7 @@ import { DescriptionDisplay } from "@/components/ui/description-display"
 import { TourInfoTable, createTourInfoItems } from "@/components/ui/tour-info-table"
 import { GoogleMaps } from "@/components/ui/google-maps"
 import { ImageGallery } from "@/components/ui/responsive-image"
+import { AddToCartButton } from "@/components/ui/add-to-cart-button"
 import { useRezdyProducts, useRezdyAvailability } from "@/hooks/use-rezdy"
 import { extractProductCodeFromSlug, getPrimaryImageUrl, getLocationString, formatPrice, getValidImages } from "@/lib/utils/product-utils"
 import { RezdyProduct } from "@/lib/types/rezdy"
@@ -321,6 +322,16 @@ export default function TourDetailPage({ params }: { params: Promise<{ slug: str
                           <div className="text-xs text-muted-foreground">per person</div>
                         </div>
                         <div className="flex gap-1 sm:gap-2 flex-shrink-0">
+                          <AddToCartButton
+                            product={selectedProduct}
+                            session={availableSessions.length > 0 ? availableSessions[0] : undefined}
+                            size="sm"
+                            variant="outline"
+                            className="text-xs px-2 sm:px-3 py-2 whitespace-nowrap"
+                            showIcon={false}
+                          >
+                            Add
+                          </AddToCartButton>
                           <Button 
                             size="sm"
                             variant="outline"
@@ -568,15 +579,37 @@ export default function TourDetailPage({ params }: { params: Promise<{ slug: str
                                           per person
                                         </div>
                                       </div>
-                                      <Button 
-                                        size="sm" 
-                                        className="bg-yellow-500 text-black hover:bg-yellow-600 text-xs sm:text-sm px-3 sm:px-4 py-1.5 sm:py-2 whitespace-nowrap flex-shrink-0"
-                                        onClick={() => setShowBooking(true)}
-                                        disabled={session.seatsAvailable === 0}
-                                        aria-label={`Book tour for ${sessionDate.toLocaleDateString()}`}
-                                      >
-                                        {session.seatsAvailable === 0 ? 'Sold Out' : 'Book'}
-                                      </Button>
+                                      <div className="flex gap-2 flex-shrink-0">
+                                        {session.seatsAvailable > 0 ? (
+                                          <AddToCartButton
+                                            product={selectedProduct}
+                                            session={session}
+                                            size="sm"
+                                            className="text-xs sm:text-sm px-2 sm:px-3 py-1.5 sm:py-2 whitespace-nowrap"
+                                            showIcon={false}
+                                          >
+                                            Add to Cart
+                                          </AddToCartButton>
+                                        ) : (
+                                          <Button 
+                                            size="sm" 
+                                            variant="outline"
+                                            className="text-xs sm:text-sm px-2 sm:px-3 py-1.5 sm:py-2 whitespace-nowrap"
+                                            disabled
+                                          >
+                                            Sold Out
+                                          </Button>
+                                        )}
+                                        <Button 
+                                          size="sm" 
+                                          className="bg-yellow-500 text-black hover:bg-yellow-600 text-xs sm:text-sm px-2 sm:px-3 py-1.5 sm:py-2 whitespace-nowrap"
+                                          onClick={() => setShowBooking(true)}
+                                          disabled={session.seatsAvailable === 0}
+                                          aria-label={`Book tour for ${sessionDate.toLocaleDateString()}`}
+                                        >
+                                          {session.seatsAvailable === 0 ? 'Sold Out' : 'Book'}
+                                        </Button>
+                                      </div>
                                     </div>
                                   </div>
                                 </Card>
@@ -828,6 +861,53 @@ export default function TourDetailPage({ params }: { params: Promise<{ slug: str
                 </div>
               </div>
               
+              {/* Mobile Booking Section - Only visible on mobile/tablet */}
+              <div className="xl:hidden mt-8">
+                <Card className="overflow-hidden">
+                  <CardHeader className="pb-4">
+                    <CardTitle className="text-xl text-center break-words">Book This Tour</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="text-center">
+                      <div className="text-sm text-muted-foreground">Starting from</div>
+                      <div className="text-2xl sm:text-3xl font-bold break-words">{price}</div>
+                      <div className="text-sm text-muted-foreground">per person</div>
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <AddToCartButton
+                        product={selectedProduct}
+                        session={availableSessions.length > 0 ? availableSessions[0] : undefined}
+                        className="w-full text-base py-3"
+                        variant="outline"
+                      >
+                        Add to Cart
+                      </AddToCartButton>
+                      
+                      <Button 
+                        className="w-full bg-yellow-500 text-black hover:bg-yellow-600 text-base py-3"
+                        onClick={() => setShowBooking(true)}
+                        aria-label={`Book ${selectedProduct.name} tour`}
+                      >
+                        Book Now
+                      </Button>
+                      
+                      <Button 
+                        className="w-full bg-blue-600 text-white hover:bg-blue-700 text-base py-3"
+                        onClick={() => setShowBooking(true)}
+                        aria-label={`Proceed to booking for ${selectedProduct.name} tour`}
+                      >
+                        Proceed to Booking
+                      </Button>
+                    </div>
+                    
+                    <div className="text-center text-sm text-muted-foreground break-words">
+                      Free cancellation up to 24 hours before
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+              
               {/* Desktop Booking Sidebar - Only visible on desktop */}
               <div className="hidden xl:block xl:col-span-1">
                 <div className="max-w-sm mx-auto">
@@ -842,13 +922,32 @@ export default function TourDetailPage({ params }: { params: Promise<{ slug: str
                         <div className="text-sm text-muted-foreground">per person</div>
                       </div>
                       
-                      <Button 
-                        className="w-full bg-yellow-500 text-black hover:bg-yellow-600 text-base py-3"
-                        onClick={() => setShowBooking(true)}
-                        aria-label={`Book ${selectedProduct.name} tour`}
-                      >
-                        Book Now
-                      </Button>
+                      <div className="space-y-2">
+                        <AddToCartButton
+                          product={selectedProduct}
+                          session={availableSessions.length > 0 ? availableSessions[0] : undefined}
+                          className="w-full text-base py-3"
+                          variant="outline"
+                        >
+                          Add to Cart
+                        </AddToCartButton>
+                        
+                        <Button 
+                          className="w-full bg-yellow-500 text-black hover:bg-yellow-600 text-base py-3"
+                          onClick={() => setShowBooking(true)}
+                          aria-label={`Book ${selectedProduct.name} tour`}
+                        >
+                          Book Now
+                        </Button>
+                        
+                        <Button 
+                          className="w-full bg-blue-600 text-white hover:bg-blue-700 text-base py-3"
+                          onClick={() => setShowBooking(true)}
+                          aria-label={`Proceed to booking for ${selectedProduct.name} tour`}
+                        >
+                          Proceed to Booking
+                        </Button>
+                      </div>
                       
                       <div className="text-center text-sm text-muted-foreground break-words">
                         Free cancellation up to 24 hours before
@@ -921,13 +1020,13 @@ export default function TourDetailPage({ params }: { params: Promise<{ slug: str
       {/* Booking Modal */}
       {showBooking && (
         <div 
-          className="fixed inset-0 bg-black/50 z-50 overflow-y-auto"
+          className="fixed inset-0 bg-black/50 z-50"
           role="dialog"
           aria-modal="true"
           aria-labelledby="booking-modal-title"
         >
-          <div className="min-h-screen flex items-start justify-center p-2 sm:p-4">
-            <div className="bg-white rounded-lg w-full max-w-none mx-auto my-4 sm:my-8 shadow-xl">
+          <div className="h-screen w-screen">
+            <div className="bg-white h-full w-full">
               <EnhancedBookingExperience 
                 product={selectedProduct}
                 onClose={() => setShowBooking(false)}

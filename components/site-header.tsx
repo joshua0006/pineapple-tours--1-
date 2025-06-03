@@ -10,6 +10,7 @@ import { VisuallyHidden } from "@/components/ui/visually-hidden"
 import { ThemeToggle } from "@/components/theme-toggle"
 import { MobileNavigation } from "@/components/mobile-navigation"
 import { TourCategoriesDropdown } from "@/components/tour-categories-dropdown"
+import { CartIcon } from "@/components/ui/cart-icon"
 import { useResponsive } from "@/hooks/use-responsive"
 import { cn } from "@/lib/utils"
 
@@ -156,6 +157,7 @@ export function SiteHeader() {
               <Phone className="h-4 w-4 text-yellow-500" aria-hidden="true" />
               <span className="font-medium">1-800-PINEAPPLE</span>
             </div>
+            <CartIcon />
             <ThemeToggle />
             <Button 
               className="bg-yellow-500 text-black hover:bg-yellow-600 focus:ring-2 focus:ring-yellow-500 focus:ring-offset-2 transition-all"
@@ -169,6 +171,7 @@ export function SiteHeader() {
         {/* Tablet Actions */}
         {isTablet && (
           <div className="flex items-center gap-2">
+            <CartIcon />
             <ThemeToggle />
             <Button 
               className="bg-yellow-500 text-black hover:bg-yellow-600 focus:ring-2 focus:ring-yellow-500 focus:ring-offset-2 transition-all"
@@ -181,32 +184,35 @@ export function SiteHeader() {
 
         {/* Mobile Menu */}
         {isMobile && (
-          <Sheet open={isOpen} onOpenChange={setIsOpen}>
-            <SheetTrigger asChild>
-              <Button 
-                variant="ghost" 
-                size="icon" 
-                className="h-10 w-10 focus:ring-2 focus:ring-yellow-500 focus:ring-offset-2"
-                aria-label="Toggle navigation menu"
+          <div className="flex items-center gap-2">
+            <CartIcon showDropdown={false} />
+            <Sheet open={isOpen} onOpenChange={setIsOpen}>
+              <SheetTrigger asChild>
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  className="h-10 w-10 focus:ring-2 focus:ring-yellow-500 focus:ring-offset-2"
+                  aria-label="Toggle navigation menu"
+                >
+                  <Menu className="h-6 w-6" />
+                  <VisuallyHidden>Open navigation menu</VisuallyHidden>
+                </Button>
+              </SheetTrigger>
+              <SheetContent 
+                side="left" 
+                className="w-[320px] sm:w-[380px] p-0 overflow-y-auto"
               >
-                <Menu className="h-6 w-6" />
-                <VisuallyHidden>Open navigation menu</VisuallyHidden>
-              </Button>
-            </SheetTrigger>
-            <SheetContent 
-              side="left" 
-              className="w-[320px] sm:w-[380px] p-0 overflow-y-auto"
-            >
-              {/* Required for accessibility */}
-              <SheetTitle>
-                <VisuallyHidden>Navigation Menu</VisuallyHidden>
-              </SheetTitle>
-              <MobileNavigation 
-                navigationItems={navigationItems}
-                onItemClick={() => setIsOpen(false)}
-              />
-            </SheetContent>
-          </Sheet>
+                {/* Required for accessibility */}
+                <SheetTitle>
+                  <VisuallyHidden>Navigation Menu</VisuallyHidden>
+                </SheetTitle>
+                <MobileNavigation 
+                  navigationItems={navigationItems}
+                  onItemClick={() => setIsOpen(false)}
+                />
+              </SheetContent>
+            </Sheet>
+          </div>
         )}
       </div>
     </header>

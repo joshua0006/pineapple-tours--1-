@@ -2,7 +2,7 @@
 
 ## Overview
 
-This system provides intelligent city-based filtering for tour products, automatically extracting unique city names from product location data and enabling seamless filtering and display of products by destination. The system is now fully integrated with the main search page at `/search` and provides comprehensive testing capabilities.
+This system provides intelligent city-based filtering for tour products, automatically extracting unique city names from product location data and enabling seamless filtering and display of products by location. The system is now fully integrated with the main search page at `/search` and provides comprehensive testing capabilities.
 
 ## Features
 
@@ -14,7 +14,7 @@ This system provides intelligent city-based filtering for tour products, automat
 
 ### 🔍 Smart Filtering
 - Filter products by selected city
-- Support for "All Destinations" view
+- Support for "All Locations" view
 - Efficient client-side filtering with server-side API support
 - Seamless integration with existing search functionality
 

@@ -73,7 +73,7 @@ export default function CitySearchPage() {
             <h1 className="text-3xl font-bold">City-Based Tour Search</h1>
           </div>
           <p className="text-muted-foreground">
-            Discover tours by destination with our intelligent city filtering system
+            Discover tours by location with our intelligent city filtering system
           </p>
         </div>
       </div>
@@ -87,23 +87,23 @@ export default function CitySearchPage() {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <MapPin className="h-5 w-5 text-yellow-500" />
-                  Search Tours by Destination
+                  Search Tours by Location
                 </CardTitle>
                 <CardDescription>
-                  Select a destination to see available tours, or search by tour type and preferences
+                  Select a location to see available tours, or search by tour type and preferences
                 </CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
                   {/* Simple City Selector for Testing */}
                   <div>
-                    <label className="block text-sm font-medium mb-2">Select Destination:</label>
+                    <label className="block text-sm font-medium mb-2">Select Location:</label>
                     <select 
                       value={selectedCity} 
                       onChange={(e) => setSelectedCity(e.target.value)}
                       className="w-full p-2 border border-gray-300 rounded-md"
                     >
-                      <option value="all">All Destinations</option>
+                      <option value="all">All Locations</option>
                       {cities.map((city) => (
                         <option key={city} value={city}>{city}</option>
                       ))}
@@ -131,7 +131,7 @@ export default function CitySearchPage() {
                     <div className="flex items-center gap-2">
                       <MapPin className="h-4 w-4 text-muted-foreground" />
                       <span className="text-sm">
-                        <strong>Destination:</strong> {searchData.city === 'all' ? 'All Cities' : searchData.city || 'Any'}
+                        <strong>Location:</strong> {searchData.city === 'all' ? 'All Cities' : searchData.city || 'Any'}
                       </span>
                     </div>
                     <div className="flex items-center gap-2">
@@ -186,10 +186,10 @@ export default function CitySearchPage() {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2 text-lg">
                   <TrendingUp className="h-5 w-5 text-yellow-500" />
-                  Popular Destinations
+                  Popular Locations
                 </CardTitle>
                 <CardDescription>
-                  Top destinations by tour availability
+                  Top locations by tour availability
                 </CardDescription>
               </CardHeader>
               <CardContent>

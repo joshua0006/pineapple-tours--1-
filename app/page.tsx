@@ -98,36 +98,41 @@ export default function Home() {
               <div className="absolute inset-0 bg-black/30"></div>
             </div>
           </div>
-          <div className="container relative z-10 flex-1 flex items-center justify-start px-4 pb-12 sm:px-6 lg:px-8">
-            <div className="max-w-3xl space-y-4 sm:space-y-5 text-center sm:text-left">
-              <Badge className="bg-yellow-500 text-black hover:bg-yellow-600 text-xs sm:text-sm">Best Tropical Getaways</Badge>
-              <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight text-white leading-tight drop-shadow-lg">
-                Discover Paradise with Pineapple Tours
-              </h1>
-              <p className="text-lg sm:text-xl text-white/95 max-w-2xl drop-shadow-md">
-                Experience the vacation of a lifetime with our handpicked tropical tours and exclusive tour
-                packages.
-              </p>
-              <div className="flex flex-col space-y-3 sm:flex-row sm:space-x-3 sm:space-y-0 pt-2">
-                <Link href="/tours">
-                  <Button size="lg" className="bg-yellow-500 text-black hover:bg-yellow-600 w-full sm:w-auto shadow-lg">
-                    Explore Tours
-                  </Button>
-                </Link>
-                <Link href="/tours">
-                  <Button size="lg" variant="outline" className="border-white text-black hover:bg-white/20 hover:text-white w-full sm:w-auto shadow-lg">
-                    View Special Offers
-                  </Button>
-                </Link>
+          <div className="container relative z-10 flex-1 flex items-center justify-center px-4 py-12 sm:px-6 lg:px-8">
+            <div className="max-w-8xl w-full space-y-8 text-center">
+              {/* Hero Content */}
+              <div className="space-y-4 sm:space-y-6">
+                <Badge className="bg-yellow-500 text-black hover:bg-yellow-600 text-xs sm:text-sm">Best Tropical Getaways</Badge>
+                <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight text-white leading-tight drop-shadow-lg">
+                  Discover Paradise with Pineapple Tours
+                </h1>
+                <p className="text-lg sm:text-xl text-white/95 max-w-3xl mx-auto drop-shadow-md">
+                  Experience the vacation of a lifetime with our handpicked tropical tours and exclusive tour
+                  packages.
+                </p>
+                <div className="flex flex-col space-y-3 sm:flex-row sm:space-x-3 sm:space-y-0 pt-2 justify-center">
+                  <Link href="/tours">
+                    <Button size="lg" className="bg-yellow-500 text-black hover:bg-yellow-600 w-full sm:w-auto shadow-lg">
+                      Explore Tours
+                    </Button>
+                  </Link>
+                  <Link href="/tours">
+                    <Button size="lg" variant="outline" className="border-white text-black hover:bg-white/20 hover:text-white w-full sm:w-auto shadow-lg">
+                      View Special Offers
+                    </Button>
+                  </Link>
+                </div>
+              </div>
+              
+              {/* Search Form */}
+              <div className="max-w-6xl mx-auto pt-8">
+                <Card className="overflow-hidden border-none shadow-lg bg-white/95 backdrop-blur-sm">
+                  <CardContent className="p-0">
+                    <SearchForm />
+                  </CardContent>
+                </Card>
               </div>
             </div>
-          </div>
-          <div className="container relative z-10 pb-8 sm:pb-16 -mt-4 sm:-mt-8 px-4 sm:px-6 lg:px-8">
-            <Card className="overflow-hidden border-none shadow-lg bg-white/95 backdrop-blur-sm">
-              <CardContent className="p-0">
-                <SearchForm />
-              </CardContent>
-            </Card>
           </div>
         </section>
 

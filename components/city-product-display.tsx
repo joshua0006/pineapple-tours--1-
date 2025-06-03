@@ -100,7 +100,7 @@ export function CityProductDisplay({
           <CardDescription className="mb-4">
             {selectedCity === 'all' 
               ? 'There are currently no tours available. Please try again later.'
-              : `We don't have any tours available in ${selectedCity} at the moment. Try selecting a different destination.`
+              : `We don't have any tours available in ${selectedCity} at the moment. Try selecting a different location.`
             }
           </CardDescription>
           {onRefresh && (
@@ -121,7 +121,7 @@ export function CityProductDisplay({
         <div className="flex items-center gap-2">
           <MapPin className="h-5 w-5 text-yellow-500" />
           <span className="text-lg font-medium">
-            {selectedCity === 'all' ? 'All Destinations' : selectedCity}
+            {selectedCity === 'all' ? 'All Locations' : selectedCity}
           </span>
           <Badge variant="secondary">
             {products.length} tour{products.length !== 1 ? 's' : ''}

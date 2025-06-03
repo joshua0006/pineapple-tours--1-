@@ -220,9 +220,9 @@ export default function ToursPage() {
 
               {/* Filter Grid */}
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
-                {/* Destination Filter */}
+                {/* Tour Location Filter */}
                 <div className="space-y-2">
-                  <label className="text-sm font-medium text-muted-foreground">Destination</label>
+                  <label className="text-sm font-medium text-muted-foreground">Tour Location</label>
                   <Select 
                     value={filters.city || filters.location || 'all'} 
                     onValueChange={(value) => {
@@ -239,11 +239,11 @@ export default function ToursPage() {
                     <SelectTrigger className="w-full h-10">
                       <div className="flex items-center gap-2">
                         <MapPin className="h-4 w-4 text-muted-foreground" />
-                        <SelectValue placeholder={citiesLoading ? "Loading..." : "All Destinations"} />
+                        <SelectValue placeholder={citiesLoading ? "Loading..." : "All Locations"} />
                       </div>
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="all">All Destinations</SelectItem>
+                      <SelectItem value="all">All Locations</SelectItem>
                       {cities.map((city) => (
                         <SelectItem key={city} value={city}>
                           {city}

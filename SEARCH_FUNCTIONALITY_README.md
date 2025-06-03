@@ -9,7 +9,7 @@ The search functionality enables users to search for tours and vacations using k
 ## Features
 
 ### 🔍 Core Search Features
-- **Keyword Search**: Search by tour names, descriptions, destinations, and activities
+- **Keyword Search**: Search by tour names, descriptions, tours, and activities
 - **Category Filtering**: Filter by tour types (Family, Honeymoon, Adventure, Cultural, Nature, Luxury)
 - **Price Range Filtering**: Filter by budget ranges (Under $500, $500-$1,000, etc.)
 - **Duration Filtering**: Filter by trip duration (1-3 days, 4-7 days, etc.)
@@ -117,7 +117,7 @@ Main search form component used in the hero section.
 - `showRedirect?: boolean` - Whether to redirect to search page
 
 **Features:**
-- Dual search modes: Destination search and Tour type search
+- Dual search modes: Location search and Tour type search
 - Calendar-based date selection for check-in/check-out
 - Date validation (check-in must be today or later, check-out must be after check-in)
 - Form validation and submission

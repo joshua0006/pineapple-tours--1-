@@ -3,6 +3,8 @@ import "@/app/globals.css"
 import { Inter } from "next/font/google"
 import { ThemeProvider } from "@/components/theme-provider"
 import { BookingPromptWrapper } from "@/components/booking-prompt-wrapper"
+import { CartProvider } from "@/hooks/use-cart"
+import { Toaster } from "@/components/ui/toaster"
 
 const inter = Inter({ subsets: ["latin"] })
 
@@ -25,8 +27,11 @@ export default function RootLayout({
       </head>
       <body className={inter.className}>
         <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
-          {children}
-          <BookingPromptWrapper />
+          <CartProvider>
+            {children}
+            <BookingPromptWrapper />
+            <Toaster />
+          </CartProvider>
         </ThemeProvider>
       </body>
     </html>

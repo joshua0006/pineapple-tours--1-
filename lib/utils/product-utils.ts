@@ -255,4 +255,113 @@ export function filterProductsByCity(products: RezdyProduct[], selectedCity: str
   });
   
   return filtered;
+}
+
+/**
+ * Check if a product offers pickup services based on its data
+ */
+export function hasPickupServices(product: RezdyProduct): boolean {
+  if (!product) return false;
+  
+  // Check product name for pickup-related keywords
+  const nameIndicators = [
+    'pickup',
+    'door to door',
+    'door-to-door',
+    'transfer',
+    'shuttle',
+    'hop on hop off',
+    'hop-on hop-off',
+    'from brisbane',
+    'from gold coast',
+    'from tamborine',
+    'including pickup'
+  ];
+  
+  const productName = product.name?.toLowerCase() || '';
+  const hasNameIndicator = nameIndicators.some(indicator => 
+    productName.includes(indicator)
+  );
+  
+  // Check product description for pickup-related keywords
+  const descriptionIndicators = [
+    'pickup',
+    'door to door',
+    'door-to-door',
+    'transfer',
+    'shuttle service',
+    'departing from',
+    'pickup from',
+    'collection from'
+  ];
+  
+  const productDescription = product.shortDescription?.toLowerCase() || '';
+  const hasDescriptionIndicator = descriptionIndicators.some(indicator => 
+    productDescription.includes(indicator)
+  );
+  
+  // Check product type
+  const pickupProductTypes = [
+    'TRANSFER',
+    'SHUTTLE',
+    'CUSTOM' // Many hop-on hop-off services are CUSTOM type
+  ];
+  
+  const hasPickupProductType = pickupProductTypes.includes(product.productType || '');
+  
+  // Return true if any indicator is found
+  return hasNameIndicator || hasDescriptionIndicator || hasPickupProductType;
+}
+
+/**
+ * Get pickup service type based on product data
+ */
+export function getPickupServiceType(product: RezdyProduct): 'door-to-door' | 'designated-points' | 'shuttle' | 'none' {
+  if (!hasPickupServices(product)) return 'none';
+  
+  const productName = product.name?.toLowerCase() || '';
+  const productDescription = product.shortDescription?.toLowerCase() || '';
+  const combinedText = `${productName} ${productDescription}`;
+  
+  // Door-to-door service
+  if (combinedText.includes('door to door') || combinedText.includes('door-to-door')) {
+    return 'door-to-door';
+  }
+  
+  // Shuttle service
+  if (combinedText.includes('shuttle') || combinedText.includes('transfer')) {
+    return 'shuttle';
+  }
+  
+  // Default to designated pickup points for other pickup services
+  return 'designated-points';
+}
+
+/**
+ * Extract pickup locations mentioned in product name or description
+ */
+export function extractPickupLocations(product: RezdyProduct): string[] {
+  const locations: string[] = [];
+  const combinedText = `${product.name || ''} ${product.shortDescription || ''}`.toLowerCase();
+  
+  // Common pickup locations mentioned in the data
+  const locationKeywords = [
+    'brisbane',
+    'gold coast',
+    'tamborine mountain',
+    'surfers paradise',
+    'broadbeach',
+    'currumbin',
+    'movie world'
+  ];
+  
+  locationKeywords.forEach(location => {
+    if (combinedText.includes(location)) {
+      locations.push(location.split(' ').map(word => 
+        word.charAt(0).toUpperCase() + word.slice(1)
+      ).join(' '));
+    }
+  });
+  
+  return [...new Set(locations)]; // Remove duplicates
 } 

@@ -15,17 +15,27 @@ import { Calendar as CalendarComponent } from "@/components/ui/calendar"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Badge } from "@/components/ui/badge"
 import { Textarea } from "@/components/ui/textarea"
-import { Alert, AlertDescription } from "@/components/ui/alert"
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Progress } from "@/components/ui/progress"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { PricingDisplay } from "@/components/ui/pricing-display"
 import { GuestManager, type GuestInfo } from "@/components/ui/guest-manager"
 import { ExtrasSelector } from "@/components/ui/extras-selector"
+import { PickupLocationSelector } from "@/components/ui/pickup-location-selector"
 import { useRezdyAvailability } from "@/hooks/use-rezdy"
 import { RezdyProduct, RezdySession, RezdyPickupLocation } from "@/lib/types/rezdy"
-import { formatPrice, getLocationString } from "@/lib/utils/product-utils"
+import { formatPrice, getLocationString, hasPickupServices, getPickupServiceType, extractPickupLocations } from "@/lib/utils/product-utils"
 import { calculatePricing, formatCurrency, getPricingSummaryText, validatePricingOptions, type PricingBreakdown, type SelectedExtra } from "@/lib/utils/pricing-utils"
+import { 
+  transformBookingDataToRezdy, 
+  validateBookingDataForRezdy,
+  calculateExtrasPricing,
+  getTotalParticipantCount,
+  getParticipantBreakdown,
+  type BookingFormData 
+} from "@/lib/utils/booking-transform"
 import { cn } from "@/lib/utils"
+import { registerBookingWithPayment, PaymentConfirmation, BookingService } from '@/lib/services/booking-service'
 
 interface EnhancedBookingExperienceProps {
   product: RezdyProduct
@@ -81,6 +91,11 @@ export function EnhancedBookingExperience({ product, onClose, onBookingComplete,
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [bookingErrors, setBookingErrors] = useState<string[]>([])
   
+  // Check if product has pickup services
+  const productHasPickupServices = hasPickupServices(product)
+  const pickupServiceType = getPickupServiceType(product)
+  const mentionedPickupLocations = extractPickupLocations(product)
+  
   // Booking state
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined)
   const [selectedSession, setSelectedSession] = useState<RezdySession | null>(preSelectedSession || null)
@@ -113,6 +128,14 @@ export function EnhancedBookingExperience({ product, onClose, onBookingComplete,
   })
   const [agreeToTerms, setAgreeToTerms] = useState(false)
   const [subscribeNewsletter, setSubscribeNewsletter] = useState(false)
+
+  // Booking confirmation state
+  const [confirmedBooking, setConfirmedBooking] = useState<{
+    orderNumber?: string
+    transactionId?: string
+    formData: BookingFormData
+    paymentConfirmation: PaymentConfirmation
+  } | null>(null)
 
   // Initialize form data from cart item if provided
   useEffect(() => {
@@ -359,7 +382,16 @@ export function EnhancedBookingExperience({ product, onClose, onBookingComplete,
   const canProceedToNextStep = () => {
     switch (currentStep) {
       case 1:
-        return selectedSession && validationErrors.length === 0 && guests.every(g => g.firstName.trim() && g.lastName.trim())
+        const hasValidGuests = guests.every(g => g.firstName.trim() && g.lastName.trim())
+        const hasValidSession = selectedSession && validationErrors.length === 0
+        
+        // Check if pickup location is required and selected
+        const needsPickupLocation = productHasPickupServices && 
+          selectedSession?.pickupLocations && 
+          selectedSession.pickupLocations.length > 0
+        const hasValidPickupLocation = !needsPickupLocation || selectedPickupLocation
+        
+        return hasValidGuests && hasValidSession && hasValidPickupLocation
       case 2:
         return contactInfo.firstName && contactInfo.lastName && contactInfo.email && contactInfo.phone
       case 3:
@@ -403,39 +435,125 @@ export function EnhancedBookingExperience({ product, onClose, onBookingComplete,
     setBookingErrors([])
 
     try {
-      // Prepare comprehensive booking data
-      const bookingData = {
+      // Prepare booking data in the format our transformation utilities expect
+      const formData: BookingFormData = {
         product: {
           code: product.productCode,
           name: product.name,
           description: product.shortDescription
         },
         session: {
-          id: selectedSession?.id,
-          startTime: selectedSession?.startTimeLocal,
-          endTime: selectedSession?.endTimeLocal,
+          id: selectedSession?.id || '',
+          startTime: selectedSession?.startTimeLocal || '',
+          endTime: selectedSession?.endTimeLocal || '',
           pickupLocation: selectedPickupLocation
         },
         guests: guests.filter(g => g.firstName.trim() && g.lastName.trim()),
         contact: contactInfo,
+        pricing: {
+          basePrice: pricingBreakdown.basePrice,
+          sessionPrice: pricingBreakdown.adultPrice, // Use adult price as session price
+          subtotal: pricingBreakdown.subtotal,
+          taxAndFees: pricingBreakdown.taxes + pricingBreakdown.serviceFees,
+          total: pricingBreakdown.total
+        },
+        extras: selectedExtras.map((selectedExtra, index) => {
+          // Get the calculated price from the pricing breakdown which already handles PER_PERSON, PER_BOOKING, etc.
+          const extrasFromBreakdown = pricingBreakdown.selectedExtras || []
+          const matchingExtra = extrasFromBreakdown.find(e => e.extra.id === selectedExtra.extra.id)
+          
+          // Calculate total price based on price type
+          let totalPrice = selectedExtra.extra.price * selectedExtra.quantity
+          if (selectedExtra.extra.priceType === 'PER_PERSON') {
+            totalPrice = selectedExtra.extra.price * selectedExtra.quantity * getTotalParticipantCount(guests)
+          }
+
+          return {
+            id: selectedExtra.extra.id,
+            name: selectedExtra.extra.name,
+            price: selectedExtra.extra.price,
+            quantity: selectedExtra.quantity,
+            totalPrice
+          }
+        }),
         payment: {
-          ...paymentInfo,
-          // Don't store sensitive payment info in real implementation
-          cardNumber: paymentInfo.cardNumber.slice(-4)
-        },
-        pricing: pricingBreakdown,
-        extras: selectedExtras,
-        preferences: {
-          subscribeNewsletter,
-          dietaryRequirements: contactInfo.dietaryRequirements,
-          accessibilityNeeds: contactInfo.accessibilityNeeds,
-          specialRequests: contactInfo.specialRequests
-        },
-        timestamp: new Date().toISOString()
+          method: 'credit_card',
+          cardNumber: paymentInfo.cardNumber
+        }
       }
 
-      // Simulate API call - replace with actual Rezdy booking API
-      await new Promise(resolve => setTimeout(resolve, 3000))
+      // Validate booking data for Rezdy submission
+      const validation = validateBookingDataForRezdy(formData)
+      if (!validation.isValid) {
+        setBookingErrors(validation.errors)
+        return
+      }
+
+      // Step 1: Simulate payment processing with Westpac
+      console.log('Processing payment with Westpac...')
+      const paymentResult = await simulateWestpacPayment({
+        amount: formData.pricing.total,
+        cardNumber: paymentInfo.cardNumber,
+        expiryDate: paymentInfo.expiryDate,
+        cvv: paymentInfo.cvv,
+        cardholderName: paymentInfo.cardholderName
+      })
+
+      if (!paymentResult.success) {
+        setBookingErrors([paymentResult.error || 'Payment processing failed'])
+        return
+      }
+
+      // Step 2: Create payment confirmation from successful payment
+      const paymentConfirmation = BookingService.createPaymentConfirmation(paymentResult.transaction)
+
+      // Step 3: Register booking with Rezdy using our booking service
+      console.log('Registering booking with Rezdy...')
+      const bookingResult = await registerBookingWithPayment(formData, paymentConfirmation)
+
+      if (!bookingResult.success) {
+        setBookingErrors([bookingResult.error || 'Failed to register booking with Rezdy'])
+        return
+      }
+
+      // Step 4: Store booking details for confirmation display
+      const bookingData = {
+        // Original form data for internal use
+        formData,
+        // Rezdy booking result
+        rezdyBooking: bookingResult.rezdyBooking,
+        orderNumber: bookingResult.orderNumber,
+        // Payment confirmation
+        paymentConfirmation,
+        // Additional metadata
+        metadata: {
+          participantBreakdown: getParticipantBreakdown(formData.guests),
+          totalParticipants: getTotalParticipantCount(formData.guests),
+          hasPickupServices: productHasPickupServices,
+          pickupServiceType,
+          selectedPickupLocation,
+          preferences: {
+            subscribeNewsletter,
+            dietaryRequirements: contactInfo.dietaryRequirements,
+            accessibilityNeeds: contactInfo.accessibilityNeeds,
+            specialRequests: contactInfo.specialRequests
+          },
+          timestamp: new Date().toISOString()
+        }
+      }
+
+      // Store confirmation data for display
+      setConfirmedBooking({
+        orderNumber: bookingResult.orderNumber,
+        transactionId: paymentConfirmation.transactionId,
+        formData,
+        paymentConfirmation
+      })
+
+      console.log('Booking completed successfully:', {
+        orderNumber: bookingResult.orderNumber,
+        transactionId: paymentConfirmation.transactionId
+      })
       
       // Move to confirmation step
       setCurrentStep(4)
@@ -444,9 +562,63 @@ export function EnhancedBookingExperience({ product, onClose, onBookingComplete,
       onBookingComplete?.(bookingData)
       
     } catch (error) {
+      console.error('Booking submission error:', error)
       setBookingErrors(['Failed to process booking. Please try again.'])
     } finally {
       setIsSubmitting(false)
+    }
+  }
+
+  // Simulate Westpac payment processing
+  const simulateWestpacPayment = async (paymentData: {
+    amount: number
+    cardNumber: string
+    expiryDate: string
+    cvv: string
+    cardholderName: string
+  }): Promise<{
+    success: boolean
+    transaction?: any
+    error?: string
+  }> => {
+    // Simulate network delay
+    await new Promise(resolve => setTimeout(resolve, 2000))
+
+    // Basic validation
+    if (!paymentData.cardNumber || paymentData.cardNumber.length < 16) {
+      return { success: false, error: 'Invalid card number' }
+    }
+
+    if (!paymentData.cvv || paymentData.cvv.length < 3) {
+      return { success: false, error: 'Invalid CVV' }
+    }
+
+    if (!paymentData.cardholderName.trim()) {
+      return { success: false, error: 'Cardholder name is required' }
+    }
+
+    // Simulate successful payment (90% success rate)
+    const isSuccessful = Math.random() > 0.1
+
+    if (isSuccessful) {
+      return {
+        success: true,
+        transaction: {
+          transactionId: `TXN${Date.now()}${Math.floor(Math.random() * 1000)}`,
+          amount: paymentData.amount,
+          currency: 'AUD',
+          paymentMethod: 'credit_card',
+          orderReference: `ORD-${Date.now()}`,
+          status: 'approved',
+          cardLast4: paymentData.cardNumber.slice(-4),
+          timestamp: new Date().toISOString()
+        }
+      }
+    } else {
+      return {
+        success: false,
+        error: 'Payment declined by bank'
+      }
     }
   }
 
@@ -765,50 +937,44 @@ export function EnhancedBookingExperience({ product, onClose, onBookingComplete,
 
                     {/* Pickup Location Selection */}
                     {selectedSession && selectedSession.pickupLocations && selectedSession.pickupLocations.length > 0 && (
-                      <div>
-                        <Label className="text-base font-medium">Pickup Location</Label>
-                        <div className="mt-2 space-y-2">
-                          {selectedSession.pickupLocations.map((location) => (
-                            <Card 
-                              key={location.id}
-                              className={cn(
-                                "cursor-pointer transition-all duration-200",
-                                selectedPickupLocation?.id === location.id 
-                                  ? "ring-2 ring-yellow-500 bg-yellow-50" 
-                                  : "hover:bg-gray-50"
+                      <PickupLocationSelector
+                        pickupLocations={selectedSession.pickupLocations}
+                        selectedPickupLocation={selectedPickupLocation}
+                        onPickupLocationSelect={setSelectedPickupLocation}
+                        showDirections={true}
+                        required={true}
+                      />
+                    )}
+
+                    {/* Pickup Service Information for products without session pickup locations */}
+                    {productHasPickupServices && (!selectedSession?.pickupLocations || selectedSession.pickupLocations.length === 0) && (
+                      <div className="bg-blue-50 rounded-lg p-4">
+                        <div className="flex items-start gap-3">
+                          <MapPin className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
+                          <div>
+                            <h3 className="font-medium text-blue-900 mb-2">
+                              {pickupServiceType === 'door-to-door' ? 'Door-to-Door Service' : 
+                               pickupServiceType === 'shuttle' ? 'Shuttle Service' : 
+                               'Pickup Service Available'}
+                            </h3>
+                            <div className="text-sm text-blue-800 space-y-1">
+                              {pickupServiceType === 'door-to-door' && (
+                                <p>This tour includes convenient door-to-door pickup service. Pickup details will be confirmed after booking.</p>
                               )}
-                              onClick={() => setSelectedPickupLocation(location)}
-                            >
-                              <CardContent className="p-3">
-                                <div className="flex items-start gap-3">
-                                  <MapPin className="h-4 w-4 mt-1 text-muted-foreground" />
-                                  <div className="flex-1">
-                                    <div className="font-medium">{location.name}</div>
-                                    {typeof location.address === 'string' ? (
-                                      <div className="text-sm text-muted-foreground">{location.address}</div>
-                                    ) : location.address && (
-                                      <div className="text-sm text-muted-foreground">
-                                        {(() => {
-                                          const addressParts = [
-                                            location.address.addressLine,
-                                            location.address.city,
-                                            location.address.state,
-                                            location.address.postCode
-                                          ].filter(Boolean)
-                                          return addressParts.join(', ')
-                                        })()}
-                                      </div>
-                                    )}
-                                    {location.pickupTime && (
-                                      <div className="text-sm text-yellow-600 font-medium">
-                                        Pickup: {location.pickupTime}
-                                      </div>
-                                    )}
-                                  </div>
+                              {pickupServiceType === 'shuttle' && (
+                                <p>Shuttle service is included. Pickup locations and times will be provided upon booking confirmation.</p>
+                              )}
+                              {pickupServiceType === 'designated-points' && (
+                                <p>Pickup is available from designated locations. Specific pickup points will be confirmed during booking.</p>
+                              )}
+                              {mentionedPickupLocations.length > 0 && (
+                                <div className="mt-2">
+                                  <span className="font-medium">Available pickup areas: </span>
+                                  <span>{mentionedPickupLocations.join(', ')}</span>
                                 </div>
-                              </CardContent>
-                            </Card>
-                          ))}
+                              )}
+                            </div>
+                          </div>
                         </div>
                       </div>
                     )}
@@ -1161,14 +1327,14 @@ export function EnhancedBookingExperience({ product, onClose, onBookingComplete,
             )}
 
             {/* Step 4: Confirmation */}
-            {currentStep === 4 && (
+            {currentStep === 4 && confirmedBooking && (
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2 text-green-600">
                     <CheckCircle className="h-5 w-5" />
                     Booking Confirmed!
                   </CardTitle>
-                  <p className="text-muted-foreground">Your tour has been successfully booked</p>
+                  <p className="text-muted-foreground">Your tour has been successfully booked and confirmed with Rezdy</p>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <Alert>
@@ -1178,6 +1344,25 @@ export function EnhancedBookingExperience({ product, onClose, onBookingComplete,
                       Please check your inbox and spam folder.
                     </AlertDescription>
                   </Alert>
+
+                  {/* Booking Confirmation Numbers */}
+                  <div className="bg-green-50 border border-green-200 rounded-lg p-4 space-y-2">
+                    <h4 className="font-semibold text-green-800">Confirmation Details</h4>
+                    {confirmedBooking.orderNumber && (
+                      <div className="flex justify-between">
+                        <span className="text-green-700">Rezdy Order Number:</span>
+                        <span className="font-mono font-bold text-green-800">{confirmedBooking.orderNumber}</span>
+                      </div>
+                    )}
+                    <div className="flex justify-between">
+                      <span className="text-green-700">Transaction ID:</span>
+                      <span className="font-mono font-bold text-green-800">{confirmedBooking.transactionId}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-green-700">Payment Status:</span>
+                      <span className="font-bold text-green-800 capitalize">{confirmedBooking.paymentConfirmation.status}</span>
+                    </div>
+                  </div>
 
                   <div className="space-y-3">
                     <h4 className="font-medium">Booking Details:</h4>
@@ -1202,14 +1387,49 @@ export function EnhancedBookingExperience({ product, onClose, onBookingComplete,
                         <span>Guests:</span>
                         <span className="font-medium">
                           {guestCounts.adults + guestCounts.children + guestCounts.infants} total
+                          ({guestCounts.adults} adults, {guestCounts.children} children, {guestCounts.infants} infants)
                         </span>
                       </div>
-                      <div className="flex justify-between">
-                        <span>Total Paid:</span>
-                        <span className="font-bold text-lg">{formatCurrency(pricingBreakdown.total)}</span>
+                      {selectedPickupLocation && (
+                        <div className="flex justify-between">
+                          <span>Pickup Location:</span>
+                          <span className="font-medium">{selectedPickupLocation.name}</span>
+                        </div>
+                      )}
+                      {selectedExtras.length > 0 && (
+                        <div className="border-t pt-2 mt-2">
+                          <div className="text-sm font-medium mb-1">Extras:</div>
+                          {selectedExtras.map((extra, index) => (
+                            <div key={index} className="flex justify-between text-sm">
+                              <span>{extra.extra.name} x{extra.quantity}</span>
+                              <span>{formatCurrency(extra.extra.price * extra.quantity)}</span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                      <div className="flex justify-between border-t pt-2 mt-2">
+                        <span className="font-semibold">Total Paid:</span>
+                        <span className="font-bold text-lg">{formatCurrency(confirmedBooking.paymentConfirmation.amount)}</span>
                       </div>
                     </div>
                   </div>
+
+                  {/* Important Information */}
+                  <Alert>
+                    <Info className="h-4 w-4" />
+                    <AlertTitle>Important Information</AlertTitle>
+                    <AlertDescription className="space-y-1 mt-2">
+                      <div>• Please arrive 15 minutes before your tour start time</div>
+                      {selectedPickupLocation && selectedPickupLocation.pickupTime && (
+                        <div>• Pickup time: {selectedPickupLocation.pickupTime}</div>
+                      )}
+                      <div>• Bring a valid photo ID and comfortable walking shoes</div>
+                      <div>• Check your email for detailed tour instructions</div>
+                      {contactInfo.dietaryRequirements && (
+                        <div>• Dietary requirements noted: {contactInfo.dietaryRequirements}</div>
+                      )}
+                    </AlertDescription>
+                  </Alert>
 
                   <div className="flex gap-3">
                     <Button onClick={onClose} className="flex-1">

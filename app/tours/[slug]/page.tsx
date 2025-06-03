@@ -19,7 +19,7 @@ import { GoogleMaps } from "@/components/ui/google-maps"
 import { ImageGallery } from "@/components/ui/responsive-image"
 import { AddToCartButton } from "@/components/ui/add-to-cart-button"
 import { useRezdyProducts, useRezdyAvailability } from "@/hooks/use-rezdy"
-import { extractProductCodeFromSlug, getPrimaryImageUrl, getLocationString, formatPrice, getValidImages } from "@/lib/utils/product-utils"
+import { extractProductCodeFromSlug, getPrimaryImageUrl, getLocationString, formatPrice, getValidImages, hasPickupServices, getPickupServiceType, extractPickupLocations } from "@/lib/utils/product-utils"
 import { RezdyProduct } from "@/lib/types/rezdy"
 
 export default function TourDetailPage({ params }: { params: Promise<{ slug: string }> }) {
@@ -750,6 +750,37 @@ export default function TourDetailPage({ params }: { params: Promise<{ slug: str
                             )}
                           </div>
                         </div>
+
+                        {/* Pickup Service Information */}
+                        {hasPickupServices(selectedProduct) && (
+                          <div className="bg-green-50 rounded-lg p-4 overflow-hidden">
+                            <h3 className="font-medium mb-3 flex items-center">
+                              <MapPin className="h-4 w-4 mr-2 text-green-500 flex-shrink-0" />
+                              <span className="truncate">
+                                {getPickupServiceType(selectedProduct) === 'door-to-door' ? 'Door-to-Door Service' :
+                                 getPickupServiceType(selectedProduct) === 'shuttle' ? 'Shuttle Service' :
+                                 'Pickup Service Available'}
+                              </span>
+                            </h3>
+                            <div className="text-sm text-muted-foreground space-y-2">
+                              {getPickupServiceType(selectedProduct) === 'door-to-door' && (
+                                <p className="break-words">Convenient door-to-door pickup service included. We'll pick you up from your accommodation.</p>
+                              )}
+                              {getPickupServiceType(selectedProduct) === 'shuttle' && (
+                                <p className="break-words">Shuttle service included with designated pickup points for your convenience.</p>
+                              )}
+                              {getPickupServiceType(selectedProduct) === 'designated-points' && (
+                                <p className="break-words">Pickup available from multiple convenient locations. Select your preferred pickup point during booking.</p>
+                              )}
+                              {extractPickupLocations(selectedProduct).length > 0 && (
+                                <div className="mt-2">
+                                  <span className="font-medium">Pickup areas: </span>
+                                  <span className="break-words">{extractPickupLocations(selectedProduct).join(', ')}</span>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        )}
                       </div>
                     </TabsContent>
                     

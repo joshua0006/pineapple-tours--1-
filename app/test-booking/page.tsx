@@ -6,46 +6,46 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { RezdyProduct } from '@/lib/types/rezdy'
 
-// Sample product for testing
+// Sample product for testing - using real product code from Rezdy system
 const sampleProduct: RezdyProduct = {
-  productCode: 'TOUR001',
-  name: 'Sydney Harbour Bridge Climb',
-  shortDescription: 'Experience breathtaking views of Sydney from the top of the iconic Harbour Bridge',
-  description: 'Join us for an unforgettable adventure climbing the Sydney Harbour Bridge. This 3.5-hour experience offers spectacular 360-degree views of Sydney Harbour, the Opera House, and the city skyline. Our expert guides will share fascinating stories about the bridge\'s construction and Sydney\'s history.',
-  advertisedPrice: 299,
+  productCode: 'PH1FEA', // Real product code from your Rezdy system
+  name: 'Hop on Hop off Bus - Tamborine Mountain - From Brisbane',
+  shortDescription: 'Embark on an adventure from Brisbane to the enchanting heights of Tamborine Mountain with our exclusive hop-on, hop-off bus service.',
+  description: 'Departing every morning from Brisbane. Enjoy the flexibility to explore Tamborine Mountain at your own pace with our convenient hop-on, hop-off service. Visit wineries, rainforest walks, local shops, and scenic lookouts.',
+  advertisedPrice: 99,
   images: [
     {
       id: 1,
-      itemUrl: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&h=600&fit=crop',
-      thumbnailUrl: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=200&h=150&fit=crop',
-      mediumSizeUrl: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400&h=300&fit=crop',
-      largeSizeUrl: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&h=600&fit=crop',
-      caption: 'Sydney Harbour Bridge',
+      itemUrl: 'https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?w=800&h=600&fit=crop',
+      thumbnailUrl: 'https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?w=200&h=150&fit=crop',
+      mediumSizeUrl: 'https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?w=400&h=300&fit=crop',
+      largeSizeUrl: 'https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?w=800&h=600&fit=crop',
+      caption: 'Tamborine Mountain Hop-on Hop-off Bus',
       isPrimary: true
     }
   ],
   quantityRequiredMin: 1,
   quantityRequiredMax: 12,
-  productType: 'TOUR',
-  locationAddress: 'Sydney Harbour Bridge, Sydney NSW 2000, Australia',
+  productType: 'CUSTOM',
+  locationAddress: 'Brisbane, QLD, Australia',
   status: 'ACTIVE',
   extras: [
     {
       id: 'photo-package',
       name: 'Professional Photo Package',
-      description: 'High-quality photos of your climb experience',
+      description: 'High-quality photos of your tour experience',
       price: 49,
       priceType: 'PER_BOOKING',
       maxQuantity: 1,
       isRequired: false
     },
     {
-      id: 'certificate',
-      name: 'Commemorative Certificate',
-      description: 'Personalized certificate of your bridge climb',
-      price: 25,
-      priceType: 'PER_BOOKING',
-      maxQuantity: 1,
+      id: 'lunch-upgrade',
+      name: 'Gourmet Lunch Upgrade',
+      description: 'Upgrade to a gourmet lunch at a local winery',
+      price: 35,
+      priceType: 'PER_PERSON',
+      maxQuantity: 8,
       isRequired: false
     }
   ]

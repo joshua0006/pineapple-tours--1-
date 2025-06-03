@@ -185,7 +185,7 @@ export function SiteHeader() {
         {/* Mobile Menu */}
         {isMobile && (
           <div className="flex items-center gap-2">
-            <CartIcon showDropdown={false} />
+            <CartIcon />
             <Sheet open={isOpen} onOpenChange={setIsOpen}>
               <SheetTrigger asChild>
                 <Button 

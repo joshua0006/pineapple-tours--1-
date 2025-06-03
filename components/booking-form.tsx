@@ -16,9 +16,10 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { Card, CardContent } from "@/components/ui/card"
 import { Calendar } from "@/components/ui/calendar"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import { PickupLocationSelector } from "@/components/ui/pickup-location-selector"
 import { useRezdyAvailability } from "@/hooks/use-rezdy"
-import { RezdyProduct, RezdySession } from "@/lib/types/rezdy"
-import { formatPrice, getLocationString } from "@/lib/utils/product-utils"
+import { RezdyProduct, RezdySession, RezdyPickupLocation } from "@/lib/types/rezdy"
+import { formatPrice, getLocationString, hasPickupServices, getPickupServiceType, extractPickupLocations } from "@/lib/utils/product-utils"
 import { cn } from "@/lib/utils"
 
 interface BookingFormProps {
@@ -28,10 +29,16 @@ interface BookingFormProps {
 
 export function BookingForm({ product, onClose }: BookingFormProps) {
   const [travelers, setTravelers] = useState(2)
-  const [startDate, setStartDate] = useState<Date | undefined>(undefined)
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined)
   const [selectedSession, setSelectedSession] = useState<RezdySession | null>(null)
+  const [selectedPickupLocation, setSelectedPickupLocation] = useState<RezdyPickupLocation | null>(null)
   const [step, setStep] = useState(1)
   const [isSubmitting, setIsSubmitting] = useState(false)
+  
+  // Check if product has pickup services
+  const productHasPickupServices = hasPickupServices(product)
+  const pickupServiceType = getPickupServiceType(product)
+  const mentionedPickupLocations = extractPickupLocations(product)
 
   // Get availability for the next 60 days to show available dates
   const today = new Date()
@@ -79,15 +86,15 @@ export function BookingForm({ product, onClose }: BookingFormProps) {
 
   // Get sessions for the selected date
   const availableSessions = useMemo(() => {
-    if (!availabilityData || !availabilityData[0]?.sessions || !startDate) return []
+    if (!availabilityData || !availabilityData[0]?.sessions || !selectedDate) return []
     
-    const selectedDateString = format(startDate, 'yyyy-MM-dd')
+    const selectedDateString = format(selectedDate, 'yyyy-MM-dd')
     const sessions = availabilityData[0].sessions.filter(session => 
       session.startTimeLocal.startsWith(selectedDateString)
     )
     console.log('Sessions for date', selectedDateString, ':', sessions)
     return sessions
-  }, [availabilityData, startDate])
+  }, [availabilityData, selectedDate])
 
   const handleTravelersChange = (value: string) => {
     setTravelers(Number.parseInt(value))
@@ -95,16 +102,31 @@ export function BookingForm({ product, onClose }: BookingFormProps) {
   }
 
   const handleDateChange = (date: Date | undefined) => {
-    setStartDate(date)
+    setSelectedDate(date)
     setSelectedSession(null) // Reset session when date changes
   }
 
-  const handleSessionSelect = (sessionId: string) => {
-    const session = availableSessions.find(s => s.id === sessionId)
-    setSelectedSession(session || null)
+  const handleSessionSelect = (session: RezdySession) => {
+    setSelectedSession(session)
+    // Auto-select first pickup location if available
+    if (session.pickupLocations && session.pickupLocations.length > 0) {
+      setSelectedPickupLocation(session.pickupLocations[0])
+    } else {
+      setSelectedPickupLocation(null)
+    }
   }
 
   const handleNextStep = () => {
+    // Validate pickup location if required
+    const needsPickupLocation = productHasPickupServices && 
+      selectedSession?.pickupLocations && 
+      selectedSession.pickupLocations.length > 0
+    
+    if (needsPickupLocation && !selectedPickupLocation) {
+      alert('Please select a pickup location to continue.')
+      return
+    }
+    
     setStep(2)
   }
 
@@ -117,8 +139,34 @@ export function BookingForm({ product, onClose }: BookingFormProps) {
 
     setIsSubmitting(true)
     try {
+      // Prepare booking data including pickup information
+      const bookingData = {
+        product: {
+          code: product.productCode,
+          name: product.name,
+          hasPickupServices: productHasPickupServices,
+          pickupServiceType: pickupServiceType
+        },
+        session: {
+          id: selectedSession.id,
+          startTime: selectedSession.startTimeLocal,
+          endTime: selectedSession.endTimeLocal
+        },
+        pickupLocation: selectedPickupLocation,
+        travelers: travelers,
+        pricing: {
+          basePrice: basePrice,
+          sessionPrice: sessionPrice,
+          subtotal: subtotal,
+          taxAndFees: taxAndFees,
+          total: total
+        },
+        timestamp: new Date().toISOString()
+      }
+
       // Here you would integrate with the Rezdy booking API
       // For now, we'll simulate a booking
+      console.log('Booking data:', bookingData)
       await new Promise(resolve => setTimeout(resolve, 2000))
       
       // Show success message or redirect
@@ -189,17 +237,17 @@ export function BookingForm({ product, onClose }: BookingFormProps) {
                       variant="outline"
                       className={cn(
                         "w-full justify-start text-left font-normal",
-                        !startDate && "text-muted-foreground"
+                        !selectedDate && "text-muted-foreground"
                       )}
                     >
                       <CalendarIcon className="mr-2 h-4 w-4" />
-                      {startDate ? format(startDate, "PPP") : "Pick a date"}
+                      {selectedDate ? format(selectedDate, "PPP") : "Pick a date"}
                     </Button>
                   </PopoverTrigger>
                   <PopoverContent className="w-auto p-0" align="start">
                     <Calendar
                       mode="single"
-                      selected={startDate}
+                      selected={selectedDate}
                       onSelect={handleDateChange}
                       disabled={isDateDisabled}
                       modifiers={{
@@ -244,7 +292,7 @@ export function BookingForm({ product, onClose }: BookingFormProps) {
             )}
           </div>
 
-          {startDate && (
+          {selectedDate && (
             <div className="space-y-2">
               <Label>Available Times</Label>
               {availableSessions.length > 0 ? (
@@ -255,7 +303,7 @@ export function BookingForm({ product, onClose }: BookingFormProps) {
                       className={`cursor-pointer transition-colors ${
                         selectedSession?.id === session.id ? 'ring-2 ring-yellow-500 bg-yellow-50' : 'hover:bg-gray-50'
                       }`}
-                      onClick={() => handleSessionSelect(session.id)}
+                      onClick={() => handleSessionSelect(session)}
                     >
                       <CardContent className="p-3">
                         <div className="flex items-center justify-between">
@@ -290,7 +338,7 @@ export function BookingForm({ product, onClose }: BookingFormProps) {
               ) : (
                 <div className="text-center py-8 text-muted-foreground">
                   <CalendarIcon className="h-8 w-8 mx-auto mb-2" />
-                  <p>No availability for {startDate ? format(startDate, "PPP") : "this date"}</p>
+                  <p>No availability for {selectedDate ? format(selectedDate, "PPP") : "this date"}</p>
                   <p className="text-sm">Please select a different date or check back later</p>
                   {availabilityLoading && (
                     <p className="text-xs mt-2">Loading availability...</p>
@@ -300,7 +348,7 @@ export function BookingForm({ product, onClose }: BookingFormProps) {
             </div>
           )}
 
-          {!startDate && !availabilityLoading && availableDates.size > 0 && (
+          {!selectedDate && !availabilityLoading && availableDates.size > 0 && (
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
               <div className="text-sm text-blue-800">
                 <strong>Available dates:</strong> We found {availableDates.size} available dates in the next 60 days. 
@@ -336,6 +384,29 @@ export function BookingForm({ product, onClose }: BookingFormProps) {
                     hour: '2-digit',
                     minute: '2-digit'
                   })}
+                </span>
+              </div>
+            )}
+            {selectedPickupLocation && (
+              <div className="flex justify-between">
+                <span>Pickup Location</span>
+                <span className="text-right text-sm">
+                  {selectedPickupLocation.name}
+                  {selectedPickupLocation.pickupTime && (
+                    <div className="text-xs text-muted-foreground">
+                      Pickup: {selectedPickupLocation.pickupTime}
+                    </div>
+                  )}
+                </span>
+              </div>
+            )}
+            {productHasPickupServices && !selectedPickupLocation && selectedSession && (
+              <div className="flex justify-between">
+                <span>Pickup Service</span>
+                <span className="text-right text-sm">
+                  {pickupServiceType === 'door-to-door' ? 'Door-to-Door' : 
+                   pickupServiceType === 'shuttle' ? 'Shuttle Service' : 
+                   'Pickup Included'}
                 </span>
               </div>
             )}
@@ -451,6 +522,50 @@ export function BookingForm({ product, onClose }: BookingFormProps) {
             </Button>
             <div className="text-center text-xs text-muted-foreground">Your payment is secured with SSL encryption</div>
           </div>
+
+          {/* Pickup Location Selection */}
+          {selectedSession && selectedSession.pickupLocations && selectedSession.pickupLocations.length > 0 && (
+            <PickupLocationSelector
+              pickupLocations={selectedSession.pickupLocations}
+              selectedPickupLocation={selectedPickupLocation}
+              onPickupLocationSelect={setSelectedPickupLocation}
+              showDirections={false}
+              required={true}
+            />
+          )}
+
+          {/* Pickup Service Information for products without session pickup locations */}
+          {productHasPickupServices && selectedSession && (!selectedSession.pickupLocations || selectedSession.pickupLocations.length === 0) && (
+            <div className="bg-blue-50 rounded-lg p-4">
+              <div className="flex items-start gap-3">
+                <MapPin className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
+                <div>
+                  <h3 className="font-medium text-blue-900 mb-2">
+                    {pickupServiceType === 'door-to-door' ? 'Door-to-Door Service Included' : 
+                     pickupServiceType === 'shuttle' ? 'Shuttle Service Included' : 
+                     'Pickup Service Available'}
+                  </h3>
+                  <div className="text-sm text-blue-800 space-y-1">
+                    {pickupServiceType === 'door-to-door' && (
+                      <p>This tour includes convenient door-to-door pickup service. Pickup details will be confirmed after booking.</p>
+                    )}
+                    {pickupServiceType === 'shuttle' && (
+                      <p>Shuttle service is included. Pickup locations and times will be provided upon booking confirmation.</p>
+                    )}
+                    {pickupServiceType === 'designated-points' && (
+                      <p>Pickup is available from designated locations. Specific pickup points will be confirmed during booking.</p>
+                    )}
+                    {mentionedPickupLocations.length > 0 && (
+                      <div className="mt-2">
+                        <span className="font-medium">Available pickup areas: </span>
+                        <span>{mentionedPickupLocations.join(', ')}</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
         </>
       )}
     </div>

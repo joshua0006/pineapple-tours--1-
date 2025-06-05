@@ -118,7 +118,7 @@ export default function BookingPromptDemoPage() {
                 <Button 
                   onClick={startDemo}
                   disabled={isActive}
-                  className="bg-yellow-500 hover:bg-yellow-600 text-black"
+                  className="bg-coral-500 hover:bg-coral-600 text-white"
                 >
                   {isActive ? 'Demo Running...' : 'Start 30s Demo'}
                 </Button>

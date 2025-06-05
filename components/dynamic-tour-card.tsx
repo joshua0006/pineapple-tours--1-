@@ -8,7 +8,6 @@ import { Badge } from "@/components/ui/badge"
 import { HtmlContent } from "@/components/ui/html-content"
 import { RezdyProduct } from "@/lib/types/rezdy"
 import { getPrimaryImageUrl, getLocationString, generateProductSlug, getValidImages } from "@/lib/utils/product-utils"
-import { ResponsiveImage } from "@/components/ui/responsive-image"
 
 interface DynamicTourCardProps {
   product: RezdyProduct
@@ -19,19 +18,15 @@ export function DynamicTourCard({ product, loading = false }: DynamicTourCardPro
   if (loading) {
     return (
       <Card className="overflow-hidden animate-pulse">
-        <div className="relative h-48 w-full bg-gray-200" />
-        <CardContent className="p-4">
-          <div className="h-6 bg-gray-200 rounded mb-2" />
-          <div className="h-4 bg-gray-200 rounded w-3/4 mb-2" />
-          <div className="h-4 bg-gray-200 rounded w-1/2 mb-4" />
-          <div className="flex gap-3 mb-4">
-            <div className="h-4 bg-gray-200 rounded w-20" />
-            <div className="h-4 bg-gray-200 rounded w-24" />
-          </div>
-          <div className="h-8 bg-gray-200 rounded w-16" />
+        <div className="relative h-56 w-full bg-gray-200" />
+        <CardContent className="p-6">
+          <div className="h-6 bg-gray-200 rounded mb-3" />
+          <div className="h-4 bg-gray-200 rounded w-3/4 mb-4" />
+          <div className="h-4 bg-gray-200 rounded w-1/2 mb-6" />
+          <div className="h-8 bg-gray-200 rounded w-20" />
         </CardContent>
-        <CardFooter className="p-4 pt-0">
-          <div className="h-10 bg-gray-200 rounded w-full" />
+        <CardFooter className="p-6 pt-0">
+          <div className="h-12 bg-gray-200 rounded w-full" />
         </CardFooter>
       </Card>
     )
@@ -41,83 +36,63 @@ export function DynamicTourCard({ product, loading = false }: DynamicTourCardPro
   const location = getLocationString(product.locationAddress)
   const slug = generateProductSlug(product)
 
-  // Check if description contains HTML
-  const hasHtmlDescription = product.shortDescription && /<[^>]*>/g.test(product.shortDescription)
-
   return (
-    <Card className="overflow-hidden group hover:shadow-lg transition-shadow duration-300">
+    <Card className="overflow-hidden group hover:shadow-xl transition-all duration-300 border-0 shadow-md bg-white">
       <div className="relative">
-        <div className="relative h-48 w-full overflow-hidden">
-          <ResponsiveImage
-            images={getValidImages(product)}
-            alt={`${product.name} tour`}
-            aspectRatio="landscape"
-            className="transition-transform duration-300 group-hover:scale-105"
-            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-          />
+        <div className="relative h-56 w-full overflow-hidden">
+          {primaryImageUrl ? (
+            <Image
+              src={primaryImageUrl}
+              alt={`${product.name} tour`}
+              fill
+              className="transition-transform duration-500 group-hover:scale-110 object-cover"
+              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+            />
+          ) : (
+            <div className="w-full h-full bg-gray-200 flex items-center justify-center">
+              <span className="text-gray-400">No image available</span>
+            </div>
+          )}
           {product.status === 'ACTIVE' && (
-            <Badge className="absolute right-2 top-2 bg-yellow-500 text-black hover:bg-yellow-600 z-10">
+            <Badge className="absolute right-3 top-3 bg-coral-500/90 text-white hover:bg-coral-600 shadow-lg backdrop-blur-sm">
               Available
             </Badge>
           )}
-        </div>
-        <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-4">
-          <div className="flex items-center text-white">
-            <Star className="mr-1 h-4 w-4 fill-yellow-500 text-yellow-500" aria-hidden="true" />
-            <span className="text-sm font-medium">4.8 (Reviews)</span>
-          </div>
+          <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
         </div>
       </div>
-      <CardContent className="p-4">
-        <h3 className="text-xl font-bold line-clamp-2 min-h-[3.5rem] leading-7">{product.name}</h3>
-        <div className="mt-2 flex items-center text-muted-foreground">
-          <MapPin className="mr-1 h-4 w-4" aria-hidden="true" />
-          <span className="text-sm line-clamp-1">{location}</span>
-        </div>
-        {product.shortDescription && (
-          <div className="mt-2">
-            {hasHtmlDescription ? (
-              <HtmlContent 
-                content={product.shortDescription}
-                maxLength={120}
-                className="text-sm prose-sm line-clamp-2 min-h-[2.5rem]"
-              />
-            ) : (
-              <p className="text-sm text-muted-foreground line-clamp-2 min-h-[2.5rem]">
-                {product.shortDescription}
-              </p>
-            )}
+      
+      <CardContent className="p-6">
+        <div className="space-y-4">
+          <div>
+            <h3 className="text-xl font-bold text-gray-900 line-clamp-2 min-h-[3.5rem] leading-7 group-hover:text-coral-600 transition-colors duration-200">
+              {product.name}
+            </h3>
+            <div className="mt-2 flex items-center text-gray-600">
+              <MapPin className="mr-2 h-4 w-4 text-coral-500" aria-hidden="true" />
+              <span className="text-sm line-clamp-1 font-medium">{location}</span>
+            </div>
           </div>
-        )}
-        <div className="mt-4 flex flex-wrap gap-3">
-          <div className="flex items-center text-sm">
-            <Calendar className="mr-1 h-4 w-4 text-yellow-500" aria-hidden="true" />
-            <span>Multiple dates</span>
+       
+          <div className="flex items-baseline justify-between">
+            <div>
+              <div className="text-xs text-gray-500 uppercase tracking-wide font-semibold">Starting from</div>
+              <div className="text-2xl font-bold text-gray-900">
+                {product.advertisedPrice 
+                  ? `$${product.advertisedPrice.toFixed(0)}`
+                  : 'Price on request'
+                }
+                <span className="text-sm text-gray-500 font-normal ml-1">per person</span>
+              </div>
+            </div>
           </div>
-          <div className="flex items-center text-sm">
-            <Users className="mr-1 h-4 w-4 text-yellow-500" aria-hidden="true" />
-            <span>
-              {product.quantityRequiredMin && product.quantityRequiredMax
-                ? `${product.quantityRequiredMin}-${product.quantityRequiredMax} people`
-                : 'Group size varies'}
-            </span>
-          </div>
-        </div>
-        <div className="mt-4">
-          <div className="text-sm text-muted-foreground">Starting from</div>
-          <div className="text-2xl font-bold">
-            {product.advertisedPrice 
-              ? `$${product.advertisedPrice.toFixed(0)}`
-              : 'Price on request'
-            }
-          </div>
-          <div className="text-sm text-muted-foreground">per person</div>
         </div>
       </CardContent>
-      <CardFooter className="p-4 pt-0">
+      
+      <CardFooter className="p-6 pt-0">
         <Link href={`/tours/${slug}`} className="w-full">
           <Button 
-            className="w-full bg-yellow-500 text-black hover:bg-yellow-600"
+            className="w-full bg-coral-500 text-white hover:bg-coral-600 hover:shadow-lg transform hover:-translate-y-0.5 transition-all duration-200 py-3 font-semibold"
             aria-label={`View details and book ${product.name} tour`}
           >
             View Details & Book

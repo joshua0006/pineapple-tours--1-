@@ -138,7 +138,7 @@ export function ExtrasSelector({
               className={cn(
                 "transition-all duration-200",
                 selectedQuantity > 0 
-                  ? "ring-2 ring-yellow-500 bg-yellow-50" 
+                  ? "ring-2 ring-coral-500 bg-coral-50" 
                   : "hover:bg-gray-50"
               )}
             >

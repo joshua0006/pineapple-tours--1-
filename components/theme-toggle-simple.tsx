@@ -1,69 +1,46 @@
 "use client"
 
 import * as React from "react"
-import { Moon, Sun, Monitor } from "lucide-react"
+import { Moon, Sun } from "lucide-react"
 import { useTheme } from "next-themes"
 
 import { Button } from "@/components/ui/button"
 
 export function ThemeToggleSimple() {
-  const { setTheme, theme } = useTheme()
+  const { theme, setTheme } = useTheme()
   const [mounted, setMounted] = React.useState(false)
 
   React.useEffect(() => {
     setMounted(true)
   }, [])
 
+  const toggleTheme = () => {
+    setTheme(theme === "dark" ? "light" : "dark")
+  }
+
   if (!mounted) {
     return (
-      <Button variant="ghost" size="icon" className="h-9 w-9">
-        <Sun className="h-[1.2rem] w-[1.2rem]" />
+      <Button 
+        variant="ghost" 
+        size="icon" 
+        className="h-9 w-9"
+        disabled
+      >
+        <div className="h-[1.2rem] w-[1.2rem] rounded-full bg-muted animate-pulse" />
       </Button>
     )
   }
 
-  const cycleTheme = () => {
-    if (theme === "light") {
-      setTheme("dark")
-    } else if (theme === "dark") {
-      setTheme("system")
-    } else {
-      setTheme("light")
-    }
-  }
-
-  const getIcon = () => {
-    switch (theme) {
-      case "light":
-        return <Sun className="h-[1.2rem] w-[1.2rem]" />
-      case "dark":
-        return <Moon className="h-[1.2rem] w-[1.2rem]" />
-      default:
-        return <Monitor className="h-[1.2rem] w-[1.2rem]" />
-    }
-  }
-
-  const getLabel = () => {
-    switch (theme) {
-      case "light":
-        return "Switch to dark mode"
-      case "dark":
-        return "Switch to system mode"
-      default:
-        return "Switch to light mode"
-    }
-  }
-
   return (
-    <Button
-      variant="ghost"
-      size="icon"
-      onClick={cycleTheme}
-      className="h-9 w-9 transition-all duration-300 hover:bg-yellow-100 hover:text-yellow-800 dark:hover:bg-yellow-900/20 dark:hover:text-yellow-300 focus:ring-2 focus:ring-yellow-500 focus:ring-offset-2"
-      aria-label={getLabel()}
-      title={getLabel()}
+    <Button 
+      variant="ghost" 
+      size="icon" 
+      onClick={toggleTheme}
+      className="h-9 w-9 transition-all duration-300 hover:bg-coral-100 hover:text-coral-800 dark:hover:bg-coral-900/20 dark:hover:text-coral-300 focus:ring-2 focus:ring-coral-500 focus:ring-offset-2"
+      aria-label={`Switch to ${theme === "dark" ? "light" : "dark"} mode`}
     >
-      {getIcon()}
+      <Sun className="h-[1.2rem] w-[1.2rem] rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
+      <Moon className="absolute h-[1.2rem] w-[1.2rem] rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
     </Button>
   )
 } 

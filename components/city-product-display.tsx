@@ -119,7 +119,7 @@ export function CityProductDisplay({
       {/* Header with controls */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <MapPin className="h-5 w-5 text-yellow-500" />
+          <MapPin className="h-5 w-5 text-coral-500" />
           <span className="text-lg font-medium">
             {selectedCity === 'all' ? 'All Locations' : selectedCity}
           </span>

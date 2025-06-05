@@ -107,7 +107,7 @@ export default function TestBookingPage() {
             <div className="pt-4">
               <Button 
                 onClick={() => setShowBooking(true)}
-                className="w-full bg-yellow-500 hover:bg-yellow-600 text-black"
+                className="w-full bg-coral-500 hover:bg-coral-600 text-white"
                 size="lg"
               >
                 Start Booking Experience

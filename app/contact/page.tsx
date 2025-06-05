@@ -109,7 +109,7 @@ export default function ContactPage() {
         <section className="bg-muted py-16">
           <div className="container">
             <div className="max-w-3xl">
-              <Badge className="bg-yellow-500 text-black hover:bg-yellow-600 mb-4">Contact Us</Badge>
+              <Badge className="bg-coral-500 text-white hover:bg-coral-600 mb-4">Contact Us</Badge>
               <h1 className="text-4xl font-bold tracking-tight sm:text-5xl md:text-6xl">
                 Let's Plan Your Perfect Getaway
               </h1>
@@ -127,8 +127,8 @@ export default function ContactPage() {
             {contactInfo.map((info, index) => (
               <Card key={index} className="text-center">
                 <CardContent className="p-6">
-                  <div className="w-12 h-12 bg-yellow-500 rounded-lg flex items-center justify-center mx-auto mb-4">
-                    <info.icon className="h-6 w-6 text-black" />
+                  <div className="w-12 h-12 bg-coral-500 rounded-lg flex items-center justify-center mx-auto mb-4">
+                    <info.icon className="h-6 w-6 text-white" />
                   </div>
                   <h3 className="text-lg font-semibold mb-3">{info.title}</h3>
                   <div className="space-y-1">
@@ -151,7 +151,7 @@ export default function ContactPage() {
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <MessageCircle className="h-5 w-5 text-yellow-500" />
+                  <MessageCircle className="h-5 w-5 text-coral-500" />
                   Send Us a Message
                 </CardTitle>
               </CardHeader>
@@ -221,7 +221,7 @@ export default function ContactPage() {
                     />
                   </div>
 
-                  <Button type="submit" className="w-full bg-yellow-500 text-black hover:bg-yellow-600">
+                  <Button type="submit" className="w-full bg-coral-500 text-white hover:bg-coral-600">
                     <Send className="mr-2 h-4 w-4" />
                     Send Message
                   </Button>
@@ -256,21 +256,21 @@ export default function ContactPage() {
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="flex items-start gap-3">
-                    <div className="w-2 h-2 bg-green-500 rounded-full mt-2"></div>
+                    <div className="w-2 h-2 bg-coral-500 rounded-full mt-2"></div>
                     <div>
                       <p className="font-medium">Email Inquiries</p>
                       <p className="text-sm text-muted-foreground">We respond within 2-4 hours during business hours</p>
                     </div>
                   </div>
                   <div className="flex items-start gap-3">
-                    <div className="w-2 h-2 bg-yellow-500 rounded-full mt-2"></div>
+                    <div className="w-2 h-2 bg-coral-500 rounded-full mt-2"></div>
                     <div>
                       <p className="font-medium">Phone Support</p>
                       <p className="text-sm text-muted-foreground">Immediate assistance available 24/7</p>
                     </div>
                   </div>
                   <div className="flex items-start gap-3">
-                    <div className="w-2 h-2 bg-blue-500 rounded-full mt-2"></div>
+                    <div className="w-2 h-2 bg-coral-500 rounded-full mt-2"></div>
                     <div>
                       <p className="font-medium">Emergency Support</p>
                       <p className="text-sm text-muted-foreground">24/7 support for travelers on active tours</p>
@@ -321,7 +321,7 @@ export default function ContactPage() {
               Contact us today and let's make your dream vacation a reality!
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Button className="bg-yellow-500 text-black hover:bg-yellow-600">
+              <Button className="bg-coral-500 text-white hover:bg-coral-600">
                 <Phone className="mr-2 h-4 w-4" />
                 Call Now: 1-800-PINEAPPLE
               </Button>

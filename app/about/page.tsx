@@ -75,7 +75,7 @@ export default function AboutPage() {
         <section className="bg-muted py-16">
           <div className="container">
             <div className="max-w-3xl">
-              <Badge className="bg-yellow-500 text-black hover:bg-yellow-600 mb-4">About Us</Badge>
+              <Badge className="bg-coral-500 text-white hover:bg-coral-600 mb-4">About Us</Badge>
               <h1 className="text-4xl font-bold tracking-tight sm:text-5xl md:text-6xl">
                 Your Gateway to Paradise
               </h1>
@@ -135,7 +135,7 @@ export default function AboutPage() {
             <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
               {stats.map((stat, index) => (
                 <div key={index} className="text-center">
-                  <div className="text-4xl font-bold text-yellow-600 mb-2">{stat.number}</div>
+                  <div className="text-4xl font-bold text-coral-600 mb-2">{stat.number}</div>
                   <div className="text-muted-foreground">{stat.label}</div>
                 </div>
               ))}
@@ -156,8 +156,8 @@ export default function AboutPage() {
             {values.map((value, index) => (
               <Card key={index} className="text-center">
                 <CardContent className="p-6">
-                  <div className="w-12 h-12 bg-yellow-500 rounded-lg flex items-center justify-center mx-auto mb-4">
-                    <value.icon className="h-6 w-6 text-black" />
+                  <div className="w-12 h-12 bg-coral-500 rounded-lg flex items-center justify-center mx-auto mb-4">
+                    <value.icon className="h-6 w-6 text-white" />
                   </div>
                   <h3 className="text-lg font-semibold mb-2">{value.title}</h3>
                   <p className="text-muted-foreground text-sm">{value.description}</p>
@@ -190,7 +190,7 @@ export default function AboutPage() {
                       />
                     </div>
                     <h3 className="text-lg font-semibold mb-1">{member.name}</h3>
-                    <p className="text-yellow-600 font-medium text-sm mb-3">{member.role}</p>
+                    <p className="text-coral-600 font-medium text-sm mb-3">{member.role}</p>
                     <p className="text-muted-foreground text-sm">{member.bio}</p>
                   </CardContent>
                 </Card>
@@ -209,7 +209,7 @@ export default function AboutPage() {
               preserving these paradises for future generations."
             </blockquote>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Button className="bg-yellow-500 text-black hover:bg-yellow-600">
+              <Button className="bg-coral-500 text-white hover:bg-coral-600">
                 Start Your Journey
               </Button>
               <Button variant="outline">
@@ -231,21 +231,21 @@ export default function AboutPage() {
             <div className="grid gap-8 md:grid-cols-3">
               <Card className="text-center">
                 <CardContent className="p-6">
-                  <Award className="h-12 w-12 text-yellow-500 mx-auto mb-4" />
+                  <Award className="h-12 w-12 text-coral-500 mx-auto mb-4" />
                   <h3 className="text-lg font-semibold mb-2">Best Tour Operator 2023</h3>
                   <p className="text-muted-foreground text-sm">Travel Excellence Awards</p>
                 </CardContent>
               </Card>
               <Card className="text-center">
                 <CardContent className="p-6">
-                  <Award className="h-12 w-12 text-yellow-500 mx-auto mb-4" />
+                  <Award className="h-12 w-12 text-coral-500 mx-auto mb-4" />
                   <h3 className="text-lg font-semibold mb-2">Sustainable Tourism Leader</h3>
                   <p className="text-muted-foreground text-sm">Green Travel Association</p>
                 </CardContent>
               </Card>
               <Card className="text-center">
                 <CardContent className="p-6">
-                  <Award className="h-12 w-12 text-yellow-500 mx-auto mb-4" />
+                  <Award className="h-12 w-12 text-coral-500 mx-auto mb-4" />
                   <h3 className="text-lg font-semibold mb-2">Customer Choice Award</h3>
                   <p className="text-muted-foreground text-sm">TripAdvisor Travelers' Choice</p>
                 </CardContent>

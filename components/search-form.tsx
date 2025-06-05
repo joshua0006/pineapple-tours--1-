@@ -176,7 +176,7 @@ export function SearchForm({ onSearch, showRedirect = true, onCityChange }: Sear
               : "Search for tours and experiences by tour location"
             }
             {hasDatesSelected && (
-              <span className="ml-2 inline-flex items-center px-2 py-1 rounded-full text-xs bg-orange-100 text-orange-800">
+              <span className="ml-2 inline-flex items-center px-2 py-1 rounded-full text-xs bg-coral-100 text-coral-800">
                 <CalendarDays className="w-3 h-3 mr-1" />
                 <span className="hidden sm:inline">{dateRangeText}</span>
                 <span className="sm:hidden">{format(checkInDate!, 'MMM dd')} - {format(checkOutDate!, 'MMM dd')}</span>
@@ -194,7 +194,7 @@ export function SearchForm({ onSearch, showRedirect = true, onCityChange }: Sear
                 placeholder="Search tours, locations, activities..."
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
-                className="pl-10 pr-4 h-12 text-base border-gray-300 focus:border-orange-500 focus:ring-orange-500"
+                className="pl-10 pr-4 h-12 text-base border-gray-300 focus:border-coral-500 focus:ring-coral-500"
               />
             </div>
           </div>
@@ -206,7 +206,7 @@ export function SearchForm({ onSearch, showRedirect = true, onCityChange }: Sear
               <Label htmlFor="tour-location" className="text-xs font-medium text-gray-700 hidden sm:block">Tour Location</Label>
               <div className="relative">
                 <Select value={selectedCity} onValueChange={handleCityChange} disabled={citiesLoading}>
-                  <SelectTrigger id="tour-location" className="h-10 border-gray-300 text-xs sm:text-sm focus:border-orange-500 focus:ring-orange-500">
+                  <SelectTrigger id="tour-location" className="h-10 border-gray-300 text-xs sm:text-sm focus:border-coral-500 focus:ring-coral-500">
                     <div className="flex items-center gap-2">
                       <MapPin className="h-4 w-4 text-muted-foreground" />
                       <SelectValue placeholder={citiesLoading ? "Loading..." : "All Locations"} />
@@ -231,8 +231,8 @@ export function SearchForm({ onSearch, showRedirect = true, onCityChange }: Sear
                 <Select value={travelers} onValueChange={setTravelers}>
                   <SelectTrigger 
                     id="travelers" 
-                    className={`h-10 border-gray-300 text-xs sm:text-sm focus:border-orange-500 focus:ring-orange-500 ${
-                      isPrePopulated && promptData?.groupSize ? 'ring-2 ring-yellow-200 bg-yellow-50' : ''
+                    className={`h-10 border-gray-300 text-xs sm:text-sm focus:border-coral-500 focus:ring-coral-500 ${
+                      isPrePopulated && promptData?.groupSize ? 'ring-2 ring-coral-200 bg-coral-50' : ''
                     }`}
                   >
                     <div className="flex items-center gap-2">
@@ -264,9 +264,9 @@ export function SearchForm({ onSearch, showRedirect = true, onCityChange }: Sear
                   placeholder="Select date"
                   minDate={new Date()}
                   maxDate={checkOutDate ? addDays(checkOutDate, -1) : addDays(new Date(), 365)}
-                  className={`h-10 border-gray-300 text-xs sm:text-sm focus:border-orange-500 focus:ring-orange-500 ${
-                    checkInDate ? 'border-orange-300 bg-orange-50' : ''
-                  } ${isPrePopulated && checkInDate ? 'ring-2 ring-yellow-200' : ''}`}
+                  className={`h-10 border-gray-300 text-xs sm:text-sm focus:border-coral-500 focus:ring-coral-500 ${
+                    checkInDate ? 'border-coral-300 bg-coral-50' : ''
+                  } ${isPrePopulated && checkInDate ? 'ring-2 ring-coral-200' : ''}`}
                 />
               </div>
             </div>
@@ -284,9 +284,9 @@ export function SearchForm({ onSearch, showRedirect = true, onCityChange }: Sear
                   placeholder="Select date"
                   minDate={checkInDate ? addDays(checkInDate, 1) : addDays(new Date(), 1)}
                   maxDate={addDays(new Date(), 365)}
-                  className={`h-10 border-gray-300 text-xs sm:text-sm focus:border-orange-500 focus:ring-orange-500 ${
-                    checkOutDate ? 'border-orange-300 bg-orange-50' : ''
-                  } ${isPrePopulated && checkOutDate ? 'ring-2 ring-yellow-200' : ''}`}
+                  className={`h-10 border-gray-300 text-xs sm:text-sm focus:border-coral-500 focus:ring-coral-500 ${
+                    checkOutDate ? 'border-coral-300 bg-coral-50' : ''
+                  } ${isPrePopulated && checkOutDate ? 'ring-2 ring-coral-200' : ''}`}
                 />
               </div>
             </div>
@@ -305,7 +305,7 @@ export function SearchForm({ onSearch, showRedirect = true, onCityChange }: Sear
             <div className="space-y-1 col-span-1">
               <Label htmlFor="price-range" className="text-xs font-medium text-gray-700 hidden sm:block">Price Range</Label>
               <Select value={priceRange} onValueChange={setPriceRange}>
-                <SelectTrigger id="price-range" className="h-10 border-gray-300 text-xs sm:text-sm focus:border-orange-500 focus:ring-orange-500">
+                <SelectTrigger id="price-range" className="h-10 border-gray-300 text-xs sm:text-sm focus:border-coral-500 focus:ring-coral-500">
                   <div className="flex items-center gap-2">
                     <span className="text-muted-foreground">$</span>
                     <SelectValue placeholder="All Prices" />
@@ -328,9 +328,9 @@ export function SearchForm({ onSearch, showRedirect = true, onCityChange }: Sear
               type="submit" 
               className={`w-full h-12 font-medium text-base transition-all duration-200 shadow-sm hover:shadow-md ${
                 hasDatesSelected 
-                  ? 'bg-orange-500 hover:bg-orange-600 text-white' 
-                  : 'bg-orange-500 hover:bg-orange-600 text-white'
-              } ${isPrePopulated ? 'bg-yellow-500 hover:bg-yellow-600 text-black' : ''}`}
+                  ? 'bg-coral-500 hover:bg-coral-600 text-white' 
+                  : 'bg-coral-500 hover:bg-coral-600 text-white'
+              } ${isPrePopulated ? 'bg-coral-500 hover:bg-coral-600 text-white' : ''}`}
             >
               <Search className="mr-2 h-4 w-4" />
               {isPrePopulated 

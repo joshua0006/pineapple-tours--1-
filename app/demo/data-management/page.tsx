@@ -124,7 +124,7 @@ export default function DataManagementDemoPage() {
       <SiteHeader />
       <main className="flex-1">
         {/* Hero Section */}
-        <section className="bg-gradient-to-r from-blue-600 to-purple-600 py-16">
+        <section className="bg-gradient-to-r from-coral-500 to-orange-500 py-16">
           <div className="container">
             <div className="text-center text-white">
               <Badge className="mb-4 bg-white/20 text-white hover:bg-white/30">

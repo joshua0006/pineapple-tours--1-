@@ -239,10 +239,10 @@ export default function TourDetailPage({ params }: { params: Promise<{ slug: str
   return (
     <div className="flex min-h-screen flex-col">
       <SiteHeader />
-      <main className="flex-1">
+      <main className="flex-1 ">
         {/* Breadcrumb */}
         <nav className="container py-4" aria-label="Breadcrumb">
-          <ol className="flex items-center justify-center text-xs sm:text-sm text-muted-foreground overflow-x-auto">
+          <ol className="flex items-center text-xs sm:text-sm text-muted-foreground overflow-x-auto">
             <li className="flex-shrink-0">
               <Link href="/" className="hover:text-foreground transition-colors">
                 Home
@@ -267,24 +267,24 @@ export default function TourDetailPage({ params }: { params: Promise<{ slug: str
 
         {/* Tour Header */}
         <section className="container py-6">
-          <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-center text-center md:text-left">
-            <div className="flex-1 max-w-4xl mx-auto">
+          <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between text-left">
+            <div className="flex-1 max-w-4xl">
               <h1 className="text-2xl font-bold tracking-tight sm:text-3xl md:text-4xl">{selectedProduct.name}</h1>
-              <div className="mt-2 flex flex-wrap items-center justify-center md:justify-start gap-2 sm:gap-4">
+              <div className="mt-2 flex flex-wrap items-center gap-2 sm:gap-4">
                 <div className="flex items-center">
-                  <MapPin className="mr-1 h-4 w-4 text-yellow-500" aria-hidden="true" />
+                  <MapPin className="mr-1 h-4 w-4 text-coral-500" aria-hidden="true" />
                   <span className="text-sm sm:text-base">{location}</span>
                 </div>
                 <div className="flex items-center">
-                  <Star className="mr-1 h-4 w-4 fill-yellow-500 text-yellow-500" aria-hidden="true" />
+                  <Star className="mr-1 h-4 w-4 fill-coral-500 text-coral-500" aria-hidden="true" />
                   <span className="text-sm sm:text-base">4.8 (Reviews)</span>
                 </div>
                 {selectedProduct.status === 'ACTIVE' && (
-                  <Badge className="bg-yellow-500 text-black hover:bg-yellow-600 text-xs sm:text-sm">Available</Badge>
+                  <Badge className="bg-coral-500 text-white hover:bg-coral-600 text-xs sm:text-sm">Available</Badge>
                 )}
               </div>
             </div>
-            <div className="text-center md:text-right flex-shrink-0">
+            <div className="text-left md:text-right flex-shrink-0">
               <div className="text-sm text-muted-foreground">Starting from</div>
               <div className="text-2xl sm:text-3xl font-bold">{price}</div>
               <div className="text-sm text-muted-foreground">per person</div>
@@ -307,35 +307,24 @@ export default function TourDetailPage({ params }: { params: Promise<{ slug: str
         </section>
 
         {/* Tour Content */}
-        <section className="container py-8 sm:py-12">
+        <section className="container py-6 sm:py-8">
           <div className="max-w-7xl mx-auto">
-            <div className="grid gap-4 sm:gap-6 lg:gap-8 xl:grid-cols-4">
-              {/* Mobile Booking Bar - Only visible on mobile */}
+            <div className="grid gap-6 lg:gap-8 xl:grid-cols-4 xl:items-start">
+              {/* Streamlined Mobile Booking Bar */}
               <div className="xl:hidden order-first">
-                <div className="max-w-2xl mx-auto px-2 sm:px-0">
-                  <Card className="sticky top-16 z-10 shadow-lg border-2 border-yellow-500/20">
-                    <CardContent className="p-3 sm:p-4">
-                      <div className="flex items-center justify-between gap-2 sm:gap-3">
-                        <div className="flex-1 min-w-0">
-                          <div className="text-xs text-muted-foreground">Starting from</div>
-                          <div className="text-base sm:text-lg lg:text-xl font-bold truncate">{price}</div>
-                          <div className="text-xs text-muted-foreground">per person</div>
+                <div className="max-w-2xl mx-auto">
+                  <Card className="sticky top-16 z-10 shadow-sm border border-coral-200">
+                    <CardContent className="p-4">
+                      <div className="flex items-center justify-between gap-4">
+                        <div className="flex-1">
+                          <div className="text-2xl font-bold text-gray-900">{price}</div>
+                          <div className="text-sm text-gray-600">per person</div>
                         </div>
-                        <div className="flex gap-1 sm:gap-2 flex-shrink-0">
-                          <AddToCartButton
-                            product={selectedProduct}
-                            session={availableSessions.length > 0 ? availableSessions[0] : undefined}
-                            size="sm"
-                            variant="outline"
-                            className="text-xs px-2 sm:px-3 py-2 whitespace-nowrap"
-                            showIcon={false}
-                          >
-                            Add
-                          </AddToCartButton>
+                        <div className="flex gap-3">
                           <Button 
                             size="sm"
                             variant="outline"
-                            className="text-xs px-2 sm:px-3 py-2 whitespace-nowrap"
+                            className="border-coral-200 text-coral-700 hover:bg-coral-50"
                             onClick={() => {
                               const availabilityTab = document.querySelector('[value="availability"]');
                               if (availabilityTab) {
@@ -344,11 +333,11 @@ export default function TourDetailPage({ params }: { params: Promise<{ slug: str
                               }
                             }}
                           >
-                            Dates
+                            Check Dates
                           </Button>
                           <Button 
                             size="sm"
-                            className="bg-yellow-500 text-black hover:bg-yellow-600 text-xs px-3 sm:px-4 py-2 whitespace-nowrap"
+                            className="bg-coral-500 text-white hover:bg-coral-600"
                             onClick={() => setShowBooking(true)}
                           >
                             Book Now
@@ -360,687 +349,455 @@ export default function TourDetailPage({ params }: { params: Promise<{ slug: str
                 </div>
               </div>
 
-              {/* Main Content */}
+              {/* Main Content - Streamlined */}
               <div className="xl:col-span-3 min-w-0">
-                <div className="max-w-4xl mx-auto xl:mx-0">
-                  <Tabs defaultValue="overview" className="w-full">
-                    <div className="flex justify-center xl:justify-start overflow-hidden">
-                      <TabsList className="w-full max-w-full justify-start overflow-x-auto scrollbar-hide" role="tablist">
-                        <TabsTrigger value="overview" role="tab" className="text-xs sm:text-sm whitespace-nowrap px-2 sm:px-3 lg:px-4 flex-shrink-0">Overview</TabsTrigger>
-                        <TabsTrigger value="availability" role="tab" className="text-xs sm:text-sm whitespace-nowrap px-2 sm:px-3 lg:px-4 flex-shrink-0">Availability</TabsTrigger>
-                        <TabsTrigger value="location" role="tab" className="text-xs sm:text-sm whitespace-nowrap px-2 sm:px-3 lg:px-4 flex-shrink-0">Location</TabsTrigger>
-                        <TabsTrigger value="details" role="tab" className="text-xs sm:text-sm whitespace-nowrap px-2 sm:px-3 lg:px-4 flex-shrink-0">Details</TabsTrigger>
-                        <TabsTrigger value="reviews" role="tab" className="text-xs sm:text-sm whitespace-nowrap px-2 sm:px-3 lg:px-4 flex-shrink-0">Reviews</TabsTrigger>
-                      </TabsList>
-                    </div>
-                    
-                    <TabsContent value="overview" className="mt-4 sm:mt-6" role="tabpanel">
-                      <div className="space-y-4 sm:space-y-6 lg:space-y-8">
-                        {/* Enhanced Description Display */}
-                        <DescriptionDisplay
-                          title="Tour Overview"
-                          description={selectedProduct.description}
-                          shortDescription={selectedProduct.shortDescription}
-                          maxLength={600}
-                          allowExpansion={true}
-                        />
-                        
-                        <div className="bg-gradient-to-br from-gray-50 to-white p-3 sm:p-4 lg:p-6 rounded-xl border border-gray-100 overflow-hidden">
-                          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4 mb-4 sm:mb-6">
-                            <h3 className="text-base sm:text-lg lg:text-xl xl:text-2xl font-bold flex items-center text-gray-800 min-w-0">
-                              <div className="w-6 h-6 sm:w-7 sm:h-7 lg:w-8 lg:h-8 xl:w-10 xl:h-10 bg-gradient-to-br from-yellow-400 to-yellow-600 rounded-full flex items-center justify-center mr-2 sm:mr-3 shadow-sm flex-shrink-0">
-                                <Star className="h-3 w-3 sm:h-4 sm:w-4 lg:h-5 lg:w-5 text-white" aria-hidden="true" />
-                              </div>
-                              <span className="truncate">Tour Highlights</span>
-                            </h3>
-                            <Badge variant="secondary" className="text-xs self-start sm:self-auto flex-shrink-0">
-                              {highlights.length} key features
-                            </Badge>
+                <div className="max-w-4xl mx-auto xl:mx-0 space-y-6">
+                  
+                  {/* Essential Tour Information - Simplified */}
+                  <Card className="border border-gray-200">
+                    <CardContent className="p-6">
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 bg-coral-100 rounded-lg flex items-center justify-center">
+                            <Users className="h-5 w-5 text-coral-600" />
                           </div>
-                          <div className="grid gap-2 sm:gap-3 lg:gap-4">
-                            {highlights.map((highlight, index) => {
-                              const IconComponent = highlight.icon
-                              return (
-                                <Card 
-                                  key={index} 
-                                  className="p-2 sm:p-3 lg:p-4 border-l-4 border-l-yellow-500 bg-gradient-to-r from-yellow-50 to-white hover:shadow-lg transition-all duration-300 hover:scale-105 animate-in fade-in slide-in-from-bottom-4 overflow-hidden"
-                                  style={{ animationDelay: `${index * 100}ms` }}
-                                >
-                                  <div className="flex items-start space-x-2 sm:space-x-3 min-w-0">
-                                    <div className="flex-shrink-0">
-                                      <div className="w-6 h-6 sm:w-8 sm:h-8 lg:w-10 lg:h-10 bg-gradient-to-br from-yellow-400 to-yellow-600 rounded-full flex items-center justify-center shadow-sm">
-                                        <IconComponent className="h-3 w-3 sm:h-4 sm:w-4 lg:h-5 lg:w-5 text-white" aria-hidden="true" />
-                                      </div>
-                                    </div>
-                                    <div className="flex-1 min-w-0">
-                                      <p className="text-xs sm:text-sm font-medium text-gray-900 leading-relaxed break-words">
-                                        {highlight.text}
-                                      </p>
-                                    </div>
-                                  </div>
-                                </Card>
-                              )
-                            })}
-                          </div>
-                        </div>
-                      </div>
-                    </TabsContent>
-                    
-                    <TabsContent value="availability" className="mt-4 sm:mt-6" role="tabpanel">
-                      <div className="space-y-4 sm:space-y-6">
-                        <div className="flex flex-col gap-3 sm:gap-4 lg:flex-row lg:items-center lg:justify-between">
-                          <h2 className="text-lg sm:text-xl lg:text-2xl font-bold min-w-0 break-words">Available Dates</h2>
-                          <div className="flex flex-col gap-2 sm:gap-3 md:flex-row md:items-center md:gap-4 overflow-hidden">
-                            <div className="flex items-center gap-2 text-xs sm:text-sm min-w-0">
-                              <label htmlFor="group-size" className="text-muted-foreground whitespace-nowrap flex-shrink-0">Group:</label>
-                              <select 
-                                id="group-size"
-                                value={groupSize} 
-                                onChange={(e) => setGroupSize(Number(e.target.value))}
-                                className="border rounded px-2 py-1 text-xs sm:text-sm min-w-0 flex-1 md:flex-initial max-w-full"
-                              >
-                                {Array.from({ length: 10 }, (_, i) => i + 1).map(size => (
-                                  <option key={size} value={size}>{size} adult{size > 1 ? 's' : ''}</option>
-                                ))}
-                              </select>
-                            </div>
-                            <div className="flex items-center gap-2 text-xs sm:text-sm min-w-0">
-                              <label htmlFor="date-range" className="text-muted-foreground whitespace-nowrap flex-shrink-0">Period:</label>
-                              <select 
-                                id="date-range"
-                                value={dateRange} 
-                                onChange={(e) => setDateRange(Number(e.target.value))}
-                                className="border rounded px-2 py-1 text-xs sm:text-sm min-w-0 flex-1 md:flex-initial max-w-full"
-                              >
-                                <option value={7}>7 days</option>
-                                <option value={14}>2 weeks</option>
-                                <option value={30}>30 days</option>
-                                <option value={60}>2 months</option>
-                                <option value={90}>3 months</option>
-                              </select>
-                            </div>
-                            <div className="text-xs sm:text-sm text-muted-foreground flex-shrink-0">
-                              {availableSessions.length} sessions
+                          <div>
+                            <div className="text-sm text-gray-600">Group Size</div>
+                            <div className="font-semibold text-gray-900">
+                              {selectedProduct.quantityRequiredMin || 1}-{selectedProduct.quantityRequiredMax || 20} people
                             </div>
                           </div>
                         </div>
                         
-                        {availabilityLoading ? (
-                          <div className="space-y-4" aria-label="Loading availability">
-                            {Array.from({ length: 3 }).map((_, index) => (
-                              <div key={index} className="animate-pulse">
-                                <div className="h-20 bg-gray-200 rounded" />
-                              </div>
-                            ))}
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 bg-coral-100 rounded-lg flex items-center justify-center">
+                            <Clock className="h-5 w-5 text-coral-600" />
                           </div>
-                        ) : availabilityError ? (
-                          <Card className="p-4 sm:p-8 text-center border-red-200 bg-red-50">
-                            <Calendar className="h-8 w-8 sm:h-12 sm:w-12 text-red-400 mx-auto mb-4" aria-hidden="true" />
-                            <h3 className="text-base sm:text-lg font-medium mb-2 text-red-800 break-words">Error loading availability</h3>
-                            <p className="text-sm sm:text-base text-red-600 mb-4 break-words">
-                              {availabilityError}
-                            </p>
-                            <div className="flex flex-col sm:flex-row gap-2 justify-center">
-                              <Button 
-                                variant="outline"
-                                onClick={() => window.location.reload()}
-                                className="border-red-300 text-red-700 hover:bg-red-100 text-xs sm:text-sm"
-                              >
-                                Try Again
-                              </Button>
-                              <Button 
-                                variant="outline"
-                                onClick={() => setShowBooking(true)}
-                                className="text-xs sm:text-sm"
-                              >
-                                Contact Support
-                              </Button>
+                          <div>
+                            <div className="text-sm text-gray-600">Duration</div>
+                            <div className="font-semibold text-gray-900">
+                              {(() => {
+                                // Calculate duration from available session if possible
+                                if (availableSessions.length > 0) {
+                                  const session = availableSessions[0];
+                                  const start = new Date(session.startTimeLocal);
+                                  const end = new Date(session.endTimeLocal);
+                                  const diffMs = end.getTime() - start.getTime();
+                                  const diffHours = Math.round(diffMs / (1000 * 60 * 60));
+                                  return diffHours > 0 ? `${diffHours} hours` : 'Full day';
+                                }
+                                // Fallback to generic text
+                                return 'Full day experience';
+                              })()}
                             </div>
-                          </Card>
-                        ) : availableSessions.length > 0 ? (
-                          <div className="space-y-3 sm:space-y-4">
-                            {availableSessions.slice(0, 15).map((session) => {
-                              const sessionDate = new Date(session.startTimeLocal)
-                              const isToday = sessionDate.toDateString() === new Date().toDateString()
-                              const isTomorrow = sessionDate.toDateString() === new Date(Date.now() + 24 * 60 * 60 * 1000).toDateString()
-                              const isLowAvailability = session.seatsAvailable <= 3
-                              
-                              return (
-                                <Card key={session.id} className={`p-3 sm:p-4 transition-all hover:shadow-md overflow-hidden ${isLowAvailability ? 'border-orange-200 bg-orange-50' : ''}`}>
-                                  <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4 min-w-0">
-                                    <div className="flex-1 min-w-0">
-                                      <div className="flex flex-wrap items-center gap-1 sm:gap-2 mb-1 sm:mb-2">
-                                        <div className="font-medium text-sm sm:text-base min-w-0">
-                                          <span className="sm:hidden block truncate">
-                                            {sessionDate.toLocaleDateString('en-US', {
-                                              weekday: 'short',
-                                              month: 'short',
-                                              day: 'numeric'
-                                            })}
-                                          </span>
-                                          <span className="hidden sm:block break-words">
-                                            {sessionDate.toLocaleDateString('en-US', {
-                                              weekday: 'long',
-                                              year: 'numeric',
-                                              month: 'long',
-                                              day: 'numeric'
-                                            })}
-                                          </span>
-                                        </div>
-                                        {isToday && (
-                                          <Badge variant="secondary" className="text-xs bg-green-100 text-green-800 flex-shrink-0">
-                                            Today
-                                          </Badge>
-                                        )}
-                                        {isTomorrow && (
-                                          <Badge variant="secondary" className="text-xs bg-blue-100 text-blue-800 flex-shrink-0">
-                                            Tomorrow
-                                          </Badge>
-                                        )}
-                                      </div>
-                                      <div className="flex flex-wrap items-center gap-2 sm:gap-4 text-xs text-muted-foreground">
-                                        <div className="flex items-center gap-1 flex-shrink-0">
-                                          <Clock className="h-3 w-3 flex-shrink-0" />
-                                          <span className="whitespace-nowrap text-xs">
-                                            {sessionDate.toLocaleTimeString('en-US', {
-                                              hour: '2-digit',
-                                              minute: '2-digit'
-                                            })} - {new Date(session.endTimeLocal).toLocaleTimeString('en-US', {
-                                              hour: '2-digit',
-                                              minute: '2-digit'
-                                            })}
-                                          </span>
-                                        </div>
-                                        <div className="flex items-center gap-1 flex-shrink-0">
-                                          <Users className="h-3 w-3 flex-shrink-0" />
-                                          <span className={`whitespace-nowrap text-xs ${isLowAvailability ? 'text-orange-600 font-medium' : ''}`}>
-                                            {session.seatsAvailable} seats
-                                          </span>
-                                          {isLowAvailability && (
-                                            <Badge variant="outline" className="text-xs border-orange-300 text-orange-700 flex-shrink-0">
-                                              Limited
-                                            </Badge>
-                                          )}
-                                        </div>
-                                        {session.pickupLocations && session.pickupLocations.length > 0 && (
-                                          <div className="flex items-center gap-1 flex-shrink-0">
-                                            <MapPin className="h-3 w-3 flex-shrink-0" />
-                                            <span className="whitespace-nowrap text-xs">{session.pickupLocations.length} pickup{session.pickupLocations.length > 1 ? 's' : ''}</span>
-                                          </div>
-                                        )}
-                                      </div>
-                                    </div>
-                                    <div className="flex items-center justify-between sm:flex-col sm:text-right sm:ml-4 gap-3 sm:gap-2 flex-shrink-0">
-                                      <div className="min-w-0">
-                                        <div className="font-bold text-sm sm:text-base lg:text-lg xl:text-xl truncate">
-                                          {session.totalPrice ? `$${session.totalPrice}` : price}
-                                        </div>
-                                        <div className="text-xs text-muted-foreground whitespace-nowrap">
-                                          per person
-                                        </div>
-                                      </div>
-                                      <div className="flex gap-2 flex-shrink-0">
-                                        {session.seatsAvailable > 0 ? (
-                                          <AddToCartButton
-                                            product={selectedProduct}
-                                            session={session}
-                                            size="sm"
-                                            className="text-xs sm:text-sm px-2 sm:px-3 py-1.5 sm:py-2 whitespace-nowrap"
-                                            showIcon={false}
-                                          >
-                                            Add to Cart
-                                          </AddToCartButton>
-                                        ) : (
-                                          <Button 
-                                            size="sm" 
-                                            variant="outline"
-                                            className="text-xs sm:text-sm px-2 sm:px-3 py-1.5 sm:py-2 whitespace-nowrap"
-                                            disabled
-                                          >
-                                            Sold Out
-                                          </Button>
-                                        )}
-                                        <Button 
-                                          size="sm" 
-                                          className="bg-yellow-500 text-black hover:bg-yellow-600 text-xs sm:text-sm px-2 sm:px-3 py-1.5 sm:py-2 whitespace-nowrap"
-                                          onClick={() => setShowBooking(true)}
-                                          disabled={session.seatsAvailable === 0}
-                                          aria-label={`Book tour for ${sessionDate.toLocaleDateString()}`}
-                                        >
-                                          {session.seatsAvailable === 0 ? 'Sold Out' : 'Book'}
-                                        </Button>
-                                      </div>
-                                    </div>
-                                  </div>
-                                </Card>
-                              )
-                            })}
-                            
-                            {availableSessions.length > 15 && (
-                              <Card className="p-4 text-center bg-gray-50">
-                                <p className="text-muted-foreground mb-2 text-sm break-words">
-                                  Showing first 15 of {availableSessions.length} available sessions
-                                </p>
-                                <Button 
-                                  variant="outline" 
-                                  size="sm"
-                                  onClick={() => setShowBooking(true)}
-                                  className="text-xs sm:text-sm"
-                                >
-                                  View All Dates
-                                </Button>
-                              </Card>
-                            )}
                           </div>
-                        ) : (
-                          <Card className="p-4 sm:p-8 text-center">
-                            <Calendar className="h-8 w-8 sm:h-12 sm:w-12 text-muted-foreground mx-auto mb-4" aria-hidden="true" />
-                            <h3 className="text-base sm:text-lg font-medium mb-2 break-words">No availability found</h3>
-                            <p className="text-sm text-muted-foreground mb-4 break-words">
-                              There are currently no available dates for this tour in the next 30 days.
-                            </p>
-                            <div className="flex flex-col sm:flex-row gap-2 justify-center">
-                              <Button 
-                                variant="outline"
-                                onClick={() => setShowBooking(true)}
-                                className="text-xs sm:text-sm"
-                              >
-                                Contact us for availability
-                              </Button>
-                              <Button 
-                                variant="outline"
-                                onClick={() => window.location.reload()}
-                                className="text-xs sm:text-sm"
-                              >
-                                Refresh availability
-                              </Button>
-                            </div>
-                          </Card>
-                        )}
-                      </div>
-                    </TabsContent>
-                    
-                    <TabsContent value="location" className="mt-4 sm:mt-6" role="tabpanel">
-                      <div className="space-y-6 overflow-hidden">
-                        <GoogleMaps
-                          address={selectedProduct.locationAddress}
-                          pickupLocations={availableSessions.length > 0 ? availableSessions[0]?.pickupLocations || [] : []}
-                          tourName={selectedProduct.name}
-                        />
+                        </div>
                         
-                        {/* Additional Location Information */}
-                        {selectedProduct.locationAddress && (
-                          <div className="bg-gray-50 rounded-lg p-4 overflow-hidden">
-                            <h3 className="font-medium mb-2 flex items-center">
-                              <MapPin className="h-4 w-4 mr-2 text-yellow-500 flex-shrink-0" />
-                              <span className="truncate">Location Details</span>
-                            </h3>
-                            <div className="text-sm text-muted-foreground space-y-1">
-                              {typeof selectedProduct.locationAddress === 'string' ? (
-                                <p className="break-words">{selectedProduct.locationAddress}</p>
-                              ) : (
-                                <div className="space-y-1">
-                                  {selectedProduct.locationAddress.addressLine && (
-                                    <p className="break-words">{selectedProduct.locationAddress.addressLine}</p>
-                                  )}
-                                  <p className="break-words">
-                                    {[
-                                      selectedProduct.locationAddress.city,
-                                      selectedProduct.locationAddress.state,
-                                      selectedProduct.locationAddress.postCode
-                                    ].filter(Boolean).join(', ')}
-                                  </p>
-                                  {selectedProduct.locationAddress.countryCode && (
-                                    <p className="break-words">{selectedProduct.locationAddress.countryCode}</p>
-                                  )}
-                                  {selectedProduct.locationAddress.latitude && selectedProduct.locationAddress.longitude && (
-                                    <p className="text-xs break-all">
-                                      Coordinates: {selectedProduct.locationAddress.latitude.toFixed(6)}, {selectedProduct.locationAddress.longitude.toFixed(6)}
-                                    </p>
-                                  )}
-                                </div>
-                              )}
-                            </div>
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 bg-coral-100 rounded-lg flex items-center justify-center">
+                            <MapPin className="h-5 w-5 text-coral-600" />
                           </div>
-                        )}
+                          <div>
+                            <div className="text-sm text-gray-600">Location</div>
+                            <div className="font-semibold text-gray-900">{location}</div>
+                          </div>
+                        </div>
+                      </div>
 
-                        {/* Pickup Information */}
-                        {availableSessions.length > 0 && availableSessions[0]?.pickupLocations && availableSessions[0].pickupLocations.length > 0 && (
-                          <div className="bg-blue-50 rounded-lg p-4 overflow-hidden">
-                            <h3 className="font-medium mb-3 flex items-center">
-                              <Users className="h-4 w-4 mr-2 text-blue-500 flex-shrink-0" />
-                              <span className="truncate">Pickup Information</span>
-                            </h3>
-                            <div className="text-sm text-muted-foreground space-y-2">
-                              <p className="break-words">This tour offers pickup from multiple locations. Select your preferred pickup point during booking.</p>
-                              <div className="grid gap-2">
-                                {availableSessions[0].pickupLocations.slice(0, 3).map((pickup, index) => (
-                                  <div key={pickup.id || index} className="flex items-center gap-2 min-w-0">
-                                    <div className="w-2 h-2 bg-blue-500 rounded-full flex-shrink-0"></div>
-                                    <span className="font-medium truncate flex-1">{pickup.name}</span>
-                                    {pickup.pickupTime && (
-                                      <span className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded flex-shrink-0">
-                                        {pickup.pickupTime}
-                                      </span>
+                      {/* What's Included - Simplified */}
+                      <div className="border-t pt-6">
+                        <h3 className="text-lg font-semibold text-gray-900 mb-4">What's Included</h3>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                          {[
+                            'Professional local guide',
+                            'All necessary equipment', 
+                            'Safety briefing and instructions',
+                            'Small group experience'
+                          ].map((item, index) => (
+                            <div key={index} className="flex items-center gap-2">
+                              <Check className="h-4 w-4 text-emerald-600" />
+                              <span className="text-sm text-gray-700">{item}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  {/* Redesigned Tabs - 2 Tab Layout */}
+                  <Tabs defaultValue="overview" className="w-full">
+                    <TabsList className="grid w-full grid-cols-2 bg-gray-50 border border-gray-200 rounded-lg">
+                      <TabsTrigger 
+                        value="overview" 
+                        className="data-[state=active]:bg-white data-[state=active]:text-coral-600 data-[state=active]:border-coral-200 data-[state=active]:shadow-sm rounded-md mx-1 my-1"
+                      >
+                        Overview
+                      </TabsTrigger>
+                      <TabsTrigger 
+                        value="location" 
+                        className="data-[state=active]:bg-white data-[state=active]:text-coral-600 data-[state=active]:border-coral-200 data-[state=active]:shadow-sm rounded-md mx-1 my-1"
+                      >
+                        Location & Pickup
+                      </TabsTrigger>
+                    </TabsList>
+                    
+                    <TabsContent value="overview" className="mt-6">
+                      <div className="space-y-6">
+                        {/* Clean Description */}
+                        <div>
+                          <h3 className="text-lg font-semibold text-gray-900 mb-3">About This Tour</h3>
+                          <DescriptionDisplay
+                            description={selectedProduct.description}
+                            shortDescription={selectedProduct.shortDescription}
+                            maxLength={undefined}
+                            allowExpansion={false}
+                            className="text-gray-700 leading-relaxed"
+                          />
+                        </div>
+                        
+                        {/* Quick Booking Section in Overview */}
+                        <Card className="border border-coral-200 bg-coral-50">
+                          <CardContent className="p-6">
+                            <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+                              <div>
+                                <h3 className="text-lg font-semibold text-gray-900 mb-2">Ready to Book?</h3>
+                                <p className="text-gray-600">Check availability and secure your spot</p>
+                              </div>
+                              <div className="flex flex-col sm:flex-row gap-3">
+                                <AddToCartButton
+                                  product={selectedProduct}
+                                  session={availableSessions.length > 0 ? availableSessions[0] : undefined}
+                                  variant="outline"
+                                  className="border-coral-300 text-coral-700 hover:bg-coral-100"
+                                >
+                                  Add to Cart
+                                </AddToCartButton>
+                                <Button 
+                                  className="bg-coral-500 text-white hover:bg-coral-600"
+                                  onClick={() => setShowBooking(true)}
+                                >
+                                  Book Now - {price}
+                                </Button>
+                              </div>
+                            </div>
+                          </CardContent>
+                        </Card>
+                   
+                      </div>
+                    </TabsContent>
+                    
+                    <TabsContent value="location" className="mt-6">
+                      <div className="space-y-6">
+                        {/* Location Card */}
+                        <Card className="border border-gray-200">
+                          <CardHeader>
+                            <CardTitle className="flex items-center gap-2">
+                              <MapPin className="h-5 w-5 text-coral-500" />
+                              Location & Meeting Point
+                            </CardTitle>
+                          </CardHeader>
+                          <CardContent className="space-y-6">
+                            {/* Map */}
+                            <GoogleMaps
+                              address={selectedProduct.locationAddress}
+                              pickupLocations={availableSessions.length > 0 ? availableSessions[0]?.pickupLocations || [] : []}
+                              tourName={selectedProduct.name}
+                            />
+                            
+                            {/* Location Details */}
+                            <div className="bg-gray-50 rounded-lg p-4">
+                              <h4 className="font-semibold text-gray-900 mb-3">Meeting Point</h4>
+                              <div className="text-gray-700">
+                                {typeof selectedProduct.locationAddress === 'string' ? (
+                                  <p>{selectedProduct.locationAddress}</p>
+                                ) : (
+                                  <div>
+                                    {selectedProduct.locationAddress?.addressLine && (
+                                      <p>{selectedProduct.locationAddress.addressLine}</p>
                                     )}
-                                  </div>
-                                ))}
-                                {availableSessions[0].pickupLocations.length > 3 && (
-                                  <div className="text-xs text-blue-600 break-words">
-                                    +{availableSessions[0].pickupLocations.length - 3} more pickup locations available
+                                    <p>
+                                      {[
+                                        selectedProduct.locationAddress?.city,
+                                        selectedProduct.locationAddress?.state,
+                                        selectedProduct.locationAddress?.postCode
+                                      ].filter(Boolean).join(', ')}
+                                    </p>
                                   </div>
                                 )}
                               </div>
-                            </div>
-                          </div>
-                        )}
-
-                        {/* Transportation Notes */}
-                        <div className="bg-yellow-50 rounded-lg p-4 overflow-hidden">
-                          <h3 className="font-medium mb-2 flex items-center">
-                            <Info className="h-4 w-4 mr-2 text-yellow-500 flex-shrink-0" />
-                            <span className="truncate">Transportation Notes</span>
-                          </h3>
-                          <div className="text-sm text-muted-foreground space-y-1">
-                            <p className="break-words">• Meeting point and pickup details will be confirmed in your booking confirmation</p>
-                            <p className="break-words">• Please arrive 15 minutes before the scheduled departure time</p>
-                            <p className="break-words">• Contact us if you need assistance with transportation arrangements</p>
-                            {availableSessions.length > 0 && availableSessions[0]?.pickupLocations && availableSessions[0].pickupLocations.length === 0 && (
-                              <p className="break-words">• This tour uses a central meeting point - no hotel pickup available</p>
-                            )}
-                          </div>
-                        </div>
-
-                        {/* Pickup Service Information */}
-                        {hasPickupServices(selectedProduct) && (
-                          <div className="bg-green-50 rounded-lg p-4 overflow-hidden">
-                            <h3 className="font-medium mb-3 flex items-center">
-                              <MapPin className="h-4 w-4 mr-2 text-green-500 flex-shrink-0" />
-                              <span className="truncate">
-                                {getPickupServiceType(selectedProduct) === 'door-to-door' ? 'Door-to-Door Service' :
-                                 getPickupServiceType(selectedProduct) === 'shuttle' ? 'Shuttle Service' :
-                                 'Pickup Service Available'}
-                              </span>
-                            </h3>
-                            <div className="text-sm text-muted-foreground space-y-2">
-                              {getPickupServiceType(selectedProduct) === 'door-to-door' && (
-                                <p className="break-words">Convenient door-to-door pickup service included. We'll pick you up from your accommodation.</p>
-                              )}
-                              {getPickupServiceType(selectedProduct) === 'shuttle' && (
-                                <p className="break-words">Shuttle service included with designated pickup points for your convenience.</p>
-                              )}
-                              {getPickupServiceType(selectedProduct) === 'designated-points' && (
-                                <p className="break-words">Pickup available from multiple convenient locations. Select your preferred pickup point during booking.</p>
-                              )}
-                              {extractPickupLocations(selectedProduct).length > 0 && (
-                                <div className="mt-2">
-                                  <span className="font-medium">Pickup areas: </span>
-                                  <span className="break-words">{extractPickupLocations(selectedProduct).join(', ')}</span>
+                              
+                              {/* Pickup Information */}
+                              {availableSessions.length > 0 && availableSessions[0]?.pickupLocations && availableSessions[0].pickupLocations.length > 0 && (
+                                <div className="mt-4 pt-4 border-t border-gray-200">
+                                  <h5 className="font-medium text-gray-900 mb-2">Pickup Available</h5>
+                                  <p className="text-sm text-gray-600 mb-3">
+                                    This tour offers pickup from {availableSessions[0].pickupLocations.length} convenient locations.
+                                  </p>
+                                  <div className="space-y-2">
+                                    {availableSessions[0].pickupLocations.slice(0, 5).map((pickup, index) => (
+                                      <div key={pickup.id || index} className="flex items-center gap-2">
+                                        <div className="w-2 h-2 bg-coral-500 rounded-full"></div>
+                                        <span className="text-sm text-gray-700">{pickup.name}</span>
+                                        {pickup.pickupTime && (
+                                          <span className="text-xs text-gray-500 ml-auto">{pickup.pickupTime}</span>
+                                        )}
+                                      </div>
+                                    ))}
+                                    {availableSessions[0].pickupLocations.length > 5 && (
+                                      <div className="text-sm text-gray-500 mt-2">
+                                        +{availableSessions[0].pickupLocations.length - 5} more pickup locations available
+                                      </div>
+                                    )}
+                                  </div>
                                 </div>
                               )}
                             </div>
-                          </div>
-                        )}
-                      </div>
-                    </TabsContent>
-                    
-                    <TabsContent value="details" className="mt-4 sm:mt-6" role="tabpanel">
-                      <div className="space-y-8 overflow-hidden">
-                        {/* Enhanced Tour Information Table */}
-                        <TourInfoTable
-                          title="Tour Details"
-                          items={[
-                            {
-                              label: 'Group Size',
-                              value: `${selectedProduct.quantityRequiredMin || 1} - ${selectedProduct.quantityRequiredMax || 20} people`,
-                              icon: <Users className="h-4 w-4" />,
-                              type: 'text'
-                            },
-                            {
-                              label: 'Location',
-                              value: location,
-                              icon: <MapPin className="h-4 w-4" />,
-                              type: 'text'
-                            },
-                            {
-                              label: 'Product Code',
-                              value: selectedProduct.productCode,
-                              icon: <Info className="h-4 w-4" />,
-                              type: 'text'
-                            },
-                            {
-                              label: 'Status',
-                              value: selectedProduct.status || 'Available',
-                              icon: <Check className="h-4 w-4" />,
-                              type: 'status'
-                            }
-                          ]}
-                          columns={2}
-                          showCard={true}
-                        />
+                          </CardContent>
+                        </Card>
                         
-                        <div className="overflow-hidden">
-                          <h3 className="text-lg sm:text-xl font-bold mb-4 flex items-center">
-                            <Check className="h-5 w-5 mr-2 text-yellow-500 flex-shrink-0" aria-hidden="true" />
-                            <span className="truncate">What's Included</span>
-                          </h3>
-                          <ul className="space-y-3" role="list">
-                            <li className="flex items-start">
-                              <Check className="mr-2 h-5 w-5 text-yellow-500 flex-shrink-0 mt-0.5" aria-hidden="true" />
-                              <span className="break-words">Professional local guide</span>
-                            </li>
-                            <li className="flex items-start">
-                              <Check className="mr-2 h-5 w-5 text-yellow-500 flex-shrink-0 mt-0.5" aria-hidden="true" />
-                              <span className="break-words">All necessary equipment</span>
-                            </li>
-                            <li className="flex items-start">
-                              <Check className="mr-2 h-5 w-5 text-yellow-500 flex-shrink-0 mt-0.5" aria-hidden="true" />
-                              <span className="break-words">Safety briefing and instructions</span>
-                            </li>
-                            <li className="flex items-start">
-                              <Check className="mr-2 h-5 w-5 text-yellow-500 flex-shrink-0 mt-0.5" aria-hidden="true" />
-                              <span className="break-words">Small group experience</span>
-                            </li>
-                          </ul>
-                        </div>
-                      </div>
-                    </TabsContent>
-                    
-                    <TabsContent value="reviews" className="mt-4 sm:mt-6" role="tabpanel">
-                      <div className="space-y-6 overflow-hidden">
-                        <h2 className="text-xl sm:text-2xl font-bold break-words">Customer Reviews</h2>
-                        <div className="space-y-4">
-                          <Card className="p-4 sm:p-6 overflow-hidden">
-                            <div className="flex items-center mb-4">
-                              <div className="flex flex-shrink-0" role="img" aria-label="5 star rating">
-                                {Array.from({ length: 5 }).map((_, i) => (
-                                  <Star key={i} className="h-4 w-4 fill-yellow-500 text-yellow-500" aria-hidden="true" />
+                        {/* Availability Quick View in Location Tab */}
+                        <Card className="border border-gray-200">
+                          <CardHeader>
+                            <CardTitle className="flex items-center gap-2">
+                              <Calendar className="h-5 w-5 text-coral-500" />
+                              Upcoming Availability
+                            </CardTitle>
+                          </CardHeader>
+                          <CardContent>
+                            {availabilityLoading ? (
+                              <div className="space-y-3">
+                                {Array.from({ length: 3 }).map((_, index) => (
+                                  <div key={index} className="animate-pulse bg-gray-100 h-12 rounded-lg" />
                                 ))}
                               </div>
-                              <span className="ml-2 font-medium truncate">Amazing experience!</span>
-                            </div>
-                            <p className="text-muted-foreground mb-4 break-words">
-                              "This tour exceeded all our expectations. The guide was knowledgeable and friendly, 
-                              and we saw some incredible sights. Highly recommended!"
-                            </p>
-                            <div className="text-sm text-muted-foreground break-words">
-                              - Sarah M. • 2 weeks ago
-                            </div>
-                          </Card>
-                          
-                          <Card className="p-4 sm:p-6 overflow-hidden">
-                            <div className="flex items-center mb-4">
-                              <div className="flex flex-shrink-0" role="img" aria-label="5 star rating">
-                                {Array.from({ length: 5 }).map((_, i) => (
-                                  <Star key={i} className="h-4 w-4 fill-yellow-500 text-yellow-500" aria-hidden="true" />
-                                ))}
+                            ) : availableSessions.length > 0 ? (
+                              <div className="space-y-3">
+                                {availableSessions.slice(0, 3).map((session) => {
+                                  const sessionDate = new Date(session.startTimeLocal)
+                                  const isLowAvailability = session.seatsAvailable <= 3
+                                  
+                                  return (
+                                    <div key={session.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                                      <div>
+                                        <div className="font-medium text-gray-900">
+                                          {sessionDate.toLocaleDateString('en-US', {
+                                            weekday: 'short',
+                                            month: 'short',
+                                            day: 'numeric'
+                                          })}
+                                        </div>
+                                        <div className="text-sm text-gray-600">
+                                          {sessionDate.toLocaleTimeString('en-US', {
+                                            hour: '2-digit',
+                                            minute: '2-digit'
+                                          })} • {session.seatsAvailable} seats
+                                        </div>
+                                      </div>
+                                      <Button 
+                                        size="sm" 
+                                        className="bg-coral-500 text-white hover:bg-coral-600"
+                                        onClick={() => setShowBooking(true)}
+                                        disabled={session.seatsAvailable === 0}
+                                      >
+                                        Book {session.totalPrice ? `$${session.totalPrice}` : price}
+                                      </Button>
+                                    </div>
+                                  )
+                                })}
+                                
+                                <div className="text-center pt-3">
+                                  <Button 
+                                    variant="outline"
+                                    onClick={() => setShowBooking(true)}
+                                    className="border-coral-200 text-coral-700 hover:bg-coral-50"
+                                  >
+                                    View All Available Dates
+                                  </Button>
+                                </div>
                               </div>
-                              <span className="ml-2 font-medium truncate">Perfect for families</span>
-                            </div>
-                            <p className="text-muted-foreground mb-4 break-words">
-                              "Great tour for the whole family. The kids loved it and learned so much. 
-                              Well organized and great value for money."
-                            </p>
-                            <div className="text-sm text-muted-foreground break-words">
-                              - Mike & Lisa T. • 1 month ago
-                            </div>
-                          </Card>
-                        </div>
+                            ) : (
+                              <div className="text-center py-6">
+                                <Calendar className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                                <h4 className="text-lg font-medium mb-2">No availability found</h4>
+                                <p className="text-gray-600 mb-4">
+                                  Contact us for custom dates and group bookings.
+                                </p>
+                                <Button 
+                                  variant="outline"
+                                  onClick={() => setShowBooking(true)}
+                                  className="border-coral-200 text-coral-700 hover:bg-coral-50"
+                                >
+                                  Contact Us
+                                </Button>
+                              </div>
+                            )}
+                          </CardContent>
+                        </Card>
                       </div>
                     </TabsContent>
                   </Tabs>
                 </div>
               </div>
               
-              {/* Mobile Booking Section - Only visible on mobile/tablet */}
-              <div className="xl:hidden mt-8">
-                <Card className="overflow-hidden">
-                  <CardHeader className="pb-4">
-                    <CardTitle className="text-xl text-center break-words">Book This Tour</CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div className="text-center">
-                      <div className="text-sm text-muted-foreground">Starting from</div>
-                      <div className="text-2xl sm:text-3xl font-bold break-words">{price}</div>
-                      <div className="text-sm text-muted-foreground">per person</div>
-                    </div>
-                    
-                    <div className="space-y-2">
-                      <AddToCartButton
-                        product={selectedProduct}
-                        session={availableSessions.length > 0 ? availableSessions[0] : undefined}
-                        className="w-full text-base py-3"
-                        variant="outline"
-                      >
-                        Add to Cart
-                      </AddToCartButton>
-                      
-                      <Button 
-                        className="w-full bg-yellow-500 text-black hover:bg-yellow-600 text-base py-3"
-                        onClick={() => setShowBooking(true)}
-                        aria-label={`Book ${selectedProduct.name} tour`}
-                      >
-                        Book Now
-                      </Button>
-                      
-                      <Button 
-                        className="w-full bg-blue-600 text-white hover:bg-blue-700 text-base py-3"
-                        onClick={() => setShowBooking(true)}
-                        aria-label={`Proceed to booking for ${selectedProduct.name} tour`}
-                      >
-                        Proceed to Booking
-                      </Button>
-                    </div>
-                    
-                    <div className="text-center text-sm text-muted-foreground break-words">
-                      Free cancellation up to 24 hours before
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
-              
-              {/* Desktop Booking Sidebar - Only visible on desktop */}
-              <div className="hidden xl:block xl:col-span-1">
-                <div className="max-w-sm mx-auto">
-                  <Card className="sticky top-20 overflow-hidden">
-                    <CardHeader className="pb-4">
-                      <CardTitle className="text-xl text-center break-words">Book This Tour</CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                      <div className="text-center">
-                        <div className="text-sm text-muted-foreground">Starting from</div>
-                        <div className="text-2xl sm:text-3xl font-bold break-words">{price}</div>
-                        <div className="text-sm text-muted-foreground">per person</div>
+              {/* Simplified Desktop Booking Sidebar */}
+              <div className="hidden xl:block xl:col-span-1 sticky top-20">
+                <div className=" max-w-sm mx-auto space-y-4">
+                  <Card className="border border-gray-200 shadow-lg bg-white">
+                    <CardContent className="p-6">
+                      <div className="text-center mb-6">
+                        <div className="text-3xl font-bold text-gray-900 mb-1">{price}</div>
+                        <div className="text-gray-600">per person</div>
                       </div>
                       
-                      <div className="space-y-2">
+                      <div className="space-y-3 mb-6">
                         <AddToCartButton
                           product={selectedProduct}
                           session={availableSessions.length > 0 ? availableSessions[0] : undefined}
-                          className="w-full text-base py-3"
+                          className="w-full"
                           variant="outline"
                         >
                           Add to Cart
                         </AddToCartButton>
                         
                         <Button 
-                          className="w-full bg-yellow-500 text-black hover:bg-yellow-600 text-base py-3"
+                          className="w-full bg-coral-500 text-white hover:bg-coral-600"
                           onClick={() => setShowBooking(true)}
-                          aria-label={`Book ${selectedProduct.name} tour`}
                         >
                           Book Now
                         </Button>
-                        
-                        <Button 
-                          className="w-full bg-blue-600 text-white hover:bg-blue-700 text-base py-3"
-                          onClick={() => setShowBooking(true)}
-                          aria-label={`Proceed to booking for ${selectedProduct.name} tour`}
-                        >
-                          Proceed to Booking
-                        </Button>
                       </div>
                       
-                      <div className="text-center text-sm text-muted-foreground break-words">
+                      <div className="text-center text-sm text-gray-600 mb-6">
                         Free cancellation up to 24 hours before
                       </div>
                       
-                      <div className="border-t pt-4">
-                        <h4 className="font-medium mb-2 text-center">Location</h4>
-                        <div className="flex items-start gap-2 mb-3 justify-center">
-                          <MapPin className="h-4 w-4 text-yellow-500 flex-shrink-0 mt-0.5" />
-                          <span className="text-sm text-muted-foreground break-words text-center">{location}</span>
+                      {/* Quick Info */}
+                      <div className="space-y-4 pt-6 border-t border-gray-200">
+                        <div className="flex items-center gap-3">
+                          <MapPin className="h-4 w-4 text-coral-500" />
+                          <span className="text-sm text-gray-700">{location}</span>
                         </div>
-                        <Button 
-                          variant="outline" 
-                          className="w-full mb-4"
-                          onClick={() => {
-                            // Create Google Maps URL for directions
-                            let destination = '';
-                            
-                            if (typeof selectedProduct.locationAddress === 'string') {
-                              destination = encodeURIComponent(selectedProduct.locationAddress);
-                            } else if (selectedProduct.locationAddress && typeof selectedProduct.locationAddress === 'object') {
-                              // If we have coordinates, use them for more precise directions
-                              if (selectedProduct.locationAddress.latitude && selectedProduct.locationAddress.longitude) {
-                                destination = `${selectedProduct.locationAddress.latitude},${selectedProduct.locationAddress.longitude}`;
-                              } else {
-                                // Build address string from object
-                                const addressParts = [
-                                  selectedProduct.locationAddress.addressLine,
-                                  selectedProduct.locationAddress.city,
-                                  selectedProduct.locationAddress.state,
-                                  selectedProduct.locationAddress.postCode,
-                                  selectedProduct.locationAddress.countryCode
-                                ].filter(Boolean);
-                                destination = encodeURIComponent(addressParts.join(', '));
-                              }
-                            } else {
-                              // Fallback to tour name if no location available
-                              destination = encodeURIComponent(selectedProduct.name);
-                            }
-                            
-                            // Open Google Maps in new tab with directions
-                            const mapsUrl = `https://www.google.com/maps/dir/?api=1&destination=${destination}`;
-                            window.open(mapsUrl, '_blank', 'noopener,noreferrer');
-                          }}
-                        >
-                          <MapPin className="h-4 w-4 mr-2" />
-                          View on Map
-                        </Button>
+                        <div className="flex items-center gap-3">
+                          <Users className="h-4 w-4 text-coral-500" />
+                          <span className="text-sm text-gray-700">
+                            {selectedProduct.quantityRequiredMin || 1}-{selectedProduct.quantityRequiredMax || 20} people
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <Shield className="h-4 w-4 text-coral-500" />
+                          <span className="text-sm text-gray-700">Safety certified</span>
+                        </div>
                       </div>
                       
-                      <div className="border-t pt-4">
-                        <h4 className="font-medium mb-2 text-center">Need help?</h4>
-                        <p className="text-sm text-muted-foreground mb-2 text-center break-words">
-                          Contact our travel experts for personalized assistance.
-                        </p>
-                        <Button variant="outline" className="w-full">
-                          Contact Support
+                      <div className="pt-6 border-t border-gray-200 mt-6">
+                        <Button 
+                          variant="outline" 
+                          className="w-full text-sm border-gray-300 text-gray-700 hover:bg-gray-50"
+                          onClick={() => setShowBooking(true)}
+                        >
+                          Need Help? Contact Us
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                  
+                  {/* Location Card */}
+                  <Card className="border border-gray-200 bg-white">
+                    <CardContent className="p-4">
+                      <div className="flex items-center gap-3 mb-3">
+                        <div className="w-8 h-8 bg-coral-100 rounded-lg flex items-center justify-center">
+                          <MapPin className="h-4 w-4 text-coral-600" />
+                        </div>
+                        <h3 className="font-semibold text-gray-900">Location</h3>
+                      </div>
+                      
+                      <div className="space-y-2">
+                        <div className="text-sm text-gray-700">
+                          {typeof selectedProduct.locationAddress === 'string' ? (
+                            selectedProduct.locationAddress
+                          ) : (
+                            <div>
+                              {selectedProduct.locationAddress?.addressLine && (
+                                <div>{selectedProduct.locationAddress.addressLine}</div>
+                              )}
+                              <div>
+                                {[
+                                  selectedProduct.locationAddress?.city,
+                                  selectedProduct.locationAddress?.state,
+                                  selectedProduct.locationAddress?.postCode
+                                ].filter(Boolean).join(', ')}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                        
+                        {/* Pickup Information */}
+                        {availableSessions.length > 0 && availableSessions[0]?.pickupLocations && availableSessions[0].pickupLocations.length > 0 && (
+                          <div className="pt-2 border-t border-gray-100">
+                            <div className="flex items-center gap-2 mb-1">
+                              <div className="w-2 h-2 bg-emerald-500 rounded-full"></div>
+                              <span className="text-xs font-medium text-gray-700">Pickup Available</span>
+                            </div>
+                            <p className="text-xs text-gray-600">
+                              {availableSessions[0].pickupLocations.length} pickup location{availableSessions[0].pickupLocations.length > 1 ? 's' : ''} available
+                            </p>
+                          </div>
+                        )}
+                        
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          className="w-full mt-3 text-xs border-gray-300 text-gray-700 hover:bg-gray-50"
+                          onClick={() => {
+                            // Switch to location tab
+                            const locationTab = document.querySelector('[value="location"]');
+                            if (locationTab) {
+                              (locationTab as HTMLElement).click();
+                              locationTab.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                            }
+                          }}
+                        >
+                          View on Map
                         </Button>
                       </div>
                     </CardContent>
                   </Card>
                 </div>
+              </div>
+
+              {/* Simplified Mobile Booking Section */}
+              <div className="xl:hidden">
+                <Card className="sticky bottom-4 z-10 border border-coral-200 shadow-lg bg-white">
+                  <CardContent className="p-4">
+                    <div className="flex items-center justify-between gap-4">
+                      <div className="flex-1 text-left">
+                        <div className="text-xl font-bold text-gray-900">{price}</div>
+                        <div className="text-sm text-gray-600">per person</div>
+                      </div>
+                      
+                      <div className="flex gap-3">
+                        <AddToCartButton
+                          product={selectedProduct}
+                          session={availableSessions.length > 0 ? availableSessions[0] : undefined}
+                          size="sm"
+                          variant="outline"
+                          className="border-coral-200 text-coral-700 hover:bg-coral-50"
+                          showIcon={false}
+                        >
+                          Add to Cart
+                        </AddToCartButton>
+                        
+                        <Button 
+                          size="sm"
+                          className="bg-coral-500 text-white hover:bg-coral-600"
+                          onClick={() => setShowBooking(true)}
+                        >
+                          Book Now
+                        </Button>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
               </div>
             </div>
           </div>

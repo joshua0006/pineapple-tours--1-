@@ -76,7 +76,7 @@ export function PickupLocationSelector({
             className={cn(
               "cursor-pointer transition-all duration-200 hover:shadow-md",
               selectedPickupLocation?.id === location.id 
-                ? "ring-2 ring-yellow-500 bg-yellow-50 border-yellow-200" 
+                ? "ring-2 ring-coral-500 bg-coral-50 border-coral-200" 
                 : "hover:bg-gray-50 border-gray-200"
             )}
             onClick={() => onPickupLocationSelect(location)}
@@ -86,8 +86,8 @@ export function PickupLocationSelector({
                 <div className={cn(
                   "w-5 h-5 rounded-full border-2 flex items-center justify-center mt-0.5",
                   selectedPickupLocation?.id === location.id
-                    ? "border-yellow-500 bg-yellow-500"
-                    : "border-gray-300"
+                    ? "border-coral-500 bg-coral-500"
+                    : "border-gray-300 bg-white"
                 )}>
                   {selectedPickupLocation?.id === location.id && (
                     <div className="w-2 h-2 bg-white rounded-full" />

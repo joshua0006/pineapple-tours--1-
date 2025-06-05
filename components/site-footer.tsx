@@ -88,7 +88,7 @@ export function SiteFooter() {
             <h3 className="text-lg font-medium">Contact & Support</h3>
             <div className="mt-4 flex flex-col gap-4">
               <div className="flex items-start gap-3">
-                <MapPin className="h-5 w-5 text-yellow-500 mt-0.5" />
+                <MapPin className="h-5 w-5 text-coral-500 mt-0.5" />
                 <div className="text-gray-400">
                   <p className="font-medium">Pineapple Tours HQ</p>
                   <p>123 Paradise Lane</p>
@@ -97,14 +97,14 @@ export function SiteFooter() {
                 </div>
               </div>
               <div className="flex items-center gap-3">
-                <Phone className="h-5 w-5 text-yellow-500" />
+                <Phone className="h-5 w-5 text-coral-500" />
                 <div className="text-gray-400">
                   <p className="font-medium">1-800-PINEAPPLE</p>
                   <p className="text-sm">24/7 Customer Support</p>
                 </div>
               </div>
               <div className="flex items-center gap-3">
-                <Mail className="h-5 w-5 text-yellow-500" />
+                <Mail className="h-5 w-5 text-coral-500" />
                 <div className="text-gray-400">
                   <p className="font-medium">info@pineappletours.com</p>
                   <p className="text-sm">Booking & Inquiries</p>

@@ -385,7 +385,7 @@ export function GoogleMaps({ address, pickupLocations = [], tourName, className 
       <Card className={className}>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <MapPin className="h-5 w-5 text-yellow-500" />
+            <MapPin className="h-5 w-5 text-coral-500" />
             Location & Map
           </CardTitle>
         </CardHeader>
@@ -401,15 +401,15 @@ export function GoogleMaps({ address, pickupLocations = [], tourName, className 
           {displayInfo.hasAnyLocationData && (
             <div className="space-y-3">
               {displayInfo.mainAddressString && (
-                <div className="flex items-start gap-3 p-3 bg-yellow-50 rounded-lg border border-yellow-200">
-                  <MapPin className="h-5 w-5 text-yellow-600 flex-shrink-0 mt-0.5" />
+                <div className="flex items-start gap-3 p-3 bg-coral-50 rounded-lg border border-coral-200">
+                  <MapPin className="h-5 w-5 text-coral-600 flex-shrink-0 mt-0.5" />
                   <div className="flex-1">
-                    <div className="font-medium text-yellow-900">Main Location</div>
-                    <div className="text-sm text-yellow-700">{displayInfo.mainAddressString}</div>
+                    <div className="font-medium text-coral-900">Main Location</div>
+                    <div className="text-sm text-coral-700">{displayInfo.mainAddressString}</div>
                     <Button
                       variant="link"
                       size="sm"
-                      className="h-auto p-0 text-yellow-600 hover:text-yellow-700"
+                      className="h-auto p-0 text-coral-600 hover:text-coral-700"
                       onClick={() => window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(displayInfo.mainAddressString!)}`, '_blank')}
                     >
                       <Navigation className="h-3 w-3 mr-1" />
@@ -462,7 +462,7 @@ export function GoogleMaps({ address, pickupLocations = [], tourName, className 
       <Card className={className}>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <MapPin className="h-5 w-5 text-yellow-500" />
+            <MapPin className="h-5 w-5 text-coral-500" />
             Location & Map
           </CardTitle>
         </CardHeader>
@@ -520,7 +520,7 @@ export function GoogleMaps({ address, pickupLocations = [], tourName, className 
       <Card className={className}>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <MapPin className="h-5 w-5 text-yellow-500" />
+            <MapPin className="h-5 w-5 text-coral-500" />
             Location & Map
           </CardTitle>
         </CardHeader>
@@ -539,7 +539,7 @@ export function GoogleMaps({ address, pickupLocations = [], tourName, className 
     <Card className={className}>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
-          <MapPin className="h-5 w-5 text-yellow-500" />
+          <MapPin className="h-5 w-5 text-coral-500" />
           Location & Map
         </CardTitle>
       </CardHeader>
@@ -554,7 +554,7 @@ export function GoogleMaps({ address, pickupLocations = [], tourName, className 
           {(!isLoaded || isGeocoding) && (
             <div className="absolute inset-0 flex items-center justify-center bg-gray-100 rounded-lg">
               <div className="text-center">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-yellow-500 mx-auto mb-2"></div>
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-coral-500 mx-auto mb-2"></div>
                 <p className="text-sm text-muted-foreground">
                   {isGeocoding ? 'Finding locations...' : 'Loading map...'}
                 </p>
@@ -566,15 +566,15 @@ export function GoogleMaps({ address, pickupLocations = [], tourName, className 
         {/* Location Details */}
         <div className="space-y-3">
           {locations.filter(loc => loc.type === 'main').map((mainLocation, index) => (
-            <div key={index} className="flex items-start gap-3 p-3 bg-yellow-50 rounded-lg border border-yellow-200">
-              <MapPin className="h-5 w-5 text-yellow-600 flex-shrink-0 mt-0.5" />
+            <div key={index} className="flex items-start gap-3 p-3 bg-coral-50 rounded-lg border border-coral-200">
+              <MapPin className="h-5 w-5 text-coral-600 flex-shrink-0 mt-0.5" />
               <div className="flex-1">
-                <div className="font-medium text-yellow-900">Main Location</div>
-                <div className="text-sm text-yellow-700">{mainLocation.address || mainLocation.title}</div>
+                <div className="font-medium text-coral-900">Main Location</div>
+                <div className="text-sm text-coral-700">{mainLocation.address || mainLocation.title}</div>
                 <Button
                   variant="link"
                   size="sm"
-                  className="h-auto p-0 text-yellow-600 hover:text-yellow-700"
+                  className="h-auto p-0 text-coral-600 hover:text-coral-700"
                   onClick={() => window.open(`https://www.google.com/maps/dir/?api=1&destination=${mainLocation.lat},${mainLocation.lng}`, '_blank')}
                 >
                   <Navigation className="h-3 w-3 mr-1" />

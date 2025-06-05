@@ -69,7 +69,7 @@ export default function CitySearchPage() {
       <div className="bg-white border-b">
         <div className="container mx-auto px-4 py-6">
           <div className="flex items-center gap-3 mb-2">
-            <Search className="h-8 w-8 text-yellow-500" />
+            <Search className="h-8 w-8 text-coral-500" />
             <h1 className="text-3xl font-bold">City-Based Tour Search</h1>
           </div>
           <p className="text-muted-foreground">
@@ -86,7 +86,7 @@ export default function CitySearchPage() {
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <MapPin className="h-5 w-5 text-yellow-500" />
+                  <MapPin className="h-5 w-5 text-coral-500" />
                   Search Tours by Location
                 </CardTitle>
                 <CardDescription>
@@ -129,7 +129,7 @@ export default function CitySearchPage() {
                 <CardContent>
                   <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                     <div className="flex items-center gap-2">
-                      <MapPin className="h-4 w-4 text-muted-foreground" />
+                      <MapPin className="h-4 w-4 text-coral-500" />
                       <span className="text-sm">
                         <strong>Location:</strong> {searchData.city === 'all' ? 'All Cities' : searchData.city || 'Any'}
                       </span>
@@ -185,7 +185,7 @@ export default function CitySearchPage() {
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2 text-lg">
-                  <TrendingUp className="h-5 w-5 text-yellow-500" />
+                  <TrendingUp className="h-5 w-5 text-coral-500" />
                   Popular Locations
                 </CardTitle>
                 <CardDescription>
@@ -224,7 +224,7 @@ export default function CitySearchPage() {
                 <CardContent>
                   <div className="space-y-3">
                     <div className="flex items-center gap-2">
-                      <MapPin className="h-4 w-4 text-yellow-500" />
+                      <MapPin className="h-4 w-4 text-coral-500" />
                       <span className="font-medium">{selectedCity}</span>
                     </div>
                     <div className="text-sm text-muted-foreground">
@@ -254,7 +254,7 @@ export default function CitySearchPage() {
                     </p>
                     {selectedProduct.advertisedPrice && (
                       <div className="flex items-center gap-2">
-                        <span className="text-lg font-bold text-yellow-600">
+                        <span className="text-lg font-bold text-coral-600">
                           ${selectedProduct.advertisedPrice}
                         </span>
                       </div>

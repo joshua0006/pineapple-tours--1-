@@ -259,7 +259,7 @@ export function AddToCartButton({
                 Cancel
               </Button>
               <Button
-                className="flex-1 bg-yellow-500 text-black hover:bg-yellow-600"
+                className="flex-1 bg-coral-500 text-white hover:bg-coral-600"
                 onClick={handleAddToCart}
                 disabled={isAdding || !session}
               >

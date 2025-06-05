@@ -301,7 +301,7 @@ export function BookingForm({ product, onClose }: BookingFormProps) {
                     <Card 
                       key={session.id} 
                       className={`cursor-pointer transition-colors ${
-                        selectedSession?.id === session.id ? 'ring-2 ring-yellow-500 bg-yellow-50' : 'hover:bg-gray-50'
+                        selectedSession?.id === session.id ? 'ring-2 ring-coral-500 bg-coral-50' : 'hover:bg-gray-50'
                       }`}
                       onClick={() => handleSessionSelect(session)}
                     >
@@ -426,7 +426,7 @@ export function BookingForm({ product, onClose }: BookingFormProps) {
           </div>
           
           <Button
-            className="w-full bg-yellow-500 text-black hover:bg-yellow-600"
+            className="w-full bg-coral-500 text-white hover:bg-coral-600"
             onClick={handleNextStep}
             disabled={!selectedSession}
           >
@@ -514,7 +514,7 @@ export function BookingForm({ product, onClose }: BookingFormProps) {
             </div>
             
             <Button 
-              className="w-full bg-yellow-500 text-black hover:bg-yellow-600"
+              className="w-full bg-coral-500 text-white hover:bg-coral-600"
               onClick={handleSubmitBooking}
               disabled={isSubmitting}
             >

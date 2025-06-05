@@ -29,7 +29,8 @@ export function DescriptionDisplay({
   // Determine which content to display
   const primaryContent = description || shortDescription
   const hasContent = Boolean(primaryContent?.trim())
-  const hasLongContent = primaryContent && primaryContent.length > maxLength
+  // Only consider content "long" if expansion is allowed and content exceeds maxLength
+  const hasLongContent = allowExpansion && primaryContent && primaryContent.length > maxLength
   
   if (!hasContent || !primaryContent) {
     return (
@@ -57,12 +58,12 @@ export function DescriptionDisplay({
         {isHtmlContent ? (
           <HtmlContent 
             content={primaryContent}
-            maxLength={!isExpanded && hasLongContent ? maxLength : undefined}
+            maxLength={allowExpansion && !isExpanded && hasLongContent ? maxLength : undefined}
             className="text-base leading-relaxed"
           />
         ) : (
           <div className="text-base leading-relaxed text-muted-foreground">
-            {!isExpanded && hasLongContent 
+            {allowExpansion && !isExpanded && hasLongContent 
               ? `${primaryContent.substring(0, maxLength).trim()}...`
               : primaryContent
             }
@@ -109,7 +110,7 @@ export function DescriptionDisplay({
       <Card className={className}>
         <CardHeader>
           <CardTitle className="flex items-center">
-            <FileText className="h-5 w-5 mr-2 text-yellow-500" />
+            <FileText className="h-5 w-5 mr-2 text-coral-500" />
             {title}
           </CardTitle>
         </CardHeader>
@@ -123,7 +124,7 @@ export function DescriptionDisplay({
   return (
     <div className={className}>
       <h2 className="text-2xl font-bold mb-4 flex items-center">
-        <FileText className="h-6 w-6 mr-2 text-yellow-500" />
+        <FileText className="h-6 w-6 mr-2 text-coral-500" />
         {title}
       </h2>
       <div id="description-content">

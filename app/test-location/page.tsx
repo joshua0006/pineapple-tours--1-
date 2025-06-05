@@ -162,7 +162,7 @@ export default function TestLocationPage() {
           <Card className="lg:col-span-2">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <MapPin className="h-5 w-5 text-yellow-500" />
+                <MapPin className="h-5 w-5 text-coral-500" />
                 Available Cities
               </CardTitle>
               <CardDescription>
@@ -172,7 +172,7 @@ export default function TestLocationPage() {
             <CardContent>
               {loading && (
                 <div className="text-center py-4">
-                  <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-yellow-500 mx-auto mb-2"></div>
+                  <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-coral-500 mx-auto mb-2"></div>
                   <p className="text-sm text-muted-foreground">Loading cities...</p>
                 </div>
               )}

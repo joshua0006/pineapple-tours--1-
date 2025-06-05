@@ -90,7 +90,7 @@ export default function BlogPage() {
         <section className="bg-muted py-16">
           <div className="container">
             <div className="max-w-3xl">
-              <Badge className="bg-yellow-500 text-black hover:bg-yellow-600 mb-4">Travel Blog</Badge>
+              <Badge className="bg-coral-500 text-white hover:bg-coral-600 mb-4">Travel Blog</Badge>
               <h1 className="text-4xl font-bold tracking-tight sm:text-5xl md:text-6xl">
                 Travel Stories & Tips
               </h1>
@@ -109,7 +109,7 @@ export default function BlogPage() {
                 key={category}
                 variant={category === "All" ? "default" : "outline"}
                 size="sm"
-                className={category === "All" ? "bg-yellow-500 text-black hover:bg-yellow-600" : ""}
+                className={category === "All" ? "bg-coral-500 text-white hover:bg-coral-600" : ""}
               >
                 {category}
               </Button>
@@ -130,7 +130,7 @@ export default function BlogPage() {
                     fill
                     className="object-cover"
                   />
-                  <Badge className="absolute top-4 left-4 bg-yellow-500 text-black">
+                  <Badge className="absolute top-4 left-4 bg-coral-500 text-white">
                     {post.category}
                   </Badge>
                 </div>
@@ -153,7 +153,7 @@ export default function BlogPage() {
                   </div>
                   <Link 
                     href={`/blog/${post.title.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`}
-                    className="flex items-center text-sm font-medium text-primary hover:text-yellow-600"
+                    className="flex items-center text-sm font-medium text-primary hover:text-coral-600"
                   >
                     Read More
                     <ChevronRight className="ml-1 h-4 w-4" />
@@ -177,7 +177,7 @@ export default function BlogPage() {
                     fill
                     className="object-cover"
                   />
-                  <Badge className="absolute top-4 left-4 bg-yellow-500 text-black">
+                  <Badge className="absolute top-4 left-4 bg-coral-500 text-white">
                     {post.category}
                   </Badge>
                 </div>
@@ -196,7 +196,7 @@ export default function BlogPage() {
                   </div>
                   <Link 
                     href={`/blog/${post.title.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`}
-                    className="flex items-center text-sm font-medium text-primary hover:text-yellow-600"
+                    className="flex items-center text-sm font-medium text-primary hover:text-coral-600"
                   >
                     Read More
                     <ChevronRight className="ml-1 h-4 w-4" />
@@ -221,8 +221,8 @@ export default function BlogPage() {
                   placeholder="Enter your email"
                   className="flex-1 px-4 py-2 border border-input rounded-md bg-background"
                 />
-                <Button className="bg-yellow-500 text-black hover:bg-yellow-600">
-                  Subscribe
+                <Button className="bg-coral-500 text-white hover:bg-coral-600">
+                  Subscribe to Blog
                 </Button>
               </div>
             </div>

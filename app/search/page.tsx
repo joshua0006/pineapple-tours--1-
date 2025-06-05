@@ -162,7 +162,7 @@ export default function SearchPage() {
       <SiteHeader />
       <main className="flex-1">
         {/* Header */}
-        <section className="bg-gradient-to-r from-yellow-500 to-orange-500 py-12">
+        <section className="bg-gradient-to-r from-coral-500 to-orange-500 py-12">
           <div className="container">
             <div className="flex items-center gap-4 text-white mb-6">
               <Button

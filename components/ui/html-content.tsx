@@ -49,10 +49,10 @@ export function HtmlContent({
         "prose-headings:text-foreground prose-headings:font-semibold",
         "prose-p:text-muted-foreground prose-p:leading-relaxed",
         "prose-strong:text-foreground prose-strong:font-semibold",
-        "prose-a:text-yellow-600 prose-a:no-underline hover:prose-a:underline",
+        "prose-a:text-coral-600 prose-a:no-underline hover:prose-a:underline",
         "prose-ul:text-muted-foreground prose-ol:text-muted-foreground",
         "prose-li:text-muted-foreground",
-        "prose-blockquote:border-l-yellow-500 prose-blockquote:text-muted-foreground",
+        "prose-blockquote:border-l-coral-500 prose-blockquote:text-muted-foreground",
         className
       )}
       dangerouslySetInnerHTML={{ __html: sanitizedContent }}

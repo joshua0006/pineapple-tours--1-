@@ -103,7 +103,7 @@ export function CartIcon({ className = "", showDropdown = true }: CartIconProps)
           {itemCount > 0 && (
             <Badge 
               variant="destructive" 
-              className="absolute -top-2 -right-2 h-5 w-5 flex items-center justify-center p-0 text-xs bg-yellow-500 text-black hover:bg-yellow-600"
+              className="absolute -top-2 -right-2 h-5 w-5 flex items-center justify-center p-0 text-xs bg-coral-500 text-white hover:bg-coral-600"
             >
               {itemCount > 99 ? '99+' : itemCount}
             </Badge>
@@ -248,7 +248,7 @@ export function CartIcon({ className = "", showDropdown = true }: CartIconProps)
                                 <div className="pt-2">
                                   <Button 
                                     size="default"
-                                    className="w-full bg-yellow-500 text-black hover:bg-yellow-600"
+                                    className="w-full bg-coral-500 text-white hover:bg-coral-600"
                                     onClick={() => handleProceedToBooking(item)}
                                   >
                                     Proceed to Booking
@@ -424,7 +424,7 @@ export function CartIcon({ className = "", showDropdown = true }: CartIconProps)
                               <div className="pt-2">
                                 <Button 
                                   size="sm"
-                                  className="w-full bg-yellow-500 text-black hover:bg-yellow-600"
+                                  className="w-full bg-coral-500 text-white hover:bg-coral-600"
                                   onClick={() => handleProceedToBooking(item)}
                                 >
                                   Proceed to Booking

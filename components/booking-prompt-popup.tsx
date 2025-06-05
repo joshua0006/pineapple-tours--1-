@@ -318,7 +318,7 @@ export function BookingPromptPopup({
             <div className="flex flex-col gap-3 pt-2">
               <Button 
                 onClick={handleStartBooking}
-                className="w-full bg-yellow-500 hover:bg-yellow-600 text-black font-medium h-11 text-base"
+                className="w-full bg-coral-500 hover:bg-coral-600 text-white font-medium h-11 text-base"
                 disabled={groupSize < 1}
               >
                 <span className="flex items-center gap-2">

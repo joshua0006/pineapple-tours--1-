@@ -155,7 +155,7 @@ export default function ToursPage() {
       <SiteHeader />
       <main className="flex-1">
         {/* Header */}
-        <section className="bg-gradient-to-r from-yellow-500 to-orange-500 py-12">
+        <section className="bg-gradient-to-r from-coral-500 to-orange-500 py-12">
           <div className="container">
             <div className="text-center text-white">
               <h1 className="text-4xl font-bold tracking-tight md:text-5xl">
@@ -556,7 +556,7 @@ export default function ToursPage() {
               Our travel experts can help you create a custom tour package tailored to your preferences and budget.
             </p>
             <div className="mt-8 flex flex-col gap-4 sm:flex-row sm:justify-center">
-              <Button size="lg" className="bg-yellow-500 text-black hover:bg-yellow-600">
+              <Button size="lg" className="bg-coral-500 text-white hover:bg-coral-600">
                 Contact Our Experts
               </Button>
               <Button size="lg" variant="outline">

@@ -180,7 +180,7 @@ export function GuestManager({
           <Card key={guest.id} className="p-4">
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-2">
-                <UserCheck className="h-4 w-4 text-yellow-500" />
+                <UserCheck className="h-4 w-4 text-coral-500" />
                 <span className="font-medium">Guest {index + 1}</span>
                 <Badge variant="outline" className={`text-xs ${GUEST_TYPES[guest.type].color}`}>
                   {GUEST_TYPES[guest.type].label}

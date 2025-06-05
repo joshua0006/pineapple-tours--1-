@@ -32,7 +32,7 @@ export function TourInfoTable({
         return (
           <Badge 
             variant={item.highlight ? 'default' : 'secondary'}
-            className={item.highlight ? 'bg-yellow-500 text-black hover:bg-yellow-600' : ''}
+            className={item.highlight ? 'bg-coral-500 text-white hover:bg-coral-600' : ''}
           >
             {item.value}
           </Badge>
@@ -86,7 +86,7 @@ export function TourInfoTable({
         >
           <div className="flex items-center space-x-2 min-w-0 flex-1">
             {item.icon && (
-              <div className="flex-shrink-0 text-yellow-500">
+              <div className="flex-shrink-0 text-coral-500">
                 {item.icon}
               </div>
             )}

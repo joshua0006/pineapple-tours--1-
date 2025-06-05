@@ -102,7 +102,7 @@ export default function Home() {
             <div className="max-w-8xl w-full space-y-8 text-center">
               {/* Hero Content */}
               <div className="space-y-4 sm:space-y-6">
-                <Badge className="bg-yellow-500 text-black hover:bg-yellow-600 text-xs sm:text-sm">Best Tropical Getaways</Badge>
+                <Badge className="bg-coral-500 text-white hover:bg-coral-600 text-xs sm:text-sm">Best Tropical Getaways</Badge>
                 <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight text-white leading-tight drop-shadow-lg">
                   Discover Paradise with Pineapple Tours
                 </h1>
@@ -112,7 +112,7 @@ export default function Home() {
                 </p>
                 <div className="flex flex-col space-y-3 sm:flex-row sm:space-x-3 sm:space-y-0 pt-2 justify-center">
                   <Link href="/tours">
-                    <Button size="lg" className="bg-yellow-500 text-black hover:bg-yellow-600 w-full sm:w-auto shadow-lg">
+                    <Button size="lg" className="bg-coral-500 text-white hover:bg-coral-600 w-full sm:w-auto shadow-lg">
                       Explore Tours
                     </Button>
                   </Link>
@@ -383,11 +383,11 @@ export default function Home() {
 
         {/* Newsletter */}
         <section className="container py-16">
-          <div className="rounded-xl bg-yellow-500 p-8 md:p-12">
+          <div className="rounded-xl bg-coral-500 p-8 md:p-12">
             <div className="grid gap-6 md:grid-cols-2 md:gap-12">
               <div>
-                <h2 className="text-3xl font-bold tracking-tight text-black">Subscribe to Our Newsletter</h2>
-                <p className="mt-4 text-black/80">
+                <h2 className="text-3xl font-bold tracking-tight text-white">Subscribe to Our Newsletter</h2>
+                <p className="mt-4 text-white/90">
                   Stay updated with our latest offers, travel tips, and exclusive deals. Subscribe now and get 10% off
                   your first booking!
                 </p>
@@ -397,11 +397,11 @@ export default function Home() {
                   <Input
                     placeholder="Enter your email"
                     type="email"
-                    className="border-black/10 bg-white text-black placeholder:text-black/50"
+                    className="border-white/20 bg-white text-black placeholder:text-black/60"
                   />
                   <Button className="bg-black text-white hover:bg-black/80">Subscribe</Button>
                 </div>
-                <p className="mt-2 text-xs text-black/70">
+                <p className="mt-2 text-xs text-white/80">
                   By subscribing, you agree to our Privacy Policy and consent to receive updates from our company.
                 </p>
               </div>
@@ -412,4 +412,29 @@ export default function Home() {
       <SiteFooter />
     </div>
   )
+}
+
+// Export BookingData type for use in other components
+export interface BookingData {
+  product: {
+    code: string
+    name: string
+    hasPickupServices?: boolean
+    pickupServiceType?: string
+  }
+  session: {
+    id: string
+    startTime: string
+    endTime: string
+  }
+  pickupLocation?: any
+  travelers: number
+  pricing: {
+    basePrice: number
+    sessionPrice: number
+    subtotal: number
+    taxAndFees: number
+    total: number
+  }
+  timestamp: string
 }

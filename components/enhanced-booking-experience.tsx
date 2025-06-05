@@ -720,15 +720,15 @@ export function EnhancedBookingExperience({ product, onClose, onBookingComplete,
               <div className={cn(
                 "w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center text-xs sm:text-sm font-medium transition-colors",
                 currentStep >= step.id 
-                  ? "bg-yellow-500 text-black" 
-                  : "bg-gray-200 text-gray-600"
+                  ? "bg-coral-500 text-white" 
+                  : "bg-muted text-muted-foreground"
               )}>
                 {currentStep > step.id ? <CheckCircle className="h-4 w-4 sm:h-5 sm:w-5" /> : step.id}
               </div>
               {index < BOOKING_STEPS.length - 1 && (
                 <div className={cn(
                   "w-12 sm:w-16 h-0.5 mx-1 sm:mx-2 transition-colors flex-shrink-0",
-                  currentStep > step.id ? "bg-yellow-500" : "bg-gray-200"
+                  currentStep > step.id ? "bg-coral-500" : "bg-gray-200"
                 )} />
               )}
             </div>
@@ -881,7 +881,7 @@ export function EnhancedBookingExperience({ product, onClose, onBookingComplete,
                                   key={session.id}
                                   className={cn(
                                     "cursor-pointer transition-all duration-200 hover:shadow-md",
-                                    isSelected ? "ring-2 ring-yellow-500 bg-yellow-50" : "hover:bg-gray-50",
+                                    isSelected ? "ring-2 ring-coral-500 bg-coral-50" : "hover:bg-gray-50",
                                     session.seatsAvailable === 0 && "opacity-50 cursor-not-allowed"
                                   )}
                                   onClick={() => session.seatsAvailable > 0 && handleSessionSelect(session)}
@@ -1516,7 +1516,7 @@ export function EnhancedBookingExperience({ product, onClose, onBookingComplete,
                     <span>Free Cancellation 24h</span>
                   </div>
                   <div className="flex items-center gap-2 text-sm">
-                    <Star className="h-4 w-4 text-yellow-500" />
+                    <Star className="h-4 w-4 text-coral-500" />
                     <span>4.9/5 Customer Rating</span>
                   </div>
                 </CardContent>
@@ -1542,7 +1542,7 @@ export function EnhancedBookingExperience({ product, onClose, onBookingComplete,
               <Button 
                 onClick={handleNextStep}
                 disabled={!canProceedToNextStep()}
-                className="flex items-center gap-2 bg-yellow-500 text-black hover:bg-yellow-600"
+                className="flex items-center gap-2 bg-coral-500 text-white hover:bg-coral-600"
               >
                 Next
                 <ArrowRight className="h-4 w-4" />

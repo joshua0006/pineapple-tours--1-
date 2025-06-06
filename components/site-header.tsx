@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { useState, useEffect } from "react"
-import { Menu, Phone, ChevronDown, MapPin, Calendar, Users, MessageCircle, Database } from "lucide-react"
+import { Menu, Phone, ChevronDown, MapPin, Calendar, Users, MessageCircle, Database, Bus, Gift, BookOpen } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Sheet, SheetContent, SheetTrigger, SheetTitle } from "@/components/ui/sheet"
@@ -50,9 +50,11 @@ export function SiteHeader() {
   }, [isOpen])
 
   const navigationItems = [
-    { href: "/tours", label: "Tours", icon: <MapPin className="w-5 h-5" /> },
-    { href: "/about", label: "About Us", icon: <Users className="w-5 h-5" /> },
-    { href: "/contact", label: "Contact", icon: <MessageCircle className="w-5 h-5" /> }
+    { href: "/tours", label: "Tours and Experiences", icon: <MapPin className="w-5 h-5" /> },
+    { href: "/hop-on-hop-off", label: "Hop on Hop off", icon: <Bus className="w-5 h-5" /> },
+    { href: "/gift-vouchers", label: "Gift Vouchers", icon: <Gift className="w-5 h-5" /> },
+    { href: "/blog", label: "Blog", icon: <BookOpen className="w-5 h-5" /> },
+    { href: "/contact", label: "Contact Us", icon: <MessageCircle className="w-5 h-5" /> }
   ]
 
   return (
@@ -68,7 +70,7 @@ export function SiteHeader() {
         {/* Logo */}
         <Link 
           href="/" 
-          className="flex items-center gap-2 font-bold text-lg sm:text-xl hover:opacity-80 transition-opacity focus:outline-none focus:ring-2 focus:ring-coral-500 focus:ring-offset-2 rounded-md"
+          className="flex items-center gap-2 font-bold text-lg sm:text-xl hover:opacity-80 transition-opacity focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2 rounded-md"
           aria-label="Pineapple Tours - Home"
         >
          <img src="/pineapple-tour-logo.png" alt="Pineapple Tours" className="h-8 sm:h-10" />
@@ -91,7 +93,7 @@ export function SiteHeader() {
                 <li key={item.href}>
                   <Link 
                     href={item.href} 
-                    className="px-3 py-2 text-sm font-medium rounded-md transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground focus:outline-none focus:ring-2 focus:ring-coral-500 focus:ring-offset-2"
+                    className="px-3 py-2 text-sm font-medium rounded-md transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2"
                   >
                     {item.label}
                   </Link>
@@ -108,20 +110,20 @@ export function SiteHeader() {
               <li>
                 <TourCategoriesDropdown />
               </li>
-              {navigationItems.slice(0, 2).map((item) => (
+              {navigationItems.slice(0, 1).map((item) => (
                 <li key={item.href}>
                   <Link 
                     href={item.href} 
-                    className="px-2 py-2 text-sm font-medium rounded-md transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground focus:outline-none focus:ring-2 focus:ring-coral-500 focus:ring-offset-2"
+                    className="px-2 py-2 text-sm font-medium rounded-md transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2"
                   >
-                    {item.label}
+                    Tours
                   </Link>
                 </li>
               ))}
               {/* More menu for remaining items on tablet */}
               <li className="relative group">
                 <button 
-                  className="flex items-center gap-1 px-2 py-2 text-sm font-medium rounded-md transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground focus:outline-none focus:ring-2 focus:ring-coral-500 focus:ring-offset-2"
+                  className="flex items-center gap-1 px-2 py-2 text-sm font-medium rounded-md transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2"
                   aria-expanded="false"
                   aria-haspopup="true"
                 >
@@ -129,9 +131,9 @@ export function SiteHeader() {
                   <ChevronDown className="h-3 w-3" />
                   <VisuallyHidden>navigation options</VisuallyHidden>
                 </button>
-                <div className="absolute top-full left-0 mt-1 w-48 bg-popover border rounded-md shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible group-focus-within:opacity-100 group-focus-within:visible transition-all duration-200 z-50">
+                <div className="absolute top-full left-0 mt-1 w-56 bg-popover border rounded-md shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible group-focus-within:opacity-100 group-focus-within:visible transition-all duration-200 z-50">
                   <ul className="py-1" role="menu">
-                    {navigationItems.slice(2).map((item) => (
+                    {navigationItems.slice(1).map((item) => (
                       <li key={item.href} role="none">
                         <Link 
                           href={item.href} 
@@ -154,13 +156,12 @@ export function SiteHeader() {
         {isDesktop && (
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-2 text-sm">
-              <Phone className="h-4 w-4 text-coral-500" aria-hidden="true" />
+              <Phone className="h-4 w-4 text-brand-green-accent" aria-hidden="true" />
               <span className="font-medium">1-800-PINEAPPLE</span>
             </div>
             <CartIcon />
             <ThemeToggle />
             <Button 
-              className="bg-coral-500 text-white hover:bg-coral-600 focus:ring-2 focus:ring-coral-500 focus:ring-offset-2 transition-all"
               size="sm"
             >
               Book Now
@@ -174,7 +175,6 @@ export function SiteHeader() {
             <CartIcon />
             <ThemeToggle />
             <Button 
-              className="bg-coral-500 text-white hover:bg-coral-600 focus:ring-2 focus:ring-coral-500 focus:ring-offset-2 transition-all"
               size="sm"
             >
               Book
@@ -191,7 +191,7 @@ export function SiteHeader() {
                 <Button 
                   variant="ghost" 
                   size="icon" 
-                  className="h-10 w-10 focus:ring-2 focus:ring-coral-500 focus:ring-offset-2"
+                  className="h-10 w-10 focus:ring-2 focus:ring-accent focus:ring-offset-2"
                   aria-label="Toggle navigation menu"
                 >
                   <Menu className="h-6 w-6" />

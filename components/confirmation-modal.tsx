@@ -94,7 +94,7 @@ export function ConfirmationModal({ booking, onClose }: ConfirmationModalProps) 
                 <div className="flex items-center gap-3">
                   <Users className="h-5 w-5 text-coral-500" />
                   <div>
-                    <p className="font-medium">{booking.travelers} {booking.travelers === 1 ? 'Traveler' : 'Travelers'}</p>
+                    <p className="font-medium">{booking.participants} {booking.participants === 1 ? 'Participant' : 'Participants'}</p>
                   </div>
                 </div>
 
@@ -122,7 +122,7 @@ export function ConfirmationModal({ booking, onClose }: ConfirmationModalProps) 
               <h3 className="text-lg font-semibold mb-4">Pricing Summary</h3>
               <div className="space-y-3">
                 <div className="flex justify-between">
-                  <span>Tour Price ({booking.travelers} travelers)</span>
+                  <span>Tour Price ({booking.participants} participants)</span>
                   <span>{formatPrice(booking.pricing.sessionPrice)}</span>
                 </div>
                 <div className="flex justify-between">

@@ -1,12 +1,28 @@
 import type React from "react"
 import "@/app/globals.css"
-import { Inter } from "next/font/google"
+import { Barlow, Open_Sans, Work_Sans } from "next/font/google"
 import { ThemeProvider } from "@/components/theme-provider"
 import { BookingPromptWrapper } from "@/components/booking-prompt-wrapper"
 import { CartProvider } from "@/hooks/use-cart"
 import { Toaster } from "@/components/ui/toaster"
 
-const inter = Inter({ subsets: ["latin"] })
+const barlow = Barlow({ 
+  subsets: ["latin"],
+  weight: ["600"],
+  variable: "--font-barlow"
+})
+
+const openSans = Open_Sans({ 
+  subsets: ["latin"],
+  weight: ["400"],
+  variable: "--font-open-sans"
+})
+
+const workSans = Work_Sans({ 
+  subsets: ["latin"],
+  weight: ["400"],
+  variable: "--font-work-sans"
+})
 
 export const metadata = {
   title: "Pineapple Tours - Tropical Vacation Specialists",
@@ -25,7 +41,7 @@ export default function RootLayout({
       <head>
         <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, user-scalable=yes" />
       </head>
-      <body className={inter.className}>
+      <body className={`${barlow.variable} ${openSans.variable} ${workSans.variable}`}>
         <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
           <CartProvider>
             {children}

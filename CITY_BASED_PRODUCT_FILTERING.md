@@ -190,7 +190,7 @@ const { filters, updateFilter, clearFilter } = useSearch(initialFilters)
 The search API now supports city filtering:
 
 ```typescript
-// GET /api/search?city=Sydney&category=adventure&travelers=2
+// GET /api/search?city=Sydney&category=adventure&participants=2
 // GET /api/search?location=Melbourne&priceRange=500-1000
 ```
 

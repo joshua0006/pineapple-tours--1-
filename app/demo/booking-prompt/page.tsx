@@ -82,7 +82,7 @@ export default function BookingPromptDemoPage() {
     
     // Navigate to search with parameters
     const searchParams = new URLSearchParams()
-    searchParams.set('travelers', testData.groupSize.toString())
+    searchParams.set('participants', testData.groupSize.toString())
     searchParams.set('checkIn', format(testData.bookingDate, 'yyyy-MM-dd'))
     searchParams.set('checkOut', format(new Date('2024-12-26'), 'yyyy-MM-dd'))
     searchParams.set('sortBy', 'relevance')
@@ -118,7 +118,6 @@ export default function BookingPromptDemoPage() {
                 <Button 
                   onClick={startDemo}
                   disabled={isActive}
-                  className="bg-coral-500 hover:bg-coral-600 text-white"
                 >
                   {isActive ? 'Demo Running...' : 'Start 30s Demo'}
                 </Button>
@@ -150,7 +149,7 @@ export default function BookingPromptDemoPage() {
                 )}
                 
                 {hasTriggered && (
-                  <Badge variant="default" className="bg-green-500">
+                  <Badge variant="default" className="bg-brand-green-accent">
                     <CheckCircle className="h-3 w-3 mr-1" />
                     Popup Triggered!
                   </Badge>
@@ -185,7 +184,7 @@ export default function BookingPromptDemoPage() {
                 <div className="flex items-center gap-3">
                   <Users className="h-5 w-5 text-blue-500" />
                   <div>
-                    <p className="font-medium">Travelers</p>
+                    <p className="font-medium">Participants</p>
                     <p className="text-sm text-gray-600">{promptData?.groupSize} people</p>
                   </div>
                 </div>
@@ -248,7 +247,7 @@ export default function BookingPromptDemoPage() {
                   <div>
                     <h4 className="font-medium">Group Size Input</h4>
                     <p className="text-sm text-gray-600">
-                      Collects the number of travelers for personalized recommendations
+                      Collects the number of participants for personalized recommendations
                     </p>
                   </div>
                 </div>

@@ -45,7 +45,7 @@ export default function SearchPage() {
     query: searchParams.get('query') || '',
     category: searchParams.get('category') || 'all',
     priceRange: searchParams.get('priceRange') || 'all',
-    travelers: searchParams.get('travelers') || '2',
+    participants: searchParams.get('participants') || '2',
     sortBy: searchParams.get('sortBy') || 'relevance',
     checkIn: searchParams.get('checkIn') || '',
     checkOut: searchParams.get('checkOut') || '',
@@ -57,7 +57,7 @@ export default function SearchPage() {
 
   // Check if this search came from the booking prompt
   const isFromBookingPrompt = hasPromptData && (
-    (searchParams.get('travelers') && searchParams.get('travelers') === promptData?.groupSize?.toString()) ||
+    (searchParams.get('participants') && searchParams.get('participants') === promptData?.groupSize?.toString()) ||
     (searchParams.get('checkIn') && promptData?.bookingDate)
   )
 
@@ -97,7 +97,7 @@ export default function SearchPage() {
       query: searchParams.get('query') || '',
       category: searchParams.get('category') || 'all',
       priceRange: searchParams.get('priceRange') || 'all',
-      travelers: searchParams.get('travelers') || '2',
+      participants: searchParams.get('participants') || '2',
       sortBy: searchParams.get('sortBy') || 'relevance',
       checkIn: searchParams.get('checkIn') || '',
       checkOut: searchParams.get('checkOut') || '',
@@ -181,7 +181,7 @@ export default function SearchPage() {
               </h1>
               <p className="mx-auto mt-4 max-w-2xl text-xl">
                 {isFromBookingPrompt ? (
-                  `Tours for ${filters.travelers} traveler${filters.travelers !== '1' ? 's' : ''}${filters.checkIn && filters.checkOut ? ` • ${format(new Date(filters.checkIn), 'MMM dd')} - ${format(new Date(filters.checkOut), 'MMM dd, yyyy')}` : ''}`
+                  `Tours for ${filters.participants} participant${filters.participants !== '1' ? 's' : ''}${filters.checkIn && filters.checkOut ? ` • ${format(new Date(filters.checkIn), 'MMM dd')} - ${format(new Date(filters.checkOut), 'MMM dd, yyyy')}` : ''}`
                 ) : hasResults ? (
                   `Found ${totalResults} tour${totalResults !== 1 ? 's' : ''} matching your search`
                 ) : (
@@ -340,20 +340,20 @@ export default function SearchPage() {
                   </div>
                 </div>
 
-                {/* Travelers Filter */}
+                {/* Participants Filter */}
                 <div className="space-y-2">
-                  <label className="text-sm font-medium text-muted-foreground">Travelers</label>
-                  <Select value={filters.travelers} onValueChange={(value) => updateFilter('travelers', value)}>
+                  <label className="text-sm font-medium text-muted-foreground">Participants</label>
+                  <Select value={filters.participants} onValueChange={(value) => updateFilter('participants', value)}>
                     <SelectTrigger className={`w-full h-10 ${isFromBookingPrompt ? 'ring-2 ring-yellow-200 bg-yellow-50' : ''}`}>
                       <div className="flex items-center gap-2">
                         <Users className="h-4 w-4 text-muted-foreground" />
-                        <SelectValue placeholder="2 Travelers" />
+                        <SelectValue placeholder="2 Participants" />
                       </div>
                     </SelectTrigger>
                     <SelectContent>
                       {Array.from({ length: 10 }, (_, i) => i + 1).map(num => (
                         <SelectItem key={num} value={num.toString()}>
-                          {num} {num === 1 ? 'Traveler' : 'Travelers'}
+                          {num} {num === 1 ? 'Participant' : 'Participants'}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -505,12 +505,12 @@ export default function SearchPage() {
                     </button>
                   </Badge>
                 )}
-                {filters.travelers !== '2' && (
+                {filters.participants !== '2' && (
                   <Badge variant="secondary" className="flex items-center gap-1 bg-orange-100 text-orange-800 border-orange-200">
                     <Users className="h-3 w-3" />
-                    {filters.travelers} Travelers
+                    {filters.participants} Participants
                     <button
-                      onClick={() => clearFilter('travelers')}
+                      onClick={() => clearFilter('participants')}
                       className="ml-1 hover:text-destructive"
                     >
                       <X className="h-3 w-3" />

@@ -91,6 +91,17 @@ export const TOUR_CATEGORIES: Omit<TourCategory, 'tourCount' | 'icon' | 'image'>
     categoryGroup: 'tours'
   },
 
+  // Hens Party - Special celebrations for brides-to-be
+  {
+    id: 'hens-party',
+    title: 'Hens Party',
+    description: 'Special celebrations for brides-to-be and their friends',
+    productTypes: ['DAYTOUR', 'PRIVATE_TOUR', 'CUSTOM'],
+    keywords: ['hens party', 'hen party', 'bachelorette', 'bridal party', 'girls night', 'ladies night', 'celebration'],
+    slug: 'hens-party',
+    categoryGroup: 'experiences'
+  },
+
   // Additional categories based on actual Rezdy product types found
   
   // Activities - Based on ACTIVITY product type

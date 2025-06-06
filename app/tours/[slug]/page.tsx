@@ -272,15 +272,15 @@ export default function TourDetailPage({ params }: { params: Promise<{ slug: str
               <h1 className="text-2xl font-bold tracking-tight sm:text-3xl md:text-4xl">{selectedProduct.name}</h1>
               <div className="mt-2 flex flex-wrap items-center gap-2 sm:gap-4">
                 <div className="flex items-center">
-                  <MapPin className="mr-1 h-4 w-4 text-coral-500" aria-hidden="true" />
+                  <MapPin className="mr-1 h-4 w-4 text-brand-accent" aria-hidden="true" />
                   <span className="text-sm sm:text-base">{location}</span>
                 </div>
                 <div className="flex items-center">
-                  <Star className="mr-1 h-4 w-4 fill-coral-500 text-coral-500" aria-hidden="true" />
+                  <Star className="mr-1 h-4 w-4 fill-brand-accent text-brand-accent" aria-hidden="true" />
                   <span className="text-sm sm:text-base">4.8 (Reviews)</span>
                 </div>
                 {selectedProduct.status === 'ACTIVE' && (
-                  <Badge className="bg-coral-500 text-white hover:bg-coral-600 text-xs sm:text-sm">Available</Badge>
+                  <Badge className="bg-brand-accent text-brand-secondary hover:bg-brand-accent/90 text-xs sm:text-sm">Available</Badge>
                 )}
               </div>
             </div>
@@ -313,7 +313,7 @@ export default function TourDetailPage({ params }: { params: Promise<{ slug: str
               {/* Streamlined Mobile Booking Bar */}
               <div className="xl:hidden order-first">
                 <div className="max-w-2xl mx-auto">
-                  <Card className="sticky top-16 z-10 shadow-sm border border-coral-200">
+                  <Card className="sticky top-16 z-10 shadow-sm border border-gray-200">
                     <CardContent className="p-4">
                       <div className="flex items-center justify-between gap-4">
                         <div className="flex-1">
@@ -324,7 +324,7 @@ export default function TourDetailPage({ params }: { params: Promise<{ slug: str
                           <Button 
                             size="sm"
                             variant="outline"
-                            className="border-coral-200 text-coral-700 hover:bg-coral-50"
+                            className="border-brand-accent/20 text-brand-accent hover:bg-brand-accent/10"
                             onClick={() => {
                               const availabilityTab = document.querySelector('[value="availability"]');
                               if (availabilityTab) {
@@ -337,7 +337,7 @@ export default function TourDetailPage({ params }: { params: Promise<{ slug: str
                           </Button>
                           <Button 
                             size="sm"
-                            className="bg-coral-500 text-white hover:bg-coral-600"
+                            className="bg-brand-accent text-brand-secondary hover:bg-brand-accent/90"
                             onClick={() => setShowBooking(true)}
                           >
                             Book Now
@@ -358,8 +358,8 @@ export default function TourDetailPage({ params }: { params: Promise<{ slug: str
                     <CardContent className="p-6">
                       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
                         <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 bg-coral-100 rounded-lg flex items-center justify-center">
-                            <Users className="h-5 w-5 text-coral-600" />
+                          <div className="w-10 h-10 bg-brand-accent/10 rounded-lg flex items-center justify-center">
+                            <Users className="h-5 w-5 text-brand-accent" />
                           </div>
                           <div>
                             <div className="text-sm text-gray-600">Group Size</div>
@@ -370,8 +370,8 @@ export default function TourDetailPage({ params }: { params: Promise<{ slug: str
                         </div>
                         
                         <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 bg-coral-100 rounded-lg flex items-center justify-center">
-                            <Clock className="h-5 w-5 text-coral-600" />
+                          <div className="w-10 h-10 bg-brand-accent/10 rounded-lg flex items-center justify-center">
+                            <Clock className="h-5 w-5 text-brand-accent" />
                           </div>
                           <div>
                             <div className="text-sm text-gray-600">Duration</div>
@@ -394,8 +394,8 @@ export default function TourDetailPage({ params }: { params: Promise<{ slug: str
                         </div>
                         
                         <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 bg-coral-100 rounded-lg flex items-center justify-center">
-                            <MapPin className="h-5 w-5 text-coral-600" />
+                          <div className="w-10 h-10 bg-brand-accent/10 rounded-lg flex items-center justify-center">
+                            <MapPin className="h-5 w-5 text-brand-accent" />
                           </div>
                           <div>
                             <div className="text-sm text-gray-600">Location</div>
@@ -429,13 +429,13 @@ export default function TourDetailPage({ params }: { params: Promise<{ slug: str
                     <TabsList className="grid w-full grid-cols-2 bg-gray-50 border border-gray-200 rounded-lg">
                       <TabsTrigger 
                         value="overview" 
-                        className="data-[state=active]:bg-white data-[state=active]:text-coral-600 data-[state=active]:border-coral-200 data-[state=active]:shadow-sm rounded-md mx-1 my-1"
+                        className="data-[state=active]:bg-white data-[state=active]:text-brand-accent data-[state=active]:border-brand-accent/20 data-[state=active]:shadow-sm rounded-md mx-1 my-1"
                       >
                         Overview
                       </TabsTrigger>
                       <TabsTrigger 
                         value="location" 
-                        className="data-[state=active]:bg-white data-[state=active]:text-coral-600 data-[state=active]:border-coral-200 data-[state=active]:shadow-sm rounded-md mx-1 my-1"
+                        className="data-[state=active]:bg-white data-[state=active]:text-brand-accent data-[state=active]:border-brand-accent/20 data-[state=active]:shadow-sm rounded-md mx-1 my-1"
                       >
                         Location & Pickup
                       </TabsTrigger>
@@ -456,7 +456,7 @@ export default function TourDetailPage({ params }: { params: Promise<{ slug: str
                         </div>
                         
                         {/* Quick Booking Section in Overview */}
-                        <Card className="border border-coral-200 bg-coral-50">
+                        <Card className="border border-brand-accent/20 bg-brand-accent/5">
                           <CardContent className="p-6">
                             <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
                               <div>
@@ -468,12 +468,12 @@ export default function TourDetailPage({ params }: { params: Promise<{ slug: str
                                   product={selectedProduct}
                                   session={availableSessions.length > 0 ? availableSessions[0] : undefined}
                                   variant="outline"
-                                  className="border-coral-300 text-coral-700 hover:bg-coral-100"
+                                  className="border-brand-accent/30 text-brand-accent hover:bg-brand-accent/10"
                                 >
                                   Add to Cart
                                 </AddToCartButton>
                                 <Button 
-                                  className="bg-coral-500 text-white hover:bg-coral-600"
+                                  className="bg-brand-accent text-brand-secondary hover:bg-brand-accent/90"
                                   onClick={() => setShowBooking(true)}
                                 >
                                   Book Now - {price}
@@ -492,7 +492,7 @@ export default function TourDetailPage({ params }: { params: Promise<{ slug: str
                         <Card className="border border-gray-200">
                           <CardHeader>
                             <CardTitle className="flex items-center gap-2">
-                              <MapPin className="h-5 w-5 text-coral-500" />
+                              <MapPin className="h-5 w-5 text-brand-accent" />
                               Location & Meeting Point
                             </CardTitle>
                           </CardHeader>

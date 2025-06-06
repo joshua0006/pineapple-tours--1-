@@ -27,7 +27,7 @@ export function CategoryCard({ id, title, description, image, tourCount, slug }:
               className="object-cover transition-transform duration-300 group-hover:scale-110"
             />
             <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
-            <Badge className="absolute right-3 top-3 bg-coral-500 text-white hover:bg-coral-600">
+            <Badge className="absolute right-3 top-3 bg-accent text-accent-foreground hover:bg-accent/90">
               {tourCount} Tours
             </Badge>
           </div>

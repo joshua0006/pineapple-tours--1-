@@ -40,7 +40,7 @@ Main search endpoint that handles all search queries and filtering.
 - `category` (string): Tour category filter
 - `priceRange` (string): Price range filter
 - `duration` (string): Duration filter
-- `travelers` (string): Number of travelers
+- `participants` (string): Number of participants
 - `sortBy` (string): Sort order
 - `checkIn` (string): Check-in date (YYYY-MM-DD format)
 - `checkOut` (string): Check-out date (YYYY-MM-DD format)

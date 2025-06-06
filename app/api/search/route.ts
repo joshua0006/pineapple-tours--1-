@@ -11,7 +11,7 @@ interface SearchFilters {
   productType?: string;
   priceRange?: string;
   duration?: string;
-  travelers?: string;
+  participants?: string;
   sortBy?: string;
   checkIn?: string;
   checkOut?: string;
@@ -22,7 +22,7 @@ interface SearchFilters {
 }
 
 // Helper function to check product availability for specific dates
-async function checkProductAvailability(productCode: string, checkIn: string, checkOut: string, travelers: string = '1'): Promise<boolean> {
+async function checkProductAvailability(productCode: string, checkIn: string, checkOut: string, participants: string = '1'): Promise<boolean> {
   try {
     if (!API_KEY) return true; // If no API key, assume available
     
@@ -38,10 +38,10 @@ async function checkProductAvailability(productCode: string, checkIn: string, ch
     
     if (!formattedCheckIn || !formattedCheckOut) return false;
 
-    // Prepare participants parameter (default to adult travelers)
-    const participants = `ADULT:${travelers}`;
+    // Prepare participants parameter (default to adult participants)
+    const participantsParam = `ADULT:${participants}`;
     
-    const url = `${REZDY_BASE_URL}/availability?apiKey=${API_KEY}&productCode=${encodeURIComponent(productCode)}&startTime=${formattedCheckIn}&endTime=${formattedCheckOut}&participants=${encodeURIComponent(participants)}`;
+    const url = `${REZDY_BASE_URL}/availability?apiKey=${API_KEY}&productCode=${encodeURIComponent(productCode)}&startTime=${formattedCheckIn}&endTime=${formattedCheckOut}&participants=${encodeURIComponent(participantsParam)}`;
     
     const response = await fetch(url, {
       method: 'GET',
@@ -94,7 +94,7 @@ export async function GET(request: NextRequest) {
       productType: searchParams.get('productType') || 'all',
       priceRange: searchParams.get('priceRange') || 'all',
       duration: searchParams.get('duration') || 'any',
-      travelers: searchParams.get('travelers') || '1',
+      participants: searchParams.get('participants') || '1',
       sortBy: searchParams.get('sortBy') || 'name',
       checkIn: searchParams.get('checkIn') || '',
       checkOut: searchParams.get('checkOut') || '',
@@ -258,7 +258,7 @@ export async function GET(request: NextRequest) {
             product.productCode, 
             filters.checkIn!, 
             filters.checkOut!, 
-            filters.travelers || '1'
+            filters.participants || '1'
           );
           return { product, isAvailable };
         });

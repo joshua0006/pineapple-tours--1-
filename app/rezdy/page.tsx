@@ -66,16 +66,17 @@ export default function RezdyDataPage() {
 
   // Get unique product types
   const productTypes = useMemo(() => {
-    if (!products) return [];
+    if (!products || !Array.isArray(products)) return [];
     const types = [...new Set(products.map(p => p.productType).filter((type): type is string => Boolean(type)))];
     return types.sort();
   }, [products]);
 
   // Budget analysis
   const budgetAnalysis = useMemo(() => {
-    if (!products) return {
+    if (!products || !Array.isArray(products)) return {
       budget: { count: 0, products: [], avgPrice: 0, totalRevenue: 0 },
       'mid-range': { count: 0, products: [], avgPrice: 0, totalRevenue: 0 },
+      premium: { count: 0, products: [], avgPrice: 0, totalRevenue: 0 },
       luxury: { count: 0, products: [], avgPrice: 0, totalRevenue: 0 },
       unknown: { count: 0, products: [], avgPrice: 0, totalRevenue: 0 }
     };
@@ -83,15 +84,18 @@ export default function RezdyDataPage() {
     const analysis = {
       budget: { count: 0, products: [] as RezdyProduct[], avgPrice: 0, totalRevenue: 0 },
       'mid-range': { count: 0, products: [] as RezdyProduct[], avgPrice: 0, totalRevenue: 0 },
+      premium: { count: 0, products: [] as RezdyProduct[], avgPrice: 0, totalRevenue: 0 },
       luxury: { count: 0, products: [] as RezdyProduct[], avgPrice: 0, totalRevenue: 0 },
       unknown: { count: 0, products: [] as RezdyProduct[], avgPrice: 0, totalRevenue: 0 }
     };
 
     products.forEach(product => {
       const category = categorizeByBudget(product);
-      analysis[category as keyof typeof analysis].products.push(product);
-      analysis[category as keyof typeof analysis].count++;
-      analysis[category as keyof typeof analysis].totalRevenue += product.advertisedPrice || 0;
+      if (analysis[category as keyof typeof analysis]) {
+        analysis[category as keyof typeof analysis].products.push(product);
+        analysis[category as keyof typeof analysis].count++;
+        analysis[category as keyof typeof analysis].totalRevenue += product.advertisedPrice || 0;
+      }
     });
 
     // Calculate average prices
@@ -105,11 +109,11 @@ export default function RezdyDataPage() {
 
   // Filter products based on search, product type, and budget range
   const filteredProducts = useMemo(() => {
-    if (!products) return [];
+    if (!products || !Array.isArray(products)) return [];
     
     let filtered = products.filter(product =>
-      product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      product.productCode.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      product.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      product.productCode?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       product.description?.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
@@ -126,7 +130,7 @@ export default function RezdyDataPage() {
 
   // Group products by productType
   const groupedProducts = useMemo(() => {
-    if (!filteredProducts) return {};
+    if (!filteredProducts || !Array.isArray(filteredProducts)) return {};
     
     const grouped = filteredProducts.reduce((acc, product) => {
       const type = product.productType || 'Uncategorized';
@@ -148,7 +152,7 @@ export default function RezdyDataPage() {
 
   // Group products by budget category
   const groupedByBudget = useMemo(() => {
-    if (!filteredProducts) return {};
+    if (!filteredProducts || !Array.isArray(filteredProducts)) return {};
     
     const grouped = filteredProducts.reduce((acc, product) => {
       const budget = categorizeByBudget(product);
@@ -175,7 +179,7 @@ export default function RezdyDataPage() {
 
   // Fetch availability for all products
   const fetchAllProductsAvailability = async () => {
-    if (!products || products.length === 0) return;
+    if (!products || !Array.isArray(products) || products.length === 0) return;
     
     setAvailabilityLoading(true);
     setAvailabilityError(null);
@@ -234,7 +238,7 @@ export default function RezdyDataPage() {
 
   // Auto-load availability when switching to availability tab
   useEffect(() => {
-    if (activeTab === 'availability' && products && products.length > 0 && Object.keys(allProductsAvailability).length === 0) {
+    if (activeTab === 'availability' && products && Array.isArray(products) && products.length > 0 && Object.keys(allProductsAvailability).length === 0) {
       fetchAllProductsAvailability();
     }
   }, [activeTab, products]);
@@ -271,7 +275,7 @@ export default function RezdyDataPage() {
           <TabsTrigger value="all" className="flex items-center gap-2">
             <Package className="h-4 w-4" />
             All Products
-            {products && <Badge variant="secondary">{products.length}</Badge>}
+            {products && Array.isArray(products) && <Badge variant="secondary">{products.length}</Badge>}
           </TabsTrigger>
           <TabsTrigger value="budget-analysis" className="flex items-center gap-2">
             <DollarSign className="h-4 w-4" />
@@ -599,7 +603,7 @@ export default function RezdyDataPage() {
                   </p>
                   <Button 
                     onClick={fetchAllProductsAvailability}
-                    disabled={availabilityLoading || !products || products.length === 0}
+                    disabled={availabilityLoading || !products || !Array.isArray(products) || products.length === 0}
                     className="flex items-center gap-2"
                   >
                     <RefreshCw className={cn("h-4 w-4", availabilityLoading && "animate-spin")} />
@@ -687,8 +691,8 @@ export default function RezdyDataPage() {
         {productTypes.map((type) => {
           const typeProducts = groupedProducts[type] || [];
           const filteredTypeProducts = typeProducts.filter(product =>
-            product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            product.productCode.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            product.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            product.productCode?.toLowerCase().includes(searchTerm.toLowerCase()) ||
             product.description?.toLowerCase().includes(searchTerm.toLowerCase())
           );
 

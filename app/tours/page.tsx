@@ -14,6 +14,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert"
 import { DatePicker } from "@/components/ui/date-picker"
 import { SiteHeader } from "@/components/site-header"
 import { SiteFooter } from "@/components/site-footer"
+import { PageHeader } from "@/components/page-header"
 import { DynamicTourCard } from "@/components/dynamic-tour-card"
 import { TourGridSkeleton } from "@/components/tour-grid-skeleton"
 import { ErrorState } from "@/components/error-state"
@@ -45,7 +46,7 @@ export default function ToursPage() {
     query: searchParams.get('query') || '',
     category: searchParams.get('category') || 'all',
     priceRange: searchParams.get('priceRange') || 'all',
-    travelers: searchParams.get('travelers') || '2',
+    participants: searchParams.get('participants') || '2',
     sortBy: searchParams.get('sortBy') || 'relevance',
     checkIn: searchParams.get('checkIn') || '',
     checkOut: searchParams.get('checkOut') || '',
@@ -91,7 +92,7 @@ export default function ToursPage() {
       query: searchParams.get('query') || '',
       category: searchParams.get('category') || 'all',
       priceRange: searchParams.get('priceRange') || 'all',
-      travelers: searchParams.get('travelers') || '2',
+      participants: searchParams.get('participants') || '2',
       sortBy: searchParams.get('sortBy') || 'relevance',
       checkIn: searchParams.get('checkIn') || '',
       checkOut: searchParams.get('checkOut') || '',
@@ -155,21 +156,14 @@ export default function ToursPage() {
       <SiteHeader />
       <main className="flex-1">
         {/* Header */}
-        <section className="bg-gradient-to-r from-coral-500 to-orange-500 py-12">
-          <div className="container">
-            <div className="text-center text-white">
-              <h1 className="text-4xl font-bold tracking-tight md:text-5xl">
-                Discover Amazing Tours
-              </h1>
-              <p className="mx-auto mt-4 max-w-2xl text-xl">
-                {hasResults 
-                  ? `Found ${totalResults} tour${totalResults !== 1 ? 's' : ''} for your perfect adventure`
-                  : 'Explore our collection of handpicked tours and experiences from around the world'
-                }
-              </p>
-            </div>
-          </div>
-        </section>
+        <PageHeader
+          title="Discover Amazing Tours"
+          subtitle={hasResults 
+            ? `Found ${totalResults} tour${totalResults !== 1 ? 's' : ''} for your perfect adventure`
+            : 'Explore our collection of handpicked tours and experiences from around the world'
+          }
+          variant="coral"
+        />
 
         {/* Search and Filters */}
         <section className="border-b bg-white py-6">
@@ -556,7 +550,7 @@ export default function ToursPage() {
               Our travel experts can help you create a custom tour package tailored to your preferences and budget.
             </p>
             <div className="mt-8 flex flex-col gap-4 sm:flex-row sm:justify-center">
-              <Button size="lg" className="bg-coral-500 text-white hover:bg-coral-600">
+              <Button size="lg">
                 Contact Our Experts
               </Button>
               <Button size="lg" variant="outline">

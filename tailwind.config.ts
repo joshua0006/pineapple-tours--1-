@@ -19,6 +19,11 @@ const config = {
       },
     },
     extend: {
+      fontFamily: {
+        barlow: ["var(--font-barlow)", "sans-serif"],
+        "open-sans": ["var(--font-open-sans)", "sans-serif"],
+        "work-sans": ["var(--font-work-sans)", "sans-serif"],
+      },
       colors: {
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
@@ -53,18 +58,26 @@ const config = {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
         },
+        // Brand Colors
+        "brand-primary": "#141312",
+        "brand-secondary": "#FFFFFF", 
+        "brand-text": "#0B2000",
+        "brand-accent": "#FF585D",
+        "brand-green-accent": "#404040",
+        
+        // Coral palette (updated to match brand accent)
         coral: {
-          50: "#fef2f2",
-          100: "#fee2e2",
-          200: "#fecaca",
-          300: "#fca5a5",
-          400: "#f87171",
-          500: "#ff585d",
-          600: "#e53e3e",
-          700: "#c53030",
-          800: "#9b2c2c",
-          900: "#742a2a",
-          950: "#451a1a",
+          50: "#fff5f5",
+          100: "#ffe3e3",
+          200: "#ffcccc",
+          300: "#ffaaaa",
+          400: "#ff7777",
+          500: "#FF585D", // Brand accent color
+          600: "#e63946",
+          700: "#cc2936",
+          800: "#b31e2b",
+          900: "#991821",
+          950: "#661016",
         },
         yellow: {
           50: "#fffbeb",
@@ -79,6 +92,7 @@ const config = {
           900: "#78350f",
           950: "#451a03",
         },
+        "green-accent": "#404040",
       },
       borderRadius: {
         lg: "var(--radius)",

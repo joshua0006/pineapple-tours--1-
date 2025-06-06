@@ -1542,7 +1542,7 @@ export function EnhancedBookingExperience({ product, onClose, onBookingComplete,
               <Button 
                 onClick={handleNextStep}
                 disabled={!canProceedToNextStep()}
-                className="flex items-center gap-2 bg-coral-500 text-white hover:bg-coral-600"
+                className="flex items-center gap-2"
               >
                 Next
                 <ArrowRight className="h-4 w-4" />
@@ -1551,7 +1551,8 @@ export function EnhancedBookingExperience({ product, onClose, onBookingComplete,
               <Button 
                 onClick={handleCompleteBooking}
                 disabled={!canProceedToNextStep() || isSubmitting}
-                className="flex items-center gap-2 bg-green-600 hover:bg-green-700"
+                variant="success"
+                className="flex items-center gap-2"
               >
                 {isSubmitting ? 'Processing...' : `Complete Booking • ${formatCurrency(pricingBreakdown.total)}`}
               </Button>

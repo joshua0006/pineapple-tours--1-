@@ -105,9 +105,9 @@ export function AddToCartButton({
   if (alreadyInCart) {
     return (
       <Button
-        variant="outline"
+        variant="success"
         size={size}
-        className={`${className} border-green-500 text-green-700 hover:bg-green-50`}
+        className={className}
         disabled
       >
         <Check className="h-4 w-4 mr-2" />
@@ -259,7 +259,7 @@ export function AddToCartButton({
                 Cancel
               </Button>
               <Button
-                className="flex-1 bg-coral-500 text-white hover:bg-coral-600"
+                className="flex-1"
                 onClick={handleAddToCart}
                 disabled={isAdding || !session}
               >

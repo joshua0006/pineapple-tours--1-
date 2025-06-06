@@ -54,7 +54,7 @@ const contactInfo = [
 const faqs = [
   {
     question: "How far in advance should I book my tour?",
-    answer: "We recommend booking at least 2-4 weeks in advance, especially during peak season (December-April). However, we often have last-minute availability for spontaneous travelers."
+    answer: "We recommend booking at least 2-4 weeks in advance, especially during peak season (December-April). However, we often have last-minute availability for spontaneous participants."
   },
   {
     question: "What's included in your tour packages?",
@@ -127,8 +127,8 @@ export default function ContactPage() {
             {contactInfo.map((info, index) => (
               <Card key={index} className="text-center">
                 <CardContent className="p-6">
-                  <div className="w-12 h-12 bg-coral-500 rounded-lg flex items-center justify-center mx-auto mb-4">
-                    <info.icon className="h-6 w-6 text-white" />
+                  <div className="w-12 h-12 bg-brand-accent rounded-lg flex items-center justify-center mx-auto mb-4">
+                    <info.icon className="h-6 w-6 text-brand-secondary" />
                   </div>
                   <h3 className="text-lg font-semibold mb-3">{info.title}</h3>
                   <div className="space-y-1">
@@ -151,7 +151,7 @@ export default function ContactPage() {
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <MessageCircle className="h-5 w-5 text-coral-500" />
+                  <MessageCircle className="h-5 w-5 text-brand-accent" />
                   Send Us a Message
                 </CardTitle>
               </CardHeader>
@@ -221,7 +221,7 @@ export default function ContactPage() {
                     />
                   </div>
 
-                  <Button type="submit" className="w-full bg-coral-500 text-white hover:bg-coral-600">
+                  <Button type="submit" className="w-full bg-brand-accent text-brand-secondary hover:bg-brand-accent/90">
                     <Send className="mr-2 h-4 w-4" />
                     Send Message
                   </Button>
@@ -256,24 +256,24 @@ export default function ContactPage() {
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="flex items-start gap-3">
-                    <div className="w-2 h-2 bg-coral-500 rounded-full mt-2"></div>
+                    <div className="w-2 h-2 bg-brand-accent rounded-full mt-2"></div>
                     <div>
                       <p className="font-medium">Email Inquiries</p>
                       <p className="text-sm text-muted-foreground">We respond within 2-4 hours during business hours</p>
                     </div>
                   </div>
                   <div className="flex items-start gap-3">
-                    <div className="w-2 h-2 bg-coral-500 rounded-full mt-2"></div>
+                    <div className="w-2 h-2 bg-brand-accent rounded-full mt-2"></div>
                     <div>
                       <p className="font-medium">Phone Support</p>
                       <p className="text-sm text-muted-foreground">Immediate assistance available 24/7</p>
                     </div>
                   </div>
                   <div className="flex items-start gap-3">
-                    <div className="w-2 h-2 bg-coral-500 rounded-full mt-2"></div>
+                    <div className="w-2 h-2 bg-brand-accent rounded-full mt-2"></div>
                     <div>
                       <p className="font-medium">Emergency Support</p>
-                      <p className="text-sm text-muted-foreground">24/7 support for travelers on active tours</p>
+                      <p className="text-sm text-muted-foreground">24/7 support for participants on active tours</p>
                     </div>
                   </div>
                 </CardContent>
@@ -321,7 +321,7 @@ export default function ContactPage() {
               Contact us today and let's make your dream vacation a reality!
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Button className="bg-coral-500 text-white hover:bg-coral-600">
+              <Button>
                 <Phone className="mr-2 h-4 w-4" />
                 Call Now: 1-800-PINEAPPLE
               </Button>

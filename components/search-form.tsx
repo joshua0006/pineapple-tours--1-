@@ -1,21 +1,41 @@
 "use client"
 
-import { useState, useEffect } from "react"
+/**
+ * Enhanced Search Form with Rezdy Data Management Integration
+ * 
+ * This component provides a simplified search interface with three main inputs:
+ * - Participants: Number of people for the tour
+ * - Tour Date: When the tour should take place
+ * - Pick up Location: Where participants will be picked up
+ * 
+ * Rezdy Integration Features:
+ * - Real-time data fetching from Rezdy API with caching
+ * - Data validation and cleaning pipeline
+ * - Product segmentation and filtering
+ * - Quality metrics and error handling
+ * - Smart cache invalidation and refresh capabilities
+ * - Dynamic location extraction from product data
+ * 
+ * The form integrates with the comprehensive data management system
+ * documented in DATA_MANAGEMENT_IMPLEMENTATION.md and follows the
+ * strategies outlined in REZDY_DATA_MANAGEMENT_STRATEGIES.md
+ */
+
+import { useState, useEffect, useMemo } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { addDays, format } from "date-fns"
-import { Search, MapPin, Calendar, Users, CalendarDays, Filter } from "lucide-react"
+import { Search, MapPin, Calendar, Users, CalendarDays, RefreshCw } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { DatePicker } from "@/components/ui/date-picker"
-import { SearchCategoryDropdown } from "@/components/search-category-dropdown"
 import { useBookingPrompt } from "@/hooks/use-booking-prompt"
 import { useCityProducts } from "@/hooks/use-city-products"
+import { useRezdyDataManager } from "@/hooks/use-rezdy-data-manager"
 
-// Static tours data based on the provided image
-const STATIC_TOURS = [
+// Static pickup locations (fallback)
+const STATIC_PICKUP_LOCATIONS = [
   "Brisbane",
   "Broadbeach", 
   "Currumbin wildlife sanctuary",
@@ -30,109 +50,142 @@ const STATIC_TOURS = [
 interface SearchFormProps {
   onSearch?: (searchData: any) => void;
   showRedirect?: boolean;
-  onCityChange?: (city: string, products: any[]) => void;
+  onLocationChange?: (location: string, products: any[]) => void;
 }
 
-export function SearchForm({ onSearch, showRedirect = true, onCityChange }: SearchFormProps) {
+export function SearchForm({ onSearch, showRedirect = true, onLocationChange }: SearchFormProps) {
   const router = useRouter()
   const searchParams = useSearchParams()
   const { promptData } = useBookingPrompt()
   const { cities, loading: citiesLoading } = useCityProducts()
   
-  // Form state for tours search
-  const [query, setQuery] = useState<string>('')
-  const [selectedCity, setSelectedCity] = useState<string>('all')
-  const [category, setCategory] = useState<string>('all')
-  const [priceRange, setPriceRange] = useState<string>('all')
-  const [checkInDate, setCheckInDate] = useState<Date | undefined>()
-  const [checkOutDate, setCheckOutDate] = useState<Date | undefined>()
-  const [travelers, setTravelers] = useState("2")
+  // Rezdy data management integration
+  const {
+    data: rezdyData,
+    isLoading: rezdyLoading,
+    error: rezdyError,
+    refreshData
+  } = useRezdyDataManager({
+    enableCaching: true,
+    enableValidation: true,
+    enableSegmentation: false, // We're doing our own filtering
+    autoRefresh: false
+  })
+
+  // Extract unique pickup locations from Rezdy products with tour counts
+  const pickupLocations = useMemo(() => {
+    const locationCounts = new Map<string, number>()
+    
+    // Add static locations
+    STATIC_PICKUP_LOCATIONS.forEach(location => {
+      if (!locationCounts.has(location)) {
+        locationCounts.set(location, 0)
+      }
+    })
+    
+    // Add locations from Rezdy products and count tours
+    rezdyData.products.forEach(product => {
+      let locationName = ''
+      
+      if (product.locationAddress) {
+        if (typeof product.locationAddress === 'string') {
+          locationName = product.locationAddress
+        } else if (product.locationAddress.city) {
+          locationName = product.locationAddress.city
+        }
+      }
+      
+      if (locationName) {
+        locationCounts.set(locationName, (locationCounts.get(locationName) || 0) + 1)
+      }
+    })
+    
+    return Array.from(locationCounts.entries())
+      .map(([location, count]) => ({ location, count }))
+      .sort((a, b) => a.location.localeCompare(b.location))
+  }, [rezdyData.products])
+
+
+  
+  // Form state for simplified search
+  const [selectedLocation, setSelectedLocation] = useState<string>('all')
+  const [tourDate, setTourDate] = useState<Date | undefined>()
+  const [participants, setParticipants] = useState("2")
 
   // Initialize form with URL parameters or booking prompt data
   useEffect(() => {
     // Check URL parameters first (these take priority)
-    const urlQuery = searchParams.get('query')
-    const urlTravelers = searchParams.get('travelers')
-    const urlCheckIn = searchParams.get('checkIn')
-    const urlCheckOut = searchParams.get('checkOut')
-    const urlCity = searchParams.get('city')
-    const urlCategory = searchParams.get('category')
-    const urlPriceRange = searchParams.get('priceRange')
+    const urlParticipants = searchParams.get('participants')
+    const urlTourDate = searchParams.get('tourDate')
+    const urlLocation = searchParams.get('location')
 
-    // Handle query parameter
-    if (urlQuery) {
-      setQuery(urlQuery)
-    }
-
-    // Handle travelers parameter
-    if (urlTravelers) {
-      setTravelers(urlTravelers)
+    // Handle participants parameter
+    if (urlParticipants) {
+      setParticipants(urlParticipants)
     } else if (promptData?.groupSize) {
-      setTravelers(promptData.groupSize.toString())
+      setParticipants(promptData.groupSize.toString())
     }
 
-    // Handle date parameters
-    if (urlCheckIn && urlCheckOut) {
-      setCheckInDate(new Date(urlCheckIn))
-      setCheckOutDate(new Date(urlCheckOut))
+    // Handle tour date parameter
+    if (urlTourDate) {
+      setTourDate(new Date(urlTourDate))
     } else if (promptData?.bookingDate) {
-      setCheckInDate(promptData.bookingDate)
-      setCheckOutDate(addDays(promptData.bookingDate, 1))
+      setTourDate(promptData.bookingDate)
     }
 
-    // Handle city parameter
-    if (urlCity) {
-      setSelectedCity(urlCity)
-    }
-
-    // Handle category parameter
-    if (urlCategory) {
-      setCategory(urlCategory)
-    }
-
-    // Handle price range parameter
-    if (urlPriceRange) {
-      setPriceRange(urlPriceRange)
+    // Handle location parameter
+    if (urlLocation) {
+      setSelectedLocation(urlLocation)
     }
   }, [searchParams, promptData])
 
-  // Handle city selection change
-  const handleCityChange = (city: string) => {
-    setSelectedCity(city)
-    if (onCityChange) {
-      // For static implementation, we pass empty products array
-      onCityChange(city, [])
-    }
+  // Handle location selection change
+  const handleLocationChange = (location: string) => {
+    setSelectedLocation(location)
   }
 
-  // Notify parent component when city changes
-  useEffect(() => {
-    if (onCityChange) {
-      onCityChange(selectedCity, [])
+  // Filter products based on selected location
+  const currentLocationProducts = useMemo(() => {
+    if (selectedLocation === 'all') {
+      return rezdyData.products
     }
-  }, [selectedCity, onCityChange])
+    
+    return rezdyData.products.filter(product => {
+      if (product.locationAddress) {
+        if (typeof product.locationAddress === 'string') {
+          return product.locationAddress.toLowerCase().includes(selectedLocation.toLowerCase())
+        } else if (product.locationAddress.city) {
+          return product.locationAddress.city.toLowerCase().includes(selectedLocation.toLowerCase())
+        }
+      }
+      return false
+    })
+  }, [selectedLocation, rezdyData.products])
 
-  // Auto-adjust check-out date when check-in date changes
+  // Notify parent component when location changes
   useEffect(() => {
-    if (checkInDate && (!checkOutDate || checkOutDate <= checkInDate)) {
-      setCheckOutDate(addDays(checkInDate, 1))
+    if (onLocationChange) {
+      onLocationChange(selectedLocation, currentLocationProducts)
     }
-  }, [checkInDate, checkOutDate])
+  }, [selectedLocation, currentLocationProducts, onLocationChange])
 
   const handleToursSearch = (e: React.FormEvent) => {
     e.preventDefault()
     
     const searchData = {
-      query: query,
-      category: category,
-      priceRange: priceRange,
-      travelers: travelers,
-      checkIn: checkInDate ? format(checkInDate, 'yyyy-MM-dd') : '',
-      checkOut: checkOutDate ? format(checkOutDate, 'yyyy-MM-dd') : '',
-      sortBy: 'relevance', // Default sort by relevance
+      participants: participants,
+      tourDate: tourDate ? format(tourDate, 'yyyy-MM-dd') : '',
+      location: selectedLocation === 'all' ? '' : selectedLocation,
+      pickupLocation: selectedLocation === 'all' ? '' : selectedLocation,
       searchType: 'tours',
-      location: selectedCity === 'all' ? '' : selectedCity,
-      city: selectedCity === 'all' ? '' : selectedCity
+      // Additional Rezdy-specific parameters
+      productType: 'tour',
+      availability: 'available',
+      sortBy: 'relevance',
+      // Include filtered products from Rezdy data
+      products: currentLocationProducts,
+      totalProducts: rezdyData.products.length,
+      dataQuality: rezdyError ? 'error' : 'good'
     }
 
     if (onSearch) {
@@ -142,108 +195,93 @@ export function SearchForm({ onSearch, showRedirect = true, onCityChange }: Sear
       const params = new URLSearchParams()
       
       // Include all parameters if they have values
-      if (query) params.append('query', query)
-      if (category && category !== 'all') params.append('category', category)
-      if (priceRange && priceRange !== 'all') params.append('priceRange', priceRange)
-      if (travelers) params.append('travelers', travelers)
-      if (selectedCity && selectedCity !== 'all') params.append('city', selectedCity)
-      if (checkInDate) params.append('checkIn', format(checkInDate, 'yyyy-MM-dd'))
-      if (checkOutDate) params.append('checkOut', format(checkOutDate, 'yyyy-MM-dd'))
+      if (participants) params.append('participants', participants)
+      if (selectedLocation && selectedLocation !== 'all') params.append('location', selectedLocation)
+      if (tourDate) params.append('tourDate', format(tourDate, 'yyyy-MM-dd'))
       
       router.push(`/search?${params.toString()}`)
     }
   }
 
-  // Check if dates are selected for enhanced UI feedback
-  const hasDatesSelected = checkInDate && checkOutDate
-  const dateRangeText = hasDatesSelected 
-    ? `${format(checkInDate!, 'MMM dd')} - ${format(checkOutDate!, 'MMM dd, yyyy')}`
-    : null
-
   // Check if form was pre-populated from booking prompt
   const isPrePopulated = promptData && (promptData.groupSize > 0 || promptData.bookingDate)
+
+  // Check if date is selected for enhanced UI feedback
+  const hasDateSelected = tourDate
+  const dateText = hasDateSelected 
+    ? format(tourDate!, 'MMM dd, yyyy')
+    : null
 
   return (
     <div className="w-full bg-white rounded-lg shadow-sm border border-gray-200">
       <div className="p-3 sm:p-6">
         <div className="mb-3 sm:mb-6">
-          <h2 className="text-lg sm:text-xl font-semibold text-gray-900 mb-1 sm:mb-2">
-            {isPrePopulated ? "Complete Your Booking" : "Find Your Perfect Vacation"}
-          </h2>
+          <div className="flex items-center justify-between mb-1 sm:mb-2">
+            <h2 className="text-lg sm:text-xl font-semibold text-gray-900">
+              {isPrePopulated ? "Complete Your Booking" : "Find a Tour"}
+            </h2>
+            {rezdyError && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => refreshData()}
+                disabled={rezdyLoading}
+                className="text-xs"
+              >
+                <RefreshCw className={`w-3 h-3 mr-1 ${rezdyLoading ? 'animate-spin' : ''}`} />
+                Refresh Data
+              </Button>
+            )}
+          </div>
           <p className="text-xs sm:text-sm text-gray-600">
             {isPrePopulated 
               ? "We've pre-filled your preferences. Adjust as needed and search for available tours."
-              : "Search for tours and experiences by tour location"
+              : "Search for tours by selecting participants, date, and pickup location"
             }
-            {hasDatesSelected && (
-              <span className="ml-2 inline-flex items-center px-2 py-1 rounded-full text-xs bg-coral-100 text-coral-800">
+            {hasDateSelected && (
+              <span className="ml-2 inline-flex items-center px-2 py-1 rounded-full text-xs bg-accent/10 text-accent">
                 <CalendarDays className="w-3 h-3 mr-1" />
-                <span className="hidden sm:inline">{dateRangeText}</span>
-                <span className="sm:hidden">{format(checkInDate!, 'MMM dd')} - {format(checkOutDate!, 'MMM dd')}</span>
+                <span>{dateText}</span>
+              </span>
+            )}
+            {rezdyData.products.length > 0 && (
+              <span className="ml-2 inline-flex items-center px-2 py-1 rounded-full text-xs bg-green-100 text-green-700">
+                {rezdyData.products.length} tours available
+              </span>
+            )}
+            {rezdyError && (
+              <span className="ml-2 inline-flex items-center px-2 py-1 rounded-full text-xs bg-red-100 text-red-700">
+                Data sync issue
               </span>
             )}
           </p>
         </div>
         
         <form onSubmit={handleToursSearch}>
-          {/* Search Query Input */}
-          <div className="mb-4">
-            <div className="relative max-w-2xl mx-auto">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Search tours, locations, activities..."
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                className="pl-10 pr-4 h-12 text-base border-gray-300 focus:border-coral-500 focus:ring-coral-500"
-              />
-            </div>
-          </div>
-
-          {/* Filter Grid */}
-          <div className="grid grid-cols-2 lg:grid-cols-6 gap-2 lg:gap-4 items-end">
-            {/* Tour Location */}
-            <div className="space-y-1 col-span-1">
-              <Label htmlFor="tour-location" className="text-xs font-medium text-gray-700 hidden sm:block">Tour Location</Label>
+          {/* Search Inputs Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
+            {/* Participants */}
+            <div className="space-y-2">
+              <Label htmlFor="participants" className="text-sm font-medium text-gray-700">
+                Participants
+              </Label>
               <div className="relative">
-                <Select value={selectedCity} onValueChange={handleCityChange} disabled={citiesLoading}>
-                  <SelectTrigger id="tour-location" className="h-10 border-gray-300 text-xs sm:text-sm focus:border-coral-500 focus:ring-coral-500">
-                    <div className="flex items-center gap-2">
-                      <MapPin className="h-4 w-4 text-muted-foreground" />
-                      <SelectValue placeholder={citiesLoading ? "Loading..." : "All Locations"} />
-                    </div>
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Locations</SelectItem>
-                    {cities.map((city) => (
-                      <SelectItem key={city} value={city}>
-                        {city}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-
-            {/* Travelers */}
-            <div className="space-y-1 col-span-1">
-              <Label htmlFor="travelers" className="text-xs font-medium text-gray-700 hidden sm:block">Travelers</Label>
-              <div className="relative">
-                <Select value={travelers} onValueChange={setTravelers}>
+                <Select value={participants} onValueChange={setParticipants}>
                   <SelectTrigger 
-                    id="travelers" 
-                    className={`h-10 border-gray-300 text-xs sm:text-sm focus:border-coral-500 focus:ring-coral-500 ${
+                    id="participants" 
+                    className={`h-12 border-gray-300 text-sm focus:border-coral-500 focus:ring-coral-500 ${
                       isPrePopulated && promptData?.groupSize ? 'ring-2 ring-coral-200 bg-coral-50' : ''
                     }`}
                   >
                     <div className="flex items-center gap-2">
                       <Users className="h-4 w-4 text-muted-foreground" />
-                      <SelectValue placeholder="2 Travelers" />
+                      <SelectValue placeholder="Select participants" />
                     </div>
                   </SelectTrigger>
                   <SelectContent>
                     {Array.from({ length: 10 }, (_, i) => i + 1).map(num => (
                       <SelectItem key={num} value={num.toString()}>
-                        {num} {num === 1 ? 'Traveler' : 'Travelers'}
+                        {num} {num === 1 ? 'Participant' : 'Participants'}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -251,93 +289,80 @@ export function SearchForm({ onSearch, showRedirect = true, onCityChange }: Sear
               </div>
             </div>
 
-            {/* Check-in Date */}
-            <div className="space-y-1 col-span-1">
-              <Label htmlFor="check-in" className="text-xs font-medium text-gray-700 hidden sm:block">
-                Check-in Date
+            {/* Tour Date */}
+            <div className="space-y-2">
+              <Label htmlFor="tour-date" className="text-sm font-medium text-gray-700">
+                Tour Date
               </Label>
               <div className="relative">
                 <DatePicker
-                  id="check-in"
-                  date={checkInDate}
-                  onDateChange={setCheckInDate}
-                  placeholder="Select date"
+                  id="tour-date"
+                  date={tourDate}
+                  onDateChange={setTourDate}
+                  placeholder="Select tour date"
                   minDate={new Date()}
-                  maxDate={checkOutDate ? addDays(checkOutDate, -1) : addDays(new Date(), 365)}
-                  className={`h-10 border-gray-300 text-xs sm:text-sm focus:border-coral-500 focus:ring-coral-500 ${
-                    checkInDate ? 'border-coral-300 bg-coral-50' : ''
-                  } ${isPrePopulated && checkInDate ? 'ring-2 ring-coral-200' : ''}`}
+                  maxDate={addDays(new Date(), 365)}
+                  className={`h-12 border-gray-300 text-sm focus:border-coral-500 focus:ring-coral-500 ${
+                    tourDate ? 'border-coral-300 bg-coral-50' : ''
+                  } ${isPrePopulated && tourDate ? 'ring-2 ring-coral-200' : ''}`}
                 />
               </div>
             </div>
 
-            {/* Check-out Date */}
-            <div className="space-y-1 col-span-1">
-              <Label htmlFor="check-out" className="text-xs font-medium text-gray-700 hidden sm:block">
-                Check-out Date
+            {/* Pick up Location */}
+            <div className="space-y-2">
+              <Label htmlFor="pickup-location" className="text-sm font-medium text-gray-700">
+                Pick up Location
               </Label>
               <div className="relative">
-                <DatePicker
-                  id="check-out"
-                  date={checkOutDate}
-                  onDateChange={setCheckOutDate}
-                  placeholder="Select date"
-                  minDate={checkInDate ? addDays(checkInDate, 1) : addDays(new Date(), 1)}
-                  maxDate={addDays(new Date(), 365)}
-                  className={`h-10 border-gray-300 text-xs sm:text-sm focus:border-coral-500 focus:ring-coral-500 ${
-                    checkOutDate ? 'border-coral-300 bg-coral-50' : ''
-                  } ${isPrePopulated && checkOutDate ? 'ring-2 ring-coral-200' : ''}`}
-                />
+                <Select value={selectedLocation} onValueChange={handleLocationChange} disabled={citiesLoading || rezdyLoading}>
+                  <SelectTrigger id="pickup-location" className="h-12 border-gray-300 text-sm focus:border-coral-500 focus:ring-coral-500">
+                    <div className="flex items-center gap-2">
+                      <MapPin className="h-4 w-4 text-muted-foreground" />
+                      <SelectValue placeholder={citiesLoading || rezdyLoading ? "Loading..." : "Select pickup location"} />
+                    </div>
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">
+                      All Locations
+                      {rezdyData.products.length > 0 && (
+                        <span className="ml-2 text-xs text-muted-foreground">
+                          ({rezdyData.products.length} tours)
+                        </span>
+                      )}
+                    </SelectItem>
+                    {pickupLocations.map(({ location, count }) => (
+                      <SelectItem key={location} value={location}>
+                        {location}
+                        {count > 0 && (
+                          <span className="ml-2 text-xs text-muted-foreground">
+                            ({count} tours)
+                          </span>
+                        )}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
-            </div>
-
-            {/* Category */}
-            <div className="space-y-1 col-span-1">
-              <Label htmlFor="category" className="text-xs font-medium text-gray-700 hidden sm:block">Category</Label>
-              <SearchCategoryDropdown
-                value={category}
-                onValueChange={setCategory}
-                className="h-10"
-              />
-            </div>
-
-            {/* Price Range */}
-            <div className="space-y-1 col-span-1">
-              <Label htmlFor="price-range" className="text-xs font-medium text-gray-700 hidden sm:block">Price Range</Label>
-              <Select value={priceRange} onValueChange={setPriceRange}>
-                <SelectTrigger id="price-range" className="h-10 border-gray-300 text-xs sm:text-sm focus:border-coral-500 focus:ring-coral-500">
-                  <div className="flex items-center gap-2">
-                    <span className="text-muted-foreground">$</span>
-                    <SelectValue placeholder="All Prices" />
-                  </div>
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Prices</SelectItem>
-                  <SelectItem value="under-99">Under $99</SelectItem>
-                  <SelectItem value="99-159">$99 - $159</SelectItem>
-                  <SelectItem value="159-299">$159 - $299</SelectItem>
-                  <SelectItem value="over-299">Over $299</SelectItem>
-                </SelectContent>
-              </Select>
             </div>
           </div>
 
           {/* Search Button */}
-          <div className="mt-4">
+          <div className="mt-6">
             <Button 
               type="submit" 
               className={`w-full h-12 font-medium text-base transition-all duration-200 shadow-sm hover:shadow-md ${
-                hasDatesSelected 
-                  ? 'bg-coral-500 hover:bg-coral-600 text-white' 
-                  : 'bg-coral-500 hover:bg-coral-600 text-white'
-              } ${isPrePopulated ? 'bg-coral-500 hover:bg-coral-600 text-white' : ''}`}
+                hasDateSelected 
+                  ? 'bg-accent hover:bg-accent/90 text-accent-foreground' 
+                  : 'bg-accent hover:bg-accent/90 text-accent-foreground'
+              } ${isPrePopulated ? 'bg-accent hover:bg-accent/90 text-accent-foreground' : ''}`}
             >
               <Search className="mr-2 h-4 w-4" />
               {isPrePopulated 
                 ? 'Find My Tours' 
-                : hasDatesSelected 
+                : hasDateSelected 
                   ? 'Search Available Tours' 
-                  : 'Search Vacations'
+                  : 'Search Tours'
               }
             </Button>
           </div>
@@ -346,3 +371,4 @@ export function SearchForm({ onSearch, showRedirect = true, onCityChange }: Sear
     </div>
   )
 }
+

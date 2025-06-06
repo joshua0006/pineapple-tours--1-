@@ -23,8 +23,8 @@ export function BookingPromptWrapper() {
     // Navigate to the search page with pre-filled data
     const searchParams = new URLSearchParams()
     
-    // Set travelers parameter (this is what the search API expects)
-    searchParams.set('travelers', data.groupSize.toString())
+    // Set participants parameter (this is what the search API expects)
+    searchParams.set('participants', data.groupSize.toString())
     
     // Set date parameters for check-in and check-out
     if (data.bookingDate) {

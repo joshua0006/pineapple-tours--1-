@@ -30,7 +30,7 @@ export function MobileNavigation({
       <div className="flex items-center justify-between p-6 border-b">
         <Link 
           href="/" 
-          className="flex items-center gap-2 font-bold text-xl hover:opacity-80 transition-opacity focus:outline-none focus:ring-2 focus:ring-coral-500 focus:ring-offset-2 rounded-md" 
+          className="flex items-center gap-2 font-bold text-xl hover:opacity-80 transition-opacity focus:outline-none focus:ring-2 focus:ring-brand-accent focus:ring-offset-2 rounded-md" 
           onClick={onItemClick}
           aria-label="Pineapple Tours - Home"
         >
@@ -54,7 +54,7 @@ export function MobileNavigation({
                 className={cn(
                   "flex items-center gap-3 px-4 py-4 text-base font-medium rounded-xl transition-all duration-200",
                   "hover:bg-accent hover:text-accent-foreground hover:scale-[1.02]",
-                  "focus:bg-accent focus:text-accent-foreground focus:outline-none focus:ring-2 focus:ring-coral-500 focus:ring-offset-2",
+                  "focus:bg-accent focus:text-accent-foreground focus:outline-none focus:ring-2 focus:ring-brand-accent focus:ring-offset-2",
                   "active:scale-[0.98] active:bg-accent/80",
                   "min-h-[48px] touch-manipulation" // Ensure proper touch target size
                 )}
@@ -65,12 +65,12 @@ export function MobileNavigation({
                 }}
               >
                 {item.icon && (
-                  <span className="flex-shrink-0 w-5 h-5 text-coral-500">
+                  <span className="flex-shrink-0 w-5 h-5 text-brand-accent">
                     {item.icon}
                   </span>
                 )}
                 <span className="flex-1">{item.label}</span>
-                <span className="w-2 h-2 bg-coral-500/20 rounded-full opacity-0 group-hover:opacity-100 transition-opacity" />
+                <span className="w-2 h-2 bg-brand-accent/20 rounded-full opacity-0 group-hover:opacity-100 transition-opacity" />
               </Link>
             </li>
           ))}
@@ -81,8 +81,8 @@ export function MobileNavigation({
       <div className="p-6 space-y-4 border-t">
         {/* Contact Info */}
         <div className="flex items-center gap-3 p-4 bg-background/50 rounded-xl border">
-          <div className="flex-shrink-0 w-10 h-10 bg-coral-500/10 rounded-full flex items-center justify-center">
-            <Phone className="h-5 w-5 text-coral-500" aria-hidden="true" />
+          <div className="flex-shrink-0 w-10 h-10 bg-brand-green-accent/10 rounded-full flex items-center justify-center">
+            <Phone className="h-5 w-5 text-brand-green-accent" aria-hidden="true" />
           </div>
           <div className="flex-1 min-w-0">
             <p className="text-sm font-semibold text-foreground">Call us anytime</p>
@@ -99,9 +99,7 @@ export function MobileNavigation({
         {/* CTA Button */}
         <Button 
           className={cn(
-            "w-full bg-gradient-to-r from-coral-500 to-coral-600 text-white hover:from-coral-600 hover:to-coral-700",
-            "focus:ring-2 focus:ring-coral-500 focus:ring-offset-2 transition-all duration-200",
-            "h-14 text-base font-semibold rounded-xl shadow-lg hover:shadow-xl",
+            "w-full h-14 text-base font-semibold rounded-xl shadow-lg hover:shadow-xl",
             "active:scale-[0.98] touch-manipulation"
           )}
           onClick={onItemClick}

@@ -273,7 +273,7 @@ export function BookingPromptPopup({
             <div className="space-y-3">
               <Label htmlFor="group-size" className="text-sm font-medium flex items-center gap-2">
                 <Users className="h-4 w-4" />
-                How many travelers?
+                How many participants?
               </Label>
               <Select 
                 value={groupSize.toString()} 
@@ -285,7 +285,7 @@ export function BookingPromptPopup({
                 <SelectContent>
                   {Array.from({ length: 10 }, (_, i) => i + 1).map(num => (
                     <SelectItem key={num} value={num.toString()}>
-                      {num} {num === 1 ? 'traveler' : 'travelers'}
+                      {num} {num === 1 ? 'participant' : 'participants'}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -318,7 +318,7 @@ export function BookingPromptPopup({
             <div className="flex flex-col gap-3 pt-2">
               <Button 
                 onClick={handleStartBooking}
-                className="w-full bg-coral-500 hover:bg-coral-600 text-white font-medium h-11 text-base"
+                className="w-full font-medium h-11 text-base"
                 disabled={groupSize < 1}
               >
                 <span className="flex items-center gap-2">
@@ -339,11 +339,11 @@ export function BookingPromptPopup({
             {/* Trust indicators */}
             <div className="flex items-center justify-center gap-4 pt-2 text-xs text-muted-foreground">
               <span className="flex items-center gap-1">
-                <div className="h-2 w-2 rounded-full bg-green-500" />
+                <div className="h-2 w-2 rounded-full bg-brand-green-accent" />
                 Secure booking
               </span>
               <span className="flex items-center gap-1">
-                <div className="h-2 w-2 rounded-full bg-blue-500" />
+                <div className="h-2 w-2 rounded-full bg-brand-accent" />
                 Free cancellation
               </span>
             </div>

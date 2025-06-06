@@ -83,7 +83,7 @@ export function DescriptionDisplay({
             variant="ghost"
             size="sm"
             onClick={() => setIsExpanded(!isExpanded)}
-            className="text-yellow-600 hover:text-yellow-700 hover:bg-yellow-50"
+            className="text-brand-accent hover:text-brand-accent/80 hover:bg-brand-accent/10"
             aria-expanded={isExpanded}
             aria-controls="description-content"
           >
@@ -110,7 +110,7 @@ export function DescriptionDisplay({
       <Card className={className}>
         <CardHeader>
           <CardTitle className="flex items-center">
-            <FileText className="h-5 w-5 mr-2 text-coral-500" />
+            <FileText className="h-5 w-5 mr-2 text-brand-accent" />
             {title}
           </CardTitle>
         </CardHeader>
@@ -124,7 +124,7 @@ export function DescriptionDisplay({
   return (
     <div className={className}>
       <h2 className="text-2xl font-bold mb-4 flex items-center">
-        <FileText className="h-6 w-6 mr-2 text-coral-500" />
+        <FileText className="h-6 w-6 mr-2 text-brand-accent" />
         {title}
       </h2>
       <div id="description-content">

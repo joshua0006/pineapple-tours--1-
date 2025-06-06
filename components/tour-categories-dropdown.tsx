@@ -206,7 +206,7 @@ export function TourCategoriesDropdown({ className, isMobile = false }: TourCate
         <div className="space-y-1">
           <button
             onClick={() => setIsOpen(!isOpen)}
-            className="flex items-center justify-between w-full px-4 py-3 text-left text-base font-medium rounded-xl transition-all duration-200 hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground focus:outline-none focus:ring-2 focus:ring-coral-500 focus:ring-offset-2"
+            className="flex items-center justify-between w-full px-4 py-3 text-left text-base font-medium rounded-xl transition-all duration-200 hover:bg-coral-50 hover:text-coral-700 dark:hover:bg-coral-500/10 dark:hover:text-coral-300 focus:bg-coral-50 focus:text-coral-700 dark:focus:bg-coral-500/10 dark:focus:text-coral-300 focus:outline-none focus:ring-2 focus:ring-coral-500 focus:ring-offset-2"
             aria-expanded={isOpen}
             aria-haspopup="true"
           >
@@ -223,11 +223,11 @@ export function TourCategoriesDropdown({ className, isMobile = false }: TourCate
                 <div key={category.id} className="border-l-2 border-coral-500/20 ml-4">
                   <button
                     onClick={() => handleCategoryClick(category)}
-                    className="flex items-center justify-between w-full px-4 py-2 text-left text-sm font-medium rounded-lg transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground focus:outline-none"
+                    className="flex items-center justify-between w-full px-4 py-2 text-left text-sm font-medium rounded-lg transition-colors hover:bg-coral-50 hover:text-coral-700 dark:hover:bg-coral-500/10 dark:hover:text-coral-300 focus:bg-coral-50 focus:text-coral-700 dark:focus:bg-coral-500/10 dark:focus:text-coral-300 focus:outline-none"
                     aria-expanded={activeCategory === category.id}
                   >
                     <div className="flex items-center gap-2">
-                      {category.icon}
+                      <span className="text-coral-500 group-hover:text-coral-600 dark:group-hover:text-coral-400 transition-colors">{category.icon}</span>
                       <span>{category.name}</span>
                       {category.featured && (
                         <span className="px-1.5 py-0.5 text-xs bg-coral-500/20 text-coral-700 dark:text-coral-300 rounded">
@@ -243,7 +243,7 @@ export function TourCategoriesDropdown({ className, isMobile = false }: TourCate
                       <Link
                         href={category.href}
                         onClick={handleSubcategoryClick}
-                        className="block px-3 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-accent rounded-md transition-colors"
+                        className="block px-3 py-2 text-sm text-muted-foreground hover:text-coral-700 hover:bg-coral-50 dark:hover:text-coral-300 dark:hover:bg-coral-500/10 rounded-md transition-colors"
                       >
                         View All {category.name}
                       </Link>
@@ -252,7 +252,7 @@ export function TourCategoriesDropdown({ className, isMobile = false }: TourCate
                           key={subcategory.id}
                           href={subcategory.href}
                           onClick={handleSubcategoryClick}
-                          className="block px-3 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-accent rounded-md transition-colors"
+                          className="block px-3 py-2 text-sm text-muted-foreground hover:text-coral-700 hover:bg-coral-50 dark:hover:text-coral-300 dark:hover:bg-coral-500/10 rounded-md transition-colors"
                         >
                           {subcategory.name}
                         </Link>
@@ -273,11 +273,11 @@ export function TourCategoriesDropdown({ className, isMobile = false }: TourCate
     <div className={cn("relative", className)} ref={dropdownRef}>
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center gap-1 px-3 py-2 text-sm font-medium rounded-md transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground focus:outline-none focus:ring-2 focus:ring-coral-500 focus:ring-offset-2"
+        className="flex items-center gap-1 px-3 py-2 text-sm font-medium rounded-md transition-colors hover:bg-coral-50 hover:text-coral-700 dark:hover:bg-coral-500/10 dark:hover:text-coral-300 focus:bg-coral-50 focus:text-coral-700 dark:focus:bg-coral-500/10 dark:focus:text-coral-300 focus:outline-none focus:ring-2 focus:ring-coral-500 focus:ring-offset-2"
         aria-expanded={isOpen}
         aria-haspopup="true"
       >
-        <MapPin className="w-4 h-4" />
+        <MapPin className="w-4 h-4 text-coral-500" />
         <span className="hidden lg:inline">Categories</span>
         <span className="lg:hidden">Tours</span>
         <ChevronDown className={cn("w-3 h-3 transition-transform duration-200", isOpen && "rotate-180")} />
@@ -296,13 +296,13 @@ export function TourCategoriesDropdown({ className, isMobile = false }: TourCate
                     onMouseEnter={() => handleCategoryHover(category.id)}
                     onClick={() => handleCategoryClick(category)}
                     className={cn(
-                      "flex items-center gap-2 w-full px-3 py-2 text-sm rounded-md transition-colors text-left",
+                      "flex items-center gap-2 w-full px-3 py-2 text-sm rounded-md transition-colors text-left group",
                       activeCategory === category.id 
-                        ? "bg-accent text-accent-foreground" 
-                        : "hover:bg-accent/50 hover:text-accent-foreground"
+                        ? "bg-coral-50 text-coral-700 dark:bg-coral-500/10 dark:text-coral-300" 
+                        : "hover:bg-coral-50/50 hover:text-coral-700 dark:hover:bg-coral-500/5 dark:hover:text-coral-300"
                     )}
                   >
-                    <span className="text-coral-500">{category.icon}</span>
+                    <span className="text-coral-500 group-hover:text-coral-600 dark:group-hover:text-coral-400 transition-colors">{category.icon}</span>
                     <span className="flex-1">{category.name}</span>
                     {category.featured && (
                       <span className="px-1.5 py-0.5 text-xs bg-coral-500/20 text-coral-700 dark:text-coral-300 rounded">
@@ -333,11 +333,11 @@ export function TourCategoriesDropdown({ className, isMobile = false }: TourCate
                           <Link
                             href={category.href}
                             onClick={() => setIsOpen(false)}
-                            className="p-3 rounded-lg border border-coral-500/20 bg-coral-500/5 hover:bg-coral-500/10 transition-colors group"
+                            className="p-3 rounded-lg border border-coral-500/20 bg-coral-500/5 hover:bg-coral-500/10 hover:border-coral-500/30 transition-colors group"
                           >
                             <div className="flex items-center gap-2 mb-1">
-                              <span className="text-coral-500">{category.icon}</span>
-                              <span className="font-medium text-sm">View All {category.name}</span>
+                              <span className="text-coral-500 group-hover:text-coral-600 transition-colors">{category.icon}</span>
+                              <span className="font-medium text-sm group-hover:text-coral-700 transition-colors">View All {category.name}</span>
                             </div>
                             <p className="text-xs text-muted-foreground">
                               Explore all tours in this category
@@ -349,9 +349,9 @@ export function TourCategoriesDropdown({ className, isMobile = false }: TourCate
                               key={subcategory.id}
                               href={subcategory.href}
                               onClick={() => setIsOpen(false)}
-                              className="p-3 rounded-lg border hover:bg-accent transition-colors group"
+                              className="p-3 rounded-lg border hover:bg-coral-50 hover:border-coral-500/20 dark:hover:bg-coral-500/5 dark:hover:border-coral-500/20 transition-colors group"
                             >
-                              <div className="font-medium text-sm mb-1 group-hover:text-coral-600 transition-colors">
+                              <div className="font-medium text-sm mb-1 group-hover:text-coral-600 dark:group-hover:text-coral-400 transition-colors">
                                 {subcategory.name}
                               </div>
                               <p className="text-xs text-muted-foreground">

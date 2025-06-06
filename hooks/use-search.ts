@@ -7,7 +7,7 @@ interface SearchFilters {
   productType: string;
   priceRange: string;
   duration: string;
-  travelers: string;
+  participants: string;
   sortBy: string;
   checkIn: string;
   checkOut: string;
@@ -51,7 +51,7 @@ export function useSearch(initialFilters?: Partial<SearchFilters>) {
     productType: 'all',
     priceRange: 'all',
     duration: 'any',
-    travelers: '2',
+    participants: '2',
     sortBy: 'relevance',
     checkIn: '',
     checkOut: '',
@@ -155,7 +155,7 @@ export function useSearch(initialFilters?: Partial<SearchFilters>) {
       productType: 'all',
       priceRange: 'all',
       duration: 'any',
-      travelers: '2',
+      participants: '2',
       sortBy: 'relevance',
       checkIn: '',
       checkOut: '',
@@ -179,7 +179,7 @@ export function useSearch(initialFilters?: Partial<SearchFilters>) {
       productType: 'all',
       priceRange: 'all',
       duration: 'any',
-      travelers: '2',
+      participants: '2',
       sortBy: 'relevance',
       checkIn: '',
       checkOut: '',

@@ -28,7 +28,7 @@ interface BookingFormProps {
 }
 
 export function BookingForm({ product, onClose }: BookingFormProps) {
-  const [travelers, setTravelers] = useState(2)
+  const [participants, setParticipants] = useState(2)
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined)
   const [selectedSession, setSelectedSession] = useState<RezdySession | null>(null)
   const [selectedPickupLocation, setSelectedPickupLocation] = useState<RezdyPickupLocation | null>(null)
@@ -51,7 +51,7 @@ export function BookingForm({ product, onClose }: BookingFormProps) {
     product.productCode,
     startDateRange,
     endDateRange,
-    `ADULT:${travelers}`
+    `ADULT:${participants}`
   )
 
   // Extract available dates from the availability data
@@ -76,13 +76,13 @@ export function BookingForm({ product, onClose }: BookingFormProps) {
       productCode: product.productCode,
       startDateRange,
       endDateRange,
-      travelers,
+      participants,
       availabilityLoading,
       availabilityError,
       availabilityDataLength: availabilityData?.length,
       availableDatesCount: availableDates.size
     })
-  }, [product.productCode, availabilityLoading, availabilityError, availabilityData, availableDates.size, startDateRange, endDateRange, travelers])
+  }, [product.productCode, availabilityLoading, availabilityError, availabilityData, availableDates.size, startDateRange, endDateRange, participants])
 
   // Get sessions for the selected date
   const availableSessions = useMemo(() => {
@@ -96,9 +96,9 @@ export function BookingForm({ product, onClose }: BookingFormProps) {
     return sessions
   }, [availabilityData, selectedDate])
 
-  const handleTravelersChange = (value: string) => {
-    setTravelers(Number.parseInt(value))
-    setSelectedSession(null) // Reset session when travelers change
+  const handleParticipantsChange = (value: string) => {
+    setParticipants(Number.parseInt(value))
+    setSelectedSession(null) // Reset session when participants change
   }
 
   const handleDateChange = (date: Date | undefined) => {
@@ -153,7 +153,7 @@ export function BookingForm({ product, onClose }: BookingFormProps) {
           endTime: selectedSession.endTimeLocal
         },
         pickupLocation: selectedPickupLocation,
-        travelers: travelers,
+        participants: participants,
         pricing: {
           basePrice: basePrice,
           sessionPrice: sessionPrice,
@@ -180,7 +180,7 @@ export function BookingForm({ product, onClose }: BookingFormProps) {
   }
 
   const basePrice = product.advertisedPrice || 0
-  const sessionPrice = selectedSession?.totalPrice || basePrice * travelers
+  const sessionPrice = selectedSession?.totalPrice || basePrice * participants
   const subtotal = sessionPrice
   const taxAndFees = Math.round(subtotal * 0.12)
   const total = subtotal + taxAndFees
@@ -205,17 +205,17 @@ export function BookingForm({ product, onClose }: BookingFormProps) {
       {step === 1 ? (
         <>
           <div className="space-y-2">
-            <Label htmlFor="travelers">Number of Travelers</Label>
+            <Label htmlFor="participants">Number of Participants</Label>
             <div className="relative">
               <Users className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-              <Select defaultValue="2" onValueChange={handleTravelersChange}>
-                <SelectTrigger id="travelers" className="pl-9">
-                  <SelectValue placeholder="Select number of travelers" />
+              <Select defaultValue="2" onValueChange={handleParticipantsChange}>
+                <SelectTrigger id="participants" className="pl-9">
+                  <SelectValue placeholder="Select number of participants" />
                 </SelectTrigger>
                 <SelectContent>
                   {Array.from({ length: Math.min(product.quantityRequiredMax || 10, 10) }, (_, i) => i + 1).map(num => (
                     <SelectItem key={num} value={num.toString()}>
-                      {num} {num === 1 ? 'Traveler' : 'Travelers'}
+                      {num} {num === 1 ? 'Participant' : 'Participants'}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -326,7 +326,7 @@ export function BookingForm({ product, onClose }: BookingFormProps) {
                           </div>
                           <div className="text-right">
                             <div className="font-bold">
-                              {session.totalPrice ? `$${session.totalPrice}` : formatPrice(basePrice * travelers)}
+                              {session.totalPrice ? `$${session.totalPrice}` : formatPrice(basePrice * participants)}
                             </div>
                             <div className="text-sm text-muted-foreground">total</div>
                           </div>
@@ -369,8 +369,8 @@ export function BookingForm({ product, onClose }: BookingFormProps) {
               <span className="text-right">{location}</span>
             </div>
             <div className="flex justify-between">
-              <span>Travelers</span>
-              <span>{travelers} {travelers === 1 ? 'person' : 'people'}</span>
+                              <span>Participants</span>
+              <span>{participants} {participants === 1 ? 'person' : 'people'}</span>
             </div>
             {selectedSession && (
               <div className="flex justify-between">
@@ -446,7 +446,7 @@ export function BookingForm({ product, onClose }: BookingFormProps) {
                     month: 'long',
                     day: 'numeric',
                     year: 'numeric'
-                  })} • {travelers} {travelers === 1 ? "traveler" : "travelers"}
+                                     })} • {participants} {participants === 1 ? "participant" : "participants"}
                 </div>
                 <div className="text-sm text-muted-foreground">
                   <MapPin className="inline h-3 w-3 mr-1" />

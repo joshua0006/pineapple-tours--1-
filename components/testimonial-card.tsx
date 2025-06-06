@@ -28,7 +28,7 @@ export function TestimonialCard({ name, location, image, rating, testimonial }: 
           {Array.from({ length: 5 }).map((_, i) => (
             <Star
               key={i}
-              className={`h-4 w-4 ${i < rating ? "fill-coral-500 text-coral-500" : "fill-muted text-muted-foreground"}`}
+              className={`h-4 w-4 ${i < rating ? "fill-accent text-accent" : "fill-muted text-muted-foreground"}`}
             />
           ))}
         </div>

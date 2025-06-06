@@ -136,7 +136,7 @@ export default function CitySearchPage() {
                     </div>
                     <div className="flex items-center gap-2">
                       <span className="text-sm">
-                        <strong>Travelers:</strong> {searchData.travelers}
+                        <strong>Participants:</strong> {searchData.participants}
                       </span>
                     </div>
                     {searchData.checkIn && (

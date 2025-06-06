@@ -29,10 +29,10 @@ export function TourCard({ tour }: TourCardProps) {
       <CardHeader className="p-0 relative">
         <Image src={tour.image} alt={tour.title} width={400} height={240} className="w-full h-60 object-cover" />
         {tour.isPopular && (
-          <Badge className="absolute right-2 top-2 bg-coral-500 text-white hover:bg-coral-600">Best Seller</Badge>
+          <Badge className="absolute right-2 top-2 bg-accent text-accent-foreground hover:bg-accent/90">Best Seller</Badge>
         )}
         <div className="absolute bottom-2 left-2 flex items-center text-white text-sm bg-black/50 rounded px-2 py-1">
-          <Star className="mr-1 h-4 w-4 fill-coral-500 text-coral-500" />
+          <Star className="mr-1 h-4 w-4 fill-accent text-accent" />
           <span>{tour.rating}</span>
           <span className="ml-1 text-white/70">({tour.reviewCount})</span>
         </div>
@@ -45,11 +45,11 @@ export function TourCard({ tour }: TourCardProps) {
             <span>{tour.location}</span>
           </div>
           <div className="flex items-center">
-            <Calendar className="mr-1 h-4 w-4 text-coral-500" />
+            <Calendar className="mr-1 h-4 w-4 text-accent" />
             <span>{tour.duration}</span>
           </div>
           <div className="flex items-center">
-            <Users className="mr-1 h-4 w-4 text-coral-500" />
+            <Users className="mr-1 h-4 w-4 text-accent" />
             <span>{tour.groupSize}</span>
           </div>
         </div>
@@ -60,7 +60,7 @@ export function TourCard({ tour }: TourCardProps) {
           <span className="text-sm text-muted-foreground ml-1">per person</span>
         </div>
         <Link href={`/tours/${tour.id}`}>
-          <Button className="w-full bg-coral-500 text-white hover:bg-coral-600">View Details</Button>
+          <Button className="w-full bg-accent text-accent-foreground hover:bg-accent/90">View Details</Button>
         </Link>
       </CardFooter>
     </Card>

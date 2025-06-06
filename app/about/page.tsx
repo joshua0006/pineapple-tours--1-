@@ -60,7 +60,7 @@ const values = [
 ]
 
 const stats = [
-  { number: "50,000+", label: "Happy Travelers" },
+          { number: "50,000+", label: "Happy Participants" },
   { number: "15+", label: "Years Experience" },
   { number: "25+", label: "Tours" },
   { number: "98%", label: "Customer Satisfaction" }
@@ -75,13 +75,13 @@ export default function AboutPage() {
         <section className="bg-muted py-16">
           <div className="container">
             <div className="max-w-3xl">
-              <Badge className="bg-coral-500 text-white hover:bg-coral-600 mb-4">About Us</Badge>
+              <Badge className="bg-brand-accent text-brand-secondary hover:bg-brand-accent/90 mb-4">About Us</Badge>
               <h1 className="text-4xl font-bold tracking-tight sm:text-5xl md:text-6xl">
                 Your Gateway to Paradise
               </h1>
               <p className="mt-4 text-xl text-muted-foreground">
                 For over 15 years, Pineapple Tours has been creating unforgettable tropical vacation experiences, 
-                connecting travelers with the world's most beautiful tours.
+                connecting participants with the world's most beautiful tours.
               </p>
             </div>
           </div>
@@ -95,7 +95,7 @@ export default function AboutPage() {
               <div className="space-y-4 text-muted-foreground">
                 <p>
                   Pineapple Tours was born from a simple dream: to share the magic of tropical paradises with fellow 
-                  travelers. Founded in 2009 by Sarah Johnson after her life-changing trip to Hawaii, our company 
+                  participants. Founded in 2009 by Sarah Johnson after her life-changing trip to Hawaii, our company 
                   started as a small operation focused on authentic, personalized experiences.
                 </p>
                 <p>
@@ -135,7 +135,7 @@ export default function AboutPage() {
             <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
               {stats.map((stat, index) => (
                 <div key={index} className="text-center">
-                  <div className="text-4xl font-bold text-coral-600 mb-2">{stat.number}</div>
+                  <div className="text-4xl font-bold text-brand-accent mb-2">{stat.number}</div>
                   <div className="text-muted-foreground">{stat.label}</div>
                 </div>
               ))}
@@ -156,8 +156,8 @@ export default function AboutPage() {
             {values.map((value, index) => (
               <Card key={index} className="text-center">
                 <CardContent className="p-6">
-                  <div className="w-12 h-12 bg-coral-500 rounded-lg flex items-center justify-center mx-auto mb-4">
-                    <value.icon className="h-6 w-6 text-white" />
+                  <div className="w-12 h-12 bg-brand-accent rounded-lg flex items-center justify-center mx-auto mb-4">
+                    <value.icon className="h-6 w-6 text-brand-secondary" />
                   </div>
                   <h3 className="text-lg font-semibold mb-2">{value.title}</h3>
                   <p className="text-muted-foreground text-sm">{value.description}</p>
@@ -190,7 +190,7 @@ export default function AboutPage() {
                       />
                     </div>
                     <h3 className="text-lg font-semibold mb-1">{member.name}</h3>
-                    <p className="text-coral-600 font-medium text-sm mb-3">{member.role}</p>
+                    <p className="text-brand-accent font-medium text-sm mb-3">{member.role}</p>
                     <p className="text-muted-foreground text-sm">{member.bio}</p>
                   </CardContent>
                 </Card>
@@ -209,7 +209,7 @@ export default function AboutPage() {
               preserving these paradises for future generations."
             </blockquote>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Button className="bg-coral-500 text-white hover:bg-coral-600">
+              <Button>
                 Start Your Journey
               </Button>
               <Button variant="outline">
@@ -231,23 +231,23 @@ export default function AboutPage() {
             <div className="grid gap-8 md:grid-cols-3">
               <Card className="text-center">
                 <CardContent className="p-6">
-                  <Award className="h-12 w-12 text-coral-500 mx-auto mb-4" />
+                  <Award className="h-12 w-12 text-brand-accent mx-auto mb-4" />
                   <h3 className="text-lg font-semibold mb-2">Best Tour Operator 2023</h3>
                   <p className="text-muted-foreground text-sm">Travel Excellence Awards</p>
                 </CardContent>
               </Card>
               <Card className="text-center">
                 <CardContent className="p-6">
-                  <Award className="h-12 w-12 text-coral-500 mx-auto mb-4" />
+                  <Award className="h-12 w-12 text-brand-accent mx-auto mb-4" />
                   <h3 className="text-lg font-semibold mb-2">Sustainable Tourism Leader</h3>
                   <p className="text-muted-foreground text-sm">Green Travel Association</p>
                 </CardContent>
               </Card>
               <Card className="text-center">
                 <CardContent className="p-6">
-                  <Award className="h-12 w-12 text-coral-500 mx-auto mb-4" />
+                  <Award className="h-12 w-12 text-brand-accent mx-auto mb-4" />
                   <h3 className="text-lg font-semibold mb-2">Customer Choice Award</h3>
-                  <p className="text-muted-foreground text-sm">TripAdvisor Travelers' Choice</p>
+                  <p className="text-muted-foreground text-sm">TripAdvisor Participants' Choice</p>
                 </CardContent>
               </Card>
             </div>

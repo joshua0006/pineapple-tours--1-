@@ -54,7 +54,7 @@ export function DynamicTourCard({ product, loading = false }: DynamicTourCardPro
             </div>
           )}
           {product.status === 'ACTIVE' && (
-            <Badge className="absolute right-3 top-3 bg-coral-500/90 text-white hover:bg-coral-600 shadow-lg backdrop-blur-sm">
+                          <Badge className="absolute right-3 top-3 bg-brand-accent/90 text-brand-secondary hover:bg-brand-accent shadow-lg backdrop-blur-sm">
               Available
             </Badge>
           )}
@@ -65,11 +65,11 @@ export function DynamicTourCard({ product, loading = false }: DynamicTourCardPro
       <CardContent className="p-6">
         <div className="space-y-4">
           <div>
-            <h3 className="text-xl font-bold text-gray-900 line-clamp-2 min-h-[3.5rem] leading-7 group-hover:text-coral-600 transition-colors duration-200">
+                          <h3 className="text-xl font-bold text-gray-900 line-clamp-2 min-h-[3.5rem] leading-7 group-hover:text-brand-accent transition-colors duration-200">
               {product.name}
             </h3>
             <div className="mt-2 flex items-center text-gray-600">
-              <MapPin className="mr-2 h-4 w-4 text-coral-500" aria-hidden="true" />
+                              <MapPin className="mr-2 h-4 w-4 text-brand-accent" aria-hidden="true" />
               <span className="text-sm line-clamp-1 font-medium">{location}</span>
             </div>
           </div>
@@ -92,7 +92,7 @@ export function DynamicTourCard({ product, loading = false }: DynamicTourCardPro
       <CardFooter className="p-6 pt-0">
         <Link href={`/tours/${slug}`} className="w-full">
           <Button 
-            className="w-full bg-coral-500 text-white hover:bg-coral-600 hover:shadow-lg transform hover:-translate-y-0.5 transition-all duration-200 py-3 font-semibold"
+                          className="w-full bg-brand-accent text-brand-secondary hover:bg-brand-accent/90 hover:shadow-lg transform hover:-translate-y-0.5 transition-all duration-200 py-3 font-semibold"
             aria-label={`View details and book ${product.name} tour`}
           >
             View Details & Book

@@ -26,7 +26,7 @@ const contactInfo = [
     icon: Phone,
     title: "Call Us",
     details: [
-      "1-800-PINEAPPLE",
+      "0466 331 232",
       "(1-800-746-3277)",
       "Available 24/7"
     ]
@@ -323,7 +323,7 @@ export default function ContactPage() {
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Button>
                 <Phone className="mr-2 h-4 w-4" />
-                Call Now: 1-800-PINEAPPLE
+                                    Call Now: 0466 331 232
               </Button>
               <Button variant="outline">
                 <Mail className="mr-2 h-4 w-4" />

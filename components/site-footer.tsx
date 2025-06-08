@@ -1,141 +1,173 @@
 import Link from "next/link"
-import { Facebook, Instagram, Twitter, Youtube, Mail, Phone, MapPin } from "lucide-react"
-import { Separator } from "@/components/ui/separator"
+import { Facebook, Instagram, Youtube } from "lucide-react"
+import { Button } from "@/components/ui/button"
 
 export function SiteFooter() {
   return (
-    <footer className="bg-gray-900 text-gray-100">
-      <div className="container py-12 md:py-16">
-        <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-4">
-          <div>
-            <Link href="/" className="flex items-center gap-2 font-bold text-xl">
-              <img src="/pineapple-tour-logo.png" alt="Pineapple Tours Logo" className="h-10" />
-              <span>Pineapple Tours</span>
-            </Link>
-            <p className="mt-4 text-gray-400">
-              Discover paradise with Pineapple Tours. We specialize in creating unforgettable tropical vacation
-              experiences with real-time booking and local expertise.
-            </p>
-            <div className="mt-6 flex gap-4">
-              <Link href="#" className="text-gray-400 hover:text-white">
-                <Facebook className="h-5 w-5" />
-                <span className="sr-only">Facebook</span>
-              </Link>
-              <Link href="#" className="text-gray-400 hover:text-white">
-                <Instagram className="h-5 w-5" />
-                <span className="sr-only">Instagram</span>
-              </Link>
-              <Link href="#" className="text-gray-400 hover:text-white">
-                <Twitter className="h-5 w-5" />
-                <span className="sr-only">Twitter</span>
-              </Link>
-              <Link href="#" className="text-gray-400 hover:text-white">
-                <Youtube className="h-5 w-5" />
-                <span className="sr-only">YouTube</span>
-              </Link>
-            </div>
-          </div>
-          <div>
-            <h3 className="text-lg font-medium">Quick Links</h3>
-            <nav className="mt-4 flex flex-col gap-2">
-              <Link href="/tours" className="text-gray-400 hover:text-white">
-                All Tours
-              </Link>
-              <Link href="/search?category=adventure" className="text-gray-400 hover:text-white">
-                Adventure Tours
-              </Link>
-              <Link href="/search?category=cultural" className="text-gray-400 hover:text-white">
-                Cultural Tours
-              </Link>
-              <Link href="/search?category=nature" className="text-gray-400 hover:text-white">
-                Nature Tours
-              </Link>
-              <Link href="/search?category=water-activities" className="text-gray-400 hover:text-white">
-                Water Activities
-              </Link>
-              <Link href="/about" className="text-gray-400 hover:text-white">
-                About Us
-              </Link>
-              <Link href="/contact" className="text-gray-400 hover:text-white">
-                Contact Us
-              </Link>
-            </nav>
-          </div>
-          <div>
-            <h3 className="text-lg font-medium">Tour Categories</h3>
-            <nav className="mt-4 flex flex-col gap-2">
-              <Link href="/search?category=family" className="text-gray-400 hover:text-white">
-                Family Tours
-              </Link>
-              <Link href="/search?category=romantic" className="text-gray-400 hover:text-white">
-                Romantic Tours
-              </Link>
-              <Link href="/search?category=luxury" className="text-gray-400 hover:text-white">
-                Luxury Tours
-              </Link>
-              <Link href="/search?category=food-wine" className="text-gray-400 hover:text-white">
-                Food & Wine
-              </Link>
-              <Link href="/search?category=photography" className="text-gray-400 hover:text-white">
-                Photography Tours
-              </Link>
-              <Link href="/search?category=transfers" className="text-gray-400 hover:text-white">
-                Transportation
-              </Link>
-            </nav>
-          </div>
-          <div>
-            <h3 className="text-lg font-medium">Contact & Support</h3>
-            <div className="mt-4 flex flex-col gap-4">
-              <div className="flex items-start gap-3">
-                                  <MapPin className="h-5 w-5 text-accent mt-0.5" />
-                <div className="text-gray-400">
-                  <p className="font-medium">Pineapple Tours HQ</p>
-                  <p>123 Paradise Lane</p>
-                  <p>Honolulu, HI 96815</p>
-                  <p>United States</p>
+    <footer className="relative bg-gray-900 text-gray-100">
+      {/* Background image */}
+      <div 
+        className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+        style={{
+          backgroundImage: "url('/footer-images/footer-bg.jpg')"
+        }}
+      />
+      
+      {/* Dark overlay */}
+      <div className="absolute inset-0 bg-black/70" />
+      
+      {/* Content */}
+      <div className="relative z-10">
+        <div className="container py-12 md:py-16">
+          {/* Two column layout: Left side (logos/CTA) and Right side (footer links) */}
+          <div className="grid gap-8 lg:grid-cols-4 mb-12">
+            {/* Left column: Logo and CTA buttons */}
+            <div className="flex flex-col gap-8 lg:col-span-1">
+              <div className="flex items-center gap-4">
+                <div className="flex items-center justify-center gap-8">
+                <img 
+                    src="/footer-images/ausowned-certified-circular.svg" 
+                    alt="Australian Owned Certified Business" 
+                    className="h-32 w-auto"
+                  />
+                 <div className="bg-transparent">
+                  <img 
+                    src="/footer-images/Mask-Group-5@2x.avif" 
+                    alt="Tourism Emissions Reduction Commitment" 
+                    className="h-32 w-auto"
+                  />
+                </div>
                 </div>
               </div>
-              <div className="flex items-center gap-3">
-                                  <Phone className="h-5 w-5 text-accent" />
-                <div className="text-gray-400">
-                  <p className="font-medium">1-800-PINEAPPLE</p>
-                  <p className="text-sm">24/7 Customer Support</p>
-                </div>
-              </div>
-              <div className="flex items-center gap-3">
-                                  <Mail className="h-5 w-5 text-accent" />
-                <div className="text-gray-400">
-                  <p className="font-medium">info@pineappletours.com</p>
-                  <p className="text-sm">Booking & Inquiries</p>
-                </div>
+              <div className="flex flex-col gap-4">
+                <Button 
+                  asChild 
+                  className="bg-red-500 hover:bg-red-600 text-white px-8 py-3 text-lg font-semibold"
+                >
+                  <Link href="/booking">BOOK YOUR TOUR NOW</Link>
+                </Button>
+                <Button 
+                  asChild 
+                  variant="outline" 
+                  className="border-red-500 text-red-500 hover:bg-red-500 hover:text-white px-8 py-3 text-lg font-semibold"
+                >
+                  <Link href="tel:0466331232">CALL US ON 0466 331 232</Link>
+                </Button>
               </div>
             </div>
+
+            {/* Right column: Main footer content */}
+            <div className="grid gap-8 md:grid-cols-3 lg:grid-cols-3 lg:col-span-3">
+            {/* Quicklinks */}
+            <div>
+              <h3 className="text-red-500 text-lg font-semibold mb-4">Quicklinks</h3>
+              <nav className="flex flex-col gap-2">
+                <Link href="/tours?category=hop-on-hop-off" className="text-gray-300 hover:text-white transition-colors">
+                  Hop on Hop off
+                </Link>
+                <Link href="/tours" className="text-gray-300 hover:text-white transition-colors">
+                  Tours
+                </Link>
+                <Link href="/tours?category=multiday-tours" className="text-gray-300 hover:text-white transition-colors">
+                  Packages
+                </Link>
+                <Link href="/tours?category=bus-charter" className="text-gray-300 hover:text-white transition-colors">
+                  Bus Charter
+                </Link>
+                <Link href="/gift-vouchers" className="text-gray-300 hover:text-white transition-colors">
+                  Gift Vouchers
+                </Link>
+                <Link href="/tours?category=day-tours" className="text-gray-300 hover:text-white transition-colors">
+                  Bus Tours
+                </Link>
+              </nav>
+            </div>
+
+            {/* Useful Info */}
+            <div>
+              <h3 className="text-red-500 text-lg font-semibold mb-4">Useful Info</h3>
+              <nav className="flex flex-col gap-2">
+                <Link href="/faq" className="text-gray-300 hover:text-white transition-colors">
+                  FAQ
+                </Link>
+                <Link href="/feedback" className="text-gray-300 hover:text-white transition-colors">
+                  Feedback
+                </Link>
+                <Link href="/queensland-weather-info" className="text-gray-300 hover:text-white transition-colors">
+                  Queensland Weather Info
+                </Link>
+                <Link href="/contact" className="text-gray-300 hover:text-white transition-colors">
+                  Contact Us
+                </Link>
+                <Link href="/work-with-us" className="text-gray-300 hover:text-white transition-colors">
+                  Work With Us
+                </Link>
+                <Link href="/accessibility" className="text-gray-300 hover:text-white transition-colors">
+                  Accessibility
+                </Link>
+                <Link href="/companion-card" className="text-gray-300 hover:text-white transition-colors">
+                  Companion Card - Accepted Here
+                </Link>
+              </nav>
+            </div>
+
+            {/* Legal */}
+            <div>
+              <h3 className="text-red-500 text-lg font-semibold mb-4">Legal</h3>
+              <nav className="flex flex-col gap-2">
+                <Link href="/terms-and-conditions" className="text-gray-300 hover:text-white transition-colors">
+                  Terms and Conditions
+                </Link>
+                <Link href="/refund-and-exchange-policy" className="text-gray-300 hover:text-white transition-colors">
+                  Refund and Exchange Policy
+                </Link>
+                <Link href="/allergies-and-dietary-requirements" className="text-gray-300 hover:text-white transition-colors">
+                  Allergies and Dietary requirements
+                </Link>
+                <Link href="/privacy-policy" className="text-gray-300 hover:text-white transition-colors">
+                  Privacy Policy
+                </Link>
+                <Link href="/sustainable-tourism" className="text-gray-300 hover:text-white transition-colors">
+                  Sustainable Tourism
+                </Link>
+              </nav>
+            </div>
+            </div>
           </div>
-        </div>
-        <Separator className="my-8 bg-gray-800" />
-        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-          <div className="flex flex-col gap-2 md:flex-row md:items-center md:gap-4">
-            <p className="text-sm text-gray-400">
-              &copy; {new Date().getFullYear()} Pineapple Tours. All rights reserved.
-            </p>
-            <p className="text-xs text-gray-500">
-              Powered by Rezdy • Real-time booking system
-            </p>
-          </div>
-          <div className="flex gap-4">
-            <Link href="/terms" className="text-sm text-gray-400 hover:text-white">
-              Terms & Conditions
-            </Link>
-            <Link href="/privacy" className="text-sm text-gray-400 hover:text-white">
-              Privacy Policy
-            </Link>
-            <Link href="/faq" className="text-sm text-gray-400 hover:text-white">
-              FAQ
-            </Link>
-            <Link href="/support" className="text-sm text-gray-400 hover:text-white">
-              Support
-            </Link>
+
+          {/* Certification badges */}
+          <div className="flex flex-col lg:flex-row items-center justify-between gap-8 mt-12 pt-8 border-t border-gray-800">
+            <div className="flex flex-wrap items-center gap-6">
+              
+              <div className="bg-transparent">
+                <img 
+                  src="/footer-images/Sustainable-Supply-Nation-1024x196.webp" 
+                  alt="Supply Nation Registered" 
+                  className="h-48 w-auto"
+                />
+              </div>
+            </div>
+
+            {/* Social media and copyright */}
+            <div className="flex flex-col items-center lg:items-end gap-4">
+              <div className="flex gap-4">
+                <Link href="#" className="text-gray-400 hover:text-white transition-colors">
+                  <Instagram className="h-6 w-6" />
+                  <span className="sr-only">Instagram</span>
+                </Link>
+                <Link href="#" className="text-gray-400 hover:text-white transition-colors">
+                  <Facebook className="h-6 w-6" />
+                  <span className="sr-only">Facebook</span>
+                </Link>
+                <Link href="#" className="text-gray-400 hover:text-white transition-colors">
+                  <Youtube className="h-6 w-6" />
+                  <span className="sr-only">YouTube</span>
+                </Link>
+              </div>
+              <p className="text-sm text-gray-400 text-center lg:text-right">
+                Copyright © 2014 - {new Date().getFullYear()} Pineapple Tours. All rights reserved.
+              </p>
+            </div>
           </div>
         </div>
       </div>

@@ -12,38 +12,40 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { Gift, Heart, Calendar, Star, CreditCard, Mail, Download, RefreshCw } from "lucide-react"
+import { GiftVoucherCard } from "@/components/ui/gift-voucher-card"
+import { GiftVoucherFiltersComponent } from "@/components/ui/gift-voucher-filters"
+import { Gift, Heart, Calendar, Star, CreditCard, Mail, Download, RefreshCw, AlertTriangle, CheckCircle } from "lucide-react"
 import Link from "next/link"
-import { useRezdyProducts } from "@/hooks/use-rezdy"
-import { RezdyProduct } from "@/lib/types/rezdy"
+import { useRezdyGiftVouchers, useGiftVoucherTerms } from "@/hooks/use-rezdy"
+import { RezdyProduct, GiftVoucherFilters } from "@/lib/types/rezdy"
 
 export default function GiftVouchersPage() {
-  const { data: allProducts, loading, error } = useRezdyProducts()
-  const [featuredProducts, setFeaturedProducts] = useState<RezdyProduct[]>([])
+  const [filters, setFilters] = useState<GiftVoucherFilters>({
+    sortBy: 'popularity',
+    sortOrder: 'desc',
+    limit: 12,
+    offset: 0
+  })
 
-  // Get featured products for gift vouchers
-  useEffect(() => {
-    if (allProducts) {
-      // Sort by price and get a variety of products for gift vouchers
-      const sorted = [...allProducts]
-        .filter(product => product.advertisedPrice && product.advertisedPrice > 0)
-        .sort((a, b) => (a.advertisedPrice || 0) - (b.advertisedPrice || 0))
-      
-      // Get products from different price ranges
-      const budget = sorted.filter(p => (p.advertisedPrice || 0) < 100)
-      const mid = sorted.filter(p => (p.advertisedPrice || 0) >= 100 && (p.advertisedPrice || 0) < 200)
-      const premium = sorted.filter(p => (p.advertisedPrice || 0) >= 200)
-      
-      const featured = [
-        budget[0],
-        mid[0] || sorted[Math.floor(sorted.length / 2)],
-        premium[0] || sorted[sorted.length - 1]
-      ].filter(Boolean)
-      
-      setFeaturedProducts(featured)
+  const { data: giftVouchers, loading, error, retry, retryCount, maxRetries } = useRezdyGiftVouchers(filters)
+  const terms = useGiftVoucherTerms()
+  const [showPurchaseForm, setShowPurchaseForm] = useState(false)
+  const [selectedVoucher, setSelectedVoucher] = useState<RezdyProduct | null>(null)
+
+  const handlePurchase = (productCode: string) => {
+    const voucher = giftVouchers?.find(v => v.productCode === productCode)
+    if (voucher) {
+      setSelectedVoucher(voucher)
+      setShowPurchaseForm(true)
     }
-  }, [allProducts])
-  const voucherTypes = [
+  }
+
+  const handleFiltersChange = (newFilters: GiftVoucherFilters) => {
+    setFilters(newFilters)
+  }
+
+  // Default voucher types for fallback
+  const defaultVoucherTypes = [
     {
       id: 1,
       name: "Adventure Explorer",
@@ -111,20 +113,22 @@ export default function GiftVouchersPage() {
         <PageHeader
           title="Gift Vouchers"
           subtitle="Give the gift of adventure with our flexible travel vouchers"
-         
           primaryAction={{
             label: "Buy Gift Voucher",
             icon: CreditCard,
-            onClick: () => console.log("Buy gift voucher clicked")
+            onClick: () => setShowPurchaseForm(true)
           }}
           secondaryAction={{
             label: "Learn More",
-            onClick: () => console.log("Learn more clicked")
+            onClick: () => {
+              const benefitsSection = document.getElementById('benefits-section')
+              benefitsSection?.scrollIntoView({ behavior: 'smooth' })
+            }
           }}
         />
 
         {/* Benefits Section */}
-        <section className="py-16 bg-gray-50">
+        <section id="benefits-section" className="py-16 bg-gray-50">
           <div className="container mx-auto px-4">
             <div className="text-center mb-12">
               <h2 className="text-3xl md:text-4xl font-bold text-brand-text mb-4 font-barlow">
@@ -155,7 +159,7 @@ export default function GiftVouchersPage() {
           </div>
         </section>
 
-        {/* Voucher Types Section */}
+        {/* Gift Vouchers Section */}
         <section className="py-16">
           <div className="container mx-auto px-4">
             <div className="text-center mb-12">
@@ -163,94 +167,136 @@ export default function GiftVouchersPage() {
                 Choose Your Gift Voucher
               </h2>
               <p className="text-lg text-muted-foreground max-w-2xl mx-auto font-work-sans">
-                {loading ? 'Loading available gift voucher options...' : 
-                 'Select from our curated voucher packages or create a custom amount'}
+                Select from our curated voucher packages or create a custom amount
               </p>
             </div>
 
+            {/* Enhanced Error Handling */}
             {error && (
-              <Alert className="mb-8">
-                <AlertDescription className="flex items-center gap-2">
-                  <RefreshCw className="h-4 w-4" />
-                  Unable to load featured products. Showing default voucher options.
+              <Alert className="mb-8 border-destructive">
+                <AlertTriangle className="h-4 w-4" />
+                <AlertDescription className="flex items-center justify-between w-full">
+                  <div>
+                    <strong>Unable to load gift vouchers:</strong> {error}
+                    {retryCount > 0 && (
+                      <span className="block text-sm mt-1">
+                        Retry attempt {retryCount} of {maxRetries}
+                      </span>
+                    )}
+                  </div>
+                  <Button variant="outline" size="sm" onClick={retry} disabled={loading}>
+                    <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
+                    Retry
+                  </Button>
                 </AlertDescription>
               </Alert>
             )}
 
-            {loading ? (
-              <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
-                {[1, 2, 3, 4].map((i) => (
+            {/* Success message when vouchers are loaded */}
+            {!loading && !error && giftVouchers && giftVouchers.length > 0 && (
+              <Alert className="mb-8 border-green-500 bg-green-50">
+                <CheckCircle className="h-4 w-4 text-green-600" />
+                <AlertDescription className="text-green-800">
+                  Successfully loaded {giftVouchers.length} gift voucher{giftVouchers.length !== 1 ? 's' : ''} from our catalog
+                </AlertDescription>
+              </Alert>
+            )}
+
+            {/* Filters */}
+            <GiftVoucherFiltersComponent
+              filters={filters}
+              onFiltersChange={handleFiltersChange}
+              totalResults={giftVouchers?.length || 0}
+              isLoading={loading}
+              className="mb-8"
+            />
+
+            {/* Loading State */}
+            {loading && (
+              <div className="grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+                {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
                   <Card key={i} className="overflow-hidden">
                     <Skeleton className="h-48 w-full" />
                     <CardHeader>
                       <Skeleton className="h-6 w-3/4" />
                       <Skeleton className="h-4 w-full" />
+                      <Skeleton className="h-4 w-2/3" />
                     </CardHeader>
                     <CardContent>
-                      <Skeleton className="h-4 w-full mb-2" />
-                      <Skeleton className="h-4 w-2/3 mb-4" />
+                      <div className="space-y-2 mb-4">
+                        <Skeleton className="h-4 w-full" />
+                        <Skeleton className="h-4 w-full" />
+                        <Skeleton className="h-4 w-3/4" />
+                      </div>
                       <Skeleton className="h-10 w-full" />
                     </CardContent>
                   </Card>
                 ))}
               </div>
-            ) : (
-              <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
-                {/* Featured Products from Rezdy */}
-                {featuredProducts.map((product, index) => (
-                  <Card key={product.productCode} className="overflow-hidden hover:shadow-xl transition-shadow relative">
-                    {index === 1 && (
-                      <Badge className="absolute top-4 right-4 bg-brand-accent text-brand-secondary z-10">
-                        Most Popular
-                      </Badge>
-                    )}
-                    <div className="relative h-48">
-                      <img 
-                        src={product.images?.[0]?.itemUrl || "/api/placeholder/300/200"} 
-                        alt={product.name}
-                        className="w-full h-full object-cover"
-                      />
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
-                      <div className="absolute bottom-4 left-4 text-white">
-                        <div className="text-2xl font-bold font-barlow">${product.advertisedPrice}</div>
+            )}
+
+            {/* Gift Vouchers Grid */}
+            {!loading && (
+              <div className="grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+                {/* Rezdy Gift Vouchers */}
+                {giftVouchers && giftVouchers.length > 0 ? (
+                  giftVouchers.map((voucher, index) => (
+                    <GiftVoucherCard
+                      key={voucher.productCode}
+                      product={voucher}
+                      isPopular={index === 1} // Mark second voucher as popular
+                      terms={terms}
+                      onPurchase={handlePurchase}
+                    />
+                  ))
+                ) : (
+                  // Fallback to default voucher types if no Rezdy vouchers
+                  !error && defaultVoucherTypes.map((voucher) => (
+                    <Card key={voucher.id} className="overflow-hidden hover:shadow-xl transition-shadow relative">
+                      {voucher.popular && (
+                        <Badge className="absolute top-4 right-4 bg-brand-accent text-brand-secondary z-10">
+                          Most Popular
+                        </Badge>
+                      )}
+                      <div className="relative h-48">
+                        <img 
+                          src={voucher.image} 
+                          alt={voucher.name}
+                          className="w-full h-full object-cover"
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
+                        <div className="absolute bottom-4 left-4 text-white">
+                          <div className="text-2xl font-bold font-barlow">{voucher.value}</div>
+                        </div>
                       </div>
-                    </div>
-                    <CardHeader>
-                      <CardTitle className="font-barlow text-brand-text">{product.name}</CardTitle>
-                      <CardDescription className="font-work-sans">
-                        {product.shortDescription || 'Perfect for creating unforgettable memories'}
-                      </CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                      <ul className="space-y-2 mb-4">
-                        <li className="flex items-center gap-2 text-sm text-muted-foreground">
-                          <Star className="h-3 w-3 text-brand-accent" />
-                          Valid for 12 months
-                        </li>
-                        <li className="flex items-center gap-2 text-sm text-muted-foreground">
-                          <Star className="h-3 w-3 text-brand-accent" />
-                          Redeemable for this experience
-                        </li>
-                        <li className="flex items-center gap-2 text-sm text-muted-foreground">
-                          <Star className="h-3 w-3 text-brand-accent" />
-                          Digital delivery
-                        </li>
-                        <li className="flex items-center gap-2 text-sm text-muted-foreground">
-                          <Star className="h-3 w-3 text-brand-accent" />
-                          Transferable
-                        </li>
-                      </ul>
-                      <Link href={`/tours/${product.productCode}`}>
-                        <Button className="w-full bg-brand-accent hover:bg-brand-accent/90 text-brand-secondary">
-                          Purchase Voucher
+                      <CardHeader>
+                        <CardTitle className="font-barlow text-brand-text">{voucher.name}</CardTitle>
+                        <CardDescription className="font-work-sans">
+                          {voucher.description}
+                        </CardDescription>
+                      </CardHeader>
+                      <CardContent>
+                        <ul className="space-y-2 mb-4">
+                          {voucher.features.map((feature, index) => (
+                            <li key={index} className="flex items-center gap-2 text-sm text-muted-foreground">
+                              <Star className="h-3 w-3 text-brand-accent" />
+                              {feature}
+                            </li>
+                          ))}
+                        </ul>
+                        <Button 
+                          className="w-full bg-brand-accent hover:bg-brand-accent/90 text-brand-secondary"
+                          onClick={() => setShowPurchaseForm(true)}
+                        >
+                          {voucher.value === "Custom" ? "Customize Amount" : "Purchase Voucher"}
                         </Button>
-                      </Link>
-                    </CardContent>
-                  </Card>
-                ))}
-                
-                {/* Custom Amount Voucher */}
-                <Card className="overflow-hidden hover:shadow-xl transition-shadow relative">
+                      </CardContent>
+                    </Card>
+                  ))
+                )}
+
+                {/* Custom Amount Voucher - Always show */}
+                <Card className="overflow-hidden hover:shadow-xl transition-shadow relative border-2 border-brand-accent/20">
                   <div className="relative h-48">
                     <img 
                       src="/api/placeholder/300/200" 
@@ -261,6 +307,9 @@ export default function GiftVouchersPage() {
                     <div className="absolute bottom-4 left-4 text-white">
                       <div className="text-2xl font-bold font-barlow">Custom</div>
                     </div>
+                    <Badge className="absolute top-4 right-4 bg-brand-accent text-brand-secondary">
+                      Flexible
+                    </Badge>
                   </div>
                   <CardHeader>
                     <CardTitle className="font-barlow text-brand-text">Custom Amount</CardTitle>
@@ -287,52 +336,14 @@ export default function GiftVouchersPage() {
                         Digital delivery
                       </li>
                     </ul>
-                    <Button className="w-full bg-brand-accent hover:bg-brand-accent/90 text-brand-secondary">
+                    <Button 
+                      className="w-full bg-brand-accent hover:bg-brand-accent/90 text-brand-secondary"
+                      onClick={() => setShowPurchaseForm(true)}
+                    >
                       Customize Amount
                     </Button>
                   </CardContent>
                 </Card>
-
-                {/* Default voucher types if no featured products */}
-                {featuredProducts.length === 0 && voucherTypes.map((voucher) => (
-                  <Card key={voucher.id} className="overflow-hidden hover:shadow-xl transition-shadow relative">
-                    {voucher.popular && (
-                      <Badge className="absolute top-4 right-4 bg-brand-accent text-brand-secondary z-10">
-                        Most Popular
-                      </Badge>
-                    )}
-                    <div className="relative h-48">
-                      <img 
-                        src={voucher.image} 
-                        alt={voucher.name}
-                        className="w-full h-full object-cover"
-                      />
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
-                      <div className="absolute bottom-4 left-4 text-white">
-                        <div className="text-2xl font-bold font-barlow">{voucher.value}</div>
-                      </div>
-                    </div>
-                    <CardHeader>
-                      <CardTitle className="font-barlow text-brand-text">{voucher.name}</CardTitle>
-                      <CardDescription className="font-work-sans">
-                        {voucher.description}
-                      </CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                      <ul className="space-y-2 mb-4">
-                        {voucher.features.map((feature, index) => (
-                          <li key={index} className="flex items-center gap-2 text-sm text-muted-foreground">
-                            <Star className="h-3 w-3 text-brand-accent" />
-                            {feature}
-                          </li>
-                        ))}
-                      </ul>
-                      <Button className="w-full bg-brand-accent hover:bg-brand-accent/90 text-brand-secondary">
-                        {voucher.value === "Custom" ? "Customize Amount" : "Purchase Voucher"}
-                      </Button>
-                    </CardContent>
-                  </Card>
-                ))}
               </div>
             )}
           </div>
@@ -395,70 +406,89 @@ export default function GiftVouchersPage() {
         </section>
 
         {/* Purchase Form Section */}
-        <section className="py-16">
-          <div className="container mx-auto px-4">
-            <div className="max-w-2xl mx-auto">
-              <div className="text-center mb-8">
-                <h2 className="text-3xl md:text-4xl font-bold text-brand-primary mb-4 font-['Barlow']">
-                  Purchase Gift Voucher
-                </h2>
-                <p className="text-lg text-gray-600 font-['Work_Sans']">
-                  Fill out the form below to purchase your gift voucher
-                </p>
-              </div>
-              
-              <Card className="p-6">
-                <form className="space-y-6">
-                  <div className="grid md:grid-cols-2 gap-4">
-                    <div>
-                      <Label htmlFor="recipient-name">Recipient Name</Label>
-                      <Input id="recipient-name" placeholder="Enter recipient's name" />
-                    </div>
-                    <div>
-                      <Label htmlFor="recipient-email">Recipient Email</Label>
-                      <Input id="recipient-email" type="email" placeholder="Enter recipient's email" />
-                    </div>
-                  </div>
-                  
-                  <div className="grid md:grid-cols-2 gap-4">
-                    <div>
-                      <Label htmlFor="sender-name">Your Name</Label>
-                      <Input id="sender-name" placeholder="Enter your name" />
-                    </div>
-                    <div>
-                      <Label htmlFor="sender-email">Your Email</Label>
-                      <Input id="sender-email" type="email" placeholder="Enter your email" />
-                    </div>
-                  </div>
-                  
-                  <div>
-                    <Label htmlFor="voucher-amount">Voucher Amount</Label>
-                    <Input id="voucher-amount" placeholder="$100" />
-                  </div>
-                  
-                  <div>
-                    <Label htmlFor="personal-message">Personal Message (Optional)</Label>
-                    <Textarea 
-                      id="personal-message" 
-                      placeholder="Add a personal message for the recipient..."
-                      rows={4}
-                    />
-                  </div>
-                  
-                  <div>
-                    <Label htmlFor="delivery-date">Delivery Date</Label>
-                    <Input id="delivery-date" type="date" />
-                  </div>
-                  
-                  <Button className="w-full" size="lg">
-                    <CreditCard className="mr-2 h-5 w-5" />
+        {showPurchaseForm && (
+          <section className="py-16">
+            <div className="container mx-auto px-4">
+              <div className="max-w-2xl mx-auto">
+                <div className="text-center mb-8">
+                  <h2 className="text-3xl md:text-4xl font-bold text-brand-primary mb-4 font-['Barlow']">
                     Purchase Gift Voucher
-                  </Button>
-                </form>
-              </Card>
+                  </h2>
+                  <p className="text-lg text-gray-600 font-['Work_Sans']">
+                    {selectedVoucher 
+                      ? `Complete your purchase for: ${selectedVoucher.name}`
+                      : 'Fill out the form below to purchase your gift voucher'
+                    }
+                  </p>
+                </div>
+                
+                <Card className="p-6">
+                  <form className="space-y-6">
+                    <div className="grid md:grid-cols-2 gap-4">
+                      <div>
+                        <Label htmlFor="recipient-name">Recipient Name</Label>
+                        <Input id="recipient-name" placeholder="Enter recipient's name" />
+                      </div>
+                      <div>
+                        <Label htmlFor="recipient-email">Recipient Email</Label>
+                        <Input id="recipient-email" type="email" placeholder="Enter recipient's email" />
+                      </div>
+                    </div>
+                    
+                    <div className="grid md:grid-cols-2 gap-4">
+                      <div>
+                        <Label htmlFor="sender-name">Your Name</Label>
+                        <Input id="sender-name" placeholder="Enter your name" />
+                      </div>
+                      <div>
+                        <Label htmlFor="sender-email">Your Email</Label>
+                        <Input id="sender-email" type="email" placeholder="Enter your email" />
+                      </div>
+                    </div>
+                    
+                    <div>
+                      <Label htmlFor="voucher-amount">Voucher Amount</Label>
+                      <Input 
+                        id="voucher-amount" 
+                        placeholder={selectedVoucher ? `$${selectedVoucher.advertisedPrice || 100}` : "$100"}
+                        defaultValue={selectedVoucher?.advertisedPrice || ''}
+                      />
+                    </div>
+                    
+                    <div>
+                      <Label htmlFor="personal-message">Personal Message (Optional)</Label>
+                      <Textarea 
+                        id="personal-message" 
+                        placeholder="Add a personal message for the recipient..."
+                        rows={4}
+                      />
+                    </div>
+                    
+                    <div>
+                      <Label htmlFor="delivery-date">Delivery Date</Label>
+                      <Input id="delivery-date" type="date" />
+                    </div>
+                    
+                    <div className="flex gap-4">
+                      <Button 
+                        type="button"
+                        variant="outline"
+                        className="flex-1"
+                        onClick={() => setShowPurchaseForm(false)}
+                      >
+                        Cancel
+                      </Button>
+                      <Button className="flex-1" size="lg">
+                        <CreditCard className="mr-2 h-5 w-5" />
+                        Purchase Gift Voucher
+                      </Button>
+                    </div>
+                  </form>
+                </Card>
+              </div>
             </div>
-          </div>
-        </section>
+          </section>
+        )}
 
         {/* FAQ Section */}
         <section className="py-16 bg-gray-50">
@@ -476,7 +506,7 @@ export default function GiftVouchersPage() {
                 </CardHeader>
                 <CardContent>
                   <p className="text-gray-600 font-['Work_Sans']">
-                    All gift vouchers are valid for 12 months from the date of purchase, giving recipients plenty of time to plan their perfect adventure.
+                    {terms.validity}
                   </p>
                 </CardContent>
               </Card>
@@ -487,7 +517,7 @@ export default function GiftVouchersPage() {
                 </CardHeader>
                 <CardContent>
                   <p className="text-gray-600 font-['Work_Sans']">
-                    Yes! Our gift vouchers can be redeemed for any tour or experience in our catalog, giving recipients complete flexibility in their choice.
+                    {terms.redemption}
                   </p>
                 </CardContent>
               </Card>
@@ -498,7 +528,29 @@ export default function GiftVouchersPage() {
                 </CardHeader>
                 <CardContent>
                   <p className="text-gray-600 font-['Work_Sans']">
-                    Recipients can pay the difference when booking. If the tour costs less, the remaining balance stays on the voucher for future use.
+                    {terms.partial_use}
+                  </p>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle className="font-['Barlow']">How do I redeem my gift voucher?</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-gray-600 font-['Work_Sans']">
+                    {terms.booking_process}
+                  </p>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle className="font-['Barlow']">Are gift vouchers transferable?</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-gray-600 font-['Work_Sans']">
+                    {terms.transferable}
                   </p>
                 </CardContent>
               </Card>

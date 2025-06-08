@@ -14,6 +14,9 @@ import { SiteFooter } from "@/components/site-footer"
 import { CategoriesSection } from "@/components/categories-section"
 import { HopOnHopOffImages } from "@/components/hop-on-hop-off-images"
 import { GiftVoucherImage } from "@/components/gift-voucher-image"
+import { BlogSection } from "@/components/blog-section"
+import { ContactSection } from "@/components/contact-section"
+import { TestimonialsSection } from "@/components/testimonials-section"
 
 export default function Home() {
 
@@ -254,159 +257,23 @@ export default function Home() {
           </div>
         </section>
 
-        {/* Blog and Contact Us Section */}
-        <section className="py-16 bg-gray-50">
-          <div className="container px-4 sm:px-6 lg:px-8">
-            <div className="grid lg:grid-cols-2 gap-12">
-              {/* Blog Section */}
-              <div className="space-y-6">
-                <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 bg-brand-accent/10 rounded-full flex items-center justify-center">
-                    <BookOpen className="h-6 w-6 text-brand-accent" />
-                  </div>
-                  <h2 className="font-secondary text-3xl sm:text-4xl font-normal tracking-tight text-brand-text">
-                    Travel Blog
-                  </h2>
-                </div>
-                <p className="font-text text-lg text-muted-foreground leading-relaxed">
-                  Discover insider tips, destination guides, and inspiring travel stories from our expert team. Get the most out of your adventures with our comprehensive travel resources and local insights.
-                </p>
-                <div className="grid sm:grid-cols-2 gap-4">
-                  <div className="flex items-center gap-3">
-                    <MapPin className="h-5 w-5 text-brand-accent" />
-                    <span className="font-text text-sm">Destination guides</span>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <Star className="h-5 w-5 text-brand-accent" />
-                    <span className="font-text text-sm">Expert travel tips</span>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <Calendar className="h-5 w-5 text-brand-accent" />
-                    <span className="font-text text-sm">Weekly updates</span>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <BookOpen className="h-5 w-5 text-brand-accent" />
-                    <span className="font-text text-sm">Local insights</span>
-                  </div>
-                </div>
-                <div className="bg-brand-accent/5 p-6 rounded-xl border border-brand-accent/20">
-                  <h3 className="font-secondary text-lg font-semibold text-brand-text mb-4">Latest Articles</h3>
-                  <div className="space-y-3">
-                    <div className="flex items-start gap-3">
-                      <div className="w-2 h-2 bg-brand-accent rounded-full mt-2 flex-shrink-0"></div>
-                      <div>
-                        <h4 className="font-text font-medium text-brand-text text-sm">Top 10 Hidden Gems in Wine Country</h4>
-                        <p className="font-text text-xs text-muted-foreground">Discover secret vineyards and local favorites</p>
-                      </div>
-                    </div>
-                    <div className="flex items-start gap-3">
-                      <div className="w-2 h-2 bg-brand-accent rounded-full mt-2 flex-shrink-0"></div>
-                      <div>
-                        <h4 className="font-text font-medium text-brand-text text-sm">Best Time to Visit Tropical Destinations</h4>
-                        <p className="font-text text-xs text-muted-foreground">Seasonal guide for perfect weather</p>
-                      </div>
-                    </div>
-                    <div className="flex items-start gap-3">
-                      <div className="w-2 h-2 bg-brand-accent rounded-full mt-2 flex-shrink-0"></div>
-                      <div>
-                        <h4 className="font-text font-medium text-brand-text text-sm">Packing Tips for Adventure Tours</h4>
-                        <p className="font-text text-xs text-muted-foreground">Essential items for your next adventure</p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-                <div className="flex flex-col sm:flex-row gap-4">
-                  <Link href="/blog">
-                    <Button size="lg" className="bg-brand-accent text-brand-secondary hover:bg-brand-accent/90">
-                      <BookOpen className="mr-2 h-5 w-5" />
-                      Read Our Blog
-                    </Button>
-                  </Link>
-                  <Link href="/blog">
-                    <Button variant="outline" size="lg" className="border-brand-accent text-brand-accent hover:bg-brand-accent hover:text-brand-secondary">
-                      Subscribe to Updates
-                    </Button>
-                  </Link>
-                </div>
-              </div>
+        {/* Testimonials Section */}
+        <TestimonialsSection />
 
-              {/* Contact Us Section */}
-              <div className="space-y-6">
-                <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 bg-brand-accent/10 rounded-full flex items-center justify-center">
-                    <MessageCircle className="h-6 w-6 text-brand-accent" />
-                  </div>
-                  <h2 className="font-secondary text-3xl sm:text-4xl font-normal tracking-tight text-brand-text">
-                    Contact Us
-                  </h2>
-                </div>
-                <p className="font-text text-lg text-muted-foreground leading-relaxed">
-                  Have questions about our tours or need help planning your perfect getaway? Our friendly team is here to assist you every step of the way. Get in touch and let's start planning your adventure.
-                </p>
-                <div className="grid sm:grid-cols-2 gap-4">
-                  <div className="flex items-center gap-3">
-                    <Clock className="h-5 w-5 text-brand-accent" />
-                    <span className="font-text text-sm">24/7 support available</span>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <MessageCircle className="h-5 w-5 text-brand-accent" />
-                    <span className="font-text text-sm">Live chat support</span>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <Star className="h-5 w-5 text-brand-accent" />
-                    <span className="font-text text-sm">Expert travel advice</span>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <Gift className="h-5 w-5 text-brand-accent" />
-                    <span className="font-text text-sm">Custom tour planning</span>
-                  </div>
-                </div>
-                <div className="bg-brand-accent/5 p-6 rounded-xl border border-brand-accent/20">
-                  <h3 className="font-secondary text-lg font-semibold text-brand-text mb-4">Get in Touch</h3>
-                  <div className="space-y-4">
-                    <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 bg-brand-accent/10 rounded-full flex items-center justify-center">
-                        <MessageCircle className="h-4 w-4 text-brand-accent" />
-                      </div>
-                      <div>
-                        <p className="font-text font-medium text-brand-text text-sm">Email Support</p>
-                        <p className="font-text text-xs text-muted-foreground">info@pineappletours.com</p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 bg-brand-accent/10 rounded-full flex items-center justify-center">
-                        <Clock className="h-4 w-4 text-brand-accent" />
-                      </div>
-                      <div>
-                        <p className="font-text font-medium text-brand-text text-sm">Response Time</p>
-                        <p className="font-text text-xs text-muted-foreground">Within 2 hours during business hours</p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 bg-brand-accent/10 rounded-full flex items-center justify-center">
-                        <MapPin className="h-4 w-4 text-brand-accent" />
-                      </div>
-                      <div>
-                        <p className="font-text font-medium text-brand-text text-sm">Office Hours</p>
-                        <p className="font-text text-xs text-muted-foreground">Mon-Fri 9AM-6PM, Sat-Sun 10AM-4PM</p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-                <div className="flex flex-col sm:flex-row gap-4">
-                  <Link href="/contact">
-                    <Button size="lg" className="bg-brand-accent text-brand-secondary hover:bg-brand-accent/90">
-                      <MessageCircle className="mr-2 h-5 w-5" />
-                      Contact Us Now
-                    </Button>
-                  </Link>
-                  <Link href="/contact">
-                    <Button variant="outline" size="lg" className="border-brand-accent text-brand-accent hover:bg-brand-accent hover:text-brand-secondary">
-                      Live Chat
-                    </Button>
-                  </Link>
-                </div>
-              </div>
+        {/* Travel Blog Section */}
+        <section className="py-16 bg-gray-100">
+          <div className="container px-4 sm:px-6 lg:px-8">
+            <div className="max-w-6xl mx-auto">
+              <BlogSection />
+            </div>
+          </div>
+        </section>
+
+        {/* Contact Us Section */}
+        <section className="py-16 bg-white">
+          <div className="container px-4 sm:px-6 lg:px-8">
+            <div className="max-w-6xl mx-auto">
+              <ContactSection />
             </div>
           </div>
         </section>

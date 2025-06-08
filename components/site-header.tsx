@@ -50,9 +50,7 @@ export function SiteHeader() {
   }, [isOpen])
 
   const navigationItems = [
-    { href: "/tours", label: "Tours and Experiences", icon: <MapPin className="w-5 h-5" /> },
-    { href: "/hop-on-hop-off", label: "Hop on Hop off", icon: <Bus className="w-5 h-5" /> },
-    { href: "/gift-vouchers", label: "Gift Vouchers", icon: <Gift className="w-5 h-5" /> },
+    { href: "/tours", label: "Tours", icon: <MapPin className="w-5 h-5" /> },
     { href: "/blog", label: "Blog", icon: <BookOpen className="w-5 h-5" /> },
     { href: "/contact", label: "Contact Us", icon: <MessageCircle className="w-5 h-5" /> }
   ]
@@ -103,62 +101,13 @@ export function SiteHeader() {
           </nav>
         )}
 
-        {/* Tablet Navigation */}
-        {isTablet && (
-          <nav className="flex flex-1 items-center justify-center" aria-label="Main navigation">
-            <ul className="flex items-center gap-1">
-              <li>
-                <TourCategoriesDropdown />
-              </li>
-              {navigationItems.slice(0, 1).map((item) => (
-                <li key={item.href}>
-                  <Link 
-                    href={item.href} 
-                    className="px-2 py-2 text-sm font-medium rounded-md transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2"
-                  >
-                    Tours
-                  </Link>
-                </li>
-              ))}
-              {/* More menu for remaining items on tablet */}
-              <li className="relative group">
-                <button 
-                  className="flex items-center gap-1 px-2 py-2 text-sm font-medium rounded-md transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2"
-                  aria-expanded="false"
-                  aria-haspopup="true"
-                >
-                  More
-                  <ChevronDown className="h-3 w-3" />
-                  <VisuallyHidden>navigation options</VisuallyHidden>
-                </button>
-                <div className="absolute top-full left-0 mt-1 w-56 bg-popover border rounded-md shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible group-focus-within:opacity-100 group-focus-within:visible transition-all duration-200 z-50">
-                  <ul className="py-1" role="menu">
-                    {navigationItems.slice(1).map((item) => (
-                      <li key={item.href} role="none">
-                        <Link 
-                          href={item.href} 
-                          className="flex items-center gap-2 px-3 py-2 text-sm hover:bg-accent hover:text-accent-foreground transition-colors"
-                          role="menuitem"
-                        >
-                          {item.icon}
-                          {item.label}
-                        </Link>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              </li>
-            </ul>
-          </nav>
-        )}
-
         {/* Desktop Actions */}
         {isDesktop && (
           <div className="flex items-center gap-4">
-            <div className="flex items-center gap-2 text-sm">
-              <Phone className="h-4 w-4 text-brand-green-accent" aria-hidden="true" />
-              <span className="font-medium">1-800-PINEAPPLE</span>
-            </div>
+              <div className="flex items-center gap-2 text-sm">
+                <Phone className="h-4 w-4 text-brand-green-accent" aria-hidden="true" />
+                <span className="font-medium">0466 331 232</span>
+              </div>
             <CartIcon />
             <ThemeToggle />
             <Button 
@@ -169,23 +118,11 @@ export function SiteHeader() {
           </div>
         )}
 
-        {/* Tablet Actions */}
-        {isTablet && (
+        {/* Mobile and Tablet Menu */}
+        {(isMobile || isTablet) && (
           <div className="flex items-center gap-2">
             <CartIcon />
-            <ThemeToggle />
-            <Button 
-              size="sm"
-            >
-              Book
-            </Button>
-          </div>
-        )}
-
-        {/* Mobile Menu */}
-        {isMobile && (
-          <div className="flex items-center gap-2">
-            <CartIcon />
+            {isTablet && <ThemeToggle />}
             <Sheet open={isOpen} onOpenChange={setIsOpen}>
               <SheetTrigger asChild>
                 <Button 

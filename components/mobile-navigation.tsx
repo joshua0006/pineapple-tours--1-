@@ -86,7 +86,7 @@ export function MobileNavigation({
           </div>
           <div className="flex-1 min-w-0">
             <p className="text-sm font-semibold text-foreground">Call us anytime</p>
-            <p className="text-sm text-muted-foreground truncate">1-800-PINEAPPLE</p>
+                            <p className="text-sm text-muted-foreground truncate">0466 331 232</p>
           </div>
         </div>
         

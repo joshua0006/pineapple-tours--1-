@@ -454,4 +454,95 @@ export interface RefreshOptions {
   force?: boolean;
   include_analytics?: boolean;
   data_types?: ('products' | 'bookings' | 'availability' | 'customers')[];
+}
+
+// Gift Voucher Specific Types
+export interface GiftVoucher extends RezdyProduct {
+  productType: 'GIFT_CARD';
+  voucherCode?: string;
+  expiryDate?: string;
+  purchaseDate?: string;
+  recipientName?: string;
+  recipientEmail?: string;
+  senderName?: string;
+  senderEmail?: string;
+  personalMessage?: string;
+  isRedeemed?: boolean;
+  redeemedDate?: string;
+  remainingBalance?: number;
+  originalAmount?: number;
+  termsAndConditions?: GiftVoucherTerms;
+}
+
+export interface GiftVoucherTerms {
+  validity: string;
+  redemption: string;
+  transferable: string;
+  refund: string;
+  partial_use: string;
+  expiry_notification: string;
+  booking_process: string;
+  group_bookings: string;
+  seasonal_restrictions: string;
+  contact_info: string;
+}
+
+export interface GiftVoucherFilters {
+  priceRange?: { min?: number; max?: number };
+  sortBy?: 'price' | 'name' | 'popularity';
+  sortOrder?: 'asc' | 'desc';
+  voucherType?: 'fixed' | 'custom' | 'experience';
+  availability?: 'available' | 'limited' | 'sold_out';
+  searchTerm?: string;
+  limit?: number;
+  offset?: number;
+}
+
+export interface GiftVoucherPurchaseData {
+  recipientName: string;
+  recipientEmail: string;
+  senderName: string;
+  senderEmail: string;
+  amount: number;
+  personalMessage?: string;
+  deliveryDate?: string;
+  voucherType: 'fixed' | 'custom' | 'experience';
+  productCode?: string; // For experience-specific vouchers
+}
+
+export interface GiftVoucherRedemption {
+  voucherCode: string;
+  productCode: string;
+  sessionId: string;
+  participants: RezdyParticipant[];
+  amountUsed: number;
+  remainingBalance: number;
+  redemptionDate: string;
+}
+
+export interface GiftVoucherStats {
+  totalVouchers: number;
+  totalValue: number;
+  redeemedVouchers: number;
+  redeemedValue: number;
+  expiringVouchers: number; // Expiring within 30 days
+  popularVoucherTypes: { type: string; count: number }[];
+  averageVoucherValue: number;
+  redemptionRate: number;
+}
+
+export interface GiftVoucherError extends DataError {
+  voucherCode?: string;
+  operation?: 'purchase' | 'redemption' | 'validation' | 'expiry_check';
+}
+
+export interface GiftVoucherValidation {
+  isValid: boolean;
+  voucherCode: string;
+  expiryDate?: string;
+  remainingBalance?: number;
+  isExpired: boolean;
+  isRedeemed: boolean;
+  errors: string[];
+  warnings: string[];
 } 

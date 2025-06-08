@@ -49,7 +49,7 @@ export default function RezdyDataPage() {
   const [availabilityError, setAvailabilityError] = useState<string | null>(null);
 
   // Fetch data
-  const { data: products, loading: productsLoading, error: productsError } = useRezdyProducts();
+  const { data: products, loading: productsLoading, error: productsError } = useRezdyProducts(1000, 0);
 
   // Categorize products by budget range based on actual data analysis
   const categorizeByBudget = (product: RezdyProduct): string => {

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { simpleCacheManager } from '@/lib/utils/simple-cache-manager';
 
 const REZDY_BASE_URL = 'https://api.rezdy.com/v1';
 const API_KEY = process.env.REZDY_API_KEY;
@@ -15,6 +16,27 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const limit = searchParams.get('limit') || '100';
     const offset = searchParams.get('offset') || '0';
+    const featured = searchParams.get('featured');
+
+    // Generate cache key
+    const cacheKey = featured ? 'products:featured' : `products:${limit}:${offset}`;
+    
+    // Check cache first
+    const cachedProducts = await simpleCacheManager.getProducts(cacheKey);
+    if (cachedProducts) {
+      console.log(`✅ Cache hit for products: ${cacheKey}`);
+      return NextResponse.json(
+        { products: cachedProducts },
+        {
+          headers: {
+            'Cache-Control': 'public, s-maxage=1800, stale-while-revalidate=3600',
+            'X-Cache': 'HIT',
+          },
+        }
+      );
+    }
+
+    console.log(`⚠️ Cache miss for products: ${cacheKey}, fetching from Rezdy...`);
 
     const url = `${REZDY_BASE_URL}/products?apiKey=${API_KEY}&limit=${limit}&offset=${offset}`;
     
@@ -30,10 +52,17 @@ export async function GET(request: NextRequest) {
     }
 
     const data = await response.json();
+    const products = data.products || data.data || [];
+
+    // Cache the results
+    await simpleCacheManager.cacheProducts(products, cacheKey);
+    
+    console.log(`✅ Cached ${products.length} products with key: ${cacheKey}`);
 
     return NextResponse.json(data, {
       headers: {
-        'Cache-Control': 'public, s-maxage=300, stale-while-revalidate=600',
+        'Cache-Control': 'public, s-maxage=1800, stale-while-revalidate=3600',
+        'X-Cache': 'MISS',
       },
     });
   } catch (error) {

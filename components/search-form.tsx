@@ -43,8 +43,7 @@ const STATIC_PICKUP_LOCATIONS = [
   "Miami",
   "Mount Nathan",
   "Mount Tamborine",
-  "Surfers Paradise",
-  "Tamborine Mountain"
+  "Surfers Paradise"
 ];
 
 interface SearchFormProps {
@@ -96,6 +95,11 @@ export function SearchForm({ onSearch, showRedirect = true, onLocationChange }: 
       }
       
       if (locationName) {
+        // Normalize Tamborine variations to "Mount Tamborine"
+        if (locationName.toLowerCase().includes('tamborine')) {
+          locationName = 'Mount Tamborine'
+        }
+        
         locationCounts.set(locationName, (locationCounts.get(locationName) || 0) + 1)
       }
     })
@@ -152,11 +156,19 @@ export function SearchForm({ onSearch, showRedirect = true, onLocationChange }: 
     
     return rezdyData.products.filter(product => {
       if (product.locationAddress) {
+        let productLocation = ''
         if (typeof product.locationAddress === 'string') {
-          return product.locationAddress.toLowerCase().includes(selectedLocation.toLowerCase())
+          productLocation = product.locationAddress
         } else if (product.locationAddress.city) {
-          return product.locationAddress.city.toLowerCase().includes(selectedLocation.toLowerCase())
+          productLocation = product.locationAddress.city
         }
+        
+        // Handle Tamborine variations
+        if (selectedLocation === 'Mount Tamborine' && productLocation.toLowerCase().includes('tamborine')) {
+          return true
+        }
+        
+        return productLocation.toLowerCase().includes(selectedLocation.toLowerCase())
       }
       return false
     })
@@ -199,7 +211,7 @@ export function SearchForm({ onSearch, showRedirect = true, onLocationChange }: 
       if (selectedLocation && selectedLocation !== 'all') params.append('location', selectedLocation)
       if (tourDate) params.append('tourDate', format(tourDate, 'yyyy-MM-dd'))
       
-      router.push(`/search?${params.toString()}`)
+      router.push(`/tours?${params.toString()}`)
     }
   }
 

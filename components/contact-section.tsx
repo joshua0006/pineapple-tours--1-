@@ -58,19 +58,19 @@ export function ContactSection() {
         <div className="bg-brand-secondary p-6 rounded-lg border border-brand-accent/20 shadow-sm">
           <h3 className="font-secondary text-lg font-normal text-brand-text mb-4">Connect</h3>
           <div className="space-y-3 mb-4">
-            <a href="#" className="flex items-center gap-3 hover:bg-brand-accent/5 p-2 rounded-lg transition-colors">
+            <a href="https://www.facebook.com/pineappletoursAU/?_rdc=1&_rdr#" className="flex items-center gap-3 hover:bg-brand-accent/5 p-2 rounded-lg transition-colors">
               <div className="w-10 h-10 bg-blue-500/10 rounded-full flex items-center justify-center">
                 <Facebook className="h-5 w-5 text-blue-500" />
               </div>
               <span className="font-text text-base text-brand-text/70">Like us on Facebook</span>
             </a>
-            <a href="#" className="flex items-center gap-3 hover:bg-brand-accent/5 p-2 rounded-lg transition-colors">
+            <a href="https://www.instagram.com/pineappletours.com.au/" className="flex items-center gap-3 hover:bg-brand-accent/5 p-2 rounded-lg transition-colors">
               <div className="w-10 h-10 bg-pink-500/10 rounded-full flex items-center justify-center">
                 <Instagram className="h-5 w-5 text-pink-500" />
               </div>
               <span className="font-text text-base text-brand-text/70">Follow us on Instagram</span>
             </a>
-            <a href="#" className="flex items-center gap-3 hover:bg-brand-accent/5 p-2 rounded-lg transition-colors">
+            <a href="https://www.youtube.com/channel/UCAvl12VYyJ06rru5nQc0QbQ/featured" className="flex items-center gap-3 hover:bg-brand-accent/5 p-2 rounded-lg transition-colors">
               <div className="w-10 h-10 bg-red-500/10 rounded-full flex items-center justify-center">
                 <Youtube className="h-5 w-5 text-red-500" />
               </div>

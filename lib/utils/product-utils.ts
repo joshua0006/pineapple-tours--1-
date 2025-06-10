@@ -220,7 +220,14 @@ export function getUniqueCitiesFromProducts(products: RezdyProduct[]): string[] 
   products.forEach(product => {
     const city = getCityFromLocation(product.locationAddress);
     if (city && city.trim() !== '' && city !== 'Location TBD') {
-      cities.add(city.trim());
+      let normalizedCity = city.trim();
+      
+      // Normalize Tamborine Mountain variations to "Mount Tamborine"
+      if (normalizedCity.toLowerCase().includes('tamborine')) {
+        normalizedCity = 'Mount Tamborine';
+      }
+      
+      cities.add(normalizedCity);
     }
   });
   
@@ -244,6 +251,12 @@ export function filterProductsByCity(products: RezdyProduct[], selectedCity: str
   
   const filtered = products.filter(product => {
     const city = getCityFromLocation(product.locationAddress);
+    
+    // Handle Mount Tamborine filtering - match any Tamborine variation
+    if (selectedCity === 'Mount Tamborine' && city && city.toLowerCase().includes('tamborine')) {
+      return true;
+    }
+    
     const matches = city && city.toLowerCase() === selectedCity.toLowerCase();
     return matches;
   });

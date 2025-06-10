@@ -77,9 +77,18 @@ export async function GET(request: NextRequest) {
 
     const data = await response.json();
 
+    // Cache the bookings data
+    const bookings = data.bookings || data.data || [];
+    if (bookings.length > 0) {
+      const { simpleCacheManager } = await import('@/lib/utils/simple-cache-manager');
+      await simpleCacheManager.cacheBookings(bookings);
+      console.log(`✅ Cached ${bookings.length} bookings`);
+    }
+
     return NextResponse.json(data, {
       headers: {
-        'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=120',
+        'Cache-Control': 'public, s-maxage=180, stale-while-revalidate=360',
+        'X-Cache': 'MISS',
       },
     });
   } catch (error) {

@@ -77,9 +77,17 @@ export async function GET(request: NextRequest) {
       ...data
     };
 
+    // Cache the availability data
+    if (data.sessions && data.sessions.length > 0) {
+          const { simpleCacheManager } = await import('@/lib/utils/simple-cache-manager');
+    await simpleCacheManager.cacheAvailability(data.sessions, productCode);
+      console.log(`✅ Cached availability for product: ${productCode}`);
+    }
+
     return NextResponse.json(responseData, {
       headers: {
         'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=120',
+        'X-Cache': 'MISS',
       },
     });
   } catch (error) {

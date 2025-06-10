@@ -22,7 +22,7 @@ import {
 
 import { dataCleaningPipeline, dataQualityMonitor } from '@/lib/utils/data-validation';
 import { dataSegmentationEngine } from '@/lib/utils/data-segmentation';
-import { cacheManager, smartCacheInvalidation } from '@/lib/utils/cache-manager';
+import { clientCacheManager } from '@/lib/utils/client-cache-manager';
 
 interface UseRezdyDataManagerOptions {
   enableCaching?: boolean;
@@ -122,13 +122,13 @@ export function useRezdyDataManager(
 
   const performanceMetrics = useMemo(() => {
     if (!enableCaching) return null;
-    return cacheManager.getPerformanceMetrics();
+    return clientCacheManager.getPerformanceMetrics();
   }, [enableCaching, data.last_updated]);
 
   // Data fetching functions
   const fetchProducts = async (): Promise<RezdyProduct[]> => {
     if (enableCaching) {
-      const cached = await cacheManager.getProducts();
+      const cached = await clientCacheManager.getProducts();
       if (cached) return cached;
     }
 
@@ -144,7 +144,7 @@ export function useRezdyDataManager(
     }
 
     if (enableCaching) {
-      await cacheManager.cacheProducts(products);
+      await clientCacheManager.cacheProducts(products);
     }
 
     return products;
@@ -152,7 +152,7 @@ export function useRezdyDataManager(
 
   const fetchBookings = async (): Promise<RezdyBooking[]> => {
     if (enableCaching) {
-      const cached = await cacheManager.getBookings();
+      const cached = await clientCacheManager.getBookings();
       if (cached) return cached;
     }
 
@@ -168,7 +168,7 @@ export function useRezdyDataManager(
     }
 
     if (enableCaching) {
-      await cacheManager.cacheBookings(bookings);
+      await clientCacheManager.cacheBookings(bookings);
     }
 
     return bookings;
@@ -202,7 +202,9 @@ export function useRezdyDataManager(
 
       // Clear cache if forced refresh
       if (force && enableCaching) {
-        await smartCacheInvalidation.invalidateByPattern(['products', 'bookings', 'customers']);
+        await clientCacheManager.invalidate('products');
+        await clientCacheManager.invalidate('bookings');
+        await clientCacheManager.invalidate('customers');
       }
 
       // Fetch data in parallel
@@ -293,7 +295,7 @@ export function useRezdyDataManager(
     const revenueInsights = generateRevenueAnalytics(dataState.products, dataState.bookings);
     const customerInsights = generateCustomerAnalytics(dataState.customers, dataState.bookings);
     const trendingProducts = identifyTrendingProducts(dataState.products, dataState.bookings);
-    const performanceMetrics = enableCaching ? cacheManager.getPerformanceMetrics() : {
+    const performanceMetrics = enableCaching ? clientCacheManager.getPerformanceMetrics() : {
       api_response_time: 0,
       data_freshness: 1,
       error_rate: 0,
@@ -408,7 +410,7 @@ export function useRezdyDataManager(
 
   const clearCache = useCallback(() => {
     if (enableCaching) {
-      cacheManager.clear();
+      clientCacheManager.clear();
     }
   }, [enableCaching]);
 
@@ -431,7 +433,7 @@ export function useRezdyDataManager(
   // Cache warming effect
   useEffect(() => {
     if (enableCaching) {
-      cacheManager.warmCache();
+      clientCacheManager.warmCache();
     }
   }, [enableCaching]);
 
@@ -495,11 +497,11 @@ export function useDataQuality(data: RezdyDataState) {
 }
 
 export function useCacheMetrics() {
-  const [metrics, setMetrics] = useState(cacheManager.getMetrics());
+  const [metrics, setMetrics] = useState(clientCacheManager.getMetrics());
 
   useEffect(() => {
     const interval = setInterval(() => {
-      setMetrics(cacheManager.getMetrics());
+      setMetrics(clientCacheManager.getMetrics());
     }, 5000); // Update every 5 seconds
 
     return () => clearInterval(interval);

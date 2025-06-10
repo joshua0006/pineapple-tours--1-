@@ -18,8 +18,6 @@ import { PageHeader } from "@/components/page-header"
 import { DynamicTourCard } from "@/components/dynamic-tour-card"
 import { TourGridSkeleton } from "@/components/tour-grid-skeleton"
 import { ErrorState } from "@/components/error-state"
-import { TourPagination } from "@/components/tour-pagination"
-import { PaginationInfo } from "@/components/pagination-info"
 import { useSearch } from "@/hooks/use-search"
 import { useCityProducts } from "@/hooks/use-city-products"
 import { getSearchCategories, getCategoryDisplayName } from "@/lib/constants/categories"
@@ -41,7 +39,7 @@ export default function ToursPage() {
   // Get search categories for the dropdown
   const searchCategories = getSearchCategories()
   
-  // Initialize search with URL parameters (removed duration)
+  // Initialize search with URL parameters (removed duration and pagination, set high limit for all results)
   const initialFilters = {
     query: searchParams.get('query') || '',
     category: searchParams.get('category') || 'all',
@@ -52,8 +50,7 @@ export default function ToursPage() {
     checkOut: searchParams.get('checkOut') || '',
     city: searchParams.get('city') || '',
     location: searchParams.get('location') || '',
-    page: parseInt(searchParams.get('page') || '1'),
-    limit: 12,
+    limit: 1000, // Set high limit to show all tours on one page
   }
 
   const {
@@ -69,13 +66,6 @@ export default function ToursPage() {
     hasActiveFilters,
     hasResults,
     totalResults,
-    totalPages,
-    currentPage,
-    hasNextPage,
-    hasPreviousPage,
-    goToPage,
-    nextPage,
-    previousPage,
   } = useSearch(initialFilters)
 
   const [localQuery, setLocalQuery] = useState(filters.query)
@@ -98,7 +88,6 @@ export default function ToursPage() {
       checkOut: searchParams.get('checkOut') || '',
       city: searchParams.get('city') || '',
       location: searchParams.get('location') || '',
-      page: parseInt(searchParams.get('page') || '1'),
     }
 
     // Only update if there are actual differences to avoid infinite loops
@@ -117,7 +106,7 @@ export default function ToursPage() {
     const params = new URLSearchParams()
     
     Object.entries(filters).forEach(([key, value]) => {
-      if (value && value !== '' && value !== 'all' && value !== 'any' && value !== 2 && value !== 12 && value !== 1) {
+      if (key !== 'limit' && value && value !== '' && value !== 'all' && value !== 'any' && value !== 2) {
         params.append(key, value.toString())
       }
     })
@@ -193,9 +182,9 @@ export default function ToursPage() {
                   Filters
                   {hasActiveFilters && (
                     <Badge variant="secondary" className="ml-2">
-                      {Object.values(filters).filter(value => 
-                        value && value !== '' && value !== 'all' && value !== 'any' && 
-                        value !== 2 && value !== 12 && value !== 1 && value !== 'relevance'
+                      {Object.entries(filters).filter(([key, value]) => 
+                        key !== 'limit' && value && value !== '' && value !== 'all' && value !== 'any' && 
+                        value !== 2 && value !== 'relevance'
                       ).length} active
                     </Badge>
                   )}
@@ -368,9 +357,9 @@ export default function ToursPage() {
                       {filters.checkIn && filters.checkOut ? "Checking availability..." : "Searching..."}
                     </span>
                   ) : (
-                    totalPages > 1 
-                      ? `${totalResults} tours found • Page ${currentPage} of ${totalPages}`
-                      : `${totalResults} tours found`
+                    totalResults > 1 
+                      ? `${totalResults} tours found`
+                      : `${totalResults} tour found`
                   )}
                 </p>
               </div>
@@ -482,25 +471,6 @@ export default function ToursPage() {
                       {data.products.map((product) => (
                         <DynamicTourCard key={product.productCode} product={product} />
                       ))}
-                    </div>
-                    
-                    {/* Pagination Info and Controls */}
-                    <div className="mt-8 flex flex-col items-center gap-4">
-                      <PaginationInfo
-                        currentPage={currentPage}
-                        totalPages={totalPages}
-                        totalResults={totalResults}
-                        resultsPerPage={filters.limit}
-                      />
-                      <TourPagination
-                        currentPage={currentPage}
-                        totalPages={totalPages}
-                        hasNextPage={hasNextPage}
-                        hasPreviousPage={hasPreviousPage}
-                        onPageChange={goToPage}
-                        onNextPage={nextPage}
-                        onPreviousPage={previousPage}
-                      />
                     </div>
                   </>
                 ) : (

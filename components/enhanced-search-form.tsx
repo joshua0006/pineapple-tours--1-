@@ -30,7 +30,7 @@ import { format } from 'date-fns';
 
 import { useProductFiltering } from '@/hooks/use-rezdy-data-manager';
 import { dataSegmentationEngine } from '@/lib/utils/data-segmentation';
-import { cacheManager } from '@/lib/utils/cache-manager';
+import { clientCacheManager } from '@/lib/utils/client-cache-manager';
 import {
   RezdyProduct,
   ProductFilters,
@@ -126,7 +126,7 @@ export function EnhancedSearchForm({
     if (value.length > 2) {
       // Check cache for search suggestions
       const cacheKey = `suggestions:${value.toLowerCase()}`;
-      const cachedSuggestions = await cacheManager.get<string[]>(cacheKey);
+      const cachedSuggestions = await clientCacheManager.get<string[]>(cacheKey);
       
       if (cachedSuggestions) {
         setSearchSuggestions(cachedSuggestions);
@@ -138,7 +138,7 @@ export function EnhancedSearchForm({
         setSearchSuggestions(filtered);
         
         // Cache the suggestions
-        await cacheManager.set(cacheKey, filtered, 300); // 5 minutes
+        await clientCacheManager.set(cacheKey, filtered, 300); // 5 minutes
       }
       
       setShowSuggestions(true);

@@ -162,7 +162,7 @@ export function useSearch(initialFilters?: Partial<SearchFilters>) {
       city: '',
       location: '',
       page: 1,
-      limit: 12,
+      limit: initialFilters?.limit || 12,
     });
     setState({
       data: null,
@@ -170,7 +170,7 @@ export function useSearch(initialFilters?: Partial<SearchFilters>) {
       error: null,
     });
     setSearchTriggered(false);
-  }, []);
+  }, [initialFilters?.limit]);
 
   const clearFilter = useCallback((filterKey: keyof SearchFilters) => {
     const defaultValues: Record<keyof SearchFilters, string | number> = {
@@ -186,11 +186,11 @@ export function useSearch(initialFilters?: Partial<SearchFilters>) {
       city: '',
       location: '',
       page: 1,
-      limit: 12,
+      limit: initialFilters?.limit || 12,
     };
     
     updateFilter(filterKey, defaultValues[filterKey]);
-  }, [updateFilter]);
+  }, [updateFilter, initialFilters?.limit]);
 
   const goToPage = useCallback((page: number) => {
     updateFilter('page', page);

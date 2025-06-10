@@ -151,15 +151,15 @@ export function SiteFooter() {
             {/* Social media and copyright */}
             <div className="flex flex-col items-center lg:items-end gap-4">
               <div className="flex gap-4">
-                <Link href="#" className="text-gray-400 hover:text-white transition-colors">
+                <Link href="https://www.instagram.com/pineappletours.com.au/" target="_blank" className="text-gray-400 hover:text-white transition-colors">
                   <Instagram className="h-6 w-6" />
                   <span className="sr-only">Instagram</span>
                 </Link>
-                <Link href="#" className="text-gray-400 hover:text-white transition-colors">
+                <Link href="https://www.facebook.com/pineappletoursAU/?_rdc=1&_rdr#" target="_blank" className="text-gray-400 hover:text-white transition-colors">
                   <Facebook className="h-6 w-6" />
                   <span className="sr-only">Facebook</span>
                 </Link>
-                <Link href="#" className="text-gray-400 hover:text-white transition-colors">
+                <Link href="https://www.youtube.com/channel/UCAvl12VYyJ06rru5nQc0QbQ/featured" target="_blank" className="text-gray-400 hover:text-white transition-colors">
                   <Youtube className="h-6 w-6" />
                   <span className="sr-only">YouTube</span>
                 </Link>

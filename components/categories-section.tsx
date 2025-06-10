@@ -1,17 +1,26 @@
 'use client'
 
 import Link from "next/link"
-import { ChevronRight, ChevronLeft, Loader2, AlertCircle, Wine, Beer, Bus, Calendar, Building, Sparkles, Activity, Users, Car, GraduationCap, Ticket, Package, Gift, Heart, MapPin, Clock, Star, Search, Plus } from "lucide-react"
+import { ChevronRight, ChevronLeft, Loader2, AlertCircle, Wine, Beer, Bus, Calendar, Building, Sparkles, Activity, Users, Car, GraduationCap, Ticket, Package, Gift, Heart, MapPin, Clock, Star, Search, Plus, RefreshCw } from "lucide-react"
 import React, { useState, useEffect, useRef, useMemo } from "react"
 
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
-import { useRezdyProducts } from "@/hooks/use-rezdy"
+import { useEnhancedRezdyProducts } from "@/hooks/use-rezdy-enhanced"
 import { TOUR_CATEGORIES, TourCategory, filterProductsByCategory } from "@/lib/constants/categories"
 import { RezdyProduct } from "@/lib/types/rezdy"
 import { cn } from "@/lib/utils"
+import { ErrorBoundary, SimpleErrorFallback } from "@/components/ui/error-boundary"
+import { 
+  CategoriesSectionSkeleton, 
+  CategoryNavigationSkeleton, 
+  CategoryRowSkeleton, 
+  MobileCategorySelectorSkeleton,
+  BrandedLoadingIndicator,
+  LoadingProgressBar
+} from "@/components/ui/loading-skeletons"
 
 // Top-level categories as specified
 const TOP_LEVEL_CATEGORIES = [
@@ -601,12 +610,14 @@ function CategoryContent({
   selectedCategory, 
   categoriesWithCounts,
   allProducts,
-  loading
+  loading,
+  onRetry
 }: { 
   selectedCategory: string; 
   categoriesWithCounts: TourCategory[];
   allProducts: RezdyProduct[];
-  loading: boolean;
+  loading: { isInitialLoading: boolean; isRefreshing: boolean; isCategoryLoading: boolean; isRetrying: boolean; progress: number; stage: string; };
+  onRetry?: () => void;
 }) {
   const [searchTerm, setSearchTerm] = useState('')
 
@@ -642,18 +653,17 @@ function CategoryContent({
       </div>
 
       {/* Loading State */}
-      {loading && (
-        <div className="text-center py-8 lg:py-12">
-          <div className="flex items-center justify-center mb-4">
-            <Loader2 className="h-6 w-6 lg:h-8 lg:w-8 animate-spin text-[#FF585D]" />
-            <span className="ml-2 text-gray-300 font-['Work_Sans'] text-sm lg:text-base">Loading tours...</span>
-          </div>
-          <p className="text-gray-400 font-['Work_Sans'] text-sm">Please wait while we fetch the latest tour information</p>
-        </div>
+      {(loading.isRefreshing || loading.isRetrying || loading.isCategoryLoading) && (
+        <BrandedLoadingIndicator
+          stage={loading.isRetrying ? 'Retrying' : loading.isRefreshing ? 'Refreshing' : 'Loading Categories'}
+          progress={loading.progress}
+          message={loading.isRetrying ? 'Attempting to reconnect...' : 'Please wait while we fetch the latest tour information'}
+          showProgress={loading.progress > 0}
+        />
       )}
 
       {/* Category Rows */}
-      {!loading && (
+      {!loading.isRefreshing && !loading.isRetrying && !loading.isCategoryLoading && (
         <div className="space-y-6 lg:space-y-8">
           {filteredCategories.map((category) => (
             <div key={category.id} className="min-w-0">
@@ -667,7 +677,7 @@ function CategoryContent({
         </div>
       )}
 
-      {!loading && filteredCategories.length === 0 && (
+      {!loading.isRefreshing && !loading.isRetrying && !loading.isCategoryLoading && filteredCategories.length === 0 && (
         <div className="text-center py-8 lg:py-12">
           <div className="text-gray-500 mb-4">
             <Package className="h-12 w-12 lg:h-16 lg:w-16 mx-auto" />
@@ -719,9 +729,31 @@ function MobileCategorySelector({
 }
 
 export function CategoriesSection() {
-  const { data: products, loading, error } = useRezdyProducts(100, 0)
+  // Memoize the hook options to prevent unnecessary re-renders
+  const hookOptions = useMemo(() => ({
+    limit: 100,
+    offset: 0,
+    enableProgressiveLoading: true,
+    preloadCategories: ['winery-tours', 'brewery-tours', 'day-tours']
+  }), []);
+
+  const { 
+    data: products, 
+    loading, 
+    error, 
+    retry, 
+    refresh,
+    preloadCategory 
+  } = useEnhancedRezdyProducts(hookOptions)
   const [categoriesWithCounts, setCategoriesWithCounts] = useState<TourCategory[]>([])
   const [selectedCategory, setSelectedCategory] = useState<string>('winery-tours')
+
+  // Enhanced category selection with preloading
+  const handleCategorySelect = (categoryId: string) => {
+    setSelectedCategory(categoryId)
+    // Preload the selected category for faster switching
+    preloadCategory(categoryId)
+  }
 
   // Calculate tour counts for all categories
   useEffect(() => {
@@ -740,49 +772,71 @@ export function CategoriesSection() {
     }
   }, [products])
 
+  // Show initial loading skeleton
+  if (loading.isInitialLoading && !products) {
+    return <CategoriesSectionSkeleton />
+  }
+
   if (error) {
     return (
+      <ErrorBoundary>
+        <section className="bg-[#141312] py-8 sm:py-12 lg:py-16">
+          <div className="container mx-auto px-4">
+            <div className="text-center mb-8 lg:mb-12">
+              <h2 className="text-3xl sm:text-4xl font-semibold text-white mb-4 font-['Barlow']">
+                Tour Categories
+              </h2>
+              <p className="text-base lg:text-lg text-gray-300 font-['Work_Sans']">
+                Discover your perfect adventure by category
+              </p>
+            </div>
+            <SimpleErrorFallback 
+              error={error} 
+              onRetry={retry}
+              className="max-w-md mx-auto"
+            />
+          </div>
+        </section>
+      </ErrorBoundary>
+    )
+  }
+
+  return (
+    <ErrorBoundary 
+      onError={(error, errorInfo) => {
+        console.error('CategoriesSection Error:', error, errorInfo);
+      }}
+      maxRetries={3}
+    >
       <section className="bg-[#141312] py-8 sm:py-12 lg:py-16">
         <div className="container mx-auto px-4">
-          <div className="text-center mb-8 lg:mb-12">
+          {/* Header */}
+          <div className="text-center mb-6 lg:mb-8">
             <h2 className="text-3xl sm:text-4xl font-semibold text-white mb-4 font-['Barlow']">
               Tour Categories
             </h2>
             <p className="text-base lg:text-lg text-gray-300 font-['Work_Sans']">
               Discover your perfect adventure by category
             </p>
+            
+            {/* Loading Progress Bar */}
+            {(loading.isRefreshing || loading.isRetrying) && (
+              <div className="max-w-md mx-auto mt-4">
+                <LoadingProgressBar 
+                  progress={loading.progress} 
+                  stage={loading.stage}
+                />
+              </div>
+            )}
           </div>
-          <Alert variant="destructive" className="max-w-md mx-auto bg-red-900/20 border-red-800 text-red-300">
-            <AlertCircle className="h-4 w-4" />
-            <AlertDescription>
-              Failed to load categories: {error}
-            </AlertDescription>
-          </Alert>
-        </div>
-      </section>
-    )
-  }
 
-  return (
-    <section className="bg-[#141312] py-8 sm:py-12 lg:py-16">
-      <div className="container mx-auto px-4">
-        {/* Header */}
-        <div className="text-center mb-6 lg:mb-8">
-          <h2 className="text-3xl sm:text-4xl font-semibold text-white mb-4 font-['Barlow']">
-            Tour Categories
-          </h2>
-          <p className="text-base lg:text-lg text-gray-300 font-['Work_Sans']">
-            Discover your perfect adventure by category
-          </p>
-        </div>
-
-        {/* Mobile Category Selector */}
-        <div className="lg:hidden mb-4">
-          <MobileCategorySelector 
-            selectedCategory={selectedCategory}
-            onCategorySelect={setSelectedCategory}
-          />
-        </div>
+                  {/* Mobile Category Selector */}
+          <div className="lg:hidden mb-4">
+            <MobileCategorySelector 
+              selectedCategory={selectedCategory}
+              onCategorySelect={handleCategorySelect}
+            />
+          </div>
 
         {/* Main Layout: Left Sidebar + Right Content */}
         <div className="bg-[#141312] rounded-xl lg:rounded-2xl shadow-lg overflow-hidden border border-gray-700">
@@ -791,7 +845,7 @@ export function CategoriesSection() {
             <div className="hidden lg:block flex-shrink-0">
               <CategoryNavigation 
                 selectedCategory={selectedCategory}
-                onCategorySelect={setSelectedCategory}
+                onCategorySelect={handleCategorySelect}
                 categoriesWithCounts={categoriesWithCounts}
                 allProducts={products || []}
               />
@@ -804,11 +858,13 @@ export function CategoriesSection() {
                 categoriesWithCounts={categoriesWithCounts}
                 allProducts={products || []}
                 loading={loading}
+                onRetry={retry}
               />
             </div>
           </div>
         </div>
       </div>
     </section>
+    </ErrorBoundary>
   )
 } 

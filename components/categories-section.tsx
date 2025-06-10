@@ -293,7 +293,7 @@ function ProductCard({
       className="group block flex-shrink-0 w-72 sm:w-80 md:w-72 lg:w-80 xl:w-72 2xl:w-80" 
       style={{ scrollSnapAlign: 'start' }}
     >
-      <div className="relative overflow-hidden rounded-xl shadow-lg transition-all duration-300 hover:shadow-xl hover:scale-[1.02] h-96 sm:h-[420px] md:h-96 lg:h-[420px] xl:h-96 2xl:h-[420px]">
+      <div className="relative overflow-hidden rounded-xl shadow-lg transition-all duration-300 hover:shadow-xl hover:scale-[1.02] h-[480px] sm:h-[520px] md:h-[480px] lg:h-[520px] xl:h-[480px] 2xl:h-[520px]">
         {/* Full Background Image */}
         <div 
           className="absolute inset-0 bg-cover bg-center transition-transform duration-300 group-hover:scale-110"
@@ -389,7 +389,7 @@ function ShowMoreCard({
       className="group block flex-shrink-0 w-72 sm:w-80 md:w-72 lg:w-80 xl:w-72 2xl:w-80" 
       style={{ scrollSnapAlign: 'start' }}
     >
-      <div className="relative overflow-hidden rounded-xl border-2 border-dashed border-[#FF585D]/50 transition-all duration-300 hover:border-[#FF585D] hover:bg-[#FF585D]/5 h-96 sm:h-[420px] md:h-96 lg:h-[420px] xl:h-96 2xl:h-[420px] flex items-center justify-center">
+      <div className="relative overflow-hidden rounded-xl border-2 border-dashed border-[#FF585D]/50 transition-all duration-300 hover:border-[#FF585D] hover:bg-[#FF585D]/5 h-[480px] sm:h-[520px] md:h-[480px] lg:h-[520px] xl:h-[480px] 2xl:h-[520px] flex items-center justify-center">
         <div className="text-center p-4 sm:p-6">
           <div className="w-16 h-16 sm:w-20 sm:h-20 mx-auto mb-4 sm:mb-6 rounded-full bg-[#FF585D]/10 flex items-center justify-center group-hover:bg-[#FF585D]/20 transition-colors duration-300">
             <Plus className="h-8 w-8 sm:h-10 sm:w-10 text-[#FF585D]" />

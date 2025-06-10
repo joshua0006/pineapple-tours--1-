@@ -7,11 +7,6 @@ export interface DownloadedImage {
   localPath: string;
   filename: string;
   alt: string;
-  productId?: string;
-  productCode?: string;
-  productName?: string;
-  productPrice?: number;
-  productDescription?: string;
 }
 
 /**
@@ -20,7 +15,7 @@ export interface DownloadedImage {
 export async function downloadImage(
   imageUrl: string, 
   filename: string, 
-  subfolder: string = 'hop-on-hop-off'
+  subfolder: string = 'gift-voucher-section'
 ): Promise<string | null> {
   try {
     // Create the directory if it doesn't exist
@@ -74,9 +69,9 @@ function generateFilename(productName: string, imageIndex: number, originalUrl: 
 }
 
 /**
- * Download images from hop-on-hop-off products
+ * Download images from tour products (excluding gift voucher products)
  */
-export async function downloadHopOnHopOffImages(): Promise<DownloadedImage[]> {
+export async function downloadGiftVoucherSectionImages(): Promise<DownloadedImage[]> {
   try {
     // Fetch products from Rezdy API
     const response = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/rezdy/products?limit=1000`);
@@ -87,20 +82,23 @@ export async function downloadHopOnHopOffImages(): Promise<DownloadedImage[]> {
     const data = await response.json();
     const products: RezdyProduct[] = data.products || data.data || [];
 
-    // Filter hop-on-hop-off products
-    const hopOnHopOffProducts = products.filter(product => 
-      product.name.toLowerCase().includes('hop on hop off') ||
-      product.name.toLowerCase().includes('hop-on-hop-off') ||
-      product.shortDescription?.toLowerCase().includes('hop on hop off') ||
-      product.description?.toLowerCase().includes('hop on hop off')
+    // Filter out gift voucher products and get regular tour products with images
+    const tourProducts = products.filter(product => 
+      // Exclude gift voucher products
+      product.productType !== 'GIFT_CARD' &&
+      !product.name.toLowerCase().includes('gift voucher') &&
+      !product.name.toLowerCase().includes('voucher') &&
+      !product.shortDescription?.toLowerCase().includes('gift voucher') &&
+      // Include products with images
+      product.images && product.images.length > 0
     );
 
-    console.log(`Found ${hopOnHopOffProducts.length} hop-on-hop-off products`);
+    console.log(`Found ${tourProducts.length} tour products with images (excluding gift vouchers)`);
 
     const downloadedImages: DownloadedImage[] = [];
 
     // Download images from the first few products (limit to avoid too many downloads)
-    const productsToProcess = hopOnHopOffProducts.slice(0, 5);
+    const productsToProcess = tourProducts.slice(0, 5);
 
     for (const product of productsToProcess) {
       if (!product.images || product.images.length === 0) continue;
@@ -119,32 +117,27 @@ export async function downloadHopOnHopOffImages(): Promise<DownloadedImage[]> {
             originalUrl: image.largeSizeUrl,
             localPath,
             filename,
-            alt: image.caption || `${product.name} - Image ${i + 1}`,
-            productId: product.productCode,
-            productCode: product.productCode,
-            productName: product.name,
-            productPrice: product.advertisedPrice,
-            productDescription: product.shortDescription || product.description
+            alt: image.caption || `${product.name} - Image ${i + 1}`
           });
         }
       }
     }
 
-    console.log(`Downloaded ${downloadedImages.length} images`);
+    console.log(`Downloaded ${downloadedImages.length} images for gift voucher section`);
     return downloadedImages;
 
   } catch (error) {
-    console.error('Error downloading hop-on-hop-off images:', error);
+    console.error('Error downloading gift voucher section images:', error);
     return [];
   }
 }
 
 /**
- * Get existing downloaded images from the hop-on-hop-off directory
+ * Get existing downloaded images from the gift-voucher-section directory
  */
-export function getExistingHopOnHopOffImages(): DownloadedImage[] {
+export function getExistingGiftVoucherSectionImages(): DownloadedImage[] {
   try {
-    const publicDir = path.join(process.cwd(), 'public', 'hop-on-hop-off');
+    const publicDir = path.join(process.cwd(), 'public', 'gift-voucher-section');
     
     if (!fs.existsSync(publicDir)) {
       return [];
@@ -157,9 +150,9 @@ export function getExistingHopOnHopOffImages(): DownloadedImage[] {
 
     return imageFiles.map((filename, index) => ({
       originalUrl: '',
-      localPath: `/hop-on-hop-off/${filename}`,
+      localPath: `/gift-voucher-section/${filename}`,
       filename,
-      alt: `Hop on Hop off Tour - Image ${index + 1}`
+      alt: `Tour Experience - Image ${index + 1}`
     }));
 
   } catch (error) {

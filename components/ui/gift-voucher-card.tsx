@@ -4,17 +4,17 @@ import { useState } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Separator } from "@/components/ui/separator"
-import { Gift, Calendar, Star, Info, CreditCard, Clock, Users, MapPin } from "lucide-react"
-import { RezdyProduct, GiftVoucherTerms } from "@/lib/types/rezdy"
-import Link from "next/link"
+import { Gift, Calendar, Star, CreditCard, Users, MapPin, Eye } from "lucide-react"
+import { RezdyProduct, GiftVoucherTerms, GiftVoucherPurchaseData } from "@/lib/types/rezdy"
+import { GiftVoucherDetailModal } from "@/components/ui/gift-voucher-detail-modal"
 
 interface GiftVoucherCardProps {
   product: RezdyProduct
   isPopular?: boolean
   terms: GiftVoucherTerms
   onPurchase?: (productCode: string) => void
+  onPurchaseComplete?: (purchaseData: GiftVoucherPurchaseData) => void
   className?: string
 }
 
@@ -23,9 +23,10 @@ export function GiftVoucherCard({
   isPopular = false, 
   terms, 
   onPurchase,
+  onPurchaseComplete,
   className = "" 
 }: GiftVoucherCardProps) {
-  const [showTerms, setShowTerms] = useState(false)
+  const [showDetailModal, setShowDetailModal] = useState(false)
 
   const handlePurchase = () => {
     if (onPurchase) {
@@ -60,7 +61,7 @@ export function GiftVoucherCard({
   }
 
   return (
-    <Card className={`overflow-hidden hover:shadow-xl transition-all duration-300 relative group ${className}`}>
+    <Card className={`overflow-hidden hover:shadow-xl transition-all duration-300 relative group flex flex-col ${className}`}>
       {isPopular && (
         <Badge className="absolute top-4 right-4 bg-brand-accent text-brand-secondary z-10 animate-pulse">
           Most Popular
@@ -95,7 +96,7 @@ export function GiftVoucherCard({
         )}
       </div>
 
-      <CardHeader className="pb-3">
+      <CardHeader className="pb-3 flex-grow">
         <CardTitle className="font-barlow text-brand-text line-clamp-2 min-h-[3rem] flex items-start">
           {product.name}
         </CardTitle>
@@ -104,7 +105,7 @@ export function GiftVoucherCard({
         </CardDescription>
       </CardHeader>
 
-      <CardContent className="pt-0">
+      <CardContent className="pt-0 mt-auto">
         <div className="space-y-4">
           {/* Features */}
           <div className="space-y-2">
@@ -118,88 +119,30 @@ export function GiftVoucherCard({
 
           <Separator />
 
-          {/* Action Buttons */}
-          <div className="space-y-2">
+          {/* Quick Preview Button */}
+          <div>
             <Button 
-              className="w-full bg-brand-accent hover:bg-brand-accent/90 text-brand-secondary font-semibold"
-              onClick={handlePurchase}
+              variant="outline" 
+              size="sm" 
+              className="w-full"
+              onClick={() => setShowDetailModal(true)}
             >
-              <CreditCard className="mr-2 h-4 w-4" />
-              Purchase Voucher
+              <Eye className="mr-2 h-4 w-4" />
+              Quick Preview
             </Button>
-            
-            <div className="flex gap-2">
-              <Dialog open={showTerms} onOpenChange={setShowTerms}>
-                <DialogTrigger asChild>
-                  <Button variant="outline" size="sm" className="flex-1">
-                    <Info className="mr-1 h-3 w-3" />
-                    Terms
-                  </Button>
-                </DialogTrigger>
-                <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
-                  <DialogHeader>
-                    <DialogTitle className="font-barlow">Gift Voucher Terms & Conditions</DialogTitle>
-                    <DialogDescription>
-                      Important information about your gift voucher purchase and redemption
-                    </DialogDescription>
-                  </DialogHeader>
-                  <div className="space-y-4 mt-4">
-                    <div>
-                      <h4 className="font-semibold text-brand-text mb-2 flex items-center gap-2">
-                        <Clock className="h-4 w-4" />
-                        Validity Period
-                      </h4>
-                      <p className="text-sm text-muted-foreground">{terms.validity}</p>
-                    </div>
-                    
-                    <div>
-                      <h4 className="font-semibold text-brand-text mb-2 flex items-center gap-2">
-                        <Gift className="h-4 w-4" />
-                        Redemption
-                      </h4>
-                      <p className="text-sm text-muted-foreground">{terms.redemption}</p>
-                    </div>
-                    
-                    <div>
-                      <h4 className="font-semibold text-brand-text mb-2">Transferability</h4>
-                      <p className="text-sm text-muted-foreground">{terms.transferable}</p>
-                    </div>
-                    
-                    <div>
-                      <h4 className="font-semibold text-brand-text mb-2">Refund Policy</h4>
-                      <p className="text-sm text-muted-foreground">{terms.refund}</p>
-                    </div>
-                    
-                    <div>
-                      <h4 className="font-semibold text-brand-text mb-2">Partial Use</h4>
-                      <p className="text-sm text-muted-foreground">{terms.partial_use}</p>
-                    </div>
-                    
-                    <div>
-                      <h4 className="font-semibold text-brand-text mb-2">Booking Process</h4>
-                      <p className="text-sm text-muted-foreground">{terms.booking_process}</p>
-                    </div>
-                    
-                    <div>
-                      <h4 className="font-semibold text-brand-text mb-2">Contact Information</h4>
-                      <p className="text-sm text-muted-foreground">{terms.contact_info}</p>
-                    </div>
-                  </div>
-                </DialogContent>
-              </Dialog>
-              
-              {product.productCode && (
-                <Link href={`/tours/${product.productCode}`} className="flex-1">
-                  <Button variant="outline" size="sm" className="w-full">
-                    <Info className="mr-1 h-3 w-3" />
-                    Details
-                  </Button>
-                </Link>
-              )}
-            </div>
           </div>
         </div>
       </CardContent>
+      
+      {/* Gift Voucher Detail Modal */}
+      <GiftVoucherDetailModal
+        product={product}
+        isOpen={showDetailModal}
+        onClose={() => setShowDetailModal(false)}
+        terms={terms}
+        isPopular={isPopular}
+        onPurchase={onPurchaseComplete}
+      />
     </Card>
   )
 } 

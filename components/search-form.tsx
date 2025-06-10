@@ -244,11 +244,7 @@ export function SearchForm({ onSearch, showRedirect = true, onLocationChange }: 
                 <span>{dateText}</span>
               </span>
             )}
-            {rezdyData.products.length > 0 && (
-              <span className="ml-2 inline-flex items-center px-2 py-1 rounded-full text-xs bg-green-100 text-green-700">
-                {rezdyData.products.length} tours available
-              </span>
-            )}
+           
             {rezdyError && (
               <span className="ml-2 inline-flex items-center px-2 py-1 rounded-full text-xs bg-red-100 text-red-700">
                 Data sync issue
@@ -325,11 +321,7 @@ export function SearchForm({ onSearch, showRedirect = true, onLocationChange }: 
                   <SelectContent>
                     <SelectItem value="all">
                       All Locations
-                      {rezdyData.products.length > 0 && (
-                        <span className="ml-2 text-xs text-muted-foreground">
-                          ({rezdyData.products.length} tours)
-                        </span>
-                      )}
+                     
                     </SelectItem>
                     {pickupLocations.map(({ location, count }) => (
                       <SelectItem key={location} value={location}>

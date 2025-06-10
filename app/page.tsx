@@ -13,7 +13,7 @@ import { SiteHeader } from "@/components/site-header"
 import { SiteFooter } from "@/components/site-footer"
 import { CategoriesSection } from "@/components/categories-section"
 import { HopOnHopOffImages } from "@/components/hop-on-hop-off-images"
-import { GiftVoucherImage } from "@/components/gift-voucher-image"
+import { GiftCardProducts } from "@/components/gift-card-products"
 import { BlogSection } from "@/components/blog-section"
 import { ContactSection } from "@/components/contact-section"
 import { TestimonialsSection } from "@/components/testimonials-section"
@@ -118,17 +118,13 @@ export default function Home() {
                   </div>
                 </div>
                 <div className="flex flex-col sm:flex-row gap-4">
-                  <Link href="/hop-on-hop-off">
+                  <Link href="/tours?category=hop-on-hop-off">
                     <Button size="lg" className="bg-brand-accent text-brand-secondary hover:bg-brand-accent/90">
                       <Bus className="mr-2 h-5 w-5" />
                       Explore Routes
                     </Button>
                   </Link>
-                  <Link href="/hop-on-hop-off">
-                    <Button variant="outline" size="lg" className="border-brand-accent text-brand-accent hover:bg-brand-accent hover:text-brand-secondary">
-                      View Pricing
-                    </Button>
-                  </Link>
+                 
                 </div>
               </div>
               
@@ -137,7 +133,7 @@ export default function Home() {
                 <HopOnHopOffImages />
                 <div className="absolute -bottom-6 -right-6 bg-brand-accent text-brand-secondary p-4 rounded-xl shadow-lg">
                   <div className="text-center">
-                    <div className="text-2xl font-bold">$25</div>
+                    <div className="text-2xl font-bold">$99</div>
                     <div className="text-sm opacity-90">Starting from</div>
                   </div>
                 </div>
@@ -150,15 +146,9 @@ export default function Home() {
         <section className="py-16">
           <div className="container px-4 sm:px-6 lg:px-8">
             <div className="grid lg:grid-cols-2 gap-12 items-center">
-              {/* Image */}
+              {/* Gift Card Products */}
               <div className="relative order-2 lg:order-1">
-                <GiftVoucherImage />
-                <div className="absolute -top-6 -left-6 bg-brand-accent text-brand-secondary p-4 rounded-xl shadow-lg">
-                  <div className="flex items-center gap-2">
-                    <Gift className="h-6 w-6" />
-                    <span className="font-semibold">Perfect Gift</span>
-                  </div>
-                </div>
+                <GiftCardProducts />
               </div>
               
               {/* Content */}
@@ -192,26 +182,7 @@ export default function Home() {
                     <span className="font-text text-sm">Custom amounts available</span>
                   </div>
                 </div>
-                <div className="bg-brand-accent/5 p-6 rounded-xl border border-brand-accent/20">
-                  <div className="flex items-center justify-between mb-4">
-                    <h3 className="font-secondary text-lg font-semibold text-brand-text">Popular Voucher Packages</h3>
-                  </div>
-                  <div className="grid sm:grid-cols-3 gap-4 text-center">
-                    <div className="bg-white p-4 rounded-lg shadow-sm">
-                      <div className="text-xl font-bold text-brand-accent">$100</div>
-                      <div className="text-sm text-muted-foreground">Adventure Explorer</div>
-                    </div>
-                    <div className="bg-white p-4 rounded-lg shadow-sm border-2 border-brand-accent">
-                      <div className="text-xl font-bold text-brand-accent">$200</div>
-                      <div className="text-sm text-muted-foreground">Romantic Getaway</div>
-                      <div className="text-xs text-brand-accent font-semibold mt-1">Most Popular</div>
-                    </div>
-                    <div className="bg-white p-4 rounded-lg shadow-sm">
-                      <div className="text-xl font-bold text-brand-accent">$150</div>
-                      <div className="text-sm text-muted-foreground">Family Fun</div>
-                    </div>
-                  </div>
-                </div>
+              
                 <div className="flex flex-col sm:flex-row gap-4">
                   <Link href="/gift-vouchers">
                     <Button size="lg" className="bg-brand-accent text-brand-secondary hover:bg-brand-accent/90">
@@ -219,11 +190,7 @@ export default function Home() {
                       Buy Gift Voucher
                     </Button>
                   </Link>
-                  <Link href="/gift-vouchers">
-                    <Button variant="outline" size="lg" className="border-brand-accent text-brand-accent hover:bg-brand-accent hover:text-brand-secondary">
-                      Learn More
-                    </Button>
-                  </Link>
+                 
                 </div>
               </div>
             </div>
@@ -248,7 +215,7 @@ export default function Home() {
                   </Button>
                 </Link>
                 <Link href="/contact">
-                  <Button variant="outline" size="lg" className="border-brand-secondary text-brand-secondary hover:bg-brand-secondary hover:text-brand-accent font-semibold px-8 py-3 text-lg">
+                  <Button size="lg" className="bg-brand-secondary text-brand-accent hover:bg-brand-secondary/90 font-semibold px-8 py-3 text-lg">
                     Contact Us
                   </Button>
                 </Link>

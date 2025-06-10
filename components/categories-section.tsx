@@ -524,6 +524,9 @@ function CategoryRow({
             <h4 className="text-2xl lg:text-3xl xl:text-4xl font-semibold text-white font-['Barlow'] truncate">
               {category.title}
             </h4>
+            <p className="text-sm lg:text-base text-gray-200 font-['Work_Sans'] mb-1 line-clamp-2">
+              {category.description}
+            </p>
             <p className="text-xs lg:text-sm text-gray-300 font-['Work_Sans'] truncate">
               {totalCategoryProducts} tours available
             </p>

@@ -213,7 +213,7 @@ export default function HopOnHopOffPage() {
                     </CardHeader>
                     <CardContent>
                       <div className="mb-4">
-                        <p className="text-sm text-muted-foreground font-work-sans line-clamp-3">
+                        <p className="text-sm text-muted-foreground font-work-sans line-clamp-3 min-h-[4.5rem] leading-6">
                           {product.shortDescription || product.description || 'Experience the city with our hop-on hop-off tour service.'}
                         </p>
                       </div>

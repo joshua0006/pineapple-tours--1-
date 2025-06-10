@@ -17,7 +17,7 @@ import { GiftVoucherFiltersComponent } from "@/components/ui/gift-voucher-filter
 import { Gift, Heart, Calendar, Star, CreditCard, Mail, Download, RefreshCw, AlertTriangle, CheckCircle } from "lucide-react"
 import Link from "next/link"
 import { useRezdyGiftVouchers, useGiftVoucherTerms } from "@/hooks/use-rezdy"
-import { RezdyProduct, GiftVoucherFilters } from "@/lib/types/rezdy"
+import { RezdyProduct, GiftVoucherFilters, GiftVoucherPurchaseData } from "@/lib/types/rezdy"
 
 export default function GiftVouchersPage() {
   const [filters, setFilters] = useState<GiftVoucherFilters>({
@@ -38,6 +38,19 @@ export default function GiftVouchersPage() {
       setSelectedVoucher(voucher)
       setShowPurchaseForm(true)
     }
+  }
+
+  const handlePurchaseComplete = (purchaseData: GiftVoucherPurchaseData) => {
+    console.log('Gift voucher purchase completed:', purchaseData)
+    // Here you would typically:
+    // 1. Send the purchase data to your API
+    // 2. Process the payment
+    // 3. Send the voucher email
+    // 4. Show success message
+    // 5. Redirect to confirmation page
+    
+    // For now, just show an alert
+    alert(`Gift voucher purchased successfully for ${purchaseData.recipientName}!`)
   }
 
   const handleFiltersChange = (newFilters: GiftVoucherFilters) => {
@@ -127,80 +140,16 @@ export default function GiftVouchersPage() {
           }}
         />
 
-        {/* Benefits Section */}
-        <section id="benefits-section" className="py-16 bg-gray-50">
-          <div className="container mx-auto px-4">
-            <div className="text-center mb-12">
-              <h2 className="text-3xl md:text-4xl font-bold text-brand-text mb-4 font-barlow">
-                Why Choose Our Gift Vouchers?
-              </h2>
-              <p className="text-lg text-muted-foreground max-w-2xl mx-auto font-work-sans">
-                Our gift vouchers offer the perfect way to share amazing experiences with your loved ones
-              </p>
-            </div>
-            
-            <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
-              {benefits.map((benefit, index) => (
-                <Card key={index} className="text-center hover:shadow-lg transition-shadow">
-                  <CardHeader>
-                    <div className="mx-auto w-16 h-16 bg-brand-accent/10 rounded-full flex items-center justify-center text-brand-accent mb-4">
-                      {benefit.icon}
-                    </div>
-                    <CardTitle className="font-barlow text-brand-text">{benefit.title}</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <CardDescription className="font-work-sans">
-                      {benefit.description}
-                    </CardDescription>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          </div>
-        </section>
+       
 
         {/* Gift Vouchers Section */}
         <section className="py-16">
           <div className="container mx-auto px-4">
-            <div className="text-center mb-12">
-              <h2 className="text-3xl md:text-4xl font-bold text-brand-text mb-4 font-barlow">
-                Choose Your Gift Voucher
-              </h2>
-              <p className="text-lg text-muted-foreground max-w-2xl mx-auto font-work-sans">
-                Select from our curated voucher packages or create a custom amount
-              </p>
-            </div>
+            
 
-            {/* Enhanced Error Handling */}
-            {error && (
-              <Alert className="mb-8 border-destructive">
-                <AlertTriangle className="h-4 w-4" />
-                <AlertDescription className="flex items-center justify-between w-full">
-                  <div>
-                    <strong>Unable to load gift vouchers:</strong> {error}
-                    {retryCount > 0 && (
-                      <span className="block text-sm mt-1">
-                        Retry attempt {retryCount} of {maxRetries}
-                      </span>
-                    )}
-                  </div>
-                  <Button variant="outline" size="sm" onClick={retry} disabled={loading}>
-                    <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
-                    Retry
-                  </Button>
-                </AlertDescription>
-              </Alert>
-            )}
+         
 
-            {/* Success message when vouchers are loaded */}
-            {!loading && !error && giftVouchers && giftVouchers.length > 0 && (
-              <Alert className="mb-8 border-green-500 bg-green-50">
-                <CheckCircle className="h-4 w-4 text-green-600" />
-                <AlertDescription className="text-green-800">
-                  Successfully loaded {giftVouchers.length} gift voucher{giftVouchers.length !== 1 ? 's' : ''} from our catalog
-                </AlertDescription>
-              </Alert>
-            )}
+         
 
             {/* Filters */}
             <GiftVoucherFiltersComponent
@@ -247,6 +196,7 @@ export default function GiftVouchersPage() {
                       isPopular={index === 1} // Mark second voucher as popular
                       terms={terms}
                       onPurchase={handlePurchase}
+                      onPurchaseComplete={handlePurchaseComplete}
                     />
                   ))
                 ) : (

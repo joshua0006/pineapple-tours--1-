@@ -21,30 +21,14 @@ export function SiteFooter() {
         <div className="container py-12 md:py-16">
           {/* Two column layout: Left side (logos/CTA) and Right side (footer links) */}
           <div className="grid gap-8 lg:grid-cols-4 mb-12">
-            {/* Left column: Logo and CTA buttons */}
-            <div className="flex flex-col gap-8 lg:col-span-1">
-              <div className="flex items-center gap-4">
-                <div className="flex items-center justify-center gap-8">
-                  <img
-                    src="/footer-images/ausowned-certified-circular.svg"
-                    alt="Australian Owned Certified Business"
-                    className="h-32 w-auto"
-                  />
-                  <div className="bg-transparent">
-                    <img
-                      src="/footer-images/Mask-Group-5@2x.avif"
-                      alt="Tourism Emissions Reduction Commitment"
-                      className="h-32 w-auto"
-                    />
-                  </div>
-                </div>
-              </div>
+            {/* Left column: CTA buttons */}
+            <div className="flex flex-col justify-center gap-8 lg:col-span-1">
               <div className="flex flex-col gap-4">
                 <Button
                   asChild
                   className="bg-red-500 hover:bg-red-600 text-white px-8 py-3 text-lg font-semibold"
                 >
-                  <Link href="/booking">BOOK YOUR TOUR NOW</Link>
+                  <Link href="/tours">BOOK YOUR TOUR NOW</Link>
                 </Button>
                 <Button
                   asChild
@@ -61,7 +45,7 @@ export function SiteFooter() {
               {/* Quicklinks */}
               <div>
                 <h3 className="text-red-500 text-lg font-semibold mb-4">
-                  Quicklinks
+                  Discover
                 </h3>
                 <nav className="flex flex-col gap-2">
                   <Link
@@ -111,28 +95,10 @@ export function SiteFooter() {
                     FAQ
                   </Link>
                   <Link
-                    href="/feedback"
-                    className="text-gray-300 hover:text-white transition-colors"
-                  >
-                    Feedback
-                  </Link>
-                  <Link
                     href="/queensland-weather-info"
                     className="text-gray-300 hover:text-white transition-colors"
                   >
                     Queensland Weather Info
-                  </Link>
-                  <Link
-                    href="/contact"
-                    className="text-gray-300 hover:text-white transition-colors"
-                  >
-                    Contact Us
-                  </Link>
-                  <Link
-                    href="/work-with-us"
-                    className="text-gray-300 hover:text-white transition-colors"
-                  >
-                    Work With Us
                   </Link>
                   <Link
                     href="/accessibility"
@@ -145,6 +111,12 @@ export function SiteFooter() {
                     className="text-gray-300 hover:text-white transition-colors"
                   >
                     Companion Card - Accepted Here
+                  </Link>
+                  <Link
+                    href="/allergies-and-dietary-requirements"
+                    className="text-gray-300 hover:text-white transition-colors"
+                  >
+                    Allergies and Dietary Requirements
                   </Link>
                 </nav>
               </div>
@@ -168,12 +140,6 @@ export function SiteFooter() {
                     Refund and Exchange Policy
                   </Link>
                   <Link
-                    href="/allergies-and-dietary-requirements"
-                    className="text-gray-300 hover:text-white transition-colors"
-                  >
-                    Allergies and Dietary requirements
-                  </Link>
-                  <Link
                     href="/privacy-policy"
                     className="text-gray-300 hover:text-white transition-colors"
                   >
@@ -191,19 +157,28 @@ export function SiteFooter() {
           </div>
 
           {/* Certification badges */}
-          <div className="flex flex-col lg:flex-row items-center justify-between gap-8 mt-12 pt-8 border-t border-gray-800">
-            <div className="flex flex-wrap items-center gap-6">
-              <div className="bg-transparent">
-                <img
-                  src="/footer-images/Sustainable-Supply-Nation-1024x196.webp"
-                  alt="Supply Nation Registered"
-                  className="h-48 w-auto"
-                />
-              </div>
+          <div className="flex flex-col items-center gap-8 mt-12 pt-8 border-t border-gray-800">
+            {/* Top row: All logos */}
+            <div className="flex flex-wrap items-center justify-center gap-6">
+              <img
+                src="/footer-images/ausowned-certified-circular.svg"
+                alt="Australian Owned Certified Business"
+                className="h-32 w-auto"
+              />
+              <img
+                src="/footer-images/Mask-Group-5@2x.avif"
+                alt="Tourism Emissions Reduction Commitment"
+                className="h-32 w-auto"
+              />
+              <img
+                src="/footer-images/Sustainable-Supply-Nation-1024x196.webp"
+                alt="Supply Nation Registered"
+                className="h-32 w-auto"
+              />
             </div>
 
-            {/* Social media and copyright */}
-            <div className="flex flex-col items-center lg:items-end gap-4">
+            {/* Bottom row: Social media and copyright */}
+            <div className="flex flex-col items-center gap-4">
               <div className="flex gap-4">
                 <Link
                   href="https://www.instagram.com/pineappletours.com.au/"
@@ -230,7 +205,7 @@ export function SiteFooter() {
                   <span className="sr-only">YouTube</span>
                 </Link>
               </div>
-              <p className="text-sm text-gray-400 text-center lg:text-right">
+              <p className="text-sm text-gray-400 text-center">
                 Copyright © 2014 - {new Date().getFullYear()} Pineapple Tours.
                 All rights reserved.
               </p>

@@ -181,12 +181,14 @@ export function SiteHeader() {
           <div className="flex items-center gap-4">
             <PhoneNumber phoneNumber="0466 331 232" variant="desktop" />
             <CartIcon />
-            <Button
-              size="sm"
-              className="bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary shadow-md hover:shadow-lg transition-all duration-200 font-semibold px-6"
-            >
-              Book Now
-            </Button>
+            <Link href="/tours">
+              <Button
+                size="sm"
+                className="bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary shadow-md hover:shadow-lg transition-all duration-200 font-semibold px-6"
+              >
+                Book Now
+              </Button>
+            </Link>
           </div>
         )}
 

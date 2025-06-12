@@ -338,13 +338,6 @@ export function CategoriesSection() {
 
                     {/* Content */}
                     <div className="relative z-10 p-6 sm:p-8 h-full flex flex-col">
-                      {/* Icon */}
-                      <div className="mb-4 sm:mb-6">
-                        <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-full bg-white/10 backdrop-blur-sm group-hover:bg-[#FF585D]/20 flex items-center justify-center transition-all duration-300 group-hover:scale-110">
-                          <Icon className="h-6 w-6 sm:h-8 sm:w-8 text-white transition-transform duration-300 group-hover:scale-110" />
-                        </div>
-                      </div>
-
                       {/* Content */}
                       <div className="flex-1 flex flex-col">
                         <h3 className="text-xl sm:text-2xl font-bold text-white mb-2 sm:mb-3 font-['Barlow'] drop-shadow-lg">

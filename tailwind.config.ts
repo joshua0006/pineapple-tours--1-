@@ -1,4 +1,4 @@
-import type { Config } from "tailwindcss"
+import type { Config } from "tailwindcss";
 
 const config = {
   darkMode: ["class"],
@@ -60,11 +60,11 @@ const config = {
         },
         // Brand Colors
         "brand-primary": "#141312",
-        "brand-secondary": "#FFFFFF", 
+        "brand-secondary": "#FFFFFF",
         "brand-text": "#0B2000",
         "brand-accent": "#FF585D",
         "brand-green-accent": "#404040",
-        
+
         // Coral palette (updated to match brand accent)
         coral: {
           50: "#fff5f5",
@@ -109,23 +109,23 @@ const config = {
           to: { height: "0" },
         },
         "dropdown-in": {
-          from: { 
-            opacity: "0", 
-            transform: "scale(0.95) translateY(-10px)" 
+          from: {
+            opacity: "0",
+            transform: "scale(0.95) translateY(-10px)",
           },
-          to: { 
-            opacity: "1", 
-            transform: "scale(1) translateY(0)" 
+          to: {
+            opacity: "1",
+            transform: "scale(1) translateY(0)",
           },
         },
         "dropdown-out": {
-          from: { 
-            opacity: "1", 
-            transform: "scale(1) translateY(0)" 
+          from: {
+            opacity: "1",
+            transform: "scale(1) translateY(0)",
           },
-          to: { 
-            opacity: "0", 
-            transform: "scale(0.95) translateY(-10px)" 
+          to: {
+            opacity: "0",
+            transform: "scale(0.95) translateY(-10px)",
           },
         },
         "fade-in-up": {
@@ -148,7 +148,11 @@ const config = {
       },
     },
   },
-  plugins: [require("tailwindcss-animate"), require("@tailwindcss/typography")],
-} satisfies Config
+  plugins: [
+    require("tailwindcss-animate"),
+    require("@tailwindcss/typography"),
+    require("@tailwindcss/line-clamp"),
+  ],
+} satisfies Config;
 
-export default config
+export default config;

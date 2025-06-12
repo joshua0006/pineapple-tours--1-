@@ -596,13 +596,11 @@ export class EnhancedCacheManager {
 
   getPerformanceMetrics(): PerformanceMetrics {
     return {
-      cache_hit_rate: this.cacheStats.hits / this.cacheStats.totalRequests || 0,
-      cache_miss_rate: this.cacheStats.misses / this.cacheStats.totalRequests || 0,
-      average_response_time: Object.values(this.analytics.averageResponseTime).reduce((a, b) => a + b, 0) / 
-                           Object.keys(this.analytics.averageResponseTime).length || 0,
+      cache_hit_ratio: this.cacheStats.hits / this.cacheStats.totalRequests || 0,
+      api_response_time: Object.values(this.analytics.averageResponseTime).reduce((a, b) => a + b, 0) / 
+                        Object.keys(this.analytics.averageResponseTime).length || 0,
       data_freshness: this.calculateDataFreshness(),
-      memory_efficiency: this.cacheStats.compressionRatio,
-      redis_connected: this.cacheStats.redisConnected
+      error_rate: 0 // TODO: Implement error tracking
     };
   }
 
@@ -610,7 +608,7 @@ export class EnhancedCacheManager {
     return { ...this.analytics };
   }
 
-  getCacheStats(): CacheStats & { size: number; config: typeof this.config } {
+  getCacheStats(): CacheStats & { size: number; config: any } {
     return {
       ...this.cacheStats,
       size: this.memoryCache.size,

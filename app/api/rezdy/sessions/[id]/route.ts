@@ -5,7 +5,7 @@ const API_KEY = process.env.REZDY_API_KEY;
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     if (!API_KEY) {
@@ -15,7 +15,7 @@ export async function GET(
       );
     }
 
-    const sessionId = params.id;
+    const { id: sessionId } = await params;
 
     if (!sessionId) {
       return NextResponse.json(

@@ -1,33 +1,27 @@
-import React from 'react';
-import { cn } from '@/lib/utils';
+import React from "react";
+import { cn } from "@/lib/utils";
 
 // Base skeleton component
-export function Skeleton({ 
-  className, 
-  ...props 
+export function Skeleton({
+  className,
+  ...props
 }: React.HTMLAttributes<HTMLDivElement>) {
   return (
     <div
-      className={cn(
-        "animate-pulse rounded-md bg-gray-800/50",
-        className
-      )}
+      className={cn("animate-pulse rounded-md bg-gray-800/50", className)}
       {...props}
     />
   );
 }
 
 // Enhanced skeleton with breathing effect
-export function BreathingSkeleton({ 
-  className, 
-  ...props 
+export function BreathingSkeleton({
+  className,
+  ...props
 }: React.HTMLAttributes<HTMLDivElement>) {
   return (
     <div
-      className={cn(
-        "animate-pulse rounded-md bg-gray-800/50",
-        className
-      )}
+      className={cn("animate-pulse rounded-md bg-gray-800/50", className)}
       {...props}
     />
   );
@@ -40,7 +34,7 @@ export function ProductCardSkeleton() {
       <div className="relative overflow-hidden rounded-xl shadow-lg h-96 sm:h-[420px] md:h-96 lg:h-[420px] xl:h-96 2xl:h-[420px] bg-gray-800/50">
         {/* Image skeleton */}
         <BreathingSkeleton className="absolute inset-0" />
-        
+
         {/* Content skeleton */}
         <div className="absolute bottom-0 left-0 right-0 p-4 sm:p-6 bg-gradient-to-t from-black/90 to-transparent">
           {/* Title skeleton */}
@@ -48,7 +42,7 @@ export function ProductCardSkeleton() {
             <Skeleton className="h-5 sm:h-6 w-3/4 bg-gray-600/50" />
             <Skeleton className="h-4 sm:h-5 w-1/2 bg-gray-600/50" />
           </div>
-          
+
           {/* Price and button skeleton */}
           <div className="flex items-end justify-between gap-3">
             <div className="flex flex-col space-y-2">
@@ -64,12 +58,18 @@ export function ProductCardSkeleton() {
 }
 
 // Category navigation skeleton
-export function CategoryNavigationSkeleton({ isCollapsed = false }: { isCollapsed?: boolean }) {
+export function CategoryNavigationSkeleton({
+  isCollapsed = false,
+}: {
+  isCollapsed?: boolean;
+}) {
   return (
-    <div className={cn(
-      "bg-[#141312] border-r border-gray-700 flex flex-col",
-      isCollapsed ? "w-16" : "w-72 xl:w-80"
-    )}>
+    <div
+      className={cn(
+        "bg-[#141312] border-r border-gray-700 flex flex-col",
+        isCollapsed ? "w-16" : "w-72 xl:w-80"
+      )}
+    >
       {/* Header skeleton */}
       <div className="p-3 xl:p-4 border-b border-gray-700 flex-shrink-0">
         <div className="flex items-center justify-between">
@@ -81,7 +81,7 @@ export function CategoryNavigationSkeleton({ isCollapsed = false }: { isCollapse
           )}
           <Skeleton className="h-8 w-8 bg-gray-700/50 rounded flex-shrink-0" />
         </div>
-        
+
         {/* Search skeleton */}
         {!isCollapsed && (
           <div className="mt-3">
@@ -89,7 +89,7 @@ export function CategoryNavigationSkeleton({ isCollapsed = false }: { isCollapse
           </div>
         )}
       </div>
-      
+
       {/* Navigation items skeleton */}
       <nav className="flex-1 p-2 space-y-1">
         {Array.from({ length: 8 }).map((_, index) => (
@@ -101,7 +101,7 @@ export function CategoryNavigationSkeleton({ isCollapsed = false }: { isCollapse
             )}
           >
             <Skeleton className="h-4 w-4 xl:h-5 xl:w-5 bg-[#FF585D]/30 rounded flex-shrink-0" />
-            
+
             {!isCollapsed && (
               <div className="flex-1 min-w-0 space-y-1">
                 <Skeleton className="h-4 w-24 bg-gray-700/50" />
@@ -129,7 +129,7 @@ export function CategoryRowSkeleton() {
             <Skeleton className="h-3 lg:h-4 w-32 bg-gray-700/50" />
           </div>
         </div>
-        
+
         {/* Scroll controls skeleton */}
         <div className="flex gap-1 lg:gap-2 flex-shrink-0">
           <Skeleton className="h-7 w-7 lg:h-8 lg:w-8 bg-gray-700/50 rounded" />
@@ -153,11 +153,58 @@ export function MobileCategorySelectorSkeleton() {
     <div className="bg-[#141312] border-b border-gray-700 p-3 sm:p-4">
       <div className="flex gap-2 overflow-hidden pb-1">
         {Array.from({ length: 6 }).map((_, index) => (
-          <div key={index} className="flex items-center gap-2 px-3 py-2 rounded-full flex-shrink-0">
+          <div
+            key={index}
+            className="flex items-center gap-2 px-3 py-2 rounded-full flex-shrink-0"
+          >
             <Skeleton className="h-4 w-4 bg-[#FF585D]/30 rounded flex-shrink-0" />
             <Skeleton className="h-4 w-16 bg-gray-700/50" />
           </div>
         ))}
+      </div>
+    </div>
+  );
+}
+
+// Category card skeleton for grid layout
+export function CategoryCardSkeleton() {
+  return (
+    <div className="relative overflow-hidden rounded-xl h-full min-h-[280px] sm:min-h-[320px] flex flex-col">
+      {/* Background image skeleton */}
+      <Skeleton className="absolute inset-0 bg-gray-700/50" />
+
+      {/* Dark overlay */}
+      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-black/20" />
+
+      {/* Content skeleton */}
+      <div className="relative z-10 p-6 sm:p-8 h-full flex flex-col">
+        {/* Icon skeleton */}
+        <div className="mb-4 sm:mb-6">
+          <Skeleton className="w-12 h-12 sm:w-16 sm:h-16 rounded-full bg-white/20" />
+        </div>
+
+        {/* Content skeleton */}
+        <div className="flex-1 flex flex-col">
+          {/* Title skeleton */}
+          <Skeleton className="h-6 sm:h-7 w-32 sm:w-40 mb-2 sm:mb-3 bg-white/30" />
+
+          {/* Description skeleton */}
+          <div className="mb-4 sm:mb-6 flex-1 space-y-2">
+            <Skeleton className="h-4 w-full bg-white/20" />
+            <Skeleton className="h-4 w-3/4 bg-white/20" />
+            <Skeleton className="h-4 w-1/2 bg-white/20" />
+          </div>
+
+          {/* Tour count and arrow skeleton */}
+          <div className="flex items-center justify-between">
+            <div className="flex flex-col space-y-1">
+              <Skeleton className="h-3 w-20 bg-white/20" />
+              <Skeleton className="h-5 sm:h-6 w-8 bg-white/30" />
+            </div>
+
+            <Skeleton className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-white/20" />
+          </div>
+        </div>
       </div>
     </div>
   );
@@ -169,37 +216,25 @@ export function CategoriesSectionSkeleton() {
     <section className="bg-[#141312] py-8 sm:py-12 lg:py-16">
       <div className="container mx-auto px-4">
         {/* Header skeleton */}
-        <div className="text-center mb-6 lg:mb-8 space-y-4">
-          <Skeleton className="h-8 sm:h-10 w-64 mx-auto bg-gray-700/50" />
-          <Skeleton className="h-5 lg:h-6 w-80 mx-auto bg-gray-700/50" />
-        </div>
-
-        {/* Mobile category selector skeleton */}
-        <div className="lg:hidden mb-4">
-          <MobileCategorySelectorSkeleton />
-        </div>
-
-        {/* Main layout skeleton */}
-        <div className="bg-[#141312] rounded-xl lg:rounded-2xl shadow-lg overflow-hidden border border-gray-700">
-          <div className="flex min-h-[600px] lg:min-h-[700px]">
-            {/* Left navigation skeleton - Hidden on mobile */}
-            <div className="hidden lg:block flex-shrink-0">
-              <CategoryNavigationSkeleton />
-            </div>
-            
-            {/* Right content skeleton */}
-            <div className="flex-1 min-w-0 p-3 sm:p-4 lg:p-6">
-              {/* Mobile search skeleton */}
-              <div className="lg:hidden mb-4">
-                <Skeleton className="h-9 w-full bg-gray-700/50 rounded" />
-              </div>
-
-              {/* Category rows skeleton */}
-              <div className="space-y-6 lg:space-y-8">
-                <CategoryRowSkeleton />
-              </div>
-            </div>
+        <div className="text-start mb-8 lg:mb-12 space-y-4">
+          <Skeleton className="h-9 sm:h-11 w-64 bg-gray-700/50" />
+          <div className="space-y-2">
+            <Skeleton className="h-5 lg:h-6 w-full max-w-4xl bg-gray-700/50" />
+            <Skeleton className="h-5 lg:h-6 w-3/4 max-w-3xl bg-gray-700/50" />
+            <Skeleton className="h-5 lg:h-6 w-1/2 max-w-2xl bg-gray-700/50" />
           </div>
+        </div>
+
+        {/* Category Grid Skeleton */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6 lg:gap-8">
+          {Array.from({ length: 8 }).map((_, index) => (
+            <CategoryCardSkeleton key={index} />
+          ))}
+        </div>
+
+        {/* Additional info skeleton */}
+        <div className="text-center mt-8 lg:mt-12">
+          <Skeleton className="h-4 w-64 mx-auto bg-gray-700/50" />
         </div>
       </div>
     </section>
@@ -207,12 +242,12 @@ export function CategoriesSectionSkeleton() {
 }
 
 // Loading progress bar
-export function LoadingProgressBar({ 
-  progress, 
+export function LoadingProgressBar({
+  progress,
   stage,
-  className 
-}: { 
-  progress: number; 
+  className,
+}: {
+  progress: number;
   stage: string;
   className?: string;
 }) {
@@ -227,7 +262,7 @@ export function LoadingProgressBar({
         </span>
       </div>
       <div className="w-full bg-gray-800 rounded-full h-2 overflow-hidden">
-        <div 
+        <div
           className="h-2 bg-gradient-to-r from-[#FF585D] to-[#FF585D]/80 rounded-full transition-all duration-300 ease-out"
           style={{ width: `${Math.max(0, Math.min(100, progress))}%` }}
         />
@@ -237,12 +272,12 @@ export function LoadingProgressBar({
 }
 
 // Enhanced loading indicator with branding
-export function BrandedLoadingIndicator({ 
-  stage = 'Loading',
+export function BrandedLoadingIndicator({
+  stage = "Loading",
   progress = 0,
   message,
   showProgress = true,
-  className
+  className,
 }: {
   stage?: string;
   progress?: number;
@@ -265,7 +300,7 @@ export function BrandedLoadingIndicator({
       <h3 className="text-lg lg:text-xl font-semibold text-white mb-2 font-['Barlow']">
         {stage}
       </h3>
-      
+
       {message && (
         <p className="text-sm lg:text-base text-gray-300 font-['Work_Sans'] mb-4 max-w-md mx-auto">
           {message}
@@ -275,10 +310,7 @@ export function BrandedLoadingIndicator({
       {/* Progress bar */}
       {showProgress && (
         <div className="max-w-xs mx-auto">
-          <LoadingProgressBar 
-            progress={progress} 
-            stage={stage.toLowerCase()}
-          />
+          <LoadingProgressBar progress={progress} stage={stage.toLowerCase()} />
         </div>
       )}
 
@@ -294,4 +326,4 @@ export function BrandedLoadingIndicator({
       </div>
     </div>
   );
-} 
+}

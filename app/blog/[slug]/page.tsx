@@ -19,13 +19,13 @@ import {
 // Using centralized blog data from lib/blog-data.ts
 
 interface BlogPostPageProps {
-  params: {
+  params: Promise<{
     slug: string
-  }
+  }>
 }
 
-export default function BlogPostPage({ params }: BlogPostPageProps) {
-  const { slug } = params
+export default async function BlogPostPage({ params }: BlogPostPageProps) {
+  const { slug } = await params
   
   // Find the blog post by slug
   const post = getBlogPostBySlug(slug)

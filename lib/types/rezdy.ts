@@ -16,7 +16,7 @@ export interface RezdyExtra {
   description?: string;
   price: number;
   currency?: string;
-  priceType: 'PER_PERSON' | 'PER_BOOKING' | 'PER_DAY';
+  priceType: "PER_PERSON" | "PER_BOOKING" | "PER_DAY";
   maxQuantity?: number;
   minQuantity?: number;
   isRequired?: boolean;
@@ -123,16 +123,19 @@ export interface RezdyApiResponse<T> {
   offset?: number;
 }
 
-export interface RezdyProductsResponse extends RezdyApiResponse<RezdyProduct[]> {
+export interface RezdyProductsResponse
+  extends RezdyApiResponse<RezdyProduct[]> {
   products?: RezdyProduct[];
 }
 
-export interface RezdyAvailabilityResponse extends RezdyApiResponse<RezdyAvailability[]> {
+export interface RezdyAvailabilityResponse
+  extends RezdyApiResponse<RezdyAvailability[]> {
   availability?: RezdyAvailability[];
   sessions?: RezdySession[];
 }
 
-export interface RezdyBookingsResponse extends RezdyApiResponse<RezdyBooking[]> {
+export interface RezdyBookingsResponse
+  extends RezdyApiResponse<RezdyBooking[]> {
   bookings?: RezdyBooking[];
 }
 
@@ -227,9 +230,9 @@ export interface BookingClassification {
 export interface FilterCriteria {
   temporal: {
     date_range: { start: Date; end: Date };
-    season: 'spring' | 'summer' | 'autumn' | 'winter';
+    season: "spring" | "summer" | "autumn" | "winter";
     day_of_week: string[];
-    time_of_day: 'morning' | 'afternoon' | 'evening';
+    time_of_day: "morning" | "afternoon" | "evening";
   };
   commercial: {
     price_range: { min: number; max: number };
@@ -242,7 +245,7 @@ export interface FilterCriteria {
     pickup_points: string[];
   };
   operational: {
-    availability_status: 'available' | 'limited' | 'sold_out';
+    availability_status: "available" | "limited" | "sold_out";
     lead_time: number;
     group_size: { min: number; max: number };
   };
@@ -296,7 +299,7 @@ export interface DataIssue {
   productCode?: string;
   orderNumber?: string;
   message?: string;
-  severity?: 'low' | 'medium' | 'high' | 'critical';
+  severity?: "low" | "medium" | "high" | "critical";
 }
 
 // Analytics and Reporting Types
@@ -335,14 +338,14 @@ export interface PerformanceMetrics {
 // Data Synchronization Types
 export interface SyncStatus {
   last_sync: Date;
-  sync_type: 'full' | 'incremental' | 'real_time';
-  status: 'success' | 'failed' | 'in_progress';
+  sync_type: "full" | "incremental" | "real_time";
+  status: "success" | "failed" | "in_progress";
   records_processed: number;
   errors: DataIssue[];
 }
 
 export interface ConflictResolutionStrategy {
-  strategy: 'latest_wins' | 'manual_review' | 'merge_fields';
+  strategy: "latest_wins" | "manual_review" | "merge_fields";
   priority_fields: string[];
   auto_resolve: boolean;
 }
@@ -351,7 +354,7 @@ export interface ConflictResolutionStrategy {
 export interface CacheConfig {
   ttl: number;
   max_size: number;
-  eviction_policy: 'lru' | 'fifo' | 'ttl';
+  eviction_policy: "lru" | "fifo" | "ttl";
 }
 
 export interface CacheMetrics {
@@ -444,7 +447,7 @@ export interface AnalyticsSummary {
 export interface DataError {
   type: string;
   message: string;
-  severity: 'low' | 'medium' | 'high' | 'critical';
+  severity: "low" | "medium" | "high" | "critical";
   timestamp: Date;
   context?: Record<string, any>;
 }
@@ -453,96 +456,5 @@ export interface DataError {
 export interface RefreshOptions {
   force?: boolean;
   include_analytics?: boolean;
-  data_types?: ('products' | 'bookings' | 'availability' | 'customers')[];
+  data_types?: ("products" | "bookings" | "availability" | "customers")[];
 }
-
-// Gift Voucher Specific Types
-export interface GiftVoucher extends RezdyProduct {
-  productType: 'GIFT_CARD';
-  voucherCode?: string;
-  expiryDate?: string;
-  purchaseDate?: string;
-  recipientName?: string;
-  recipientEmail?: string;
-  senderName?: string;
-  senderEmail?: string;
-  personalMessage?: string;
-  isRedeemed?: boolean;
-  redeemedDate?: string;
-  remainingBalance?: number;
-  originalAmount?: number;
-  termsAndConditions?: GiftVoucherTerms;
-}
-
-export interface GiftVoucherTerms {
-  validity: string;
-  redemption: string;
-  transferable: string;
-  refund: string;
-  partial_use: string;
-  expiry_notification: string;
-  booking_process: string;
-  group_bookings: string;
-  seasonal_restrictions: string;
-  contact_info: string;
-}
-
-export interface GiftVoucherFilters {
-  priceRange?: { min?: number; max?: number };
-  sortBy?: 'price' | 'name' | 'popularity';
-  sortOrder?: 'asc' | 'desc';
-  voucherType?: 'fixed' | 'custom' | 'experience';
-  availability?: 'available' | 'limited' | 'sold_out';
-  searchTerm?: string;
-  limit?: number;
-  offset?: number;
-}
-
-export interface GiftVoucherPurchaseData {
-  recipientName: string;
-  recipientEmail: string;
-  senderName: string;
-  senderEmail: string;
-  amount: number;
-  personalMessage?: string;
-  deliveryDate?: string;
-  voucherType: 'fixed' | 'custom' | 'experience';
-  productCode?: string; // For experience-specific vouchers
-}
-
-export interface GiftVoucherRedemption {
-  voucherCode: string;
-  productCode: string;
-  sessionId: string;
-  participants: RezdyParticipant[];
-  amountUsed: number;
-  remainingBalance: number;
-  redemptionDate: string;
-}
-
-export interface GiftVoucherStats {
-  totalVouchers: number;
-  totalValue: number;
-  redeemedVouchers: number;
-  redeemedValue: number;
-  expiringVouchers: number; // Expiring within 30 days
-  popularVoucherTypes: { type: string; count: number }[];
-  averageVoucherValue: number;
-  redemptionRate: number;
-}
-
-export interface GiftVoucherError extends DataError {
-  voucherCode?: string;
-  operation?: 'purchase' | 'redemption' | 'validation' | 'expiry_check';
-}
-
-export interface GiftVoucherValidation {
-  isValid: boolean;
-  voucherCode: string;
-  expiryDate?: string;
-  remainingBalance?: number;
-  isExpired: boolean;
-  isRedeemed: boolean;
-  errors: string[];
-  warnings: string[];
-} 

@@ -25,7 +25,7 @@ interface BookingPromptPopupProps {
   className?: string
 }
 
-const INACTIVITY_TIMEOUT = 30000 // 30 seconds
+const INACTIVITY_TIMEOUT = 60000 // 1 minute
 const STORAGE_KEY = 'pineapple-tours-booking-prompt'
 
 export function BookingPromptPopup({ 

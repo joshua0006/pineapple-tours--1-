@@ -25,13 +25,5 @@
       "alt": "Scenic city views and tours"
     }
   ],
-  "giftVouchers": [
-    {
-      "originalUrl": "https://images.unsplash.com/photo-1513475382585-d06e58bcb0e0?w=600&h=450&fit=crop&crop=center",
-      "localPath": "/gift-vouchers/gift-vouchers-main.jpg",
-      "filename": "gift-vouchers-main.jpg",
-      "alt": "Gift Vouchers for Tours and Experiences"
-    }
-  ],
   "downloadedAt": "2025-06-06T03:16:12.658Z"
 }

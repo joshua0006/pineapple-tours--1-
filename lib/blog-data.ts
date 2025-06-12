@@ -1,162 +1,194 @@
-import { BlogPost } from "@/components/blog-card"
+import { BlogPost } from "@/components/blog-card";
 
 // Static blog configuration - easily modifiable
 export const BLOG_CONFIG = {
   // Blog section settings
   section: {
-    title: "Travel Blog",
-    description: "Discover insider tips, destination guides, and inspiring travel stories from our expert team. Get the most out of your adventures with our comprehensive travel resources and local insights.",
+    title: "Discover",
+    description:
+      "Discover insider tips, destination guides, and inspiring travel stories from our expert team. Get the most out of your adventures with our comprehensive travel resources and local insights.",
     features: [
       { icon: "MapPin", text: "Destination guides" },
       { icon: "Star", text: "Expert travel tips" },
       { icon: "Calendar", text: "Weekly updates" },
-      { icon: "BookOpen", text: "Local insights" }
-    ]
+      { icon: "BookOpen", text: "Local insights" },
+    ],
   },
-  
+
   // Blog page settings
   page: {
     title: "Travel Stories & Tips",
-    subtitle: "Discover insider tips, tour guides, and inspiring travel stories from our tropical paradise experts.",
-    categories: ["All", "Hawaii", "Caribbean", "Fiji", "Bali", "Wine Tours", "Travel Tips", "Activities", "Photography", "Sustainable Travel"]
+    subtitle:
+      "Discover insider tips, tour guides, and inspiring travel stories from our tropical paradise experts.",
+    categories: [
+      "All",
+      "Hawaii",
+      "Caribbean",
+      "Fiji",
+      "Bali",
+      "Wine Tours",
+      "Travel Tips",
+      "Activities",
+      "Photography",
+      "Sustainable Travel",
+    ],
   },
-  
+
   // Newsletter settings
   newsletter: {
     title: "Stay Updated",
-    description: "Subscribe to our newsletter for the latest travel tips, tour guides, and exclusive offers.",
-    placeholder: "Enter your email"
-  }
-}
+    description:
+      "Subscribe to our newsletter for the latest travel tips, tour guides, and exclusive offers.",
+    placeholder: "Enter your email",
+  },
+};
 
 // Static blog posts data - centralized for easy management
 export const BLOG_POSTS: BlogPost[] = [
   {
     id: 1,
     title: "10 Must-Visit Beaches in Hawaii",
-    excerpt: "Discover the most stunning beaches across the Hawaiian islands, from the black sands of Punalu'u to the pristine waters of Lanikai Beach.",
+    excerpt:
+      "Discover the most stunning beaches across the Hawaiian islands, from the black sands of Punalu'u to the pristine waters of Lanikai Beach.",
     author: "Sarah Johnson",
     date: "2024-01-15",
     readTime: "5 min read",
     category: "Hawaii",
-    image: "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&h=450&fit=crop&crop=center",
+    image:
+      "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&h=450&fit=crop&crop=center",
     featured: true,
-    slug: "10-must-visit-beaches-in-hawaii"
+    slug: "10-must-visit-beaches-in-hawaii",
   },
   {
     id: 2,
     title: "Caribbean Food Guide: Local Delicacies You Must Try",
-    excerpt: "Explore the vibrant culinary landscape of the Caribbean with our comprehensive guide to local dishes and hidden food gems.",
+    excerpt:
+      "Explore the vibrant culinary landscape of the Caribbean with our comprehensive guide to local dishes and hidden food gems.",
     author: "Marcus Rodriguez",
     date: "2024-01-12",
     readTime: "7 min read",
     category: "Caribbean",
-    image: "https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=800&h=450&fit=crop&crop=center",
+    image:
+      "https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=800&h=450&fit=crop&crop=center",
     featured: true,
-    slug: "caribbean-food-guide-local-delicacies-you-must-try"
+    slug: "caribbean-food-guide-local-delicacies-you-must-try",
   },
   {
     id: 3,
     title: "Top 10 Hidden Gems in Wine Country",
-    excerpt: "Discover secret vineyards and local favorites off the beaten path in California's premier wine regions.",
+    excerpt:
+      "Discover secret vineyards and local favorites off the beaten path in California's premier wine regions.",
     author: "Emily Chen",
     date: "2024-01-10",
     readTime: "6 min read",
     category: "Wine Tours",
-    image: "https://images.unsplash.com/photo-1506377247377-2a5b3b417ebb?w=800&h=450&fit=crop&crop=center",
+    image:
+      "https://images.unsplash.com/photo-1506377247377-2a5b3b417ebb?w=800&h=450&fit=crop&crop=center",
     featured: false,
-    slug: "top-10-hidden-gems-in-wine-country"
+    slug: "top-10-hidden-gems-in-wine-country",
   },
   {
     id: 4,
     title: "Best Time to Visit Fiji: A Seasonal Guide",
-    excerpt: "Learn about Fiji's seasons, weather patterns, and the best times to visit for different activities and experiences.",
+    excerpt:
+      "Learn about Fiji's seasons, weather patterns, and the best times to visit for different activities and experiences.",
     author: "David Thompson",
     date: "2024-01-08",
     readTime: "6 min read",
     category: "Fiji",
-    image: "https://images.unsplash.com/photo-1540979388789-6cee28a1cdc9?w=800&h=450&fit=crop&crop=center",
+    image:
+      "https://images.unsplash.com/photo-1540979388789-6cee28a1cdc9?w=800&h=450&fit=crop&crop=center",
     featured: false,
-    slug: "best-time-to-visit-fiji-a-seasonal-guide"
+    slug: "best-time-to-visit-fiji-a-seasonal-guide",
   },
   {
     id: 5,
     title: "Snorkeling vs Scuba Diving: Which is Right for You?",
-    excerpt: "Compare snorkeling and scuba diving to help you choose the best underwater adventure for your tropical vacation.",
+    excerpt:
+      "Compare snorkeling and scuba diving to help you choose the best underwater adventure for your tropical vacation.",
     author: "Lisa Park",
     date: "2024-01-05",
     readTime: "5 min read",
     category: "Activities",
-    image: "https://images.unsplash.com/photo-1559827260-dc66d52bef19?w=800&h=450&fit=crop&crop=center",
+    image:
+      "https://images.unsplash.com/photo-1559827260-dc66d52bef19?w=800&h=450&fit=crop&crop=center",
     featured: false,
-    slug: "snorkeling-vs-scuba-diving-which-is-right-for-you"
+    slug: "snorkeling-vs-scuba-diving-which-is-right-for-you",
   },
   {
     id: 6,
     title: "Hidden Gems of Bali: Off the Beaten Path",
-    excerpt: "Discover lesser-known attractions and experiences in Bali that offer authentic culture and stunning natural beauty.",
+    excerpt:
+      "Discover lesser-known attractions and experiences in Bali that offer authentic culture and stunning natural beauty.",
     author: "James Wilson",
     date: "2024-01-03",
     readTime: "8 min read",
     category: "Bali",
-    image: "https://images.unsplash.com/photo-1537953773345-d172ccf13cf1?w=800&h=450&fit=crop&crop=center",
+    image:
+      "https://images.unsplash.com/photo-1537953773345-d172ccf13cf1?w=800&h=450&fit=crop&crop=center",
     featured: false,
-    slug: "hidden-gems-of-bali-off-the-beaten-path"
+    slug: "hidden-gems-of-bali-off-the-beaten-path",
   },
   {
     id: 7,
     title: "Packing Tips for Adventure Tours",
-    excerpt: "Essential packing advice for adventure tours, including what to bring, what to leave behind, and how to pack efficiently.",
+    excerpt:
+      "Essential packing advice for adventure tours, including what to bring, what to leave behind, and how to pack efficiently.",
     author: "Rachel Green",
     date: "2024-01-01",
     readTime: "4 min read",
     category: "Travel Tips",
-    image: "https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=800&h=450&fit=crop&crop=center",
+    image:
+      "https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=800&h=450&fit=crop&crop=center",
     featured: false,
-    slug: "packing-tips-for-adventure-tours"
+    slug: "packing-tips-for-adventure-tours",
   },
   {
     id: 8,
     title: "Photography Tips for Your Tropical Vacation",
-    excerpt: "Capture stunning memories with these professional photography tips specifically designed for tropical destinations.",
+    excerpt:
+      "Capture stunning memories with these professional photography tips specifically designed for tropical destinations.",
     author: "Michael Brown",
     date: "2023-12-28",
     readTime: "7 min read",
     category: "Photography",
-    image: "https://images.unsplash.com/photo-1452421822248-d4c2b47f0c81?w=800&h=450&fit=crop&crop=center",
+    image:
+      "https://images.unsplash.com/photo-1452421822248-d4c2b47f0c81?w=800&h=450&fit=crop&crop=center",
     featured: false,
-    slug: "photography-tips-for-your-tropical-vacation"
+    slug: "photography-tips-for-your-tropical-vacation",
   },
   {
     id: 9,
     title: "Sustainable Tourism: How to Travel Responsibly",
-    excerpt: "Learn how to minimize your environmental impact while maximizing your travel experiences with sustainable tourism practices.",
+    excerpt:
+      "Learn how to minimize your environmental impact while maximizing your travel experiences with sustainable tourism practices.",
     author: "Anna Martinez",
     date: "2023-12-25",
     readTime: "6 min read",
     category: "Sustainable Travel",
-    image: "https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=800&h=450&fit=crop&crop=center",
+    image:
+      "https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=800&h=450&fit=crop&crop=center",
     featured: false,
-    slug: "sustainable-tourism-how-to-travel-responsibly"
-  }
-]
+    slug: "sustainable-tourism-how-to-travel-responsibly",
+  },
+];
 
 // Blog post content - easily expandable for different content types
 export interface BlogPostContent {
-  slug: string
-  content: string
-  contentType: 'html' | 'markdown' | 'rich'
+  slug: string;
+  content: string;
+  contentType: "html" | "markdown" | "rich";
   media?: {
-    type: 'image' | 'video' | 'gallery'
-    url: string
-    caption?: string
-    alt?: string
-  }[]
+    type: "image" | "video" | "gallery";
+    url: string;
+    caption?: string;
+    alt?: string;
+  }[];
   seo?: {
-    metaTitle?: string
-    metaDescription?: string
-    keywords?: string[]
-  }
+    metaTitle?: string;
+    metaDescription?: string;
+    keywords?: string[];
+  };
 }
 
 // Static blog post content - supports text, images, and videos
@@ -186,14 +218,20 @@ export const BLOG_POST_CONTENT: BlogPostContent[] = [
         type: "image",
         url: "/placeholder.jpg",
         caption: "Schramsberg's historic wine caves",
-        alt: "Historic wine caves at Schramsberg Vineyards"
-      }
+        alt: "Historic wine caves at Schramsberg Vineyards",
+      },
     ],
     seo: {
       metaTitle: "Top 10 Hidden Gems in Wine Country - Pineapple Tours",
-      metaDescription: "Discover secret vineyards and local favorites in California's wine country with our expert guide to hidden gems.",
-      keywords: ["wine country", "hidden wineries", "California vineyards", "wine tours"]
-    }
+      metaDescription:
+        "Discover secret vineyards and local favorites in California's wine country with our expert guide to hidden gems.",
+      keywords: [
+        "wine country",
+        "hidden wineries",
+        "California vineyards",
+        "wine tours",
+      ],
+    },
   },
   {
     slug: "best-time-to-visit-tropical-destinations",
@@ -221,9 +259,9 @@ export const BLOG_POST_CONTENT: BlogPostContent[] = [
         type: "video",
         url: "/placeholder-video.mp4",
         caption: "Tropical weather patterns explained",
-        alt: "Video guide to tropical weather patterns"
-      }
-    ]
+        alt: "Video guide to tropical weather patterns",
+      },
+    ],
   },
   {
     slug: "packing-tips-for-adventure-tours",
@@ -254,23 +292,23 @@ export const BLOG_POST_CONTENT: BlogPostContent[] = [
         type: "gallery",
         url: "/placeholder-gallery.jpg",
         caption: "Essential packing items for adventure tours",
-        alt: "Gallery of adventure tour packing essentials"
-      }
-    ]
-  }
-]
+        alt: "Gallery of adventure tour packing essentials",
+      },
+    ],
+  },
+];
 
 // Author information - easily expandable
 export interface AuthorInfo {
-  name: string
-  bio: string
-  avatar?: string
-  expertise: string[]
+  name: string;
+  bio: string;
+  avatar?: string;
+  expertise: string[];
   socialLinks?: {
-    twitter?: string
-    instagram?: string
-    linkedin?: string
-  }
+    twitter?: string;
+    instagram?: string;
+    linkedin?: string;
+  };
 }
 
 export const AUTHORS: { [key: string]: AuthorInfo } = {
@@ -280,49 +318,51 @@ export const AUTHORS: { [key: string]: AuthorInfo } = {
     expertise: ["Wine Tours", "Cultural Travel", "Photography"],
     socialLinks: {
       instagram: "@sarahtravels",
-      twitter: "@sarahjohnson"
-    }
+      twitter: "@sarahjohnson",
+    },
   },
   "Marcus Rodriguez": {
     name: "Marcus Rodriguez",
     bio: "Caribbean travel specialist and food enthusiast who has explored over 25 islands in the region.",
     expertise: ["Caribbean Travel", "Food Tourism", "Island Culture"],
     socialLinks: {
-      instagram: "@marcuscaribbean"
-    }
+      instagram: "@marcuscaribbean",
+    },
   },
   "Emily Chen": {
     name: "Emily Chen",
     bio: "Adventure travel expert and sustainability advocate with a passion for responsible tourism.",
     expertise: ["Adventure Tours", "Sustainable Travel", "Outdoor Activities"],
     socialLinks: {
-      linkedin: "emily-chen-travel"
-    }
-  }
-}
+      linkedin: "emily-chen-travel",
+    },
+  },
+};
 
 // Utility functions for easy data access
 export const getBlogPostsByCategory = (category: string): BlogPost[] => {
-  if (category === "All") return BLOG_POSTS
-  return BLOG_POSTS.filter(post => post.category === category)
-}
+  if (category === "All") return BLOG_POSTS;
+  return BLOG_POSTS.filter((post) => post.category === category);
+};
 
 export const getFeaturedPosts = (): BlogPost[] => {
-  return BLOG_POSTS.filter(post => post.featured)
-}
+  return BLOG_POSTS.filter((post) => post.featured);
+};
 
 export const getLatestPosts = (limit: number = 3): BlogPost[] => {
-  return BLOG_POSTS.slice(0, limit)
-}
+  return BLOG_POSTS.slice(0, limit);
+};
 
 export const getBlogPostBySlug = (slug: string): BlogPost | undefined => {
-  return BLOG_POSTS.find(post => post.slug === slug)
-}
+  return BLOG_POSTS.find((post) => post.slug === slug);
+};
 
-export const getBlogPostContent = (slug: string): BlogPostContent | undefined => {
-  return BLOG_POST_CONTENT.find(content => content.slug === slug)
-}
+export const getBlogPostContent = (
+  slug: string
+): BlogPostContent | undefined => {
+  return BLOG_POST_CONTENT.find((content) => content.slug === slug);
+};
 
 export const getAuthorInfo = (authorName: string): AuthorInfo | undefined => {
-  return AUTHORS[authorName]
-} 
+  return AUTHORS[authorName];
+};

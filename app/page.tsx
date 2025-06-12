@@ -14,6 +14,7 @@ import {
   BookOpen,
   MessageCircle,
 } from "lucide-react";
+import { useState, useEffect } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -27,11 +28,74 @@ import { BlogSection } from "@/components/blog-section";
 import { ContactSection } from "@/components/contact-section";
 import { TestimonialsSection } from "@/components/testimonials-section";
 
+// Video Overlay Component with customizable options
+interface VideoOverlayProps {
+  opacity?: number; // 0-1
+  fadeInDuration?: number; // in seconds
+  position?: "bottom" | "top" | "full";
+  height?: string; // CSS height value for partial overlays
+  color?: string; // hex color
+}
+
+const VideoOverlay: React.FC<VideoOverlayProps> = ({
+  opacity = 0.4,
+  fadeInDuration = 2,
+  position = "bottom",
+  height = "40%",
+  color = "#141312",
+}) => {
+  const [isVisible, setIsVisible] = useState(false);
+
+  useEffect(() => {
+    // Trigger fade-in animation after component mounts
+    const timer = setTimeout(() => {
+      setIsVisible(true);
+    }, 100);
+
+    return () => clearTimeout(timer);
+  }, []);
+
+  const getPositionStyles = () => {
+    switch (position) {
+      case "top":
+        return {
+          top: 0,
+          height: height,
+          background: `linear-gradient(to bottom, ${color} 0%, transparent 100%)`,
+        };
+      case "full":
+        return {
+          top: 0,
+          height: "100%",
+          backgroundColor: color,
+        };
+      case "bottom":
+      default:
+        return {
+          bottom: 0,
+          height: height,
+          background: `linear-gradient(to top, ${color} 0%, transparent 100%)`,
+        };
+    }
+  };
+
+  return (
+    <div
+      className="absolute left-0 right-0 z-20 pointer-events-none transition-opacity ease-in-out"
+      style={{
+        ...getPositionStyles(),
+        opacity: isVisible ? opacity : 0,
+        transitionDuration: `${fadeInDuration}s`,
+      }}
+    />
+  );
+};
+
 export default function Home() {
   return (
     <>
       {/* Hero Section */}
-      <section className="relative min-h-screen flex flex-col">
+      <section className="relative h-[90vh] flex flex-col">
         <div className="absolute inset-0 z-0">
           <div className="relative h-full w-full overflow-hidden">
             <iframe
@@ -50,29 +114,40 @@ export default function Home() {
             />
             {/* Dark overlay for better text readability */}
             <div className="absolute inset-0 bg-black/30"></div>
+
+            {/* Customizable Video Overlay */}
+            <VideoOverlay
+              opacity={0.5}
+              fadeInDuration={3}
+              position="bottom"
+              height="50%"
+              color="#141312"
+            />
           </div>
         </div>
         <div className="container relative z-10 flex-1 flex items-center justify-center px-4 py-12 sm:px-6 lg:px-8">
-          <div className="max-w-8xl w-full space-y-8 text-center">
-            {/* Hero Content */}
-            <div className="space-y-4 sm:space-y-6">
-              <p className="font-secondary text-sm sm:text-base font-medium text-brand-secondary/90 tracking-widest uppercase drop-shadow-lg">
-                WELCOME TO PINEAPPLE TOURS
-              </p>
-              <h1 className="font-primary text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-semibold tracking-tight text-brand-secondary leading-tight drop-shadow-lg">
-                Make memories with friends,
-                <br />
-                make friends with wine!
-              </h1>
-            </div>
+          <div className="max-w-8xl w-full">
+            <div className="grid lg:grid-cols-2 gap-8 lg:gap-12 items-center">
+              {/* Left Side - Text Content */}
+              <div className="space-y-4 sm:space-y-6 text-left">
+                <p className="font-secondary text-sm sm:text-base font-medium text-brand-secondary/90 tracking-widest uppercase drop-shadow-lg">
+                  WELCOME TO PINEAPPLE TOURS
+                </p>
+                <h1 className="font-primary text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-semibold tracking-tight text-brand-secondary leading-tight drop-shadow-lg">
+                  Make memories with friends,
+                  <br />
+                  make friends with wine!
+                </h1>
+              </div>
 
-            {/* Search Form */}
-            <div className="max-w-6xl mx-auto pt-8">
-              <Card className="overflow-hidden border-none shadow-lg bg-white/80 ">
-                <CardContent className="p-0">
-                  <SearchForm />
-                </CardContent>
-              </Card>
+              {/* Right Side - Search Form */}
+              <div className="w-full">
+                <Card className="overflow-hidden border-none shadow-lg bg-white/60">
+                  <CardContent className="p-0">
+                    <SearchForm />
+                  </CardContent>
+                </Card>
+              </div>
             </div>
           </div>
         </div>

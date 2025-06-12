@@ -85,7 +85,7 @@ export default function BlogPage() {
 
           {/* Sidebar */}
           <div className="lg:col-span-1">
-            <div className="sticky top-8">
+            <div className="sticky top-24">
               <BlogInfoSection position="sidebar" />
             </div>
           </div>

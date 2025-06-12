@@ -285,7 +285,7 @@ export function CategoriesSection() {
         <div className="container mx-auto px-4">
           {/* Header */}
           <div className="text-start mb-8 lg:mb-12">
-            <h2 className="text-[36px] leading-[48px] sm:text-[42px] sm:leading-[58px] font-semibold text-white mb-4 font-['Barlow']">
+            <h2 className="text-[42px] leading-[58px] font-semibold text-white mb-4 font-['Barlow']">
               Tour Categories
             </h2>
             <p className="text-base lg:text-lg text-white/80 font-['Work_Sans'] ">

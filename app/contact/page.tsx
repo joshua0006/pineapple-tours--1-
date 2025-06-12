@@ -19,6 +19,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
+import { PageHeader } from "@/components/page-header";
 
 const contactInfo = [
   {
@@ -119,35 +120,21 @@ export default function ContactPage() {
 
   return (
     <>
-      {/* Hero Section */}
-      <section className="bg-white py-20">
-        <div className="container max-w-6xl mx-auto px-4">
-          <div className="text-center">
-            <h1
-              className="text-[58px] leading-tight font-semibold mb-6"
-              style={{
-                fontFamily: "Barlow, sans-serif",
-                fontWeight: 600,
-                color: "#0B2000",
-              }}
-            >
-              Contact Us
-            </h1>
-            <p
-              className="text-lg max-w-2xl mx-auto"
-              style={{
-                fontFamily: "Work Sans, sans-serif",
-                fontWeight: 400,
-                fontSize: "18px",
-                color: "#0B2000",
-              }}
-            >
-              Ready to explore paradise? Our travel experts are here to help you
-              create the tropical vacation of your dreams. Get in touch today!
-            </p>
-          </div>
-        </div>
-      </section>
+      <PageHeader
+        title="Contact Us"
+        subtitle="Ready to explore paradise? Our travel experts are here to help you create the tropical vacation of your dreams. Get in touch today!"
+        icon={MessageCircle}
+        primaryAction={{
+          label: "Call Now",
+          icon: Phone,
+          href: "tel:0466331232",
+        }}
+        secondaryAction={{
+          label: "Email Us",
+          icon: Mail,
+          href: "mailto:bookings@pineappletours.com.au",
+        }}
+      />
 
       {/* Contact Information Section */}
       <section className="bg-white py-16">

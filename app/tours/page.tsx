@@ -772,11 +772,6 @@ export default function ToursPage() {
                             {` • Page ${currentPage} of ${totalPages}`}
                           </span>
                         )}
-                        {isCached && (
-                          <Badge variant="outline" className="ml-2 text-xs">
-                            Cached
-                          </Badge>
-                        )}
                       </>
                     )}
                   </div>

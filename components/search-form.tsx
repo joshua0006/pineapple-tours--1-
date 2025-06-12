@@ -249,11 +249,11 @@ export function SearchForm({
   const dateText = hasDateSelected ? format(tourDate!, "MMM dd, yyyy") : null;
 
   return (
-    <div className="w-full bg-transparent rounded-lg shadow-sm border border-white/20">
-      <div className="p-3 sm:p-6">
-        <div className="mb-3 sm:mb-6">
-          <div className="flex items-center justify-between mb-1 sm:mb-2">
-            <h2 className="text-[24px]   leading-[36px] sm:text-xl font-semibold text-gray-900 text-center mx-auto">
+    <div className="w-full bg-white/60 rounded-xl shadow-xl border-0">
+      <div className="p-4 sm:p-5">
+        <div className="mb-4 sm:mb-5">
+          <div className="flex items-center justify-between mb-2">
+            <h2 className="font-primary text-[24px] leading-[36px] font-semibold text-gray-900 text-center mx-auto">
               {isPrePopulated ? "Complete Your Booking" : "Find a Tour"}
             </h2>
             {rezdyError && (
@@ -273,7 +273,7 @@ export function SearchForm({
               </Button>
             )}
           </div>
-          <p className="text-xs sm:text-sm text-gray-600">
+          <p className="font-text text-xs sm:text-sm text-gray-600 leading-relaxed">
             {isPrePopulated
               ? "We've pre-filled your preferences. Adjust as needed and search for available tours."
               : "Search for tours by selecting participants, date, and pickup location"}
@@ -294,12 +294,12 @@ export function SearchForm({
 
         <form onSubmit={handleToursSearch}>
           {/* Search Inputs Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 items-end mb-4">
             {/* Participants */}
             <div className="space-y-2 text-start">
               <Label
                 htmlFor="participants"
-                className="text-sm font-medium text-gray-700"
+                className="font-text text-sm font-medium text-gray-700"
               >
                 Participants
               </Label>
@@ -333,7 +333,7 @@ export function SearchForm({
             <div className="space-y-2 text-start">
               <Label
                 htmlFor="tour-date"
-                className="text-sm font-medium text-gray-700"
+                className="font-text text-sm font-medium text-gray-700"
               >
                 Tour Date
               </Label>
@@ -358,7 +358,7 @@ export function SearchForm({
             <div className="space-y-2 text-start">
               <Label
                 htmlFor="pickup-location"
-                className="text-sm font-medium text-gray-700"
+                className="font-text text-sm font-medium text-gray-700"
               >
                 Pick up Location
               </Label>
@@ -388,43 +388,29 @@ export function SearchForm({
                     {pickupLocations.map(({ location, count }) => (
                       <SelectItem key={location} value={location}>
                         {location}
-                        {count > 0 && (
-                          <span className="ml-2 text-xs text-muted-foreground">
-                            ({count} tours)
-                          </span>
-                        )}
                       </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
               </div>
             </div>
+          </div>
 
-            {/* Search Button */}
-            <div className="space-y-2 text-start">
-              <Label className="text-sm font-medium text-transparent">
-                Search
-              </Label>
-              <Button
-                type="submit"
-                className={`w-full h-12 font-medium text-base transition-all duration-200 shadow-sm hover:shadow-md ${
-                  hasDateSelected
-                    ? "bg-accent hover:bg-accent/90 text-accent-foreground"
-                    : "bg-accent hover:bg-accent/90 text-accent-foreground"
-                } ${
-                  isPrePopulated
-                    ? "bg-accent hover:bg-accent/90 text-accent-foreground"
-                    : ""
-                }`}
-              >
-                <Search className="mr-2 h-4 w-4" />
-                {isPrePopulated
-                  ? "Find My Tours"
-                  : hasDateSelected
-                  ? "Search Available Tours"
-                  : "Search Tours"}
-              </Button>
-            </div>
+          {/* Search Button Row */}
+          <div className="flex justify-center">
+            <Button
+              type="submit"
+              className={`px-8 w-full h-12 font-medium text-base transition-all duration-200 shadow-md hover:shadow-lg bg-brand-accent text-brand-secondary hover:bg-brand-accent/90 ${
+                isPrePopulated ? "ring-2 ring-brand-accent/20" : ""
+              }`}
+            >
+              <Search className="mr-2 h-4 w-4" />
+              {isPrePopulated
+                ? "Find My Tours"
+                : hasDateSelected
+                ? "Search Available Tours"
+                : "Search Tours"}
+            </Button>
           </div>
         </form>
       </div>

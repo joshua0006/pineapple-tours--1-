@@ -19,7 +19,11 @@ h1 {
   margin-bottom: 1rem;
 }
 
-h2, h3, h4, h5, h6 {
+h2,
+h3,
+h4,
+h5,
+h6 {
   font-family: var(--font-open-sans), sans-serif;
   font-weight: 400;
   line-height: 1.3;
@@ -51,43 +55,43 @@ p {
   .text-balance {
     text-wrap: balance;
   }
-  
+
   /* Font family utilities */
   .font-primary {
     font-family: var(--font-barlow), sans-serif;
   }
-  
+
   .font-secondary {
     font-family: var(--font-open-sans), sans-serif;
   }
-  
+
   .font-text {
     font-family: var(--font-work-sans), sans-serif;
   }
-  
+
   /* Hide scrollbars while maintaining functionality */
   .scrollbar-hide {
-    -ms-overflow-style: none;  /* Internet Explorer 10+ */
-    scrollbar-width: none;  /* Firefox */
+    -ms-overflow-style: none; /* Internet Explorer 10+ */
+    scrollbar-width: none; /* Firefox */
   }
   .scrollbar-hide::-webkit-scrollbar {
-    display: none;  /* Safari and Chrome */
+    display: none; /* Safari and Chrome */
   }
-  
+
   /* Mobile-specific utilities */
   .touch-manipulation {
     touch-action: manipulation;
   }
-  
+
   .safe-area-inset {
     padding-left: env(safe-area-inset-left);
     padding-right: env(safe-area-inset-right);
   }
-  
+
   .safe-area-inset-top {
     padding-top: env(safe-area-inset-top);
   }
-  
+
   .safe-area-inset-bottom {
     padding-bottom: env(safe-area-inset-bottom);
   }
@@ -99,14 +103,14 @@ p {
     -webkit-box-orient: vertical;
     -webkit-line-clamp: 1;
   }
-  
+
   .line-clamp-2 {
     overflow: hidden;
     display: -webkit-box;
     -webkit-box-orient: vertical;
     -webkit-line-clamp: 2;
   }
-  
+
   .line-clamp-3 {
     overflow: hidden;
     display: -webkit-box;
@@ -119,43 +123,43 @@ p {
     padding-top: 4rem;
     padding-bottom: 4rem;
   }
-  
+
   @media (min-width: 768px) {
     .section-spacing {
       padding-top: 6rem;
       padding-bottom: 6rem;
     }
   }
-  
+
   .content-spacing > * + * {
     margin-top: 1.5rem;
   }
-  
+
   .tight-spacing > * + * {
     margin-top: 0.75rem;
   }
-  
+
   /* Visual hierarchy utilities */
   .visual-hierarchy h1 {
     color: hsl(var(--brand-text));
     margin-bottom: 1.5rem;
   }
-  
+
   .visual-hierarchy h2 {
     color: hsl(var(--brand-text));
     margin-bottom: 1.25rem;
   }
-  
+
   .visual-hierarchy h3 {
     color: hsl(var(--brand-text));
     margin-bottom: 1rem;
   }
-  
+
   .visual-hierarchy p {
     color: hsl(var(--muted-foreground));
     margin-bottom: 1.25rem;
   }
-  
+
   /* Interactive element focus improvements */
   .focus-visible-enhanced:focus-visible {
     outline: 2px solid hsl(var(--brand-accent));
@@ -167,15 +171,15 @@ p {
   .booking-prompt-enter {
     animation: booking-prompt-fade-in 0.3s ease-out forwards;
   }
-  
+
   .booking-prompt-exit {
     animation: booking-prompt-fade-out 0.3s ease-in forwards;
   }
-  
+
   .booking-prompt-backdrop-enter {
     animation: backdrop-fade-in 0.3s ease-out forwards;
   }
-  
+
   .booking-prompt-backdrop-exit {
     animation: backdrop-fade-out 0.3s ease-in forwards;
   }
@@ -267,45 +271,41 @@ p {
     /* Prevent zoom on input focus on iOS */
     -webkit-text-size-adjust: 100%;
   }
-  
+
   /* Mobile-specific improvements */
   @media (max-width: 768px) {
     /* Ensure minimum touch target size */
-    button, 
-    [role="button"], 
-    input[type="submit"], 
-    input[type="button"], 
+    button,
+    [role="button"],
+    input[type="submit"],
+    input[type="button"],
     .clickable {
       min-height: 44px;
       min-width: 44px;
     }
-    
+
     /* Improve form inputs on mobile */
-    input, 
-    select, 
+    input,
+    select,
     textarea {
       font-size: 16px; /* Prevent zoom on iOS */
     }
-    
+
     /* Better spacing for mobile */
     .container {
       padding-left: 1rem;
       padding-right: 1rem;
     }
   }
-  
+
   /* Smooth transitions for theme changes */
   *,
   *::before,
   *::after {
-    transition: 
-      background-color 0.3s ease,
-      border-color 0.3s ease,
-      color 0.3s ease,
-      fill 0.3s ease,
-      stroke 0.3s ease;
+    transition: background-color 0.3s ease, border-color 0.3s ease,
+      color 0.3s ease, fill 0.3s ease, stroke 0.3s ease;
   }
-  
+
   /* Preserve specific animations and dropdown states */
   .animate-spin,
   .animate-pulse,
@@ -319,7 +319,7 @@ p {
   [data-radix-dropdown-menu-item] {
     transition: none;
   }
-  
+
   /* Enhanced dropdown animations */
   @keyframes dropdown-fade-in {
     from {
@@ -331,7 +331,7 @@ p {
       transform: scale(1) translateY(0);
     }
   }
-  
+
   @keyframes dropdown-fade-out {
     from {
       opacity: 1;
@@ -354,7 +354,7 @@ p {
       transform: translate(-50%, -50%) scale(1);
     }
   }
-  
+
   @keyframes booking-prompt-fade-out {
     from {
       opacity: 1;
@@ -365,7 +365,7 @@ p {
       transform: translate(-50%, -45%) scale(0.95);
     }
   }
-  
+
   @keyframes backdrop-fade-in {
     from {
       opacity: 0;
@@ -374,7 +374,7 @@ p {
       opacity: 1;
     }
   }
-  
+
   @keyframes backdrop-fade-out {
     from {
       opacity: 1;
@@ -386,14 +386,15 @@ p {
 
   /* Pulse animation for pre-populated fields */
   @keyframes gentle-pulse {
-    0%, 100% {
+    0%,
+    100% {
       box-shadow: 0 0 0 0 rgba(251, 191, 36, 0.4);
     }
     50% {
       box-shadow: 0 0 0 4px rgba(251, 191, 36, 0.1);
     }
   }
-  
+
   .animate-gentle-pulse {
     animation: gentle-pulse 2s ease-in-out infinite;
   }
@@ -427,13 +428,13 @@ p {
     iframe[src*="youtube"] {
       height: 200px;
     }
-    
+
     /* Booking prompt mobile adjustments */
     .booking-prompt-mobile {
       max-width: calc(100vw - 2rem);
       margin: 0 1rem;
     }
-    
+
     /* Ensure popup doesn't interfere with mobile navigation */
     .booking-prompt-popup {
       z-index: 9999;

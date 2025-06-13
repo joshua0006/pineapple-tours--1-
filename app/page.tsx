@@ -97,7 +97,7 @@ export default function Home() {
   return (
     <>
       {/* Hero Section */}
-      <section className="relative h-[90vh] flex flex-col">
+      <section className="relative h-[80vh] flex flex-col">
         <div className="absolute inset-0 z-0">
           <div className="relative h-full w-full overflow-hidden">
             <iframe
@@ -127,11 +127,11 @@ export default function Home() {
             />
           </div>
         </div>
-        <div className="container relative z-10 flex-1 flex items-center justify-center px-4 py-12 sm:px-6 lg:px-8">
-          <div className="max-w-8xl w-full">
-            <div className="grid lg:grid-cols-2 gap-8 lg:gap-12 items-center">
+        <div className="container relative z-10 flex-1 flex items-center justify-center px-4 py-8 sm:px-6 lg:px-8">
+          <div className="max-w-7xl w-full">
+            <div className="grid lg:grid-cols-5 gap-8 lg:gap-12 items-center">
               {/* Left Side - Text Content */}
-              <div className="space-y-4 sm:space-y-6 text-left">
+              <div className="lg:col-span-3 space-y-4 sm:space-y-6 text-left">
                 <p className="font-secondary text-sm sm:text-base font-medium text-brand-secondary/90 tracking-widest uppercase drop-shadow-lg">
                   WELCOME TO PINEAPPLE TOURS
                 </p>
@@ -143,7 +143,7 @@ export default function Home() {
               </div>
 
               {/* Right Side - Search Form */}
-              <div className="w-full">
+              <div className="lg:col-span-2 w-full">
                 <Card className="overflow-hidden border-none shadow-lg bg-white/60">
                   <CardContent className="p-0">
                     <SearchForm />

@@ -293,9 +293,8 @@ export function SearchForm({
         </div>
 
         <form onSubmit={handleToursSearch}>
-          {/* Search Inputs Grid - Responsive 2x2 layout for mid-size screens */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4 mb-4">
-            {/* First Row */}
+          {/* Search Inputs - Single column layout for better UX */}
+          <div className="space-y-4 mb-6">
             {/* Participants */}
             <div className="space-y-2 text-start">
               <Label
@@ -355,7 +354,6 @@ export function SearchForm({
               </div>
             </div>
 
-            {/* Second Row */}
             {/* Pick up Location */}
             <div className="space-y-2 text-start">
               <Label
@@ -396,27 +394,22 @@ export function SearchForm({
                 </Select>
               </div>
             </div>
-
-            {/* Search Button - Aligned with pickup location */}
-            <div className="space-y-2 text-start">
-              <Label className="font-text text-sm font-medium text-transparent">
-                Search
-              </Label>
-              <Button
-                type="submit"
-                className={`w-full h-12 font-medium text-base transition-all duration-200 shadow-md hover:shadow-lg bg-brand-accent text-brand-secondary hover:bg-brand-accent/90 ${
-                  isPrePopulated ? "ring-2 ring-brand-accent/20" : ""
-                }`}
-              >
-                <Search className="mr-2 h-4 w-4" />
-                {isPrePopulated
-                  ? "Find My Tours"
-                  : hasDateSelected
-                  ? "Search Available Tours"
-                  : "Search Tours"}
-              </Button>
-            </div>
           </div>
+
+          {/* Search Button - Full width at bottom */}
+          <Button
+            type="submit"
+            className={`w-full h-12 font-medium text-base transition-all duration-200 shadow-md hover:shadow-lg bg-brand-accent text-brand-secondary hover:bg-brand-accent/90 ${
+              isPrePopulated ? "ring-2 ring-brand-accent/20" : ""
+            }`}
+          >
+            <Search className="mr-2 h-4 w-4" />
+            {isPrePopulated
+              ? "Find My Tours"
+              : hasDateSelected
+              ? "Search Available Tours"
+              : "Search Tours"}
+          </Button>
         </form>
       </div>
     </div>

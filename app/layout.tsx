@@ -33,13 +33,13 @@ export const metadata = {
   generator: "v0.dev",
   icons: {
     icon: [
-      { url: "/favicon/favicon-16x16.png", sizes: "16x16", type: "image/png" },
-      { url: "/favicon/favicon-32x32.png", sizes: "32x32", type: "image/png" },
-      { url: "/favicon/favicon.ico", sizes: "any" },
+      { url: "/pineapple-tour-logo.png", sizes: "16x16", type: "image/png" },
+      { url: "/pineapple-tour-logo.png", sizes: "32x32", type: "image/png" },
+      { url: "/pineapple-tour-logo.png", sizes: "any" },
     ],
     apple: [
       {
-        url: "/favicon/apple-touch-icon.png",
+        url: "/pineapple-tour-logo.png",
         sizes: "180x180",
         type: "image/png",
       },
@@ -47,13 +47,13 @@ export const metadata = {
     other: [
       {
         rel: "android-chrome",
-        url: "/favicon/android-chrome-192x192.png",
+        url: "/pineapple-tour-logo.png",
         sizes: "192x192",
         type: "image/png",
       },
       {
         rel: "android-chrome",
-        url: "/favicon/android-chrome-512x512.png",
+        url: "/pineapple-tour-logo.png",
         sizes: "512x512",
         type: "image/png",
       },

@@ -814,7 +814,7 @@ export default function TourDetailPage({
             </div>
 
             {/* Simplified Desktop Booking Sidebar */}
-            <div className="hidden xl:block xl:col-span-1 sticky top-20">
+            <div className="hidden xl:block xl:col-span-1 sticky top-24">
               <div className=" max-w-sm mx-auto space-y-4">
                 <Card className="border border-gray-200 shadow-lg bg-white">
                   <CardContent className="p-6">

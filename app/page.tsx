@@ -13,6 +13,8 @@ import {
   CreditCard,
   BookOpen,
   MessageCircle,
+  Users,
+  Mountain,
 } from "lucide-react";
 import { useState, useEffect } from "react";
 
@@ -216,11 +218,117 @@ export default function Home() {
             {/* Images Grid */}
             <div className="relative">
               <HopOnHopOffImages />
-              <div className="absolute -bottom-6 -right-6 bg-brand-accent text-brand-secondary p-4 rounded-xl shadow-lg">
+              <div className="absolute -bottom-6 -right-2 sm:-right-6 bg-brand-accent text-brand-secondary p-4 rounded-xl shadow-lg">
                 <div className="text-center">
                   <div className="text-2xl font-bold">$99</div>
                   <div className="text-sm opacity-90">Starting from</div>
                 </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Private Tours by Destination Section */}
+      <section className="py-16 bg-white">
+        <div className="container px-4 sm:px-6 lg:px-8">
+          <div className="grid lg:grid-cols-2 gap-12 items-center">
+            {/* Images Grid */}
+            <div className="relative order-2 lg:order-1">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-4">
+                  <div className="relative h-48 rounded-xl overflow-hidden shadow-lg">
+                    <Image
+                      src="/private-tours/gold-coast.avif"
+                      alt="Tamborine Mountain scenic view"
+                      fill
+                      className="object-cover"
+                    />
+                  </div>
+                  <div className="relative h-32 rounded-xl overflow-hidden shadow-lg">
+                    <Image
+                      src="/private-tours/brisbane-tours.webp"
+                      alt="Gold Coast departure"
+                      fill
+                      className="object-cover"
+                    />
+                  </div>
+                </div>
+                <div className="space-y-4 pt-8">
+                  <div className="relative h-32 rounded-xl overflow-hidden shadow-lg">
+                    <Image
+                      src="/private-tours/tamborine-mountain.avif"
+                      alt="Brisbane city views"
+                      fill
+                      className="object-cover"
+                    />
+                  </div>
+                  <div className="relative h-48 rounded-xl overflow-hidden shadow-lg">
+                    <Image
+                      src="/private-tours/scenic-rim.avif"
+                      alt="Scenic Rim landscape"
+                      fill
+                      className="object-cover"
+                    />
+                  </div>
+                </div>
+              </div>
+              <div className="absolute -bottom-6 -left-2 sm:-left-6 bg-brand-accent text-brand-secondary p-4 rounded-xl shadow-lg">
+                <div className="text-center">
+                  <div className="text-2xl font-bold">Custom</div>
+                  <div className="text-sm opacity-90">Pricing</div>
+                </div>
+              </div>
+            </div>
+
+            {/* Content */}
+            <div className="space-y-6 order-1 lg:order-2">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 bg-brand-accent/10 rounded-full flex items-center justify-center">
+                  <Users className="h-6 w-6 text-brand-accent" />
+                </div>
+                <h2 className="font-secondary text-3xl sm:text-4xl font-normal tracking-tight text-brand-text">
+                  Private Tours by Destination
+                </h2>
+              </div>
+              <p className="font-text text-lg text-muted-foreground leading-relaxed">
+                Travel from the Gold Coast and Brisbane to Tamborine Mountain or
+                journey further into the unknown of Northern New South Wales and
+                the Scenic Rim. Our private tours are curated to suit you, so if
+                you can't see exactly what you are looking for, just let our
+                helpful team know and we will put together the perfect tour for
+                you.
+              </p>
+              <div className="grid sm:grid-cols-2 gap-4">
+                <div className="flex items-center gap-3">
+                  <MapPin className="h-5 w-5 text-brand-accent" />
+                  <span className="font-text text-sm">
+                    Gold Coast departures
+                  </span>
+                </div>
+                <div className="flex items-center gap-3">
+                  <MapPin className="h-5 w-5 text-brand-accent" />
+                  <span className="font-text text-sm">Brisbane departures</span>
+                </div>
+                <div className="flex items-center gap-3">
+                  <Mountain className="h-5 w-5 text-brand-accent" />
+                  <span className="font-text text-sm">Tamborine Mountain</span>
+                </div>
+                <div className="flex items-center gap-3">
+                  <Star className="h-5 w-5 text-brand-accent" />
+                  <span className="font-text text-sm">Scenic Rim region</span>
+                </div>
+              </div>
+              <div className="flex flex-col sm:flex-row gap-4">
+                <Link href="/tours?category=private-tours">
+                  <Button
+                    size="lg"
+                    className="bg-brand-accent text-brand-secondary hover:bg-brand-accent/90"
+                  >
+                    <Users className="mr-2 h-5 w-5" />
+                    View Private Tours
+                  </Button>
+                </Link>
               </div>
             </div>
           </div>

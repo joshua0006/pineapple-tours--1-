@@ -294,8 +294,14 @@ export function CategoriesSection() {
               class experiences but also authentic experiences. Whether to
               adventure through scenic terrains that take your breath away or
               taste some of the finest selection of gourmet food and wine in
-              Australia, experience all day unlike any other when you take a
-              tour with Pineapple Tours.
+              Australia, experience all day unlike any other when you take a{" "}
+              <Link
+                href="/tours"
+                className="text-brand-accent hover:text-brand-accent/80 transition-colors duration-200 underline"
+              >
+                tour
+              </Link>{" "}
+              with Pineapple Tours.
             </p>
 
             {/* Loading Progress Bar */}
@@ -354,7 +360,7 @@ export function CategoriesSection() {
                             <span className="text-xs text-white/70 uppercase tracking-wide font-['Work_Sans'] mb-1 drop-shadow-sm">
                               Available Tours
                             </span>
-                            <span className="text-lg sm:text-xl font-bold text-white font-['Barlow'] drop-shadow-lg">
+                            <span className="text-lg sm:text-3xl font-bold text-white font-['Barlow'] drop-shadow-lg">
                               {productCount}
                             </span>
                           </div>
@@ -369,20 +375,6 @@ export function CategoriesSection() {
                 </Link>
               );
             })}
-          </div>
-
-          {/* Additional Info */}
-          <div className="text-center mt-8 lg:mt-12">
-            <p className="text-sm text-gray-400 font-['Work_Sans']">
-              Can't find what you're looking for?{" "}
-              <Link
-                href="/contact"
-                className="text-[#FF585D] hover:text-[#FF585D]/80 transition-colors duration-200 underline"
-              >
-                Contact us
-              </Link>{" "}
-              for custom tour arrangements.
-            </p>
           </div>
         </div>
       </section>

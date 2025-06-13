@@ -78,9 +78,55 @@ p {
     display: none; /* Safari and Chrome */
   }
 
+  /* Custom scrollbar for mobile navigation */
+  .scrollbar-thin {
+    scrollbar-width: thin;
+  }
+
+  .scrollbar-thumb-border {
+    scrollbar-color: hsl(var(--border)) transparent;
+  }
+
+  /* Webkit scrollbar styles */
+  .scrollbar-thin::-webkit-scrollbar {
+    width: 4px;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-thumb {
+    background-color: hsl(var(--border));
+    border-radius: 2px;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-thumb:hover {
+    background-color: hsl(var(--border) / 0.8);
+  }
+
   /* Mobile-specific utilities */
   .touch-manipulation {
     touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  /* Touch-friendly interactions */
+  @media (hover: none) and (pointer: coarse) {
+    .touch-manipulation {
+      touch-action: manipulation;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    /* Enhance touch targets on mobile */
+    button,
+    [role="button"],
+    input[type="button"],
+    input[type="submit"],
+    .touch-target {
+      min-height: 44px;
+      min-width: 44px;
+    }
   }
 
   .safe-area-inset {
@@ -182,6 +228,177 @@ p {
 
   .booking-prompt-backdrop-exit {
     animation: backdrop-fade-out 0.3s ease-in forwards;
+  }
+
+  /* Responsive utilities */
+  .responsive-padding-x {
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+
+  @media (min-width: 640px) {
+    .responsive-padding-x {
+      padding-left: 1.5rem;
+      padding-right: 1.5rem;
+    }
+  }
+
+  @media (min-width: 768px) {
+    .responsive-padding-x {
+      padding-left: 2rem;
+      padding-right: 2rem;
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .responsive-padding-x {
+      padding-left: 3rem;
+      padding-right: 3rem;
+    }
+  }
+
+  /* Enhanced responsive tab spacing utilities */
+  .tab-spacing-compact {
+    gap: 0.125rem; /* 2px */
+    padding-left: 0.5rem; /* 8px */
+    padding-right: 0.5rem; /* 8px */
+  }
+
+  @media (min-width: 1024px) {
+    .tab-spacing-compact {
+      gap: 0.25rem; /* 4px */
+      padding-left: 0.625rem; /* 10px */
+      padding-right: 0.625rem; /* 10px */
+    }
+  }
+
+  .tab-spacing-standard {
+    gap: 0.25rem; /* 4px */
+    padding-left: 0.625rem; /* 10px */
+    padding-right: 0.625rem; /* 10px */
+  }
+
+  @media (min-width: 1280px) {
+    .tab-spacing-standard {
+      gap: 0.375rem; /* 6px */
+      padding-left: 0.75rem; /* 12px */
+      padding-right: 0.75rem; /* 12px */
+    }
+  }
+
+  .tab-spacing-spacious {
+    gap: 0.375rem; /* 6px */
+    padding-left: 0.75rem; /* 12px */
+    padding-right: 0.75rem; /* 12px */
+  }
+
+  @media (min-width: 1536px) {
+    .tab-spacing-spacious {
+      gap: 0.5rem; /* 8px */
+      padding-left: 1rem; /* 16px */
+      padding-right: 1rem; /* 16px */
+    }
+  }
+
+  /* Navigation width constraints */
+  .nav-tab-width-compact {
+    max-width: 7.5rem; /* 120px */
+  }
+
+  .nav-tab-width-standard {
+    max-width: 8.75rem; /* 140px */
+  }
+
+  .nav-tab-width-spacious {
+    max-width: 10rem; /* 160px */
+  }
+
+  /* Smooth transitions for responsive changes */
+  .responsive-transition {
+    transition: padding 0.2s ease-in-out, gap 0.2s ease-in-out,
+      max-width 0.3s ease-in-out;
+  }
+
+  /* Mobile-first responsive text sizes */
+  .text-responsive-sm {
+    font-size: 0.875rem;
+  }
+
+  @media (min-width: 768px) {
+    .text-responsive-sm {
+      font-size: 1rem;
+    }
+  }
+
+  .text-responsive-base {
+    font-size: 1rem;
+  }
+
+  @media (min-width: 768px) {
+    .text-responsive-base {
+      font-size: 1.125rem;
+    }
+  }
+
+  .text-responsive-lg {
+    font-size: 1.125rem;
+  }
+
+  @media (min-width: 768px) {
+    .text-responsive-lg {
+      font-size: 1.25rem;
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .text-responsive-lg {
+      font-size: 1.5rem;
+    }
+  }
+
+  /* Enhanced navigation-specific utilities */
+  .nav-item-hover {
+    transition: all 0.2s ease-in-out;
+  }
+
+  .nav-item-hover:hover {
+    transform: scale(1.05);
+    background-color: hsl(var(--accent) / 0.5);
+  }
+
+  .nav-item-hover:active {
+    transform: scale(0.95);
+  }
+
+  /* Responsive container queries support (when available) */
+  @supports (container-type: inline-size) {
+    .nav-container {
+      container-type: inline-size;
+    }
+
+    @container (min-width: 1024px) {
+      .nav-compact {
+        gap: 0.25rem;
+        padding-left: 0.5rem;
+        padding-right: 0.5rem;
+      }
+    }
+
+    @container (min-width: 1280px) {
+      .nav-standard {
+        gap: 0.375rem;
+        padding-left: 0.75rem;
+        padding-right: 0.75rem;
+      }
+    }
+
+    @container (min-width: 1536px) {
+      .nav-spacious {
+        gap: 0.5rem;
+        padding-left: 1rem;
+        padding-right: 1rem;
+      }
+    }
   }
 }
 
@@ -402,7 +619,7 @@ p {
   @keyframes fade-in-up {
     from {
       opacity: 0;
-      transform: translateY(10px);
+      transform: translateY(20px);
     }
     to {
       opacity: 1;

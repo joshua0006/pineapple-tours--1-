@@ -1,417 +1,570 @@
-"use client";
-
-import { useState, useMemo } from "react";
-import { MapPin, Users, Clock, Star, ArrowRight } from "lucide-react";
+import Image from "next/image";
+import Link from "next/link";
+import {
+  ChevronRight,
+  Star,
+  Calendar,
+  Users,
+  Thermometer,
+  Plane,
+  Mountain,
+  Heart,
+} from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Skeleton } from "@/components/ui/skeleton";
+import { SiteHeader } from "@/components/site-header";
+import { SiteFooter } from "@/components/site-footer";
+import { TourCard } from "@/components/tour-card";
+import { TestimonialCard } from "@/components/testimonial-card";
+import { ActivityCard } from "@/components/activity-card";
+import { AccommodationCard } from "@/components/accommodation-card";
+import { DestinationMap } from "@/components/destination-map";
+import { DestinationStats } from "@/components/destination-stats";
 
-import { useRezdyProducts } from "@/hooks/use-rezdy";
-import { RezdyProduct } from "@/lib/types/rezdy";
-
-interface DestinationConfig {
-  id: string;
-  name: string;
-  description: string;
-  keywords: string[];
-  locationFilters: string[];
-}
-
-const DESTINATIONS: DestinationConfig[] = [
-  {
-    id: "gold-coast",
-    name: "Gold Coast",
-    description:
-      "Discover the stunning beaches, theme parks, and hinterland of the Gold Coast with our private tours.",
-    keywords: [
-      "gold coast",
-      "surfers paradise",
-      "broadbeach",
-      "burleigh",
-      "currumbin",
-    ],
-    locationFilters: [
-      "Gold Coast",
-      "Surfers Paradise",
-      "Broadbeach",
-      "Burleigh Heads",
-      "Currumbin",
-    ],
-  },
-  {
-    id: "brisbane",
-    name: "Brisbane",
-    description:
-      "Explore Queensland's vibrant capital city with personalized private tours showcasing culture, food, and attractions.",
-    keywords: [
-      "brisbane",
-      "south bank",
-      "fortitude valley",
-      "west end",
-      "kangaroo point",
-    ],
-    locationFilters: [
-      "Brisbane",
-      "South Bank",
-      "Fortitude Valley",
-      "West End",
-      "Kangaroo Point",
-    ],
-  },
-  {
-    id: "tamborine-mountain",
-    name: "Tamborine Mountain",
-    description:
-      "Experience the natural beauty and world-class wineries of Mount Tamborine on exclusive private tours.",
-    keywords: [
-      "tamborine",
-      "mount tamborine",
-      "tamborine mountain",
-      "gallery walk",
-      "cedar creek",
-    ],
-    locationFilters: [
-      "Mount Tamborine",
-      "Tamborine Mountain",
-      "Gallery Walk",
-      "Cedar Creek",
-    ],
-  },
-  {
-    id: "northern-nsw",
-    name: "Northern New South Wales",
-    description:
-      "Journey into the unknown beauty of Northern NSW with private tours to Byron Bay, Nimbin, and hidden gems.",
-    keywords: [
-      "byron bay",
-      "nimbin",
-      "lismore",
-      "ballina",
-      "northern nsw",
-      "northern new south wales",
-    ],
-    locationFilters: [
-      "Byron Bay",
-      "Nimbin",
-      "Lismore",
-      "Ballina",
-      "Northern NSW",
-    ],
-  },
-  {
-    id: "scenic-rim",
-    name: "Scenic Rim",
-    description:
-      "Discover the dramatic landscapes and charming towns of the Scenic Rim region on bespoke private tours.",
-    keywords: [
-      "scenic rim",
-      "boonah",
-      "beaudesert",
-      "canungra",
-      "mount barney",
-    ],
-    locationFilters: [
-      "Scenic Rim",
-      "Boonah",
-      "Beaudesert",
-      "Canungra",
-      "Mount Barney",
-    ],
-  },
-];
-
-interface PrivateToursDestinationProps {
-  className?: string;
-}
-
-export function PrivateToursDestination({
-  className,
-}: PrivateToursDestinationProps) {
-  const [activeDestination, setActiveDestination] = useState("gold-coast");
-
-  // Fetch all products with a higher limit to get comprehensive data
-  const { data: products, loading, error } = useRezdyProducts(1000, 0);
-
-  // Filter products for private tours
-  const privateTourProducts = useMemo(() => {
-    if (!products) return [];
-
-    return products.filter((product) => {
-      // Filter for private tour types
-      const isPrivateTour =
-        product.productType === "PRIVATE_TOUR" ||
-        product.productType === "CUSTOM" ||
-        product.name?.toLowerCase().includes("private") ||
-        product.description?.toLowerCase().includes("private") ||
-        product.shortDescription?.toLowerCase().includes("private");
-
-      // Ensure product is active
-      const isActive = product.status === "ACTIVE";
-
-      return isPrivateTour && isActive;
-    });
-  }, [products]);
-
-  // Group products by destination
-  const productsByDestination = useMemo(() => {
-    const grouped: Record<string, RezdyProduct[]> = {};
-
-    DESTINATIONS.forEach((destination) => {
-      grouped[destination.id] = privateTourProducts.filter((product) => {
-        const searchText =
-          `${product.name} ${product.description} ${product.shortDescription} ${product.locationAddress}`.toLowerCase();
-
-        return (
-          destination.keywords.some((keyword) =>
-            searchText.includes(keyword.toLowerCase())
-          ) ||
-          destination.locationFilters.some((location) =>
-            searchText.includes(location.toLowerCase())
-          )
-        );
-      });
-    });
-
-    return grouped;
-  }, [privateTourProducts]);
-
-  const currentDestination = DESTINATIONS.find(
-    (d) => d.id === activeDestination
-  );
-  const currentProducts = productsByDestination[activeDestination] || [];
-
-  if (loading) {
-    return (
-      <section
-        className={`py-16 bg-gradient-to-br from-blue-50 to-indigo-100 ${className}`}
-      >
-        <div className="container mx-auto px-4">
-          <div className="text-center mb-12">
-            <Skeleton className="h-8 w-64 mx-auto mb-4" />
-            <Skeleton className="h-20 w-full max-w-4xl mx-auto" />
-          </div>
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {[...Array(6)].map((_, i) => (
-              <Skeleton key={i} className="h-64 w-full" />
-            ))}
-          </div>
-        </div>
-      </section>
-    );
-  }
-
-  if (error) {
-    return (
-      <section
-        className={`py-16 bg-gradient-to-br from-blue-50 to-indigo-100 ${className}`}
-      >
-        <div className="container mx-auto px-4 text-center">
-          <h2 className="text-3xl font-bold text-gray-900 mb-4">
-            Private Tours by Destination
-          </h2>
-          <p className="text-red-600">
-            Unable to load tour data. Please try again later.
-          </p>
-        </div>
-      </section>
-    );
-  }
-
+export default function HawaiiDestinationPage() {
   return (
-    <section
-      className={`py-16 bg-gradient-to-br from-blue-50 to-indigo-100 ${className}`}
-    >
-      <div className="container mx-auto px-4">
-        {/* Header */}
-        <div className="text-center mb-12">
-          <h2 className="text-4xl font-bold text-gray-900 mb-6">
-            Private Tours by Destination
-          </h2>
-          <p className="text-lg text-gray-700 max-w-4xl mx-auto leading-relaxed">
-            Travel from the Gold Coast and Brisbane to Tamborine Mountain or
-            Journey further into the unknown of Northern New South Wales and the
-            Scenic Rim, our private tours are curated to suit you so If you
-            can't see exactly what you are looking for just let our helpful team
-            know and we will put together the perfect tour for you.
-          </p>
+    <div className="flex min-h-screen flex-col">
+      <SiteHeader />
+      <main className="flex-1">
+        {/* Breadcrumb */}
+        <div className="container py-4">
+          <div className="flex items-center text-sm text-muted-foreground">
+            <Link href="/" className="hover:text-foreground">
+              Home
+            </Link>
+            <ChevronRight className="mx-1 h-4 w-4" />
+            <Link href="/destinations" className="hover:text-foreground">
+              Destinations
+            </Link>
+            <ChevronRight className="mx-1 h-4 w-4" />
+            <span className="text-foreground">Hawaii</span>
+          </div>
         </div>
 
-        {/* Destination Tabs */}
-        <Tabs
-          value={activeDestination}
-          onValueChange={setActiveDestination}
-          className="w-full"
-        >
-          <TabsList className="grid w-full grid-cols-2 md:grid-cols-5 bg-white/80 backdrop-blur-sm border border-gray-200 rounded-xl p-2 mb-8">
-            {DESTINATIONS.map((destination) => (
-              <TabsTrigger
-                key={destination.id}
-                value={destination.id}
-                className="data-[state=active]:bg-blue-600 data-[state=active]:text-white data-[state=active]:shadow-lg rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200 hover:bg-blue-50"
+        {/* Hero Section */}
+        <section className="relative">
+          <div className="absolute inset-0 z-0">
+            <Image
+              src="/placeholder.svg?height=800&width=1920"
+              alt="Hawaii tropical paradise"
+              fill
+              className="object-cover brightness-[0.8]"
+              priority
+            />
+          </div>
+          <div className="container relative z-10 py-24 md:py-32 lg:py-40">
+            <div className="max-w-4xl space-y-6">
+              <div className="flex flex-wrap gap-2">
+                <Badge className="bg-brand-accent text-brand-secondary hover:bg-coral-600">
+                  Top Destination
+                </Badge>
+                <Badge variant="outline" className="border-white text-white">
+                  Pacific Paradise
+                </Badge>
+              </div>
+              <h1 className="text-4xl font-bold tracking-tight text-white sm:text-5xl md:text-6xl lg:text-7xl">
+                Discover the Magic of Hawaii
+              </h1>
+              <p className="text-xl text-white/90 md:text-2xl">
+                Experience the Aloha spirit across eight magnificent islands,
+                where pristine beaches meet volcanic wonders and ancient culture
+                thrives in modern paradise.
+              </p>
+              <div className="flex flex-col gap-3 sm:flex-row sm:gap-4">
+                <Button
+                  size="lg"
+                  className="bg-brand-accent text-brand-secondary hover:bg-coral-600"
+                >
+                  Explore Hawaii Tours
+                </Button>
+                <Button
+                  size="lg"
+                  variant="outline"
+                  className="border-white text-white hover:bg-white/20"
+                >
+                  Watch Destination Video
+                </Button>
+              </div>
+            </div>
+          </div>
+
+          {/* Floating Stats */}
+          <div className="container relative z-10 -mt-16 mb-16">
+            <DestinationStats />
+          </div>
+        </section>
+
+        {/* Destination Overview */}
+        <section className="container py-16">
+          <div className="grid gap-12 lg:grid-cols-2 lg:items-center">
+            <div className="space-y-6">
+              <div>
+                <h2 className="text-3xl font-bold tracking-tight">
+                  Welcome to Paradise
+                </h2>
+                <p className="mt-4 text-lg text-muted-foreground">
+                  Hawaii is a tropical paradise like no other, where ancient
+                  Polynesian culture meets modern luxury. From the dramatic
+                  volcanic landscapes of the Big Island to the pristine beaches
+                  of Maui, each island offers its own unique character and
+                  unforgettable experiences.
+                </p>
+              </div>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div className="flex items-center gap-3">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-coral-100">
+                    <Thermometer className="h-5 w-5 text-brand-accent" />
+                  </div>
+                  <div>
+                    <div className="font-medium">Perfect Climate</div>
+                    <div className="text-sm text-muted-foreground">
+                      75-85°F year-round
+                    </div>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-coral-100">
+                    <Plane className="h-5 w-5 text-brand-accent" />
+                  </div>
+                  <div>
+                    <div className="font-medium">Easy Access</div>
+                    <div className="text-sm text-muted-foreground">
+                      Direct flights worldwide
+                    </div>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-coral-100">
+                    <Mountain className="h-5 w-5 text-brand-accent" />
+                  </div>
+                  <div>
+                    <div className="font-medium">8 Unique Islands</div>
+                    <div className="text-sm text-muted-foreground">
+                      Each with distinct character
+                    </div>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-coral-100">
+                    <Heart className="h-5 w-5 text-brand-accent" />
+                  </div>
+                  <div>
+                    <div className="font-medium">Aloha Spirit</div>
+                    <div className="text-sm text-muted-foreground">
+                      Warm Hawaiian hospitality
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div className="flex gap-3">
+                <Button className="bg-brand-accent text-brand-secondary hover:bg-coral-600">
+                  Plan Your Trip
+                </Button>
+                <Button variant="outline">Download Guide</Button>
+              </div>
+            </div>
+            <div className="relative">
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div className="space-y-4">
+                  <div className="relative h-48 overflow-hidden rounded-lg">
+                    <Image
+                      src="/placeholder.svg?height=300&width=400"
+                      alt="Hawaiian beach"
+                      fill
+                      className="object-cover"
+                    />
+                  </div>
+                  <div className="relative h-32 overflow-hidden rounded-lg">
+                    <Image
+                      src="/placeholder.svg?height=200&width=400"
+                      alt="Hawaiian culture"
+                      fill
+                      className="object-cover"
+                    />
+                  </div>
+                </div>
+                <div className="space-y-4 sm:mt-8">
+                  <div className="relative h-32 overflow-hidden rounded-lg">
+                    <Image
+                      src="/placeholder.svg?height=200&width=400"
+                      alt="Hawaiian volcano"
+                      fill
+                      className="object-cover"
+                    />
+                  </div>
+                  <div className="relative h-48 overflow-hidden rounded-lg">
+                    <Image
+                      src="/placeholder.svg?height=300&width=400"
+                      alt="Hawaiian sunset"
+                      fill
+                      className="object-cover"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Popular Activities */}
+        <section className="bg-muted py-16">
+          <div className="container">
+            <div className="text-center">
+              <h2 className="text-3xl font-bold tracking-tight">
+                Unforgettable Experiences
+              </h2>
+              <p className="mx-auto mt-4 max-w-2xl text-muted-foreground">
+                From underwater adventures to volcanic hikes, Hawaii offers
+                endless opportunities for adventure and relaxation
+              </p>
+            </div>
+            <Tabs defaultValue="adventure" className="mt-12">
+              <TabsList className="grid w-full grid-cols-4">
+                <TabsTrigger value="adventure">Adventure</TabsTrigger>
+                <TabsTrigger value="culture">Culture</TabsTrigger>
+                <TabsTrigger value="relaxation">Relaxation</TabsTrigger>
+                <TabsTrigger value="nature">Nature</TabsTrigger>
+              </TabsList>
+              <TabsContent value="adventure" className="mt-8">
+                <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                  <ActivityCard
+                    title="Snorkeling at Molokini Crater"
+                    description="Explore the crystal-clear waters of this partially submerged volcanic crater, home to over 250 species of fish."
+                    image="/placeholder.svg?height=300&width=400"
+                    duration="Half Day"
+                    difficulty="Easy"
+                    price={89}
+                  />
+                  <ActivityCard
+                    title="Volcano National Park Tour"
+                    description="Witness the raw power of nature at Kilauea volcano and explore lava tubes and volcanic landscapes."
+                    image="/placeholder.svg?height=300&width=400"
+                    duration="Full Day"
+                    difficulty="Moderate"
+                    price={149}
+                  />
+                  <ActivityCard
+                    title="Helicopter Island Tour"
+                    description="See Hawaii from above with breathtaking aerial views of waterfalls, valleys, and volcanic craters."
+                    image="/placeholder.svg?height=300&width=400"
+                    duration="2 Hours"
+                    difficulty="Easy"
+                    price={299}
+                  />
+                </div>
+              </TabsContent>
+              <TabsContent value="culture" className="mt-8">
+                <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                  <ActivityCard
+                    title="Traditional Hawaiian Luau"
+                    description="Experience authentic Hawaiian culture with traditional food, music, and hula dancing under the stars."
+                    image="/placeholder.svg?height=300&width=400"
+                    duration="Evening"
+                    difficulty="Easy"
+                    price={119}
+                  />
+                  <ActivityCard
+                    title="Pearl Harbor Historic Tour"
+                    description="Learn about the pivotal moment in history that changed the world at this moving memorial."
+                    image="/placeholder.svg?height=300&width=400"
+                    duration="Half Day"
+                    difficulty="Easy"
+                    price={79}
+                  />
+                  <ActivityCard
+                    title="Polynesian Cultural Center"
+                    description="Journey through six Pacific island cultures with authentic villages, shows, and demonstrations."
+                    image="/placeholder.svg?height=300&width=400"
+                    duration="Full Day"
+                    difficulty="Easy"
+                    price={99}
+                  />
+                </div>
+              </TabsContent>
+              <TabsContent value="relaxation" className="mt-8">
+                <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                  <ActivityCard
+                    title="Spa Day at Luxury Resort"
+                    description="Indulge in traditional Hawaiian healing treatments using local ingredients and ancient techniques."
+                    image="/placeholder.svg?height=300&width=400"
+                    duration="Half Day"
+                    difficulty="Easy"
+                    price={199}
+                  />
+                  <ActivityCard
+                    title="Sunset Beach Picnic"
+                    description="Enjoy a romantic beachside dinner as the sun sets over the Pacific Ocean."
+                    image="/placeholder.svg?height=300&width=400"
+                    duration="Evening"
+                    difficulty="Easy"
+                    price={89}
+                  />
+                  <ActivityCard
+                    title="Catamaran Sailing"
+                    description="Relax on deck while sailing along the beautiful Hawaiian coastline with snorkeling stops."
+                    image="/placeholder.svg?height=300&width=400"
+                    duration="Half Day"
+                    difficulty="Easy"
+                    price={129}
+                  />
+                </div>
+              </TabsContent>
+              <TabsContent value="nature" className="mt-8">
+                <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                  <ActivityCard
+                    title="Haleakala Sunrise Hike"
+                    description="Watch the sunrise from 10,000 feet above sea level at Maui's highest peak."
+                    image="/placeholder.svg?height=300&width=400"
+                    duration="Half Day"
+                    difficulty="Moderate"
+                    price={69}
+                  />
+                  <ActivityCard
+                    title="Bamboo Forest Trail"
+                    description="Hike through mystical bamboo forests to discover hidden waterfalls and natural pools."
+                    image="/placeholder.svg?height=300&width=400"
+                    duration="Half Day"
+                    difficulty="Moderate"
+                    price={59}
+                  />
+                  <ActivityCard
+                    title="Whale Watching Tour"
+                    description="Witness majestic humpback whales during their annual migration (December-April)."
+                    image="/placeholder.svg?height=300&width=400"
+                    duration="3 Hours"
+                    difficulty="Easy"
+                    price={79}
+                  />
+                </div>
+              </TabsContent>
+            </Tabs>
+          </div>
+        </section>
+
+        {/* Accommodation Options */}
+        <section className="container py-16">
+          <div className="text-center">
+            <h2 className="text-3xl font-bold tracking-tight">Where to Stay</h2>
+            <p className="mx-auto mt-4 max-w-2xl text-muted-foreground">
+              From luxury resorts to boutique hotels, find the perfect
+              accommodation for your Hawaiian getaway
+            </p>
+          </div>
+          <div className="mt-12 grid gap-8 lg:grid-cols-3">
+            <AccommodationCard
+              name="Grand Wailea Resort"
+              location="Wailea, Maui"
+              type="Luxury Resort"
+              image="/placeholder.svg?height=300&width=400"
+              rating={4.8}
+              price={599}
+              amenities={[
+                "Spa",
+                "Multiple Pools",
+                "Golf Course",
+                "Beach Access",
+              ]}
+              description="A world-class luxury resort featuring stunning ocean views, award-winning spa, and exceptional dining."
+            />
+            <AccommodationCard
+              name="Turtle Bay Resort"
+              location="North Shore, Oahu"
+              type="Beach Resort"
+              image="/placeholder.svg?height=300&width=400"
+              rating={4.6}
+              price={399}
+              amenities={["Surfing", "Golf", "Spa", "Multiple Restaurants"]}
+              description="Located on Oahu's famous North Shore, perfect for surf enthusiasts and beach lovers."
+            />
+            <AccommodationCard
+              name="Volcano House"
+              location="Hawaii Volcanoes National Park"
+              type="Historic Hotel"
+              image="/placeholder.svg?height=300&width=400"
+              rating={4.4}
+              price={299}
+              amenities={[
+                "Volcano Views",
+                "Historic Charm",
+                "Restaurant",
+                "Gift Shop",
+              ]}
+              description="A unique historic hotel perched on the rim of Kilauea volcano with unparalleled views."
+            />
+          </div>
+          <div className="mt-8 text-center">
+            <Button variant="outline" size="lg">
+              View All Accommodations
+            </Button>
+          </div>
+        </section>
+
+        {/* Interactive Map */}
+        <section className="bg-muted py-16">
+          <div className="container">
+            <div className="text-center">
+              <h2 className="text-3xl font-bold tracking-tight">
+                Explore Hawaii's Islands
+              </h2>
+              <p className="mx-auto mt-4 max-w-2xl text-muted-foreground">
+                Discover the unique attractions and experiences each Hawaiian
+                island has to offer
+              </p>
+            </div>
+            <div className="mt-12">
+              <DestinationMap />
+            </div>
+          </div>
+        </section>
+
+        {/* Customer Reviews */}
+        <section className="container py-16">
+          <div className="text-center">
+            <h2 className="text-3xl font-bold tracking-tight">
+              What Our Travelers Say
+            </h2>
+            <p className="mx-auto mt-4 max-w-2xl text-muted-foreground">
+              Read authentic reviews from travelers who have experienced the
+              magic of Hawaii with Pineapple Tours
+            </p>
+          </div>
+          <div className="mt-12 grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
+            <TestimonialCard
+              name="Sarah & Mike Johnson"
+              location="Denver, Colorado"
+              image="/placeholder.svg?height=100&width=100"
+              rating={5}
+              testimonial="Our Hawaiian honeymoon was absolutely perfect! The snorkeling at Molokini was breathtaking, and the luau was an authentic cultural experience. Pineapple Tours took care of every detail."
+            />
+            <TestimonialCard
+              name="Emily Chen"
+              location="San Francisco, California"
+              image="/placeholder.svg?height=100&width=100"
+              rating={5}
+              testimonial="The volcano tour was the highlight of our trip! Our guide was incredibly knowledgeable about Hawaiian geology and culture. The helicopter tour was also amazing - seeing the islands from above was unforgettable."
+            />
+            <TestimonialCard
+              name="Rodriguez Family"
+              location="Austin, Texas"
+              image="/placeholder.svg?height=100&width=100"
+              rating={5}
+              testimonial="Perfect family vacation! The kids loved the snorkeling and beach time, while we adults enjoyed the cultural experiences and beautiful resorts. Hawaii truly has something for everyone."
+            />
+          </div>
+          <div className="mt-12 text-center">
+            <div className="inline-flex items-center gap-2 rounded-full bg-yellow-100 px-4 py-2">
+              <Star className="h-5 w-5 fill-yellow-500 text-yellow-500" />
+              <span className="font-medium">
+                4.9/5 average rating from 247 Hawaii travelers
+              </span>
+            </div>
+          </div>
+        </section>
+
+        {/* Featured Tours */}
+        <section className="bg-gradient-to-b from-white to-yellow-50 py-16">
+          <div className="container">
+            <div className="text-center">
+              <h2 className="text-3xl font-bold tracking-tight">
+                Hawaii Tour Packages
+              </h2>
+              <p className="mx-auto mt-4 max-w-2xl text-muted-foreground">
+                Choose from our carefully crafted Hawaii tour packages designed
+                to showcase the best of the islands
+              </p>
+            </div>
+            <div className="mt-12 grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
+              <TourCard
+                title="Hawaiian Paradise Escape"
+                location="Maui, Hawaii"
+                image="/placeholder.svg?height=400&width=600"
+                price={1299}
+                duration={7}
+                rating={4.8}
+                slug="hawaiian-paradise-escape"
+              />
+              <TourCard
+                title="Big Island Volcano Adventure"
+                location="Big Island, Hawaii"
+                image="/placeholder.svg?height=400&width=600"
+                price={1399}
+                duration={6}
+                rating={4.7}
+                slug="big-island-volcano-adventure"
+              />
+              <TourCard
+                title="Oahu Island Explorer"
+                location="Oahu, Hawaii"
+                image="/placeholder.svg?height=400&width=600"
+                price={1199}
+                duration={5}
+                rating={4.6}
+                slug="oahu-island-explorer"
+              />
+            </div>
+            <div className="mt-12 text-center">
+              <Button
+                size="lg"
+                className="bg-brand-accent text-brand-secondary hover:bg-coral-600"
               >
-                {destination.name}
-              </TabsTrigger>
-            ))}
-          </TabsList>
+                View All Hawaii Tours
+              </Button>
+            </div>
+          </div>
+        </section>
 
-          {/* Tab Content */}
-          {DESTINATIONS.map((destination) => (
-            <TabsContent
-              key={destination.id}
-              value={destination.id}
-              className="space-y-8"
-            >
-              {/* Destination Description */}
-              <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-lg">
-                <CardHeader className="text-center">
-                  <CardTitle className="text-2xl text-gray-900 flex items-center justify-center gap-2">
-                    <MapPin className="h-6 w-6 text-blue-600" />
-                    {destination.name}
-                  </CardTitle>
-                  <CardDescription className="text-lg text-gray-700 max-w-2xl mx-auto">
-                    {destination.description}
-                  </CardDescription>
-                </CardHeader>
-              </Card>
-
-              {/* Products Grid */}
-              {currentProducts.length > 0 ? (
-                <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-                  {currentProducts.slice(0, 6).map((product) => (
-                    <Card
-                      key={product.productCode}
-                      className="bg-white/90 backdrop-blur-sm border-0 shadow-lg hover:shadow-xl transition-all duration-300 group"
-                    >
-                      <CardHeader className="pb-3">
-                        <div className="flex items-start justify-between">
-                          <Badge
-                            variant="secondary"
-                            className="bg-blue-100 text-blue-800 mb-2"
-                          >
-                            Private Tour
-                          </Badge>
-                          {product.advertisedPrice && (
-                            <span className="text-lg font-bold text-green-600">
-                              ${product.advertisedPrice}
-                            </span>
-                          )}
-                        </div>
-                        <CardTitle className="text-lg line-clamp-2 group-hover:text-blue-600 transition-colors">
-                          {product.name}
-                        </CardTitle>
-                      </CardHeader>
-                      <CardContent className="space-y-4">
-                        {product.shortDescription && (
-                          <p className="text-gray-600 text-sm line-clamp-3">
-                            {product.shortDescription}
-                          </p>
-                        )}
-
-                        <div className="flex items-center gap-4 text-sm text-gray-500">
-                          {product.quantityRequiredMin &&
-                            product.quantityRequiredMax && (
-                              <div className="flex items-center gap-1">
-                                <Users className="h-4 w-4" />
-                                <span>
-                                  {product.quantityRequiredMin}-
-                                  {product.quantityRequiredMax} guests
-                                </span>
-                              </div>
-                            )}
-                          {product.durationHours && (
-                            <div className="flex items-center gap-1">
-                              <Clock className="h-4 w-4" />
-                              <span>{product.durationHours}h</span>
-                            </div>
-                          )}
-                        </div>
-
-                        {product.locationAddress && (
-                          <div className="flex items-start gap-2 text-sm text-gray-600">
-                            <MapPin className="h-4 w-4 mt-0.5 flex-shrink-0" />
-                            <span className="line-clamp-2">
-                              {typeof product.locationAddress === "string"
-                                ? product.locationAddress
-                                : `${product.locationAddress.city || ""} ${
-                                    product.locationAddress.state || ""
-                                  }`.trim()}
-                            </span>
-                          </div>
-                        )}
-
-                        <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white group-hover:bg-blue-700 transition-colors">
-                          View Details
-                          <ArrowRight className="ml-2 h-4 w-4" />
-                        </Button>
-                      </CardContent>
-                    </Card>
-                  ))}
-                </div>
-              ) : (
-                <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-lg">
-                  <CardContent className="text-center py-12">
-                    <MapPin className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                    <h3 className="text-xl font-semibold text-gray-900 mb-2">
-                      No Private Tours Available
-                    </h3>
-                    <p className="text-gray-600 mb-6">
-                      We don't currently have private tours listed for{" "}
-                      {destination.name}, but we can create a custom experience
-                      for you.
-                    </p>
-                    <Button className="bg-blue-600 hover:bg-blue-700 text-white">
-                      Contact Us for Custom Tour
-                    </Button>
-                  </CardContent>
-                </Card>
-              )}
-
-              {/* Show More Button */}
-              {currentProducts.length > 6 && (
-                <div className="text-center">
-                  <Button
-                    variant="outline"
-                    className="bg-white/80 backdrop-blur-sm border-gray-200 hover:bg-white"
-                  >
-                    View All {currentProducts.length} {destination.name} Private
-                    Tours
-                    <ArrowRight className="ml-2 h-4 w-4" />
-                  </Button>
-                </div>
-              )}
-
-              {/* Custom Tour CTA */}
-              <Card className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white border-0 shadow-xl">
-                <CardContent className="text-center py-8">
-                  <Star className="h-8 w-8 mx-auto mb-4 text-yellow-300" />
-                  <h3 className="text-2xl font-bold mb-2">
-                    Can't Find What You're Looking For?
-                  </h3>
-                  <p className="text-blue-100 mb-6 max-w-2xl mx-auto">
-                    Our experienced team specializes in creating bespoke private
-                    tours tailored to your interests, schedule, and group size.
-                    Let us design the perfect {destination.name} experience just
-                    for you.
-                  </p>
-                  <Button className="bg-white text-blue-600 hover:bg-blue-50 font-semibold px-8 py-3">
-                    Create Custom Tour
-                    <ArrowRight className="ml-2 h-5 w-5" />
-                  </Button>
-                </CardContent>
-              </Card>
-            </TabsContent>
-          ))}
-        </Tabs>
-      </div>
-    </section>
+        {/* Call to Action */}
+        <section className="container py-16">
+          <div className="rounded-xl bg-gradient-to-r from-brand-accent to-coral-600 p-8 text-center md:p-12">
+            <h2 className="text-3xl font-bold text-black md:text-4xl">
+              Ready to Experience Hawaii?
+            </h2>
+            <p className="mx-auto mt-4 max-w-2xl text-black/80 md:text-lg">
+              Let our Hawaii specialists help you plan the perfect tropical
+              getaway. From romantic honeymoons to family adventures, we'll
+              create an unforgettable experience just for you.
+            </p>
+            <div className="mt-8 flex flex-col gap-4 sm:flex-row sm:justify-center">
+              <Button
+                size="lg"
+                className="bg-brand-primary text-brand-secondary hover:bg-brand-green"
+              >
+                <Calendar className="mr-2 h-5 w-5" />
+                Book Your Hawaii Trip
+              </Button>
+              <Button
+                size="lg"
+                variant="outline"
+                className="border-black text-black hover:bg-black/10"
+              >
+                <Users className="mr-2 h-5 w-5" />
+                Speak with a Specialist
+              </Button>
+            </div>
+            <div className="mt-6 flex flex-wrap justify-center gap-6 text-sm text-black/70">
+              <div className="flex items-center gap-1">
+                <span>✓</span>
+                <span>Free consultation</span>
+              </div>
+              <div className="flex items-center gap-1">
+                <span>✓</span>
+                <span>Custom itineraries</span>
+              </div>
+              <div className="flex items-center gap-1">
+                <span>✓</span>
+                <span>24/7 support</span>
+              </div>
+              <div className="flex items-center gap-1">
+                <span>✓</span>
+                <span>Best price guarantee</span>
+              </div>
+            </div>
+          </div>
+        </section>
+      </main>
+      <SiteFooter />
+    </div>
   );
 }

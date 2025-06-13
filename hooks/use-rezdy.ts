@@ -27,10 +27,9 @@ export function useRezdyProducts(limit = 100, offset = 0) {
       try {
         setState((prev) => ({ ...prev, loading: true, error: null }));
 
-        // Add cache-busting parameter to ensure fresh data
-        const cacheBuster = Date.now();
+        // Remove cache-busting to allow proper caching
         const response = await fetch(
-          `/api/rezdy/products?limit=${limit}&offset=${offset}&_t=${cacheBuster}`
+          `/api/rezdy/products?limit=${limit}&offset=${offset}`
         );
 
         if (!response.ok) {
@@ -48,7 +47,6 @@ export function useRezdyProducts(limit = 100, offset = 0) {
           totalProducts: products.length,
           hasProducts: products.length > 0,
           firstProduct: products[0]?.name || "None",
-          cacheBuster,
         });
 
         setState({

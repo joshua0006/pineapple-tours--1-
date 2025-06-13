@@ -7,8 +7,8 @@ import {
   X,
   Clock,
   ArrowRight,
-  Heart,
 } from "lucide-react";
+import Image from "next/image";
 import { format, addDays } from "date-fns";
 
 import { Button } from "@/components/ui/button";
@@ -30,6 +30,7 @@ interface BookingPromptData {
   groupSize: number;
   bookingDate: Date | undefined;
   hasInteracted: boolean;
+  permanentlyDismissed?: boolean;
 }
 
 interface BookingPromptPopupProps {
@@ -38,7 +39,7 @@ interface BookingPromptPopupProps {
   className?: string;
 }
 
-const INACTIVITY_TIMEOUT = 60000; // 1 minute
+const INACTIVITY_TIMEOUT = 5000; // 1 minute
 const STORAGE_KEY = "pineapple-tours-booking-prompt";
 
 export function BookingPromptPopup({
@@ -60,9 +61,18 @@ export function BookingPromptPopup({
 
   // Check if user has already interacted with the popup in this page load
   const checkPreviousInteraction = useCallback(() => {
-    // For page refresh behavior, we'll use a page-load specific check
-    // Only prevent popup if user interacted in the current page load session
-    return hasShownPopupRef.current;
+    // Allow popup to show multiple times - only check if user has permanently dismissed it
+    try {
+      const stored = sessionStorage.getItem(STORAGE_KEY);
+      if (stored) {
+        const data = JSON.parse(stored);
+        // Only prevent if user explicitly dismissed (not just completed booking)
+        return data.permanentlyDismissed === true;
+      }
+    } catch (error) {
+      console.warn("Failed to check previous interaction:", error);
+    }
+    return false;
   }, []);
 
   // Store user interaction data
@@ -163,8 +173,9 @@ export function BookingPromptPopup({
 
   // Show popup with animation
   const showPopup = useCallback(() => {
-    if (hasShownPopupRef.current || checkPreviousInteraction()) return;
+    if (checkPreviousInteraction()) return;
 
+    // Reset the flag to allow popup to show again after some time
     hasShownPopupRef.current = true;
     setIsVisible(true);
     setIsAnimating(true);
@@ -185,6 +196,10 @@ export function BookingPromptPopup({
     setIsAnimating(false);
     setTimeout(() => {
       setIsVisible(false);
+      // Reset the flag after 1 second to allow popup to show again
+      setTimeout(() => {
+        hasShownPopupRef.current = false;
+      }, 1000);
     }, 300); // Match animation duration
   }, []);
 
@@ -201,7 +216,7 @@ export function BookingPromptPopup({
 
   // Handle popup dismissal
   const handleDismiss = useCallback(() => {
-    storeInteractionData({ hasInteracted: true });
+    storeInteractionData({ hasInteracted: true, permanentlyDismissed: true });
     clearInactivityTimer();
     hidePopup();
     onDismiss?.();
@@ -355,8 +370,14 @@ export function BookingPromptPopup({
 
           <CardHeader className="pb-4 pt-6">
             <div className="flex items-center gap-3 mb-2">
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-yellow-100 dark:bg-yellow-900/20">
-                <Heart className="h-5 w-5 text-yellow-600 dark:text-yellow-400" />
+              <div className="flex items-center justify-center rounded-full">
+                <Image
+                  src="/pineapple-tour-logo.png"
+                  alt="Pineapple Tours"
+                  width={48}
+                  height={48}
+                  className="object-contain"
+                />
               </div>
               <div>
                 <CardTitle

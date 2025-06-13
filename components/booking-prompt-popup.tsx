@@ -30,7 +30,6 @@ interface BookingPromptData {
   groupSize: number;
   bookingDate: Date | undefined;
   hasInteracted: boolean;
-  permanentlyDismissed?: boolean;
 }
 
 interface BookingPromptPopupProps {
@@ -39,8 +38,7 @@ interface BookingPromptPopupProps {
   className?: string;
 }
 
-const INACTIVITY_TIMEOUT = 5000; // 1 minute
-const STORAGE_KEY = "pineapple-tours-booking-prompt";
+const INACTIVITY_TIMEOUT = 60000; // 1 minute
 
 export function BookingPromptPopup({
   onStartBooking,
@@ -59,42 +57,6 @@ export function BookingPromptPopup({
   const hasShownPopupRef = useRef(false);
   const timerReasonRef = useRef<"inactivity" | "tab-out" | null>(null);
 
-  // Check if user has already interacted with the popup in this page load
-  const checkPreviousInteraction = useCallback(() => {
-    // Allow popup to show multiple times - only check if user has permanently dismissed it
-    try {
-      const stored = sessionStorage.getItem(STORAGE_KEY);
-      if (stored) {
-        const data = JSON.parse(stored);
-        // Only prevent if user explicitly dismissed (not just completed booking)
-        return data.permanentlyDismissed === true;
-      }
-    } catch (error) {
-      console.warn("Failed to check previous interaction:", error);
-    }
-    return false;
-  }, []);
-
-  // Store user interaction data
-  const storeInteractionData = useCallback(
-    (data: Partial<BookingPromptData>) => {
-      try {
-        const existing = sessionStorage.getItem(STORAGE_KEY);
-        const currentData = existing ? JSON.parse(existing) : {};
-        const updatedData = {
-          ...currentData,
-          ...data,
-          timestamp: Date.now(),
-          pageLoadId: Math.random().toString(36).substr(2, 9),
-        };
-        sessionStorage.setItem(STORAGE_KEY, JSON.stringify(updatedData));
-      } catch (error) {
-        console.warn("Failed to store booking prompt data:", error);
-      }
-    },
-    []
-  );
-
   // Clear the inactivity timer
   const clearInactivityTimer = useCallback(() => {
     if (inactivityTimerRef.current) {
@@ -109,15 +71,15 @@ export function BookingPromptPopup({
     (reason: "inactivity" | "tab-out") => {
       clearInactivityTimer();
 
-      // Don't start timer if popup already shown or user has interacted
-      if (hasShownPopupRef.current || checkPreviousInteraction()) {
+      // Don't start timer if popup already shown
+      if (hasShownPopupRef.current) {
         return;
       }
 
       timerReasonRef.current = reason;
       inactivityTimerRef.current = setTimeout(() => {
         // Only show popup if conditions are still met
-        if (!hasShownPopupRef.current && !checkPreviousInteraction()) {
+        if (!hasShownPopupRef.current) {
           // For tab-out scenario, only show if tab is still hidden
           if (reason === "tab-out" && isTabVisible) {
             return;
@@ -126,7 +88,7 @@ export function BookingPromptPopup({
         }
       }, INACTIVITY_TIMEOUT);
     },
-    [checkPreviousInteraction, isTabVisible]
+    [isTabVisible]
   );
 
   // Reset inactivity timer (for user activity within tab)
@@ -136,19 +98,13 @@ export function BookingPromptPopup({
 
     clearInactivityTimer();
 
-    // Don't start timer if popup is already visible or user has already interacted
-    if (isVisible || hasShownPopupRef.current || checkPreviousInteraction()) {
+    // Don't start timer if popup is already visible
+    if (isVisible || hasShownPopupRef.current) {
       return;
     }
 
     startInactivityTimer("inactivity");
-  }, [
-    isVisible,
-    isTabVisible,
-    checkPreviousInteraction,
-    startInactivityTimer,
-    clearInactivityTimer,
-  ]);
+  }, [isVisible, isTabVisible, startInactivityTimer, clearInactivityTimer]);
 
   // Handle tab visibility changes
   const handleVisibilityChange = useCallback(() => {
@@ -173,8 +129,6 @@ export function BookingPromptPopup({
 
   // Show popup with animation
   const showPopup = useCallback(() => {
-    if (checkPreviousInteraction()) return;
-
     // Reset the flag to allow popup to show again after some time
     hasShownPopupRef.current = true;
     setIsVisible(true);
@@ -189,7 +143,7 @@ export function BookingPromptPopup({
         firstFocusable?.focus();
       }
     }, 100);
-  }, [checkPreviousInteraction]);
+  }, []);
 
   // Hide popup with animation
   const hidePopup = useCallback(() => {
@@ -216,11 +170,10 @@ export function BookingPromptPopup({
 
   // Handle popup dismissal
   const handleDismiss = useCallback(() => {
-    storeInteractionData({ hasInteracted: true, permanentlyDismissed: true });
     clearInactivityTimer();
     hidePopup();
     onDismiss?.();
-  }, [hidePopup, onDismiss, storeInteractionData, clearInactivityTimer]);
+  }, [hidePopup, onDismiss, clearInactivityTimer]);
 
   // Handle start booking
   const handleStartBooking = useCallback(() => {
@@ -230,18 +183,10 @@ export function BookingPromptPopup({
       hasInteracted: true,
     };
 
-    storeInteractionData(bookingData);
     clearInactivityTimer();
     hidePopup();
     onStartBooking?.(bookingData);
-  }, [
-    groupSize,
-    bookingDate,
-    hidePopup,
-    onStartBooking,
-    storeInteractionData,
-    clearInactivityTimer,
-  ]);
+  }, [groupSize, bookingDate, hidePopup, onStartBooking, clearInactivityTimer]);
 
   // Handle escape key
   const handleKeyDown = useCallback(

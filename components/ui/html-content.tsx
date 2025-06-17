@@ -1,49 +1,72 @@
-import { useMemo } from 'react'
-import DOMPurify from 'isomorphic-dompurify'
-import { cn } from '@/lib/utils'
+import { useMemo } from "react";
+import DOMPurify from "isomorphic-dompurify";
+import { cn } from "@/lib/utils";
+import { decodeHtmlEntities } from "@/lib/utils/html-entities";
 
 interface HtmlContentProps {
-  content: string
-  className?: string
-  maxLength?: number
-  showReadMore?: boolean
+  content: string;
+  className?: string;
+  maxLength?: number;
+  showReadMore?: boolean;
 }
 
-export function HtmlContent({ 
-  content, 
-  className, 
+export function HtmlContent({
+  content,
+  className,
   maxLength,
-  showReadMore = false 
+  showReadMore = false,
 }: HtmlContentProps) {
   const sanitizedContent = useMemo(() => {
-    if (!content) return ''
-    
+    if (!content) return "";
+
+    // First decode HTML entities
+    const decodedContent = decodeHtmlEntities(content);
+
     // Configure DOMPurify to allow safe HTML tags
-    const cleanContent = DOMPurify.sanitize(content, {
+    const cleanContent = DOMPurify.sanitize(decodedContent, {
       ALLOWED_TAGS: [
-        'p', 'br', 'strong', 'b', 'em', 'i', 'u', 'ul', 'ol', 'li', 
-        'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'blockquote', 'a', 'span'
+        "p",
+        "br",
+        "strong",
+        "b",
+        "em",
+        "i",
+        "u",
+        "ul",
+        "ol",
+        "li",
+        "h1",
+        "h2",
+        "h3",
+        "h4",
+        "h5",
+        "h6",
+        "blockquote",
+        "a",
+        "span",
       ],
-      ALLOWED_ATTR: ['href', 'target', 'rel', 'class'],
-      ALLOW_DATA_ATTR: false
-    })
-    
+      ALLOWED_ATTR: ["href", "target", "rel", "class"],
+      ALLOW_DATA_ATTR: false,
+    });
+
     // Truncate if maxLength is specified
     if (maxLength && cleanContent.length > maxLength) {
-      const truncated = cleanContent.substring(0, maxLength)
-      const lastSpace = truncated.lastIndexOf(' ')
-      return lastSpace > 0 ? truncated.substring(0, lastSpace) + '...' : truncated + '...'
+      const truncated = cleanContent.substring(0, maxLength);
+      const lastSpace = truncated.lastIndexOf(" ");
+      return lastSpace > 0
+        ? truncated.substring(0, lastSpace) + "..."
+        : truncated + "...";
     }
-    
-    return cleanContent
-  }, [content, maxLength])
+
+    return cleanContent;
+  }, [content, maxLength]);
 
   if (!sanitizedContent) {
-    return null
+    return null;
   }
 
   return (
-    <div 
+    <div
       className={cn(
         "prose prose-gray max-w-none",
         "prose-headings:text-foreground prose-headings:font-semibold",
@@ -59,5 +82,5 @@ export function HtmlContent({
       role="region"
       aria-label="Tour description content"
     />
-  )
-} 
+  );
+}

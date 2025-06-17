@@ -324,7 +324,7 @@ export function CategoriesSection() {
               return (
                 <Link
                   key={category.id}
-                  href={`/tours/category/${category.id}`}
+                  href={`/tours?category=${category.id}`}
                   className="group block"
                 >
                   <div className="relative overflow-hidden rounded-xl transition-all duration-300 hover:scale-[1.02] hover:shadow-xl hover:shadow-[#FF585D]/20 h-full min-h-[280px] sm:min-h-[320px] flex flex-col">

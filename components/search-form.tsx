@@ -253,7 +253,7 @@ export function SearchForm({
       <div className="p-4 sm:p-5">
         <div className="mb-4 sm:mb-5">
           <div className="flex items-center justify-between mb-2">
-            <h2 className="font-primary text-[24px] leading-[36px] font-semibold text-gray-900 text-center mx-auto">
+            <h2 className="font-primary text-[24px] leading-[36px] font-semibold text-gray-900">
               {isPrePopulated ? "Complete Your Booking" : "Find a Tour"}
             </h2>
             {rezdyError && (

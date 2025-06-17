@@ -34,7 +34,7 @@ import { PageHeader } from "@/components/page-header";
 import { DynamicTourCard } from "@/components/dynamic-tour-card";
 import { TourGridSkeleton } from "@/components/tour-grid-skeleton";
 import { ErrorState } from "@/components/error-state";
-import { useAllProducts } from "@/hooks/use-all-products";
+import { usePaginatedProducts } from "@/hooks/use-paginated-products";
 import { useCityProducts } from "@/hooks/use-city-products";
 import {
   getSearchCategories,
@@ -74,10 +74,6 @@ export default function ToursPage() {
   // Get search categories for the dropdown
   const searchCategories = getSearchCategories();
 
-  // Fetch all products using the new hook
-  const { products, loading, error, refreshProducts, totalCount, isCached } =
-    useAllProducts();
-
   // Local filter state
   const [filters, setFilters] = useState<Filters>({
     query: searchParams.get("query") || "",
@@ -96,7 +92,21 @@ export default function ToursPage() {
   const [localQuery, setLocalQuery] = useState(filters.query);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
 
-  // Client-side filtering and sorting
+  // Fetch products using pagination
+  const {
+    products,
+    loading,
+    error,
+    refreshProducts,
+    totalCount,
+    isCached,
+    hasMore,
+    fetchProducts,
+  } = usePaginatedProducts({
+    autoFetch: false, // We'll manually trigger fetches
+  });
+
+  // Client-side filtering and sorting (applied to current page of server-side paginated data)
   const { filteredProducts, totalFilteredCount, currentPage, totalPages } =
     useMemo(() => {
       let filtered = [...products];
@@ -203,23 +213,22 @@ export default function ToursPage() {
           break;
       }
 
-      // Pagination
+      // Calculate pagination info based on server-side pagination
       const limit = parseInt(filters.limit) || 100;
       const offset = parseInt(filters.offset) || 0;
-      const totalFilteredCount = filtered.length;
       const currentPage = Math.floor(offset / limit) + 1;
-      const totalPages = Math.ceil(totalFilteredCount / limit);
 
-      // Apply pagination
-      const paginatedProducts = filtered.slice(offset, offset + limit);
+      // For server-side pagination, we estimate total pages based on hasMore
+      // This is a simplified approach - in a real app you'd want the server to return total count
+      const estimatedTotalPages = hasMore ? currentPage + 1 : currentPage;
 
       return {
-        filteredProducts: paginatedProducts,
-        totalFilteredCount,
+        filteredProducts: filtered,
+        totalFilteredCount: filtered.length,
         currentPage,
-        totalPages,
+        totalPages: estimatedTotalPages,
       };
-    }, [products, filters]);
+    }, [products, filters, hasMore]);
 
   // Sync URL parameters with filters when searchParams change
   useEffect(() => {
@@ -240,6 +249,13 @@ export default function ToursPage() {
     setFilters(urlFilters);
     setLocalQuery(urlFilters.query);
   }, [searchParams]);
+
+  // Fetch products when filters change
+  useEffect(() => {
+    const limit = parseInt(filters.limit) || 100;
+    const offset = parseInt(filters.offset) || 0;
+    fetchProducts(limit, offset);
+  }, [filters.limit, filters.offset, fetchProducts]);
 
   // Update URL when filters change
   useEffect(() => {
@@ -345,7 +361,6 @@ export default function ToursPage() {
     filters.location !== "";
 
   const hasResults = filteredProducts.length > 0;
-  const totalResults = totalFilteredCount;
 
   const getFilterDisplayName = (key: string, value: string) => {
     const displayNames: Record<string, Record<string, string>> = {
@@ -370,9 +385,9 @@ export default function ToursPage() {
         title="Discover Amazing Tours"
         subtitle={
           hasResults
-            ? `Found ${totalResults} tour${
-                totalResults !== 1 ? "s" : ""
-              } for your perfect adventure`
+            ? `Showing ${totalFilteredCount} tour${
+                totalFilteredCount !== 1 ? "s" : ""
+              } on this page`
             : "Explore our collection of handpicked tours and experiences from around the world"
         }
         variant="coral"
@@ -764,12 +779,16 @@ export default function ToursPage() {
                       </span>
                     ) : (
                       <>
-                        {totalResults > 1
-                          ? `${totalResults} tours found`
-                          : `${totalResults} tour found`}
+                        {totalFilteredCount > 1
+                          ? `${totalFilteredCount} tours on this page`
+                          : `${totalFilteredCount} tour on this page`}
                         {totalPages > 1 && (
                           <span className="text-muted-foreground">
-                            {` • Page ${currentPage} of ${totalPages}`}
+                            {` • Page ${currentPage}${
+                              hasMore
+                                ? ` of ${totalPages}+`
+                                : ` of ${totalPages}`
+                            }`}
                           </span>
                         )}
                       </>

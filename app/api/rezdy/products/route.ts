@@ -40,7 +40,15 @@ export async function GET(request: NextRequest) {
         `✅ Cache HIT for products: ${cacheKey} (${cachedProducts.length} products)`
       );
       return NextResponse.json(
-        { products: cachedProducts },
+        {
+          products: cachedProducts,
+          pagination: {
+            limit: parseInt(limit),
+            offset: parseInt(offset),
+            count: cachedProducts.length,
+            hasMore: cachedProducts.length === parseInt(limit),
+          },
+        },
         {
           headers: {
             "Cache-Control":
@@ -81,7 +89,19 @@ export async function GET(request: NextRequest) {
       `✅ Cached ${products.length} products with key: ${cacheKey} (TTL: 30min)`
     );
 
-    return NextResponse.json(data, {
+    // Enhanced response with pagination info
+    const responseData = {
+      ...data,
+      products,
+      pagination: {
+        limit: parseInt(limit),
+        offset: parseInt(offset),
+        count: products.length,
+        hasMore: products.length === parseInt(limit),
+      },
+    };
+
+    return NextResponse.json(responseData, {
       headers: {
         "Cache-Control": "public, s-maxage=1800, stale-while-revalidate=3600",
         "X-Cache": "MISS",

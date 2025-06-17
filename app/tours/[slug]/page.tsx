@@ -551,9 +551,6 @@ export default function TourDetailPage({
                     <div className="space-y-6">
                       {/* Clean Description */}
                       <div>
-                        <h3 className="text-lg font-semibold text-gray-900 mb-3">
-                          About This Tour
-                        </h3>
                         <DescriptionDisplay
                           description={selectedProduct.description}
                           shortDescription={selectedProduct.shortDescription}

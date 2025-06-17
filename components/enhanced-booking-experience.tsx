@@ -1,244 +1,316 @@
-"use client"
+"use client";
 
-import React, { useState, useEffect, useMemo } from "react"
-import { Calendar as CalendarIcon, Users, CreditCard, MapPin, Clock, Star, Shield, CheckCircle, AlertCircle, Info, Phone, Mail, Globe, Heart, Share2, Calendar, ArrowLeft, ArrowRight } from "lucide-react"
-import { format, addDays, isSameDay } from "date-fns"
+import React, { useState, useEffect, useMemo } from "react";
+import {
+  Calendar as CalendarIcon,
+  Users,
+  CreditCard,
+  MapPin,
+  Clock,
+  Star,
+  Shield,
+  CheckCircle,
+  AlertCircle,
+  Info,
+  Phone,
+  Mail,
+  Globe,
+  Heart,
+  Share2,
+  Calendar,
+  ArrowLeft,
+  ArrowRight,
+} from "lucide-react";
+import { format, addDays, isSameDay } from "date-fns";
 
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Separator } from "@/components/ui/separator"
-import { Checkbox } from "@/components/ui/checkbox"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Calendar as CalendarComponent } from "@/components/ui/calendar"
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
-import { Badge } from "@/components/ui/badge"
-import { Textarea } from "@/components/ui/textarea"
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
-import { Progress } from "@/components/ui/progress"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { PricingDisplay } from "@/components/ui/pricing-display"
-import { GuestManager, type GuestInfo } from "@/components/ui/guest-manager"
-import { ExtrasSelector } from "@/components/ui/extras-selector"
-import { PickupLocationSelector } from "@/components/ui/pickup-location-selector"
-import { useRezdyAvailability } from "@/hooks/use-rezdy"
-import { RezdyProduct, RezdySession, RezdyPickupLocation } from "@/lib/types/rezdy"
-import { formatPrice, getLocationString, hasPickupServices, getPickupServiceType, extractPickupLocations } from "@/lib/utils/product-utils"
-import { calculatePricing, formatCurrency, getPricingSummaryText, validatePricingOptions, type PricingBreakdown, type SelectedExtra } from "@/lib/utils/pricing-utils"
-import { 
-  transformBookingDataToRezdy, 
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Separator } from "@/components/ui/separator";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Calendar as CalendarComponent } from "@/components/ui/calendar";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { Badge } from "@/components/ui/badge";
+import { Textarea } from "@/components/ui/textarea";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Progress } from "@/components/ui/progress";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { PricingDisplay } from "@/components/ui/pricing-display";
+import { GuestManager, type GuestInfo } from "@/components/ui/guest-manager";
+import { ExtrasSelector } from "@/components/ui/extras-selector";
+import { PickupLocationSelector } from "@/components/ui/pickup-location-selector";
+import { useRezdyAvailability } from "@/hooks/use-rezdy";
+import {
+  RezdyProduct,
+  RezdySession,
+  RezdyPickupLocation,
+} from "@/lib/types/rezdy";
+import {
+  formatPrice,
+  getLocationString,
+  hasPickupServices,
+  getPickupServiceType,
+  extractPickupLocations,
+} from "@/lib/utils/product-utils";
+import {
+  calculatePricing,
+  formatCurrency,
+  getPricingSummaryText,
+  validatePricingOptions,
+  type PricingBreakdown,
+  type SelectedExtra,
+} from "@/lib/utils/pricing-utils";
+import {
+  transformBookingDataToRezdy,
   validateBookingDataForRezdy,
   calculateExtrasPricing,
   getTotalParticipantCount,
   getParticipantBreakdown,
-  type BookingFormData 
-} from "@/lib/utils/booking-transform"
-import { cn } from "@/lib/utils"
-import { registerBookingWithPayment, PaymentConfirmation, BookingService } from '@/lib/services/booking-service'
+  type BookingFormData,
+} from "@/lib/utils/booking-transform";
+import { cn } from "@/lib/utils";
+import {
+  registerBookingWithPayment,
+  PaymentConfirmation,
+  BookingService,
+} from "@/lib/services/booking-service";
 
 interface EnhancedBookingExperienceProps {
-  product: RezdyProduct
-  onClose?: () => void
-  onBookingComplete?: (bookingData: any) => void
+  product: RezdyProduct;
+  onClose?: () => void;
+  onBookingComplete?: (bookingData: any) => void;
   // Optional cart item data for pre-populating the form
-  preSelectedSession?: RezdySession
+  preSelectedSession?: RezdySession;
   preSelectedParticipants?: {
-    adults: number
-    children?: number
-    infants?: number
-  }
-  preSelectedExtras?: SelectedExtra[]
+    adults: number;
+    children?: number;
+    infants?: number;
+  };
+  preSelectedExtras?: SelectedExtra[];
 }
 
 interface ContactInfo {
-  firstName: string
-  lastName: string
-  email: string
-  phone: string
-  country: string
-  emergencyContact: string
-  emergencyPhone: string
-  dietaryRequirements: string
-  accessibilityNeeds: string
-  specialRequests: string
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone: string;
+  country: string;
+  emergencyContact: string;
+  emergencyPhone: string;
+  dietaryRequirements: string;
+  accessibilityNeeds: string;
+  specialRequests: string;
 }
 
-interface PaymentInfo {
-  cardNumber: string
-  expiryDate: string
-  cvv: string
-  cardholderName: string
-  billingAddress: string
-  city: string
-  postalCode: string
-  country: string
-}
+// Payment info is no longer collected in the form - handled by Westpac hosted page
 
 const BOOKING_STEPS = [
-  { id: 1, title: "Date & Guest Details", description: "Choose your tour date and add guest information" },
-  { id: 2, title: "Contact Info", description: "Provide contact and special requirements" },
-  { id: 3, title: "Payment", description: "Complete your booking with secure payment" },
-  { id: 4, title: "Confirmation", description: "Review and confirm your booking" }
-]
+  {
+    id: 1,
+    title: "Date & Guest Details",
+    description: "Choose your tour date and add guest information",
+  },
+  {
+    id: 2,
+    title: "Contact Info",
+    description: "Provide contact and special requirements",
+  },
+  {
+    id: 3,
+    title: "Review & Pay",
+    description: "Review your booking and proceed to secure payment",
+  },
+];
 
 const COUNTRIES = [
-  "United States", "Canada", "United Kingdom", "Australia", "Germany", "France", "Italy", "Spain", "Japan", "South Korea", "China", "India", "Brazil", "Mexico", "Argentina", "Other"
-]
+  "United States",
+  "Canada",
+  "United Kingdom",
+  "Australia",
+  "Germany",
+  "France",
+  "Italy",
+  "Spain",
+  "Japan",
+  "South Korea",
+  "China",
+  "India",
+  "Brazil",
+  "Mexico",
+  "Argentina",
+  "Other",
+];
 
-export function EnhancedBookingExperience({ product, onClose, onBookingComplete, preSelectedSession, preSelectedParticipants, preSelectedExtras }: EnhancedBookingExperienceProps) {
-  const [currentStep, setCurrentStep] = useState(1)
-  const [isSubmitting, setIsSubmitting] = useState(false)
-  const [bookingErrors, setBookingErrors] = useState<string[]>([])
-  
+export function EnhancedBookingExperience({
+  product,
+  onClose,
+  onBookingComplete,
+  preSelectedSession,
+  preSelectedParticipants,
+  preSelectedExtras,
+}: EnhancedBookingExperienceProps) {
+  const [currentStep, setCurrentStep] = useState(1);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [bookingErrors, setBookingErrors] = useState<string[]>([]);
+
   // Check if product has pickup services
-  const productHasPickupServices = hasPickupServices(product)
-  const pickupServiceType = getPickupServiceType(product)
-  const mentionedPickupLocations = extractPickupLocations(product)
-  
-  // Booking state
-  const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined)
-  const [selectedSession, setSelectedSession] = useState<RezdySession | null>(preSelectedSession || null)
-  const [selectedPickupLocation, setSelectedPickupLocation] = useState<RezdyPickupLocation | null>(null)
-  const [guests, setGuests] = useState<GuestInfo[]>([
-    { id: '1', firstName: '', lastName: '', age: 25, type: 'ADULT' }
-  ])
-  const [selectedExtras, setSelectedExtras] = useState<SelectedExtra[]>(preSelectedExtras || [])
-  const [contactInfo, setContactInfo] = useState<ContactInfo>({
-    firstName: '',
-    lastName: '',
-    email: '',
-    phone: '',
-    country: '',
-    emergencyContact: '',
-    emergencyPhone: '',
-    dietaryRequirements: '',
-    accessibilityNeeds: '',
-    specialRequests: ''
-  })
-  const [paymentInfo, setPaymentInfo] = useState<PaymentInfo>({
-    cardNumber: '',
-    expiryDate: '',
-    cvv: '',
-    cardholderName: '',
-    billingAddress: '',
-    city: '',
-    postalCode: '',
-    country: ''
-  })
-  const [agreeToTerms, setAgreeToTerms] = useState(false)
-  const [subscribeNewsletter, setSubscribeNewsletter] = useState(false)
+  const productHasPickupServices = hasPickupServices(product);
+  const pickupServiceType = getPickupServiceType(product);
+  const mentionedPickupLocations = extractPickupLocations(product);
 
-  // Booking confirmation state
-  const [confirmedBooking, setConfirmedBooking] = useState<{
-    orderNumber?: string
-    transactionId?: string
-    formData: BookingFormData
-    paymentConfirmation: PaymentConfirmation
-  } | null>(null)
+  // Booking state
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
+  const [selectedSession, setSelectedSession] = useState<RezdySession | null>(
+    preSelectedSession || null
+  );
+  const [selectedPickupLocation, setSelectedPickupLocation] =
+    useState<RezdyPickupLocation | null>(null);
+  const [guests, setGuests] = useState<GuestInfo[]>([
+    { id: "1", firstName: "", lastName: "", age: 25, type: "ADULT" },
+  ]);
+  const [selectedExtras, setSelectedExtras] = useState<SelectedExtra[]>(
+    preSelectedExtras || []
+  );
+  const [contactInfo, setContactInfo] = useState<ContactInfo>({
+    firstName: "",
+    lastName: "",
+    email: "",
+    phone: "",
+    country: "",
+    emergencyContact: "",
+    emergencyPhone: "",
+    dietaryRequirements: "",
+    accessibilityNeeds: "",
+    specialRequests: "",
+  });
+  // Payment info is handled by Westpac hosted page - no longer stored in component state
+  const [agreeToTerms, setAgreeToTerms] = useState(false);
+  const [subscribeNewsletter, setSubscribeNewsletter] = useState(false);
+
+  // Payment processing state
+  const [isProcessingPayment, setIsProcessingPayment] = useState(false);
 
   // Initialize form data from cart item if provided
   useEffect(() => {
     if (preSelectedSession) {
       // Set the selected date from the session
-      const sessionDate = new Date(preSelectedSession.startTimeLocal)
-      setSelectedDate(sessionDate)
-      
+      const sessionDate = new Date(preSelectedSession.startTimeLocal);
+      setSelectedDate(sessionDate);
+
       // Auto-select first pickup location if available
-      if (preSelectedSession.pickupLocations && preSelectedSession.pickupLocations.length > 0) {
-        setSelectedPickupLocation(preSelectedSession.pickupLocations[0])
+      if (
+        preSelectedSession.pickupLocations &&
+        preSelectedSession.pickupLocations.length > 0
+      ) {
+        setSelectedPickupLocation(preSelectedSession.pickupLocations[0]);
       }
     }
-    
+
     if (preSelectedParticipants) {
       // Create guest list based on participant counts
-      const newGuests: GuestInfo[] = []
-      let guestId = 1
-      
+      const newGuests: GuestInfo[] = [];
+      let guestId = 1;
+
       // Add adults
       for (let i = 0; i < preSelectedParticipants.adults; i++) {
         newGuests.push({
           id: guestId.toString(),
-          firstName: '',
-          lastName: '',
+          firstName: "",
+          lastName: "",
           age: 25,
-          type: 'ADULT'
-        })
-        guestId++
+          type: "ADULT",
+        });
+        guestId++;
       }
-      
+
       // Add children
       if (preSelectedParticipants.children) {
         for (let i = 0; i < preSelectedParticipants.children; i++) {
           newGuests.push({
             id: guestId.toString(),
-            firstName: '',
-            lastName: '',
+            firstName: "",
+            lastName: "",
             age: 12,
-            type: 'CHILD'
-          })
-          guestId++
+            type: "CHILD",
+          });
+          guestId++;
         }
       }
-      
+
       // Add infants
       if (preSelectedParticipants.infants) {
         for (let i = 0; i < preSelectedParticipants.infants; i++) {
           newGuests.push({
             id: guestId.toString(),
-            firstName: '',
-            lastName: '',
+            firstName: "",
+            lastName: "",
             age: 1,
-            type: 'INFANT'
-          })
-          guestId++
+            type: "INFANT",
+          });
+          guestId++;
         }
       }
-      
+
       if (newGuests.length > 0) {
-        setGuests(newGuests)
+        setGuests(newGuests);
       }
     }
-  }, [preSelectedSession, preSelectedParticipants])
+  }, [preSelectedSession, preSelectedParticipants]);
 
   // Date range for availability
-  const today = new Date()
-  const endDate = addDays(today, 90) // 3 months ahead
-  const startDateRange = today.toISOString().split('T')[0]
-  const endDateRange = endDate.toISOString().split('T')[0]
+  const today = new Date();
+  const endDate = addDays(today, 90); // 3 months ahead
+  const startDateRange = today.toISOString().split("T")[0];
+  const endDateRange = endDate.toISOString().split("T")[0];
 
   // Calculate guest counts
   const guestCounts = useMemo(() => {
-    const counts = { adults: 0, children: 0, infants: 0 }
-    guests.forEach(guest => {
-      if (guest.type === 'ADULT') counts.adults++
-      else if (guest.type === 'CHILD') counts.children++
-      else if (guest.type === 'INFANT') counts.infants++
-    })
-    return counts
-  }, [guests])
+    const counts = { adults: 0, children: 0, infants: 0 };
+    guests.forEach((guest) => {
+      if (guest.type === "ADULT") counts.adults++;
+      else if (guest.type === "CHILD") counts.children++;
+      else if (guest.type === "INFANT") counts.infants++;
+    });
+    return counts;
+  }, [guests]);
 
   // Fetch availability
-  const { data: availabilityData, loading: availabilityLoading, error: availabilityError } = useRezdyAvailability(
+  const {
+    data: availabilityData,
+    loading: availabilityLoading,
+    error: availabilityError,
+  } = useRezdyAvailability(
     product.productCode,
     startDateRange,
     endDateRange,
     `ADULT:${guestCounts.adults},CHILD:${guestCounts.children},INFANT:${guestCounts.infants}`
-  )
+  );
 
   // Fallback mock data for when API is not working
   const mockAvailabilityData = useMemo(() => {
-    const sessions = []
-    const today = new Date()
-    
+    const sessions = [];
+    const today = new Date();
+
     // Generate mock sessions for the next 30 days
     for (let i = 1; i <= 30; i++) {
-      const sessionDate = new Date(today.getTime() + i * 24 * 60 * 60 * 1000)
-      const dateString = sessionDate.toISOString().split('T')[0]
-      
+      const sessionDate = new Date(today.getTime() + i * 24 * 60 * 60 * 1000);
+      const dateString = sessionDate.toISOString().split("T")[0];
+
       // Skip weekends for some variety
-      if (sessionDate.getDay() === 0 || sessionDate.getDay() === 6) continue
-      
+      if (sessionDate.getDay() === 0 || sessionDate.getDay() === 6) continue;
+
       // Morning session
       sessions.push({
         id: `mock-session-${i}-morning`,
@@ -246,9 +318,9 @@ export function EnhancedBookingExperience({ product, onClose, onBookingComplete,
         endTimeLocal: `${dateString}T17:00:00`,
         seatsAvailable: Math.floor(Math.random() * 15) + 5, // 5-20 seats
         totalPrice: product.advertisedPrice || 89,
-        pickupLocations: []
-      })
-      
+        pickupLocations: [],
+      });
+
       // Afternoon session (some days)
       if (Math.random() > 0.3) {
         sessions.push({
@@ -257,38 +329,55 @@ export function EnhancedBookingExperience({ product, onClose, onBookingComplete,
           endTimeLocal: `${dateString}T22:00:00`,
           seatsAvailable: Math.floor(Math.random() * 12) + 3, // 3-15 seats
           totalPrice: product.advertisedPrice || 89,
-          pickupLocations: []
-        })
+          pickupLocations: [],
+        });
       }
     }
-    
-    return [{ productCode: product.productCode, sessions }]
-  }, [product.productCode, product.advertisedPrice])
+
+    return [{ productCode: product.productCode, sessions }];
+  }, [product.productCode, product.advertisedPrice]);
 
   // Use mock data if API fails or returns no data
   const effectiveAvailabilityData = useMemo(() => {
     // If we have real data with sessions, use it
-    if (availabilityData && availabilityData[0]?.sessions && availabilityData[0].sessions.length > 0) {
-      return availabilityData
+    if (
+      availabilityData &&
+      availabilityData[0]?.sessions &&
+      availabilityData[0].sessions.length > 0
+    ) {
+      return availabilityData;
     }
-    
+
     // If API is still loading, don't use mock data yet
     if (availabilityLoading) {
-      return null
+      return null;
     }
-    
+
     // If API failed or returned no sessions, use mock data
-    if (availabilityError || !availabilityData || !availabilityData[0]?.sessions || availabilityData[0].sessions.length === 0) {
-      console.log('Using mock availability data due to API issue:', { availabilityError, availabilityData })
-      return mockAvailabilityData
+    if (
+      availabilityError ||
+      !availabilityData ||
+      !availabilityData[0]?.sessions ||
+      availabilityData[0].sessions.length === 0
+    ) {
+      console.log("Using mock availability data due to API issue:", {
+        availabilityError,
+        availabilityData,
+      });
+      return mockAvailabilityData;
     }
-    
-    return availabilityData
-  }, [availabilityData, availabilityLoading, availabilityError, mockAvailabilityData])
+
+    return availabilityData;
+  }, [
+    availabilityData,
+    availabilityLoading,
+    availabilityError,
+    mockAvailabilityData,
+  ]);
 
   // Debug logging for availability data
   useEffect(() => {
-    console.log('Enhanced Booking Experience - Availability Debug:', {
+    console.log("Enhanced Booking Experience - Availability Debug:", {
       productCode: product.productCode,
       startDateRange,
       endDateRange,
@@ -298,65 +387,92 @@ export function EnhancedBookingExperience({ product, onClose, onBookingComplete,
       availabilityData,
       effectiveAvailabilityData,
       sessionsCount: effectiveAvailabilityData?.[0]?.sessions?.length || 0,
-      firstSessionExample: effectiveAvailabilityData?.[0]?.sessions?.[0]
-    })
-  }, [product.productCode, startDateRange, endDateRange, guestCounts, availabilityLoading, availabilityError, availabilityData, effectiveAvailabilityData])
+      firstSessionExample: effectiveAvailabilityData?.[0]?.sessions?.[0],
+    });
+  }, [
+    product.productCode,
+    startDateRange,
+    endDateRange,
+    guestCounts,
+    availabilityLoading,
+    availabilityError,
+    availabilityData,
+    effectiveAvailabilityData,
+  ]);
 
   // Extract available dates with seat availability
   const availableDates = useMemo(() => {
-    if (!effectiveAvailabilityData || !effectiveAvailabilityData[0]?.sessions) return new Set<string>()
-    
-    const dates = new Set<string>()
-    effectiveAvailabilityData[0].sessions.forEach(session => {
+    if (!effectiveAvailabilityData || !effectiveAvailabilityData[0]?.sessions)
+      return new Set<string>();
+
+    const dates = new Set<string>();
+    effectiveAvailabilityData[0].sessions.forEach((session) => {
       if (session.seatsAvailable > 0 && session.startTimeLocal) {
-        const sessionDate = session.startTimeLocal.split('T')[0]
-        dates.add(sessionDate)
+        const sessionDate = session.startTimeLocal.split("T")[0];
+        dates.add(sessionDate);
       }
-    })
-    return dates
-  }, [effectiveAvailabilityData])
+    });
+    return dates;
+  }, [effectiveAvailabilityData]);
 
   // Get seat availability for a specific date
   const getDateSeatAvailability = useMemo(() => {
-    if (!effectiveAvailabilityData || !effectiveAvailabilityData[0]?.sessions) return new Map<string, number>()
-    
-    const seatMap = new Map<string, number>()
-    effectiveAvailabilityData[0].sessions.forEach(session => {
+    if (!effectiveAvailabilityData || !effectiveAvailabilityData[0]?.sessions)
+      return new Map<string, number>();
+
+    const seatMap = new Map<string, number>();
+    effectiveAvailabilityData[0].sessions.forEach((session) => {
       if (session.startTimeLocal) {
-        const sessionDate = session.startTimeLocal.split('T')[0]
-        const currentSeats = seatMap.get(sessionDate) || 0
-        seatMap.set(sessionDate, Math.max(currentSeats, session.seatsAvailable))
+        const sessionDate = session.startTimeLocal.split("T")[0];
+        const currentSeats = seatMap.get(sessionDate) || 0;
+        seatMap.set(
+          sessionDate,
+          Math.max(currentSeats, session.seatsAvailable)
+        );
       }
-    })
-    return seatMap
-  }, [effectiveAvailabilityData])
+    });
+    return seatMap;
+  }, [effectiveAvailabilityData]);
 
   // Get all dates that have sessions (regardless of availability)
   const datesWithSessions = useMemo(() => {
-    if (!effectiveAvailabilityData || !effectiveAvailabilityData[0]?.sessions) return new Set<string>()
-    
-    const dates = new Set<string>()
-    effectiveAvailabilityData[0].sessions.forEach(session => {
+    if (!effectiveAvailabilityData || !effectiveAvailabilityData[0]?.sessions)
+      return new Set<string>();
+
+    const dates = new Set<string>();
+    effectiveAvailabilityData[0].sessions.forEach((session) => {
       if (session.startTimeLocal) {
-        const sessionDate = session.startTimeLocal.split('T')[0]
-        dates.add(sessionDate)
+        const sessionDate = session.startTimeLocal.split("T")[0];
+        dates.add(sessionDate);
       }
-    })
-    return dates
-  }, [effectiveAvailabilityData])
+    });
+    return dates;
+  }, [effectiveAvailabilityData]);
 
   // Get sessions for selected date
   const availableSessions = useMemo(() => {
-    if (!effectiveAvailabilityData || !effectiveAvailabilityData[0]?.sessions || !selectedDate) return []
-    
-    const selectedDateString = format(selectedDate, 'yyyy-MM-dd')
-    return effectiveAvailabilityData[0].sessions.filter(session => 
-      session.startTimeLocal && session.startTimeLocal.startsWith(selectedDateString)
-    ).sort((a, b) => {
-      if (!a.startTimeLocal || !b.startTimeLocal) return 0
-      return new Date(a.startTimeLocal).getTime() - new Date(b.startTimeLocal).getTime()
-    })
-  }, [effectiveAvailabilityData, selectedDate])
+    if (
+      !effectiveAvailabilityData ||
+      !effectiveAvailabilityData[0]?.sessions ||
+      !selectedDate
+    )
+      return [];
+
+    const selectedDateString = format(selectedDate, "yyyy-MM-dd");
+    return effectiveAvailabilityData[0].sessions
+      .filter(
+        (session) =>
+          session.startTimeLocal &&
+          session.startTimeLocal.startsWith(selectedDateString)
+      )
+      .sort((a, b) => {
+        if (!a.startTimeLocal || !b.startTimeLocal) return 0;
+        return (
+          new Date(a.startTimeLocal).getTime() -
+          new Date(b.startTimeLocal).getTime()
+        );
+      });
+  }, [effectiveAvailabilityData, selectedDate]);
 
   // Calculate pricing
   const pricingBreakdown = useMemo((): PricingBreakdown => {
@@ -364,75 +480,88 @@ export function EnhancedBookingExperience({ product, onClose, onBookingComplete,
       adults: guestCounts.adults,
       children: guestCounts.children,
       infants: guestCounts.infants,
-      extras: selectedExtras
-    })
-  }, [product, selectedSession, guestCounts, selectedExtras])
+      extras: selectedExtras,
+    });
+  }, [product, selectedSession, guestCounts, selectedExtras]);
 
   // Validation
   const validationErrors = useMemo(() => {
-    return validatePricingOptions({
-      adults: guestCounts.adults,
-      children: guestCounts.children,
-      infants: guestCounts.infants,
-      extras: selectedExtras
-    }, product)
-  }, [guestCounts, selectedExtras, product])
+    return validatePricingOptions(
+      {
+        adults: guestCounts.adults,
+        children: guestCounts.children,
+        infants: guestCounts.infants,
+        extras: selectedExtras,
+      },
+      product
+    );
+  }, [guestCounts, selectedExtras, product]);
 
   // Step validation
   const canProceedToNextStep = () => {
     switch (currentStep) {
       case 1:
-        const hasValidGuests = guests.every(g => g.firstName.trim() && g.lastName.trim())
-        const hasValidSession = selectedSession && validationErrors.length === 0
-        
+        const hasValidGuests = guests.every(
+          (g) => g.firstName.trim() && g.lastName.trim()
+        );
+        const hasValidSession =
+          selectedSession && validationErrors.length === 0;
+
         // Check if pickup location is required and selected
-        const needsPickupLocation = productHasPickupServices && 
-          selectedSession?.pickupLocations && 
-          selectedSession.pickupLocations.length > 0
-        const hasValidPickupLocation = !needsPickupLocation || selectedPickupLocation
-        
-        return hasValidGuests && hasValidSession && hasValidPickupLocation
+        const needsPickupLocation =
+          productHasPickupServices &&
+          selectedSession?.pickupLocations &&
+          selectedSession.pickupLocations.length > 0;
+        const hasValidPickupLocation =
+          !needsPickupLocation || selectedPickupLocation;
+
+        return hasValidGuests && hasValidSession && hasValidPickupLocation;
       case 2:
-        return contactInfo.firstName && contactInfo.lastName && contactInfo.email && contactInfo.phone
+        return (
+          contactInfo.firstName &&
+          contactInfo.lastName &&
+          contactInfo.email &&
+          contactInfo.phone
+        );
       case 3:
-        return paymentInfo.cardNumber && paymentInfo.expiryDate && paymentInfo.cvv && paymentInfo.cardholderName && agreeToTerms
+        return agreeToTerms; // Only need terms agreement for final step
       default:
-        return false
+        return false;
     }
-  }
+  };
 
   // Event handlers
   const handleDateSelect = (date: Date | undefined) => {
-    setSelectedDate(date)
-    setSelectedSession(null)
-    setSelectedPickupLocation(null)
-  }
+    setSelectedDate(date);
+    setSelectedSession(null);
+    setSelectedPickupLocation(null);
+  };
 
   const handleSessionSelect = (session: RezdySession) => {
-    setSelectedSession(session)
+    setSelectedSession(session);
     // Auto-select first pickup location if available
     if (session.pickupLocations && session.pickupLocations.length > 0) {
-      setSelectedPickupLocation(session.pickupLocations[0])
+      setSelectedPickupLocation(session.pickupLocations[0]);
     }
-  }
+  };
 
   const handleNextStep = () => {
     if (canProceedToNextStep() && currentStep < 4) {
-      setCurrentStep(currentStep + 1)
-      setBookingErrors([])
+      setCurrentStep(currentStep + 1);
+      setBookingErrors([]);
     }
-  }
+  };
 
   const handlePrevStep = () => {
     if (currentStep > 1) {
-      setCurrentStep(currentStep - 1)
-      setBookingErrors([])
+      setCurrentStep(currentStep - 1);
+      setBookingErrors([]);
     }
-  }
+  };
 
-  const handleCompleteBooking = async () => {
-    setIsSubmitting(true)
-    setBookingErrors([])
+  const handleProceedToPayment = async () => {
+    setIsProcessingPayment(true);
+    setBookingErrors([]);
 
     try {
       // Prepare booking data in the format our transformation utilities expect
@@ -440,32 +569,37 @@ export function EnhancedBookingExperience({ product, onClose, onBookingComplete,
         product: {
           code: product.productCode,
           name: product.name,
-          description: product.shortDescription
+          description: product.shortDescription,
         },
         session: {
-          id: selectedSession?.id || '',
-          startTime: selectedSession?.startTimeLocal || '',
-          endTime: selectedSession?.endTimeLocal || '',
-          pickupLocation: selectedPickupLocation
+          id: selectedSession?.id || "",
+          startTime: selectedSession?.startTimeLocal || "",
+          endTime: selectedSession?.endTimeLocal || "",
+          pickupLocation: selectedPickupLocation,
         },
-        guests: guests.filter(g => g.firstName.trim() && g.lastName.trim()),
+        guests: guests.filter((g) => g.firstName.trim() && g.lastName.trim()),
         contact: contactInfo,
         pricing: {
           basePrice: pricingBreakdown.basePrice,
           sessionPrice: pricingBreakdown.adultPrice, // Use adult price as session price
           subtotal: pricingBreakdown.subtotal,
           taxAndFees: pricingBreakdown.taxes + pricingBreakdown.serviceFees,
-          total: pricingBreakdown.total
+          total: pricingBreakdown.total,
         },
         extras: selectedExtras.map((selectedExtra, index) => {
           // Get the calculated price from the pricing breakdown which already handles PER_PERSON, PER_BOOKING, etc.
-          const extrasFromBreakdown = pricingBreakdown.selectedExtras || []
-          const matchingExtra = extrasFromBreakdown.find(e => e.extra.id === selectedExtra.extra.id)
-          
+          const extrasFromBreakdown = pricingBreakdown.selectedExtras || [];
+          const matchingExtra = extrasFromBreakdown.find(
+            (e) => e.extra.id === selectedExtra.extra.id
+          );
+
           // Calculate total price based on price type
-          let totalPrice = selectedExtra.extra.price * selectedExtra.quantity
-          if (selectedExtra.extra.priceType === 'PER_PERSON') {
-            totalPrice = selectedExtra.extra.price * selectedExtra.quantity * getTotalParticipantCount(guests)
+          let totalPrice = selectedExtra.extra.price * selectedExtra.quantity;
+          if (selectedExtra.extra.priceType === "PER_PERSON") {
+            totalPrice =
+              selectedExtra.extra.price *
+              selectedExtra.quantity *
+              getTotalParticipantCount(guests);
           }
 
           return {
@@ -473,212 +607,126 @@ export function EnhancedBookingExperience({ product, onClose, onBookingComplete,
             name: selectedExtra.extra.name,
             price: selectedExtra.extra.price,
             quantity: selectedExtra.quantity,
-            totalPrice
-          }
+            totalPrice,
+          };
         }),
         payment: {
-          method: 'credit_card',
-          cardNumber: paymentInfo.cardNumber
-        }
-      }
+          method: "credit_card",
+        },
+      };
 
       // Validate booking data for Rezdy submission
-      const validation = validateBookingDataForRezdy(formData)
+      const validation = validateBookingDataForRezdy(formData);
       if (!validation.isValid) {
-        setBookingErrors(validation.errors)
-        return
+        setBookingErrors(validation.errors);
+        setIsProcessingPayment(false);
+        return;
       }
 
-      // Step 1: Simulate payment processing with Westpac
-      console.log('Processing payment with Westpac...')
-      const paymentResult = await simulateWestpacPayment({
-        amount: formData.pricing.total,
-        cardNumber: paymentInfo.cardNumber,
-        expiryDate: paymentInfo.expiryDate,
-        cvv: paymentInfo.cvv,
-        cardholderName: paymentInfo.cardholderName
-      })
+      // Generate unique order number
+      const orderNumber = `ORD-${Date.now()}-${Math.floor(
+        Math.random() * 1000
+      )}`;
+
+      // Initiate payment with Westpac and redirect to hosted payment page
+      console.log("Initiating payment with Westpac...");
+      const paymentResponse = await fetch("/api/payments/westpac/initiate", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          bookingData: formData,
+          orderNumber,
+        }),
+      });
+
+      const paymentResult = await paymentResponse.json();
 
       if (!paymentResult.success) {
-        setBookingErrors([paymentResult.error || 'Payment processing failed'])
-        return
+        setBookingErrors([paymentResult.error || "Failed to initiate payment"]);
+        setIsProcessingPayment(false);
+        return;
       }
 
-      // Step 2: Create payment confirmation from successful payment
-      const paymentConfirmation = BookingService.createPaymentConfirmation(paymentResult.transaction)
+      // Redirect to Westpac hosted payment page
+      console.log("Redirecting to Westpac payment page...");
+      window.location.href = paymentResult.redirectUrl;
 
-      // Step 3: Register booking with Rezdy using our booking service
-      console.log('Registering booking with Rezdy...')
-      const bookingResult = await registerBookingWithPayment(formData, paymentConfirmation)
-
-      if (!bookingResult.success) {
-        setBookingErrors([bookingResult.error || 'Failed to register booking with Rezdy'])
-        return
-      }
-
-      // Step 4: Store booking details for confirmation display
-      const bookingData = {
-        // Original form data for internal use
-        formData,
-        // Rezdy booking result
-        rezdyBooking: bookingResult.rezdyBooking,
-        orderNumber: bookingResult.orderNumber,
-        // Payment confirmation
-        paymentConfirmation,
-        // Additional metadata
-        metadata: {
-          participantBreakdown: getParticipantBreakdown(formData.guests),
-          totalParticipants: getTotalParticipantCount(formData.guests),
-          hasPickupServices: productHasPickupServices,
-          pickupServiceType,
-          selectedPickupLocation,
-          preferences: {
-            subscribeNewsletter,
-            dietaryRequirements: contactInfo.dietaryRequirements,
-            accessibilityNeeds: contactInfo.accessibilityNeeds,
-            specialRequests: contactInfo.specialRequests
-          },
-          timestamp: new Date().toISOString()
-        }
-      }
-
-      // Store confirmation data for display
-      setConfirmedBooking({
-        orderNumber: bookingResult.orderNumber,
-        transactionId: paymentConfirmation.transactionId,
-        formData,
-        paymentConfirmation
-      })
-
-      console.log('Booking completed successfully:', {
-        orderNumber: bookingResult.orderNumber,
-        transactionId: paymentConfirmation.transactionId
-      })
-      
-      // Move to confirmation step
-      setCurrentStep(4)
-      
-      // Notify parent component
-      onBookingComplete?.(bookingData)
-      
+      // Note: The rest of the booking process (payment confirmation and Rezdy registration)
+      // will be handled by the payment callback endpoint after successful payment
     } catch (error) {
-      console.error('Booking submission error:', error)
-      setBookingErrors(['Failed to process booking. Please try again.'])
-    } finally {
-      setIsSubmitting(false)
+      console.error("Booking submission error:", error);
+      setBookingErrors(["Failed to process booking. Please try again."]);
+      setIsProcessingPayment(false);
     }
-  }
-
-  // Simulate Westpac payment processing
-  const simulateWestpacPayment = async (paymentData: {
-    amount: number
-    cardNumber: string
-    expiryDate: string
-    cvv: string
-    cardholderName: string
-  }): Promise<{
-    success: boolean
-    transaction?: any
-    error?: string
-  }> => {
-    // Simulate network delay
-    await new Promise(resolve => setTimeout(resolve, 2000))
-
-    // Basic validation
-    if (!paymentData.cardNumber || paymentData.cardNumber.length < 16) {
-      return { success: false, error: 'Invalid card number' }
-    }
-
-    if (!paymentData.cvv || paymentData.cvv.length < 3) {
-      return { success: false, error: 'Invalid CVV' }
-    }
-
-    if (!paymentData.cardholderName.trim()) {
-      return { success: false, error: 'Cardholder name is required' }
-    }
-
-    // Simulate successful payment (90% success rate)
-    const isSuccessful = Math.random() > 0.1
-
-    if (isSuccessful) {
-      return {
-        success: true,
-        transaction: {
-          transactionId: `TXN${Date.now()}${Math.floor(Math.random() * 1000)}`,
-          amount: paymentData.amount,
-          currency: 'AUD',
-          paymentMethod: 'credit_card',
-          orderReference: `ORD-${Date.now()}`,
-          status: 'approved',
-          cardLast4: paymentData.cardNumber.slice(-4),
-          timestamp: new Date().toISOString()
-        }
-      }
-    } else {
-      return {
-        success: false,
-        error: 'Payment declined by bank'
-      }
-    }
-  }
+  };
 
   const isDateAvailable = (date: Date): boolean => {
     try {
-      const dateString = format(date, 'yyyy-MM-dd')
-      return availableDates.has(dateString)
+      const dateString = format(date, "yyyy-MM-dd");
+      return availableDates.has(dateString);
     } catch {
-      return false
+      return false;
     }
-  }
+  };
 
   const isDateDisabled = (date: Date): boolean => {
     try {
-      const dateString = format(date, 'yyyy-MM-dd')
-      const hasAvailabilityData = Boolean(effectiveAvailabilityData && effectiveAvailabilityData[0]?.sessions && effectiveAvailabilityData[0].sessions.length > 0)
-      
+      const dateString = format(date, "yyyy-MM-dd");
+      const hasAvailabilityData = Boolean(
+        effectiveAvailabilityData &&
+          effectiveAvailabilityData[0]?.sessions &&
+          effectiveAvailabilityData[0].sessions.length > 0
+      );
+
       // Disable if date is in the past or beyond our range
       if (date < today || date > endDate) {
-        return true
+        return true;
       }
-      
+
       // If we don't have availability data yet, don't disable dates (let them load)
       if (!hasAvailabilityData) {
-        return false
+        return false;
       }
-      
+
       // If we have availability data, only disable dates that have sessions but no seats
-      const hasSessionsOnDate = datesWithSessions.has(dateString)
-      const hasSeatsOnDate = (getDateSeatAvailability.get(dateString) || 0) > 0
-      
+      const hasSessionsOnDate = datesWithSessions.has(dateString);
+      const hasSeatsOnDate = (getDateSeatAvailability.get(dateString) || 0) > 0;
+
       // Disable if there are sessions on this date but no seats available
-      return hasSessionsOnDate && !hasSeatsOnDate
+      return hasSessionsOnDate && !hasSeatsOnDate;
     } catch {
-      return true
+      return true;
     }
-  }
+  };
 
   const isDateSoldOut = (date: Date): boolean => {
     try {
-      const dateString = format(date, 'yyyy-MM-dd')
-      const hasAvailabilityData = Boolean(effectiveAvailabilityData && effectiveAvailabilityData[0]?.sessions && effectiveAvailabilityData[0].sessions.length > 0)
-      
+      const dateString = format(date, "yyyy-MM-dd");
+      const hasAvailabilityData = Boolean(
+        effectiveAvailabilityData &&
+          effectiveAvailabilityData[0]?.sessions &&
+          effectiveAvailabilityData[0].sessions.length > 0
+      );
+
       // Only mark as sold out if we have availability data, there are sessions on this date, but no seats available
       if (!hasAvailabilityData) {
-        return false
+        return false;
       }
-      
-      const hasSessionsOnDate = datesWithSessions.has(dateString)
-      const hasSeatsOnDate = (getDateSeatAvailability.get(dateString) || 0) > 0
-      
-      return hasSessionsOnDate && !hasSeatsOnDate
+
+      const hasSessionsOnDate = datesWithSessions.has(dateString);
+      const hasSeatsOnDate = (getDateSeatAvailability.get(dateString) || 0) > 0;
+
+      return hasSessionsOnDate && !hasSeatsOnDate;
     } catch {
-      return false
+      return false;
     }
-  }
+  };
 
   const getStepProgress = () => {
-    return ((currentStep - 1) / (BOOKING_STEPS.length - 1)) * 100
-  }
+    return ((currentStep - 1) / (BOOKING_STEPS.length - 1)) * 100;
+  };
 
   return (
     <div className="w-full h-full overflow-y-auto">
@@ -687,7 +735,9 @@ export function EnhancedBookingExperience({ product, onClose, onBookingComplete,
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-xl sm:text-2xl font-bold">{product.name}</h1>
-            <p className="text-muted-foreground">{getLocationString(product.locationAddress)}</p>
+            <p className="text-muted-foreground">
+              {getLocationString(product.locationAddress)}
+            </p>
           </div>
           <div className="flex items-center gap-2">
             <Button variant="ghost" size="sm">
@@ -707,7 +757,9 @@ export function EnhancedBookingExperience({ product, onClose, onBookingComplete,
         {/* Progress Bar */}
         <div className="space-y-2">
           <div className="flex items-center justify-between text-sm">
-            <span>Step {currentStep} of {BOOKING_STEPS.length}</span>
+            <span>
+              Step {currentStep} of {BOOKING_STEPS.length}
+            </span>
             <span>{Math.round(getStepProgress())}% Complete</span>
           </div>
           <Progress value={getStepProgress()} className="h-2" />
@@ -717,19 +769,27 @@ export function EnhancedBookingExperience({ product, onClose, onBookingComplete,
         <div className="flex items-center justify-between overflow-x-auto pb-2">
           {BOOKING_STEPS.map((step, index) => (
             <div key={step.id} className="flex items-center flex-shrink-0">
-              <div className={cn(
-                "w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center text-xs sm:text-sm font-medium transition-colors",
-                currentStep >= step.id 
-                  ? "bg-coral-500 text-white" 
-                  : "bg-muted text-muted-foreground"
-              )}>
-                {currentStep > step.id ? <CheckCircle className="h-4 w-4 sm:h-5 sm:w-5" /> : step.id}
+              <div
+                className={cn(
+                  "w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center text-xs sm:text-sm font-medium transition-colors",
+                  currentStep >= step.id
+                    ? "bg-coral-500 text-white"
+                    : "bg-muted text-muted-foreground"
+                )}
+              >
+                {currentStep > step.id ? (
+                  <CheckCircle className="h-4 w-4 sm:h-5 sm:w-5" />
+                ) : (
+                  step.id
+                )}
               </div>
               {index < BOOKING_STEPS.length - 1 && (
-                <div className={cn(
-                  "w-12 sm:w-16 h-0.5 mx-1 sm:mx-2 transition-colors flex-shrink-0",
-                  currentStep > step.id ? "bg-coral-500" : "bg-gray-200"
-                )} />
+                <div
+                  className={cn(
+                    "w-12 sm:w-16 h-0.5 mx-1 sm:mx-2 transition-colors flex-shrink-0",
+                    currentStep > step.id ? "bg-coral-500" : "bg-gray-200"
+                  )}
+                />
               )}
             </div>
           ))}
@@ -750,14 +810,19 @@ export function EnhancedBookingExperience({ product, onClose, onBookingComplete,
         )}
 
         {/* Demo Data Alert */}
-        {!availabilityLoading && (availabilityError || !availabilityData || !availabilityData[0]?.sessions?.length) && (
-          <Alert>
-            <Info className="h-4 w-4" />
-            <AlertDescription>
-              Demo availability data is being displayed. In a live environment, this would show real-time tour availability from the booking system.
-            </AlertDescription>
-          </Alert>
-        )}
+        {!availabilityLoading &&
+          (availabilityError ||
+            !availabilityData ||
+            !availabilityData[0]?.sessions?.length) && (
+            <Alert>
+              <Info className="h-4 w-4" />
+              <AlertDescription>
+                Demo availability data is being displayed. In a live
+                environment, this would show real-time tour availability from
+                the booking system.
+              </AlertDescription>
+            </Alert>
+          )}
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
           {/* Main Content */}
@@ -772,12 +837,15 @@ export function EnhancedBookingExperience({ product, onClose, onBookingComplete,
                       <Calendar className="h-5 w-5" />
                       Select Date & Time
                     </CardTitle>
-                    <p className="text-muted-foreground">Choose your preferred tour date and session first</p>
+                    <p className="text-muted-foreground">
+                      Choose your preferred tour date and session first
+                    </p>
                     {selectedSession && (
                       <div className="flex items-center gap-2 text-sm">
                         <CheckCircle className="h-4 w-4 text-green-600" />
                         <span className="text-green-600">
-                          Session selected for {selectedDate && format(selectedDate, "MMM dd, yyyy")}
+                          Session selected for{" "}
+                          {selectedDate && format(selectedDate, "MMM dd, yyyy")}
                         </span>
                       </div>
                     )}
@@ -785,7 +853,9 @@ export function EnhancedBookingExperience({ product, onClose, onBookingComplete,
                   <CardContent className="space-y-6">
                     {/* Date Selection */}
                     <div>
-                      <Label className="text-base font-medium">Select Date</Label>
+                      <Label className="text-base font-medium">
+                        Select Date
+                      </Label>
                       <div className="mt-2">
                         <Popover>
                           <PopoverTrigger asChild>
@@ -797,7 +867,9 @@ export function EnhancedBookingExperience({ product, onClose, onBookingComplete,
                               )}
                             >
                               <CalendarIcon className="mr-2 h-4 w-4" />
-                              {selectedDate ? format(selectedDate, "EEEE, MMMM do, yyyy") : "Choose your tour date"}
+                              {selectedDate
+                                ? format(selectedDate, "EEEE, MMMM do, yyyy")
+                                : "Choose your tour date"}
                             </Button>
                           </PopoverTrigger>
                           <PopoverContent className="w-auto p-0" align="start">
@@ -808,19 +880,19 @@ export function EnhancedBookingExperience({ product, onClose, onBookingComplete,
                               disabled={isDateDisabled}
                               modifiers={{
                                 available: isDateAvailable,
-                                soldOut: isDateSoldOut
+                                soldOut: isDateSoldOut,
                               }}
                               modifiersStyles={{
                                 available: {
-                                  backgroundColor: '#fef3c7',
-                                  color: '#92400e',
-                                  fontWeight: 'bold'
+                                  backgroundColor: "#fef3c7",
+                                  color: "#92400e",
+                                  fontWeight: "bold",
                                 },
                                 soldOut: {
-                                  backgroundColor: '#fee2e2',
-                                  color: '#991b1b',
-                                  textDecoration: 'line-through'
-                                }
+                                  backgroundColor: "#fee2e2",
+                                  color: "#991b1b",
+                                  textDecoration: "line-through",
+                                },
                               }}
                               initialFocus
                             />
@@ -845,12 +917,20 @@ export function EnhancedBookingExperience({ product, onClose, onBookingComplete,
                                   <span>Error loading availability</span>
                                 </div>
                               )}
-                              {!availabilityLoading && !availabilityError && effectiveAvailabilityData && (
-                                <div className="text-xs text-muted-foreground">
-                                  {effectiveAvailabilityData[0]?.sessions?.length || 0} sessions found
-                                  {availabilityError || !availabilityData || !availabilityData[0]?.sessions?.length ? ' (using demo data)' : ''}
-                                </div>
-                              )}
+                              {!availabilityLoading &&
+                                !availabilityError &&
+                                effectiveAvailabilityData && (
+                                  <div className="text-xs text-muted-foreground">
+                                    {effectiveAvailabilityData[0]?.sessions
+                                      ?.length || 0}{" "}
+                                    sessions found
+                                    {availabilityError ||
+                                    !availabilityData ||
+                                    !availabilityData[0]?.sessions?.length
+                                      ? " (using demo data)"
+                                      : ""}
+                                  </div>
+                                )}
                             </div>
                           </PopoverContent>
                         </Popover>
@@ -860,131 +940,181 @@ export function EnhancedBookingExperience({ product, onClose, onBookingComplete,
                     {/* Time Selection */}
                     {selectedDate && (
                       <div>
-                        <Label className="text-base font-medium">Select Time</Label>
+                        <Label className="text-base font-medium">
+                          Select Time
+                        </Label>
                         {availabilityLoading ? (
                           <div className="mt-2 space-y-2">
-                            {[1, 2, 3].map(i => (
-                              <div key={i} className="h-16 bg-gray-100 rounded-lg animate-pulse" />
+                            {[1, 2, 3].map((i) => (
+                              <div
+                                key={i}
+                                className="h-16 bg-gray-100 rounded-lg animate-pulse"
+                              />
                             ))}
                           </div>
                         ) : availableSessions.length > 0 ? (
                           <div className="mt-2 space-y-3">
                             {availableSessions
-                              .filter(session => session.startTimeLocal && session.endTimeLocal)
+                              .filter(
+                                (session) =>
+                                  session.startTimeLocal && session.endTimeLocal
+                              )
                               .map((session) => {
-                              const startTime = new Date(session.startTimeLocal!)
-                              const endTime = new Date(session.endTimeLocal!)
-                              const isSelected = selectedSession?.id === session.id
-                              
-                              return (
-                                <Card 
-                                  key={session.id}
-                                  className={cn(
-                                    "cursor-pointer transition-all duration-200 hover:shadow-md",
-                                    isSelected ? "ring-2 ring-coral-500 bg-coral-50" : "hover:bg-gray-50",
-                                    session.seatsAvailable === 0 && "opacity-50 cursor-not-allowed"
-                                  )}
-                                  onClick={() => session.seatsAvailable > 0 && handleSessionSelect(session)}
-                                >
-                                  <CardContent className="p-4">
-                                    <div className="flex items-center justify-between">
-                                      <div className="flex items-center gap-4">
-                                        <div className="text-center">
+                                const startTime = new Date(
+                                  session.startTimeLocal!
+                                );
+                                const endTime = new Date(session.endTimeLocal!);
+                                const isSelected =
+                                  selectedSession?.id === session.id;
+
+                                return (
+                                  <Card
+                                    key={session.id}
+                                    className={cn(
+                                      "cursor-pointer transition-all duration-200 hover:shadow-md",
+                                      isSelected
+                                        ? "ring-2 ring-coral-500 bg-coral-50"
+                                        : "hover:bg-gray-50",
+                                      session.seatsAvailable === 0 &&
+                                        "opacity-50 cursor-not-allowed"
+                                    )}
+                                    onClick={() =>
+                                      session.seatsAvailable > 0 &&
+                                      handleSessionSelect(session)
+                                    }
+                                  >
+                                    <CardContent className="p-4">
+                                      <div className="flex items-center justify-between">
+                                        <div className="flex items-center gap-4">
+                                          <div className="text-center">
+                                            <div className="text-lg font-bold">
+                                              {format(startTime, "HH:mm")}
+                                            </div>
+                                            <div className="text-sm text-muted-foreground">
+                                              {format(endTime, "HH:mm")}
+                                            </div>
+                                          </div>
+                                          <div>
+                                            <div className="font-medium">
+                                              {format(startTime, "h:mm a")} -{" "}
+                                              {format(endTime, "h:mm a")}
+                                            </div>
+                                            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                                              <Users className="h-4 w-4" />
+                                              <span>
+                                                {session.seatsAvailable > 0
+                                                  ? `${session.seatsAvailable} seats available`
+                                                  : "Sold out"}
+                                              </span>
+                                            </div>
+                                          </div>
+                                        </div>
+                                        <div className="text-right">
                                           <div className="text-lg font-bold">
-                                            {format(startTime, 'HH:mm')}
+                                            {formatCurrency(
+                                              session.totalPrice ||
+                                                product.advertisedPrice ||
+                                                0
+                                            )}
                                           </div>
                                           <div className="text-sm text-muted-foreground">
-                                            {format(endTime, 'HH:mm')}
+                                            per adult
                                           </div>
-                                        </div>
-                                        <div>
-                                          <div className="font-medium">
-                                            {format(startTime, 'h:mm a')} - {format(endTime, 'h:mm a')}
-                                          </div>
-                                          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                                            <Users className="h-4 w-4" />
-                                            <span>
-                                              {session.seatsAvailable > 0 
-                                                ? `${session.seatsAvailable} seats available`
-                                                : 'Sold out'
-                                              }
-                                            </span>
-                                          </div>
+                                          {typeof session.id === "string" &&
+                                          session.id.startsWith("mock-") ? (
+                                            <div className="text-xs text-blue-600 mt-1">
+                                              Demo
+                                            </div>
+                                          ) : null}
                                         </div>
                                       </div>
-                                      <div className="text-right">
-                                        <div className="text-lg font-bold">
-                                          {formatCurrency(session.totalPrice || product.advertisedPrice || 0)}
-                                        </div>
-                                        <div className="text-sm text-muted-foreground">per adult</div>
-                                        {typeof session.id === 'string' && session.id.startsWith('mock-') ? (
-                                          <div className="text-xs text-blue-600 mt-1">Demo</div>
-                                        ) : null}
-                                      </div>
-                                    </div>
-                                  </CardContent>
-                                </Card>
-                              )
-                            })}
+                                    </CardContent>
+                                  </Card>
+                                );
+                              })}
                           </div>
                         ) : (
                           <div className="mt-2 p-4 text-center text-muted-foreground bg-gray-50 rounded-lg">
-                            No sessions available for this date. Please select another date.
+                            No sessions available for this date. Please select
+                            another date.
                           </div>
                         )}
                       </div>
                     )}
 
                     {/* Pickup Location Selection */}
-                    {selectedSession && selectedSession.pickupLocations && selectedSession.pickupLocations.length > 0 && (
-                      <PickupLocationSelector
-                        pickupLocations={selectedSession.pickupLocations}
-                        selectedPickupLocation={selectedPickupLocation}
-                        onPickupLocationSelect={setSelectedPickupLocation}
-                        showDirections={true}
-                        required={true}
-                      />
-                    )}
+                    {selectedSession &&
+                      selectedSession.pickupLocations &&
+                      selectedSession.pickupLocations.length > 0 && (
+                        <PickupLocationSelector
+                          pickupLocations={selectedSession.pickupLocations}
+                          selectedPickupLocation={selectedPickupLocation}
+                          onPickupLocationSelect={setSelectedPickupLocation}
+                          showDirections={true}
+                          required={true}
+                        />
+                      )}
 
                     {/* Pickup Service Information for products without session pickup locations */}
-                    {productHasPickupServices && (!selectedSession?.pickupLocations || selectedSession.pickupLocations.length === 0) && (
-                      <div className="bg-blue-50 rounded-lg p-4">
-                        <div className="flex items-start gap-3">
-                          <MapPin className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
-                          <div>
-                            <h3 className="font-medium text-blue-900 mb-2">
-                              {pickupServiceType === 'door-to-door' ? 'Door-to-Door Service' : 
-                               pickupServiceType === 'shuttle' ? 'Shuttle Service' : 
-                               'Pickup Service Available'}
-                            </h3>
-                            <div className="text-sm text-blue-800 space-y-1">
-                              {pickupServiceType === 'door-to-door' && (
-                                <p>This tour includes convenient door-to-door pickup service. Pickup details will be confirmed after booking.</p>
-                              )}
-                              {pickupServiceType === 'shuttle' && (
-                                <p>Shuttle service is included. Pickup locations and times will be provided upon booking confirmation.</p>
-                              )}
-                              {pickupServiceType === 'designated-points' && (
-                                <p>Pickup is available from designated locations. Specific pickup points will be confirmed during booking.</p>
-                              )}
-                              {mentionedPickupLocations.length > 0 && (
-                                <div className="mt-2">
-                                  <span className="font-medium">Available pickup areas: </span>
-                                  <span>{mentionedPickupLocations.join(', ')}</span>
-                                </div>
-                              )}
+                    {productHasPickupServices &&
+                      (!selectedSession?.pickupLocations ||
+                        selectedSession.pickupLocations.length === 0) && (
+                        <div className="bg-blue-50 rounded-lg p-4">
+                          <div className="flex items-start gap-3">
+                            <MapPin className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
+                            <div>
+                              <h3 className="font-medium text-blue-900 mb-2">
+                                {pickupServiceType === "door-to-door"
+                                  ? "Door-to-Door Service"
+                                  : pickupServiceType === "shuttle"
+                                  ? "Shuttle Service"
+                                  : "Pickup Service Available"}
+                              </h3>
+                              <div className="text-sm text-blue-800 space-y-1">
+                                {pickupServiceType === "door-to-door" && (
+                                  <p>
+                                    This tour includes convenient door-to-door
+                                    pickup service. Pickup details will be
+                                    confirmed after booking.
+                                  </p>
+                                )}
+                                {pickupServiceType === "shuttle" && (
+                                  <p>
+                                    Shuttle service is included. Pickup
+                                    locations and times will be provided upon
+                                    booking confirmation.
+                                  </p>
+                                )}
+                                {pickupServiceType === "designated-points" && (
+                                  <p>
+                                    Pickup is available from designated
+                                    locations. Specific pickup points will be
+                                    confirmed during booking.
+                                  </p>
+                                )}
+                                {mentionedPickupLocations.length > 0 && (
+                                  <div className="mt-2">
+                                    <span className="font-medium">
+                                      Available pickup areas:{" "}
+                                    </span>
+                                    <span>
+                                      {mentionedPickupLocations.join(", ")}
+                                    </span>
+                                  </div>
+                                )}
+                              </div>
                             </div>
                           </div>
                         </div>
-                      </div>
-                    )}
+                      )}
 
                     {/* Date Selection Validation */}
                     {!selectedSession && (
                       <Alert>
                         <Info className="h-4 w-4" />
                         <AlertDescription>
-                          Please select a date and time session before adding guest details.
+                          Please select a date and time session before adding
+                          guest details.
                         </AlertDescription>
                       </Alert>
                     )}
@@ -998,12 +1128,17 @@ export function EnhancedBookingExperience({ product, onClose, onBookingComplete,
                       <Users className="h-5 w-5" />
                       {BOOKING_STEPS[0].title}
                     </CardTitle>
-                    <p className="text-muted-foreground">Add guest information for your selected session</p>
+                    <p className="text-muted-foreground">
+                      Add guest information for your selected session
+                    </p>
                     {guests.length > 0 && (
                       <div className="flex items-center gap-2 text-sm">
                         <CheckCircle className="h-4 w-4 text-green-600" />
                         <span className="text-green-600">
-                          {guestCounts.adults + guestCounts.children + guestCounts.infants} guests added
+                          {guestCounts.adults +
+                            guestCounts.children +
+                            guestCounts.infants}{" "}
+                          guests added
                         </span>
                       </div>
                     )}
@@ -1025,19 +1160,27 @@ export function EnhancedBookingExperience({ product, onClose, onBookingComplete,
                     extras={product.extras}
                     selectedExtras={selectedExtras}
                     onExtrasChange={setSelectedExtras}
-                    guestCount={guestCounts.adults + guestCounts.children + guestCounts.infants}
+                    guestCount={
+                      guestCounts.adults +
+                      guestCounts.children +
+                      guestCounts.infants
+                    }
                   />
                 )}
 
                 {/* Guest Details Validation */}
-                {guests.length > 0 && !guests.every(g => g.firstName.trim() && g.lastName.trim()) && (
-                  <Alert>
-                    <Info className="h-4 w-4" />
-                    <AlertDescription>
-                      Please complete all guest names to proceed to the next step.
-                    </AlertDescription>
-                  </Alert>
-                )}
+                {guests.length > 0 &&
+                  !guests.every(
+                    (g) => g.firstName.trim() && g.lastName.trim()
+                  ) && (
+                    <Alert>
+                      <Info className="h-4 w-4" />
+                      <AlertDescription>
+                        Please complete all guest names to proceed to the next
+                        step.
+                      </AlertDescription>
+                    </Alert>
+                  )}
               </div>
             )}
 
@@ -1049,7 +1192,9 @@ export function EnhancedBookingExperience({ product, onClose, onBookingComplete,
                     <Mail className="h-5 w-5" />
                     {BOOKING_STEPS[1].title}
                   </CardTitle>
-                  <p className="text-muted-foreground">{BOOKING_STEPS[1].description}</p>
+                  <p className="text-muted-foreground">
+                    {BOOKING_STEPS[1].description}
+                  </p>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -1058,7 +1203,12 @@ export function EnhancedBookingExperience({ product, onClose, onBookingComplete,
                       <Input
                         id="contact-first-name"
                         value={contactInfo.firstName}
-                        onChange={(e) => setContactInfo(prev => ({ ...prev, firstName: e.target.value }))}
+                        onChange={(e) =>
+                          setContactInfo((prev) => ({
+                            ...prev,
+                            firstName: e.target.value,
+                          }))
+                        }
                         placeholder="Enter first name"
                         required
                       />
@@ -1068,7 +1218,12 @@ export function EnhancedBookingExperience({ product, onClose, onBookingComplete,
                       <Input
                         id="contact-last-name"
                         value={contactInfo.lastName}
-                        onChange={(e) => setContactInfo(prev => ({ ...prev, lastName: e.target.value }))}
+                        onChange={(e) =>
+                          setContactInfo((prev) => ({
+                            ...prev,
+                            lastName: e.target.value,
+                          }))
+                        }
                         placeholder="Enter last name"
                         required
                       />
@@ -1082,7 +1237,12 @@ export function EnhancedBookingExperience({ product, onClose, onBookingComplete,
                         id="contact-email"
                         type="email"
                         value={contactInfo.email}
-                        onChange={(e) => setContactInfo(prev => ({ ...prev, email: e.target.value }))}
+                        onChange={(e) =>
+                          setContactInfo((prev) => ({
+                            ...prev,
+                            email: e.target.value,
+                          }))
+                        }
                         placeholder="Enter email address"
                         required
                       />
@@ -1093,7 +1253,12 @@ export function EnhancedBookingExperience({ product, onClose, onBookingComplete,
                         id="contact-phone"
                         type="tel"
                         value={contactInfo.phone}
-                        onChange={(e) => setContactInfo(prev => ({ ...prev, phone: e.target.value }))}
+                        onChange={(e) =>
+                          setContactInfo((prev) => ({
+                            ...prev,
+                            phone: e.target.value,
+                          }))
+                        }
                         placeholder="Enter phone number"
                         required
                       />
@@ -1102,7 +1267,12 @@ export function EnhancedBookingExperience({ product, onClose, onBookingComplete,
 
                   <div>
                     <Label htmlFor="contact-country">Country</Label>
-                    <Select value={contactInfo.country} onValueChange={(value) => setContactInfo(prev => ({ ...prev, country: value }))}>
+                    <Select
+                      value={contactInfo.country}
+                      onValueChange={(value) =>
+                        setContactInfo((prev) => ({ ...prev, country: value }))
+                      }
+                    >
                       <SelectTrigger>
                         <SelectValue placeholder="Select your country" />
                       </SelectTrigger>
@@ -1120,11 +1290,18 @@ export function EnhancedBookingExperience({ product, onClose, onBookingComplete,
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                      <Label htmlFor="emergency-contact">Emergency Contact</Label>
+                      <Label htmlFor="emergency-contact">
+                        Emergency Contact
+                      </Label>
                       <Input
                         id="emergency-contact"
                         value={contactInfo.emergencyContact}
-                        onChange={(e) => setContactInfo(prev => ({ ...prev, emergencyContact: e.target.value }))}
+                        onChange={(e) =>
+                          setContactInfo((prev) => ({
+                            ...prev,
+                            emergencyContact: e.target.value,
+                          }))
+                        }
                         placeholder="Emergency contact name"
                       />
                     </div>
@@ -1134,7 +1311,12 @@ export function EnhancedBookingExperience({ product, onClose, onBookingComplete,
                         id="emergency-phone"
                         type="tel"
                         value={contactInfo.emergencyPhone}
-                        onChange={(e) => setContactInfo(prev => ({ ...prev, emergencyPhone: e.target.value }))}
+                        onChange={(e) =>
+                          setContactInfo((prev) => ({
+                            ...prev,
+                            emergencyPhone: e.target.value,
+                          }))
+                        }
                         placeholder="Emergency contact phone"
                       />
                     </div>
@@ -1143,22 +1325,36 @@ export function EnhancedBookingExperience({ product, onClose, onBookingComplete,
                   <Separator />
 
                   <div>
-                    <Label htmlFor="dietary-requirements">Dietary Requirements</Label>
+                    <Label htmlFor="dietary-requirements">
+                      Dietary Requirements
+                    </Label>
                     <Textarea
                       id="dietary-requirements"
                       value={contactInfo.dietaryRequirements}
-                      onChange={(e) => setContactInfo(prev => ({ ...prev, dietaryRequirements: e.target.value }))}
+                      onChange={(e) =>
+                        setContactInfo((prev) => ({
+                          ...prev,
+                          dietaryRequirements: e.target.value,
+                        }))
+                      }
                       placeholder="Please specify any dietary restrictions or allergies"
                       rows={2}
                     />
                   </div>
 
                   <div>
-                    <Label htmlFor="accessibility-needs">Accessibility Needs</Label>
+                    <Label htmlFor="accessibility-needs">
+                      Accessibility Needs
+                    </Label>
                     <Textarea
                       id="accessibility-needs"
                       value={contactInfo.accessibilityNeeds}
-                      onChange={(e) => setContactInfo(prev => ({ ...prev, accessibilityNeeds: e.target.value }))}
+                      onChange={(e) =>
+                        setContactInfo((prev) => ({
+                          ...prev,
+                          accessibilityNeeds: e.target.value,
+                        }))
+                      }
                       placeholder="Please specify any accessibility requirements"
                       rows={2}
                     />
@@ -1169,7 +1365,12 @@ export function EnhancedBookingExperience({ product, onClose, onBookingComplete,
                     <Textarea
                       id="special-requests"
                       value={contactInfo.specialRequests}
-                      onChange={(e) => setContactInfo(prev => ({ ...prev, specialRequests: e.target.value }))}
+                      onChange={(e) =>
+                        setContactInfo((prev) => ({
+                          ...prev,
+                          specialRequests: e.target.value,
+                        }))
+                      }
                       placeholder="Any other special requests or information"
                       rows={2}
                     />
@@ -1178,269 +1379,243 @@ export function EnhancedBookingExperience({ product, onClose, onBookingComplete,
               </Card>
             )}
 
-            {/* Step 3: Payment */}
+            {/* Step 3: Review & Pay */}
             {currentStep === 3 && (
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <CreditCard className="h-5 w-5" />
-                    {BOOKING_STEPS[2].title}
-                  </CardTitle>
-                  <p className="text-muted-foreground">{BOOKING_STEPS[2].description}</p>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div>
-                    <Label htmlFor="cardholder-name">Cardholder Name *</Label>
-                    <Input
-                      id="cardholder-name"
-                      value={paymentInfo.cardholderName}
-                      onChange={(e) => setPaymentInfo(prev => ({ ...prev, cardholderName: e.target.value }))}
-                      placeholder="Name on card"
-                      required
-                    />
-                  </div>
-
-                  <div>
-                    <Label htmlFor="card-number">Card Number *</Label>
-                    <Input
-                      id="card-number"
-                      value={paymentInfo.cardNumber}
-                      onChange={(e) => setPaymentInfo(prev => ({ ...prev, cardNumber: e.target.value }))}
-                      placeholder="1234 5678 9012 3456"
-                      required
-                    />
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <Label htmlFor="expiry-date">Expiry Date *</Label>
-                      <Input
-                        id="expiry-date"
-                        value={paymentInfo.expiryDate}
-                        onChange={(e) => setPaymentInfo(prev => ({ ...prev, expiryDate: e.target.value }))}
-                        placeholder="MM/YY"
-                        required
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="cvv">CVV *</Label>
-                      <Input
-                        id="cvv"
-                        value={paymentInfo.cvv}
-                        onChange={(e) => setPaymentInfo(prev => ({ ...prev, cvv: e.target.value }))}
-                        placeholder="123"
-                        required
-                      />
-                    </div>
-                  </div>
-
-                  <Separator />
-
-                  <div>
-                    <Label htmlFor="billing-address">Billing Address</Label>
-                    <Input
-                      id="billing-address"
-                      value={paymentInfo.billingAddress}
-                      onChange={(e) => setPaymentInfo(prev => ({ ...prev, billingAddress: e.target.value }))}
-                      placeholder="Street address"
-                    />
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div>
-                      <Label htmlFor="billing-city">City</Label>
-                      <Input
-                        id="billing-city"
-                        value={paymentInfo.city}
-                        onChange={(e) => setPaymentInfo(prev => ({ ...prev, city: e.target.value }))}
-                        placeholder="City"
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="billing-postal">Postal Code</Label>
-                      <Input
-                        id="billing-postal"
-                        value={paymentInfo.postalCode}
-                        onChange={(e) => setPaymentInfo(prev => ({ ...prev, postalCode: e.target.value }))}
-                        placeholder="Postal code"
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="billing-country">Country</Label>
-                      <Select value={paymentInfo.country} onValueChange={(value) => setPaymentInfo(prev => ({ ...prev, country: value }))}>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select country" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {COUNTRIES.map((country) => (
-                            <SelectItem key={country} value={country}>
-                              {country}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </div>
-
-                  <Separator />
-
-                  <div className="space-y-3">
-                    <div className="flex items-start space-x-2">
-                      <Checkbox 
-                        id="terms" 
-                        checked={agreeToTerms}
-                        onCheckedChange={(checked) => setAgreeToTerms(checked as boolean)}
-                        required 
-                      />
-                      <Label htmlFor="terms" className="text-sm leading-tight">
-                        I agree to the{" "}
-                        <a href="/terms" className="text-primary underline" target="_blank">
-                          terms and conditions
-                        </a>{" "}
-                        and{" "}
-                        <a href="/privacy" className="text-primary underline" target="_blank">
-                          privacy policy
-                        </a>
-                      </Label>
-                    </div>
-
-                    <div className="flex items-start space-x-2">
-                      <Checkbox 
-                        id="newsletter" 
-                        checked={subscribeNewsletter}
-                        onCheckedChange={(checked) => setSubscribeNewsletter(checked as boolean)}
-                      />
-                      <Label htmlFor="newsletter" className="text-sm leading-tight">
-                        Subscribe to our newsletter for exclusive offers and travel tips
-                      </Label>
-                    </div>
-                  </div>
-
-                  <Alert>
-                    <Shield className="h-4 w-4" />
-                    <AlertDescription>
-                      Your payment information is secured with 256-bit SSL encryption and processed by our secure payment partner.
-                    </AlertDescription>
-                  </Alert>
-                </CardContent>
-              </Card>
-            )}
-
-            {/* Step 4: Confirmation */}
-            {currentStep === 4 && confirmedBooking && (
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2 text-green-600">
-                    <CheckCircle className="h-5 w-5" />
-                    Booking Confirmed!
-                  </CardTitle>
-                  <p className="text-muted-foreground">Your tour has been successfully booked and confirmed with Rezdy</p>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <Alert>
-                    <CheckCircle className="h-4 w-4" />
-                    <AlertDescription>
-                      Confirmation email has been sent to {contactInfo.email}. 
-                      Please check your inbox and spam folder.
-                    </AlertDescription>
-                  </Alert>
-
-                  {/* Booking Confirmation Numbers */}
-                  <div className="bg-green-50 border border-green-200 rounded-lg p-4 space-y-2">
-                    <h4 className="font-semibold text-green-800">Confirmation Details</h4>
-                    {confirmedBooking.orderNumber && (
-                      <div className="flex justify-between">
-                        <span className="text-green-700">Rezdy Order Number:</span>
-                        <span className="font-mono font-bold text-green-800">{confirmedBooking.orderNumber}</span>
-                      </div>
-                    )}
-                    <div className="flex justify-between">
-                      <span className="text-green-700">Transaction ID:</span>
-                      <span className="font-mono font-bold text-green-800">{confirmedBooking.transactionId}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-green-700">Payment Status:</span>
-                      <span className="font-bold text-green-800 capitalize">{confirmedBooking.paymentConfirmation.status}</span>
-                    </div>
-                  </div>
-
-                  <div className="space-y-3">
-                    <h4 className="font-medium">Booking Details:</h4>
-                    <div className="bg-gray-50 p-4 rounded-lg space-y-2">
-                      <div className="flex justify-between">
-                        <span>Tour:</span>
-                        <span className="font-medium">{product.name}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span>Date:</span>
-                        <span className="font-medium">
-                          {selectedDate && format(selectedDate, "EEEE, MMMM do, yyyy")}
-                        </span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span>Time:</span>
-                        <span className="font-medium">
-                          {selectedSession && selectedSession.startTimeLocal && format(new Date(selectedSession.startTimeLocal), "h:mm a")}
-                        </span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span>Guests:</span>
-                        <span className="font-medium">
-                          {guestCounts.adults + guestCounts.children + guestCounts.infants} total
-                          ({guestCounts.adults} adults, {guestCounts.children} children, {guestCounts.infants} infants)
-                        </span>
-                      </div>
-                      {selectedPickupLocation && (
-                        <div className="flex justify-between">
-                          <span>Pickup Location:</span>
-                          <span className="font-medium">{selectedPickupLocation.name}</span>
+              <div className="space-y-6">
+                {/* Booking Review */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <CheckCircle className="h-5 w-5" />
+                      Review Your Booking
+                    </CardTitle>
+                    <p className="text-muted-foreground">
+                      Please review your booking details before proceeding to
+                      payment
+                    </p>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    {/* Tour Details */}
+                    <div className="bg-gray-50 p-4 rounded-lg space-y-3">
+                      <h4 className="font-medium text-lg">{product.name}</h4>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+                        <div className="flex items-center gap-2">
+                          <Calendar className="h-4 w-4 text-muted-foreground" />
+                          <span>
+                            {selectedDate &&
+                              format(selectedDate, "EEEE, MMMM do, yyyy")}
+                          </span>
                         </div>
-                      )}
-                      {selectedExtras.length > 0 && (
-                        <div className="border-t pt-2 mt-2">
-                          <div className="text-sm font-medium mb-1">Extras:</div>
-                          {selectedExtras.map((extra, index) => (
-                            <div key={index} className="flex justify-between text-sm">
-                              <span>{extra.extra.name} x{extra.quantity}</span>
-                              <span>{formatCurrency(extra.extra.price * extra.quantity)}</span>
+                        {selectedSession &&
+                          selectedSession.startTimeLocal &&
+                          selectedSession.endTimeLocal && (
+                            <div className="flex items-center gap-2">
+                              <Clock className="h-4 w-4 text-muted-foreground" />
+                              <span>
+                                {format(
+                                  new Date(selectedSession.startTimeLocal),
+                                  "h:mm a"
+                                )}{" "}
+                                -
+                                {format(
+                                  new Date(selectedSession.endTimeLocal),
+                                  "h:mm a"
+                                )}
+                              </span>
+                            </div>
+                          )}
+                        <div className="flex items-center gap-2">
+                          <Users className="h-4 w-4 text-muted-foreground" />
+                          <span>
+                            {guestCounts.adults +
+                              guestCounts.children +
+                              guestCounts.infants}{" "}
+                            guests ({guestCounts.adults} adults,{" "}
+                            {guestCounts.children} children,{" "}
+                            {guestCounts.infants} infants)
+                          </span>
+                        </div>
+                        {selectedPickupLocation && (
+                          <div className="flex items-center gap-2">
+                            <MapPin className="h-4 w-4 text-muted-foreground" />
+                            <span>{selectedPickupLocation.name}</span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Guest Details */}
+                    <div>
+                      <h4 className="font-medium mb-2">Guest Details</h4>
+                      <div className="bg-gray-50 p-4 rounded-lg">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm">
+                          {guests.map((guest, index) => (
+                            <div
+                              key={guest.id}
+                              className="flex justify-between"
+                            >
+                              <span>
+                                {guest.firstName} {guest.lastName}
+                              </span>
+                              <span className="text-muted-foreground">
+                                {guest.age}yo {guest.type.toLowerCase()}
+                              </span>
                             </div>
                           ))}
                         </div>
-                      )}
-                      <div className="flex justify-between border-t pt-2 mt-2">
-                        <span className="font-semibold">Total Paid:</span>
-                        <span className="font-bold text-lg">{formatCurrency(confirmedBooking.paymentConfirmation.amount)}</span>
                       </div>
                     </div>
-                  </div>
 
-                  {/* Important Information */}
-                  <Alert>
-                    <Info className="h-4 w-4" />
-                    <AlertTitle>Important Information</AlertTitle>
-                    <AlertDescription className="space-y-1 mt-2">
-                      <div>• Please arrive 15 minutes before your tour start time</div>
-                      {selectedPickupLocation && selectedPickupLocation.pickupTime && (
-                        <div>• Pickup time: {selectedPickupLocation.pickupTime}</div>
-                      )}
-                      <div>• Bring a valid photo ID and comfortable walking shoes</div>
-                      <div>• Check your email for detailed tour instructions</div>
-                      {contactInfo.dietaryRequirements && (
-                        <div>• Dietary requirements noted: {contactInfo.dietaryRequirements}</div>
-                      )}
-                    </AlertDescription>
-                  </Alert>
+                    {/* Contact Information */}
+                    <div>
+                      <h4 className="font-medium mb-2">Contact Information</h4>
+                      <div className="bg-gray-50 p-4 rounded-lg text-sm space-y-1">
+                        <div>
+                          {contactInfo.firstName} {contactInfo.lastName}
+                        </div>
+                        <div>{contactInfo.email}</div>
+                        <div>{contactInfo.phone}</div>
+                        {contactInfo.emergencyContact && (
+                          <div className="text-muted-foreground">
+                            Emergency: {contactInfo.emergencyContact} (
+                            {contactInfo.emergencyPhone})
+                          </div>
+                        )}
+                        {contactInfo.dietaryRequirements && (
+                          <div className="text-muted-foreground">
+                            Dietary: {contactInfo.dietaryRequirements}
+                          </div>
+                        )}
+                        {contactInfo.specialRequests && (
+                          <div className="text-muted-foreground">
+                            Special requests: {contactInfo.specialRequests}
+                          </div>
+                        )}
+                      </div>
+                    </div>
 
-                  <div className="flex gap-3">
-                    <Button onClick={onClose} className="flex-1">
-                      Close
-                    </Button>
-                    <Button variant="outline" onClick={() => window.print()}>
-                      Print Confirmation
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
+                    {/* Selected Extras */}
+                    {selectedExtras.length > 0 && (
+                      <div>
+                        <h4 className="font-medium mb-2">Selected Extras</h4>
+                        <div className="bg-gray-50 p-4 rounded-lg space-y-2">
+                          {selectedExtras.map((extra, index) => (
+                            <div
+                              key={index}
+                              className="flex justify-between text-sm"
+                            >
+                              <span>
+                                {extra.extra.name} x{extra.quantity}
+                              </span>
+                              <span>
+                                {formatCurrency(
+                                  extra.extra.price * extra.quantity
+                                )}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+
+                {/* Terms and Payment */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Shield className="h-5 w-5" />
+                      Terms & Payment
+                    </CardTitle>
+                    <p className="text-muted-foreground">
+                      Agree to terms and proceed to secure payment
+                    </p>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="space-y-3">
+                      <div className="flex items-start space-x-2">
+                        <Checkbox
+                          id="terms"
+                          checked={agreeToTerms}
+                          onCheckedChange={(checked) =>
+                            setAgreeToTerms(checked as boolean)
+                          }
+                          required
+                        />
+                        <Label
+                          htmlFor="terms"
+                          className="text-sm leading-tight"
+                        >
+                          I agree to the{" "}
+                          <a
+                            href="/terms"
+                            className="text-primary underline"
+                            target="_blank"
+                          >
+                            terms and conditions
+                          </a>{" "}
+                          and{" "}
+                          <a
+                            href="/privacy"
+                            className="text-primary underline"
+                            target="_blank"
+                          >
+                            privacy policy
+                          </a>
+                        </Label>
+                      </div>
+
+                      <div className="flex items-start space-x-2">
+                        <Checkbox
+                          id="newsletter"
+                          checked={subscribeNewsletter}
+                          onCheckedChange={(checked) =>
+                            setSubscribeNewsletter(checked as boolean)
+                          }
+                        />
+                        <Label
+                          htmlFor="newsletter"
+                          className="text-sm leading-tight"
+                        >
+                          Subscribe to our newsletter for exclusive offers and
+                          travel tips
+                        </Label>
+                      </div>
+                    </div>
+
+                    <Alert>
+                      <Shield className="h-4 w-4" />
+                      <AlertDescription>
+                        You will be redirected to Westpac's secure payment
+                        gateway to complete your payment. Your booking will be
+                        confirmed automatically after successful payment.
+                      </AlertDescription>
+                    </Alert>
+
+                    <Alert>
+                      <Info className="h-4 w-4" />
+                      <AlertTitle>What happens next?</AlertTitle>
+                      <AlertDescription className="space-y-1 mt-2">
+                        <div>
+                          1. You'll be redirected to Westpac's secure payment
+                          page
+                        </div>
+                        <div>
+                          2. Complete your payment using credit card, PayPal, or
+                          bank transfer
+                        </div>
+                        <div>
+                          3. You'll be redirected back with booking confirmation
+                        </div>
+                        <div>
+                          4. Confirmation email will be sent to{" "}
+                          {contactInfo.email}
+                        </div>
+                      </AlertDescription>
+                    </Alert>
+                  </CardContent>
+                </Card>
+              </div>
             )}
           </div>
 
@@ -1455,7 +1630,9 @@ export function EnhancedBookingExperience({ product, onClose, onBookingComplete,
                 <CardContent className="space-y-3">
                   <div>
                     <div className="font-medium">{product.name}</div>
-                    <div className="text-sm text-muted-foreground">{getLocationString(product.locationAddress)}</div>
+                    <div className="text-sm text-muted-foreground">
+                      {getLocationString(product.locationAddress)}
+                    </div>
                   </div>
 
                   {selectedDate && (
@@ -1465,20 +1642,34 @@ export function EnhancedBookingExperience({ product, onClose, onBookingComplete,
                     </div>
                   )}
 
-                  {selectedSession && selectedSession.startTimeLocal && selectedSession.endTimeLocal && (
-                    <div className="flex items-center gap-2 text-sm">
-                      <Clock className="h-4 w-4" />
-                      <span>
-                        {format(new Date(selectedSession.startTimeLocal), "h:mm a")} - 
-                        {format(new Date(selectedSession.endTimeLocal), "h:mm a")}
-                      </span>
-                    </div>
-                  )}
+                  {selectedSession &&
+                    selectedSession.startTimeLocal &&
+                    selectedSession.endTimeLocal && (
+                      <div className="flex items-center gap-2 text-sm">
+                        <Clock className="h-4 w-4" />
+                        <span>
+                          {format(
+                            new Date(selectedSession.startTimeLocal),
+                            "h:mm a"
+                          )}{" "}
+                          -
+                          {format(
+                            new Date(selectedSession.endTimeLocal),
+                            "h:mm a"
+                          )}
+                        </span>
+                      </div>
+                    )}
 
                   {guests.length > 0 && (
                     <div className="flex items-center gap-2 text-sm">
                       <Users className="h-4 w-4" />
-                      <span>{guestCounts.adults + guestCounts.children + guestCounts.infants} guests</span>
+                      <span>
+                        {guestCounts.adults +
+                          guestCounts.children +
+                          guestCounts.infants}{" "}
+                        guests
+                      </span>
                     </div>
                   )}
 
@@ -1486,9 +1677,13 @@ export function EnhancedBookingExperience({ product, onClose, onBookingComplete,
                     <div className="flex items-start gap-2 text-sm">
                       <MapPin className="h-4 w-4 mt-0.5" />
                       <div>
-                        <div className="font-medium">{selectedPickupLocation.name}</div>
+                        <div className="font-medium">
+                          {selectedPickupLocation.name}
+                        </div>
                         {selectedPickupLocation.pickupTime && (
-                          <div className="text-muted-foreground">Pickup: {selectedPickupLocation.pickupTime}</div>
+                          <div className="text-muted-foreground">
+                            Pickup: {selectedPickupLocation.pickupTime}
+                          </div>
                         )}
                       </div>
                     </div>
@@ -1498,8 +1693,8 @@ export function EnhancedBookingExperience({ product, onClose, onBookingComplete,
 
               {/* Pricing Summary */}
               {selectedSession && (
-                <PricingDisplay 
-                  breakdown={pricingBreakdown} 
+                <PricingDisplay
+                  breakdown={pricingBreakdown}
                   showDetails={true}
                 />
               )}
@@ -1526,40 +1721,48 @@ export function EnhancedBookingExperience({ product, onClose, onBookingComplete,
         </div>
 
         {/* Navigation Buttons */}
-        {currentStep < 4 && (
-          <div className="flex items-center justify-between pt-6 border-t">
-            <Button 
-              variant="outline" 
-              onClick={handlePrevStep}
-              disabled={currentStep === 1}
+        <div className="flex items-center justify-between pt-6 border-t">
+          <Button
+            variant="outline"
+            onClick={handlePrevStep}
+            disabled={currentStep === 1}
+            className="flex items-center gap-2"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Previous
+          </Button>
+
+          {currentStep < 3 ? (
+            <Button
+              onClick={handleNextStep}
+              disabled={!canProceedToNextStep()}
               className="flex items-center gap-2"
             >
-              <ArrowLeft className="h-4 w-4" />
-              Previous
+              Next
+              <ArrowRight className="h-4 w-4" />
             </Button>
-
-            {currentStep < 3 ? (
-              <Button 
-                onClick={handleNextStep}
-                disabled={!canProceedToNextStep()}
-                className="flex items-center gap-2"
-              >
-                Next
-                <ArrowRight className="h-4 w-4" />
-              </Button>
-            ) : (
-              <Button 
-                onClick={handleCompleteBooking}
-                disabled={!canProceedToNextStep() || isSubmitting}
-                variant="success"
-                className="flex items-center gap-2"
-              >
-                {isSubmitting ? 'Processing...' : `Complete Booking • ${formatCurrency(pricingBreakdown.total)}`}
-              </Button>
-            )}
-          </div>
-        )}
+          ) : (
+            <Button
+              onClick={handleProceedToPayment}
+              disabled={!canProceedToNextStep() || isProcessingPayment}
+              className="flex items-center gap-2 bg-coral-600 hover:bg-coral-700 text-white"
+              size="lg"
+            >
+              {isProcessingPayment ? (
+                <>
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                  Redirecting to Payment...
+                </>
+              ) : (
+                <>
+                  <Shield className="h-4 w-4" />
+                  Proceed to Payment • {formatCurrency(pricingBreakdown.total)}
+                </>
+              )}
+            </Button>
+          )}
+        </div>
       </div>
     </div>
-  )
-} 
+  );
+}

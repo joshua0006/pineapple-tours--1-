@@ -1,37 +1,38 @@
-import { useState } from 'react'
-import { ChevronDown, ChevronUp, FileText, Info } from 'lucide-react'
-import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { HtmlContent } from '@/components/ui/html-content'
-import { cn } from '@/lib/utils'
+import { useState } from "react";
+import { ChevronDown, ChevronUp, FileText, Info } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { HtmlContent } from "@/components/ui/html-content";
+import { cn } from "@/lib/utils";
 
 interface DescriptionDisplayProps {
-  title?: string
-  description?: string
-  shortDescription?: string
-  className?: string
-  showCard?: boolean
-  maxLength?: number
-  allowExpansion?: boolean
+  title?: string;
+  description?: string;
+  shortDescription?: string;
+  className?: string;
+  showCard?: boolean;
+  maxLength?: number;
+  allowExpansion?: boolean;
 }
 
 export function DescriptionDisplay({
-  title = "Description",
+  title = "About This Tour",
   description,
   shortDescription,
   className,
   showCard = false,
   maxLength = 500,
-  allowExpansion = true
+  allowExpansion = true,
 }: DescriptionDisplayProps) {
-  const [isExpanded, setIsExpanded] = useState(false)
-  
+  const [isExpanded, setIsExpanded] = useState(false);
+
   // Determine which content to display
-  const primaryContent = description || shortDescription
-  const hasContent = Boolean(primaryContent?.trim())
+  const primaryContent = description || shortDescription;
+  const hasContent = Boolean(primaryContent?.trim());
   // Only consider content "long" if expansion is allowed and content exceeds maxLength
-  const hasLongContent = allowExpansion && primaryContent && primaryContent.length > maxLength
-  
+  const hasLongContent =
+    allowExpansion && primaryContent && primaryContent.length > maxLength;
+
   if (!hasContent || !primaryContent) {
     return (
       <Card className={cn("border-dashed", className)}>
@@ -45,31 +46,34 @@ export function DescriptionDisplay({
           </p>
         </CardContent>
       </Card>
-    )
+    );
   }
 
   // Check if content contains HTML
-  const isHtmlContent = /<[^>]*>/g.test(primaryContent)
-  
+  const isHtmlContent = /<[^>]*>/g.test(primaryContent);
+
   const content = (
     <div className="space-y-4">
       {/* Content Display */}
       <div className="relative">
         {isHtmlContent ? (
-          <HtmlContent 
+          <HtmlContent
             content={primaryContent}
-            maxLength={allowExpansion && !isExpanded && hasLongContent ? maxLength : undefined}
+            maxLength={
+              allowExpansion && !isExpanded && hasLongContent
+                ? maxLength
+                : undefined
+            }
             className="text-base leading-relaxed"
           />
         ) : (
           <div className="text-base leading-relaxed text-muted-foreground">
-            {allowExpansion && !isExpanded && hasLongContent 
+            {allowExpansion && !isExpanded && hasLongContent
               ? `${primaryContent.substring(0, maxLength).trim()}...`
-              : primaryContent
-            }
+              : primaryContent}
           </div>
         )}
-        
+
         {/* Fade overlay for long content */}
         {!isExpanded && hasLongContent && (
           <div className="absolute bottom-0 left-0 right-0 h-8 bg-gradient-to-t from-background to-transparent pointer-events-none" />
@@ -101,9 +105,8 @@ export function DescriptionDisplay({
           </Button>
         </div>
       )}
-
     </div>
-  )
+  );
 
   if (showCard) {
     return (
@@ -114,11 +117,9 @@ export function DescriptionDisplay({
             {title}
           </CardTitle>
         </CardHeader>
-        <CardContent id="description-content">
-          {content}
-        </CardContent>
+        <CardContent id="description-content">{content}</CardContent>
       </Card>
-    )
+    );
   }
 
   return (
@@ -127,9 +128,7 @@ export function DescriptionDisplay({
         <FileText className="h-6 w-6 mr-2 text-brand-accent" />
         {title}
       </h2>
-      <div id="description-content">
-        {content}
-      </div>
+      <div id="description-content">{content}</div>
     </div>
-  )
-} 
+  );
+}

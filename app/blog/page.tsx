@@ -16,7 +16,6 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { PageHeader } from "@/components/page-header";
 import { BlogCard } from "@/components/blog-card";
-import { BlogInfoSection } from "@/components/blog-info-section";
 import {
   BlogLoadingGrid,
   BlogCategoriesSkeleton,
@@ -89,11 +88,6 @@ export default function BlogPage() {
       {/* Loading or Content */}
       {!error && (
         <>
-          {/* Content Types Info Section */}
-          <section className="container py-8">
-            <BlogInfoSection position="top" />
-          </section>
-
           {/* Categories Filter */}
           <section className="container py-8">
             {loading ? (
@@ -132,108 +126,85 @@ export default function BlogPage() {
             )}
           </section>
 
-          {/* Main Content with Sidebar */}
+          {/* Main Content */}
           <section className="container pb-16">
-            <div className="grid lg:grid-cols-4 gap-8">
-              {/* Main Content */}
-              <div className="lg:col-span-3">
-                {loading ? (
-                  <BlogLoadingGrid />
-                ) : (
-                  <div className="space-y-12">
-                    {/* Featured Posts */}
-                    {filteredFeaturedPosts.length > 0 && (
-                      <div>
-                        <div className="flex items-center justify-between mb-6">
-                          <h2 className="text-2xl font-bold tracking-tight text-brand-text font-barlow">
-                            Featured Articles
-                          </h2>
-                          {selectedCategory !== "All" && (
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => setSelectedCategory("All")}
-                              className="text-brand-accent hover:text-brand-accent/80"
-                            >
-                              View All
-                            </Button>
-                          )}
-                        </div>
-                        <div className="grid gap-6 md:grid-cols-2">
-                          {filteredFeaturedPosts.map((post) => (
-                            <BlogCard
-                              key={post.id}
-                              post={post}
-                              variant="featured"
-                            />
-                          ))}
-                        </div>
-                      </div>
-                    )}
-
-                    {/* All Posts */}
-                    {filteredRegularPosts.length > 0 && (
-                      <div>
-                        <h2 className="text-2xl font-bold tracking-tight mb-6 text-brand-text font-barlow">
-                          Latest Articles
-                        </h2>
-                        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-                          {filteredRegularPosts.map((post) => (
-                            <BlogCard
-                              key={post.id}
-                              post={post}
-                              variant="default"
-                            />
-                          ))}
-                        </div>
-                      </div>
-                    )}
-
-                    {/* No Posts Found */}
-                    {!loading &&
-                      filteredFeaturedPosts.length === 0 &&
-                      filteredRegularPosts.length === 0 && (
-                        <div className="text-center py-12">
-                          <BookOpen className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-                          <h3 className="text-xl font-semibold text-gray-900 mb-2">
-                            No articles found
-                          </h3>
-                          <p className="text-gray-600 mb-6">
-                            {selectedCategory === "All"
-                              ? "We're working on adding new content. Please check back soon!"
-                              : `No articles found in the "${selectedCategory}" category.`}
-                          </p>
-                          {selectedCategory !== "All" && (
-                            <Button
-                              onClick={() => setSelectedCategory("All")}
-                              className="bg-brand-accent hover:bg-brand-accent/90"
-                            >
-                              View All Articles
-                            </Button>
-                          )}
-                        </div>
+            {loading ? (
+              <BlogLoadingGrid />
+            ) : (
+              <div className="space-y-12">
+                {/* Featured Posts */}
+                {filteredFeaturedPosts.length > 0 && (
+                  <div>
+                    <div className="flex items-center justify-between mb-6">
+                      <h2 className="text-2xl font-bold tracking-tight text-brand-text font-barlow">
+                        Featured Articles
+                      </h2>
+                      {selectedCategory !== "All" && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setSelectedCategory("All")}
+                          className="text-brand-accent hover:text-brand-accent/80"
+                        >
+                          View All
+                        </Button>
                       )}
+                    </div>
+                    <div className="grid gap-6 md:grid-cols-2">
+                      {filteredFeaturedPosts.map((post) => (
+                        <BlogCard
+                          key={post.id}
+                          post={post}
+                          variant="featured"
+                        />
+                      ))}
+                    </div>
                   </div>
                 )}
-              </div>
 
-              {/* Sidebar */}
-              <div className="lg:col-span-1">
-                <div className="sticky top-24">
-                  <BlogInfoSection position="sidebar" />
-                </div>
+                {/* All Posts */}
+                {filteredRegularPosts.length > 0 && (
+                  <div>
+                    <h2 className="text-2xl font-bold tracking-tight mb-6 text-brand-text font-barlow">
+                      Latest Articles
+                    </h2>
+                    <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                      {filteredRegularPosts.map((post) => (
+                        <BlogCard key={post.id} post={post} variant="default" />
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* No Posts Found */}
+                {!loading &&
+                  filteredFeaturedPosts.length === 0 &&
+                  filteredRegularPosts.length === 0 && (
+                    <div className="text-center py-12">
+                      <BookOpen className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+                      <h3 className="text-xl font-semibold text-gray-900 mb-2">
+                        No articles found
+                      </h3>
+                      <p className="text-gray-600 mb-6">
+                        {selectedCategory === "All"
+                          ? "We're working on adding new content. Please check back soon!"
+                          : `No articles found in the "${selectedCategory}" category.`}
+                      </p>
+                      {selectedCategory !== "All" && (
+                        <Button
+                          onClick={() => setSelectedCategory("All")}
+                          className="bg-brand-accent hover:bg-brand-accent/90"
+                        >
+                          View All Articles
+                        </Button>
+                      )}
+                    </div>
+                  )}
               </div>
-            </div>
+            )}
           </section>
         </>
       )}
-
-      {/* Newsletter Signup */}
-      <section className="bg-gradient-to-r from-brand-primary/5 to-brand-accent/5 py-16">
-        <div className="container">
-          <BlogInfoSection position="bottom" />
-        </div>
-      </section>
     </>
   );
 }

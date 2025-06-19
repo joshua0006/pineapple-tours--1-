@@ -1,4 +1,9 @@
-import { RezdyProduct, RezdySession, RezdyPickupLocation } from "./rezdy";
+import {
+  RezdyProduct,
+  RezdySession,
+  RezdyPickupLocation,
+  RezdyBookingOption,
+} from "./rezdy";
 
 export interface BookingData {
   id?: string;
@@ -17,6 +22,7 @@ export interface BookingData {
     startTime: string;
     endTime: string;
   };
+  selectedBookingOption?: RezdyBookingOption;
   pickupLocation?: RezdyPickupLocation | null;
   participants: {
     adults: number;
@@ -41,6 +47,8 @@ export interface BookingData {
     subtotal: number;
     taxAndFees: number;
     total: number;
+    optionPrice?: number;
+    optionName?: string;
   };
   payment?: {
     method: string;
@@ -64,6 +72,12 @@ export interface BookingValidation {
   isValid: boolean;
   errors: string[];
   warnings: string[];
+}
+
+export interface BookingOptionSelection {
+  option: RezdyBookingOption;
+  selectedPickupLocation: RezdyPickupLocation;
+  isRequired: boolean;
 }
 
 // BookingFormData has been moved to @/lib/utils/booking-transform

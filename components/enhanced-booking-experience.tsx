@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useMemo } from "react";
+import Link from "next/link";
 import {
   Calendar as CalendarIcon,
   Users,
@@ -20,6 +21,7 @@ import {
   Calendar,
   ArrowLeft,
   ArrowRight,
+  Home,
 } from "lucide-react";
 import { format, addDays, isSameDay } from "date-fns";
 
@@ -51,12 +53,15 @@ import { PricingDisplay } from "@/components/ui/pricing-display";
 import { GuestManager, type GuestInfo } from "@/components/ui/guest-manager";
 import { ExtrasSelector } from "@/components/ui/extras-selector";
 import { PickupLocationSelector } from "@/components/ui/pickup-location-selector";
+import { BookingOptionSelector } from "@/components/ui/booking-option-selector";
 import { useRezdyAvailability } from "@/hooks/use-rezdy";
 import {
   RezdyProduct,
   RezdySession,
   RezdyPickupLocation,
+  RezdyBookingOption,
 } from "@/lib/types/rezdy";
+import { FitTourDataService } from "@/lib/services/fit-tour-data";
 import {
   formatPrice,
   getLocationString,
@@ -156,7 +161,6 @@ const COUNTRIES = [
 export function EnhancedBookingExperience({
   product,
   onClose,
-  onBookingComplete,
   preSelectedSession,
   preSelectedParticipants,
   preSelectedExtras,
@@ -170,6 +174,13 @@ export function EnhancedBookingExperience({
   const pickupServiceType = getPickupServiceType(product);
   const mentionedPickupLocations = extractPickupLocations(product);
 
+  // Get FIT tour booking options
+  const fitTourBookingOptions = useMemo(() => {
+    return FitTourDataService.getBookingOptions(product.productCode);
+  }, [product.productCode]);
+
+  const hasFitTourOptions = fitTourBookingOptions.length > 0;
+
   // Booking state
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
   const [selectedSession, setSelectedSession] = useState<RezdySession | null>(
@@ -177,6 +188,8 @@ export function EnhancedBookingExperience({
   );
   const [selectedPickupLocation, setSelectedPickupLocation] =
     useState<RezdyPickupLocation | null>(null);
+  const [selectedBookingOption, setSelectedBookingOption] =
+    useState<RezdyBookingOption | null>(null);
   const [guests, setGuests] = useState<GuestInfo[]>([
     { id: "1", firstName: "", lastName: "", age: 25, type: "ADULT" },
   ]);
@@ -474,15 +487,40 @@ export function EnhancedBookingExperience({
       });
   }, [effectiveAvailabilityData, selectedDate]);
 
-  // Calculate pricing
+  // Calculate pricing with booking option
   const pricingBreakdown = useMemo((): PricingBreakdown => {
-    return calculatePricing(product, selectedSession, {
+    const basePricing = calculatePricing(product, selectedSession, {
       adults: guestCounts.adults,
       children: guestCounts.children,
       infants: guestCounts.infants,
       extras: selectedExtras,
     });
-  }, [product, selectedSession, guestCounts, selectedExtras]);
+
+    // If FIT tour option is selected, add the option pricing
+    if (selectedBookingOption && hasFitTourOptions) {
+      const participantCount = guestCounts.adults + guestCounts.children;
+      const optionTotal = selectedBookingOption.price * participantCount;
+
+      return {
+        ...basePricing,
+        adultPrice: basePricing.adultPrice + selectedBookingOption.price,
+        subtotal: basePricing.subtotal + optionTotal,
+        total: basePricing.total + optionTotal,
+        bookingOptionPrice: selectedBookingOption.price,
+        bookingOptionTotal: optionTotal,
+        bookingOptionName: selectedBookingOption.name,
+      };
+    }
+
+    return basePricing;
+  }, [
+    product,
+    selectedSession,
+    guestCounts,
+    selectedExtras,
+    selectedBookingOption,
+    hasFitTourOptions,
+  ]);
 
   // Validation
   const validationErrors = useMemo(() => {
@@ -515,7 +553,18 @@ export function EnhancedBookingExperience({
         const hasValidPickupLocation =
           !needsPickupLocation || selectedPickupLocation;
 
-        return hasValidGuests && hasValidSession && hasValidPickupLocation;
+        // Check if FIT tour booking option is required and selected
+        const needsBookingOption = hasFitTourOptions;
+        const hasValidBookingOption =
+          !needsBookingOption ||
+          (selectedBookingOption && selectedPickupLocation);
+
+        return (
+          hasValidGuests &&
+          hasValidSession &&
+          hasValidPickupLocation &&
+          hasValidBookingOption
+        );
       case 2:
         return (
           contactInfo.firstName &&
@@ -539,16 +588,33 @@ export function EnhancedBookingExperience({
 
   const handleSessionSelect = (session: RezdySession) => {
     setSelectedSession(session);
-    // Auto-select first pickup location if available
-    if (session.pickupLocations && session.pickupLocations.length > 0) {
+    // Reset booking option selection when session changes
+    setSelectedBookingOption(null);
+    setSelectedPickupLocation(null);
+    // Auto-select first pickup location if available (for non-FIT tours)
+    if (
+      !hasFitTourOptions &&
+      session.pickupLocations &&
+      session.pickupLocations.length > 0
+    ) {
       setSelectedPickupLocation(session.pickupLocations[0]);
     }
+  };
+
+  const handleBookingOptionSelect = (
+    option: RezdyBookingOption,
+    location: RezdyPickupLocation
+  ) => {
+    setSelectedBookingOption(option);
+    setSelectedPickupLocation(location);
   };
 
   const handleNextStep = () => {
     if (canProceedToNextStep() && currentStep < 4) {
       setCurrentStep(currentStep + 1);
       setBookingErrors([]);
+      // Scroll to top of the page
+      window.scrollTo({ top: 0, behavior: "smooth" });
     }
   };
 
@@ -556,6 +622,8 @@ export function EnhancedBookingExperience({
     if (currentStep > 1) {
       setCurrentStep(currentStep - 1);
       setBookingErrors([]);
+      // Scroll to top of the page
+      window.scrollTo({ top: 0, behavior: "smooth" });
     }
   };
 
@@ -576,6 +644,7 @@ export function EnhancedBookingExperience({
           startTime: selectedSession?.startTimeLocal || "",
           endTime: selectedSession?.endTimeLocal || "",
           pickupLocation: selectedPickupLocation,
+          bookingOption: selectedBookingOption,
         },
         guests: guests.filter((g) => g.firstName.trim() && g.lastName.trim()),
         contact: contactInfo,
@@ -729,28 +798,56 @@ export function EnhancedBookingExperience({
   };
 
   return (
-    <div className="w-full h-full overflow-y-auto">
-      <div className="max-w-6xl mx-auto p-4 sm:p-6 space-y-4 sm:space-y-6 min-h-full">
-        {/* Header */}
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-xl sm:text-2xl font-bold">{product.name}</h1>
-            <p className="text-muted-foreground">
-              {getLocationString(product.locationAddress)}
-            </p>
-          </div>
-          <div className="flex items-center gap-2">
-            <Button variant="ghost" size="sm">
-              <Heart className="h-4 w-4" />
-            </Button>
-            <Button variant="ghost" size="sm">
-              <Share2 className="h-4 w-4" />
-            </Button>
-            {onClose && (
-              <Button variant="ghost" size="sm" onClick={onClose}>
-                ×
+    <div className="w-full min-h-screen bg-background">
+      <div className="max-w-6xl mx-auto p-4 sm:p-6 space-y-4 sm:space-y-6">
+        {/* Header with Navigation */}
+        <div className="space-y-4">
+          {/* Breadcrumb Navigation */}
+          <nav className="flex items-center space-x-2 text-sm text-muted-foreground">
+            <Link
+              href="/"
+              className="hover:text-foreground flex items-center gap-1"
+            >
+              <Home className="h-4 w-4" />
+              Home
+            </Link>
+            <span>/</span>
+            <Link href="/tours" className="hover:text-foreground">
+              Tours
+            </Link>
+            <span>/</span>
+            <Link
+              href={`/tours/${product.productCode}`}
+              className="hover:text-foreground"
+            >
+              {product.name}
+            </Link>
+            <span>/</span>
+            <span className="text-foreground font-medium">Book Now</span>
+          </nav>
+
+          {/* Page Header */}
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-2xl sm:text-3xl font-bold">{product.name}</h1>
+              <p className="text-muted-foreground">
+                {getLocationString(product.locationAddress)}
+              </p>
+            </div>
+            <div className="flex items-center gap-2">
+              <Button variant="ghost" size="sm">
+                <Heart className="h-4 w-4" />
               </Button>
-            )}
+              <Button variant="ghost" size="sm">
+                <Share2 className="h-4 w-4" />
+              </Button>
+              <Link href={`/tours/${product.productCode}`}>
+                <Button variant="outline" size="sm">
+                  <ArrowLeft className="h-4 w-4 mr-2" />
+                  Back to Tour
+                </Button>
+              </Link>
+            </div>
           </div>
         </div>
 
@@ -773,7 +870,7 @@ export function EnhancedBookingExperience({
                 className={cn(
                   "w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center text-xs sm:text-sm font-medium transition-colors",
                   currentStep >= step.id
-                    ? "bg-coral-500 text-white"
+                    ? "bg-brand-accent text-white"
                     : "bg-muted text-muted-foreground"
                 )}
               >
@@ -787,7 +884,7 @@ export function EnhancedBookingExperience({
                 <div
                   className={cn(
                     "w-12 sm:w-16 h-0.5 mx-1 sm:mx-2 transition-colors flex-shrink-0",
-                    currentStep > step.id ? "bg-coral-500" : "bg-gray-200"
+                    currentStep > step.id ? "bg-brand-accent" : "bg-muted"
                   )}
                 />
               )}
@@ -842,8 +939,8 @@ export function EnhancedBookingExperience({
                     </p>
                     {selectedSession && (
                       <div className="flex items-center gap-2 text-sm">
-                        <CheckCircle className="h-4 w-4 text-green-600" />
-                        <span className="text-green-600">
+                        <CheckCircle className="h-4 w-4 text-brand-accent" />
+                        <span className="text-brand-accent">
                           Session selected for{" "}
                           {selectedDate && format(selectedDate, "MMM dd, yyyy")}
                         </span>
@@ -884,13 +981,13 @@ export function EnhancedBookingExperience({
                               }}
                               modifiersStyles={{
                                 available: {
-                                  backgroundColor: "#fef3c7",
-                                  color: "#92400e",
+                                  backgroundColor: "rgb(255 88 93 / 0.1)",
+                                  color: "#FF585D",
                                   fontWeight: "bold",
                                 },
                                 soldOut: {
-                                  backgroundColor: "#fee2e2",
-                                  color: "#991b1b",
+                                  backgroundColor: "rgb(64 64 64 / 0.1)",
+                                  color: "#404040",
                                   textDecoration: "line-through",
                                 },
                               }}
@@ -898,21 +995,21 @@ export function EnhancedBookingExperience({
                             />
                             <div className="p-3 border-t space-y-2">
                               <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                                <div className="w-3 h-3 bg-yellow-200 rounded"></div>
+                                <div className="w-3 h-3 bg-brand-accent/20 rounded"></div>
                                 <span>Available dates</span>
                               </div>
                               <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                                <div className="w-3 h-3 bg-red-200 rounded"></div>
+                                <div className="w-3 h-3 bg-muted rounded"></div>
                                 <span>Sold out</span>
                               </div>
                               {availabilityLoading && (
                                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                                  <div className="w-3 h-3 bg-gray-200 rounded animate-pulse"></div>
+                                  <div className="w-3 h-3 bg-muted rounded animate-pulse"></div>
                                   <span>Loading availability...</span>
                                 </div>
                               )}
                               {availabilityError && (
-                                <div className="flex items-center gap-2 text-sm text-red-600">
+                                <div className="flex items-center gap-2 text-sm text-destructive">
                                   <AlertCircle className="h-3 w-3" />
                                   <span>Error loading availability</span>
                                 </div>
@@ -948,7 +1045,7 @@ export function EnhancedBookingExperience({
                             {[1, 2, 3].map((i) => (
                               <div
                                 key={i}
-                                className="h-16 bg-gray-100 rounded-lg animate-pulse"
+                                className="h-16 bg-muted/50 rounded-lg animate-pulse"
                               />
                             ))}
                           </div>
@@ -971,10 +1068,10 @@ export function EnhancedBookingExperience({
                                   <Card
                                     key={session.id}
                                     className={cn(
-                                      "cursor-pointer transition-all duration-200 hover:shadow-md",
+                                      "cursor-pointer transition-all duration-200 border",
                                       isSelected
-                                        ? "ring-2 ring-coral-500 bg-coral-50"
-                                        : "hover:bg-gray-50",
+                                        ? "ring-2 ring-brand-accent bg-brand-accent/5 border-brand-accent"
+                                        : "border-gray-200",
                                       session.seatsAvailable === 0 &&
                                         "opacity-50 cursor-not-allowed"
                                     )}
@@ -1022,7 +1119,7 @@ export function EnhancedBookingExperience({
                                           </div>
                                           {typeof session.id === "string" &&
                                           session.id.startsWith("mock-") ? (
-                                            <div className="text-xs text-blue-600 mt-1">
+                                            <div className="text-xs text-brand-accent mt-1">
                                               Demo
                                             </div>
                                           ) : null}
@@ -1034,7 +1131,7 @@ export function EnhancedBookingExperience({
                               })}
                           </div>
                         ) : (
-                          <div className="mt-2 p-4 text-center text-muted-foreground bg-gray-50 rounded-lg">
+                          <div className="mt-2 p-4 text-center text-muted-foreground bg-muted/30 rounded-lg">
                             No sessions available for this date. Please select
                             another date.
                           </div>
@@ -1042,8 +1139,24 @@ export function EnhancedBookingExperience({
                       </div>
                     )}
 
-                    {/* Pickup Location Selection */}
-                    {selectedSession &&
+                    {/* FIT Tour Booking Options or Standard Pickup Location Selection */}
+                    {selectedSession && hasFitTourOptions ? (
+                      <BookingOptionSelector
+                        bookingOptions={fitTourBookingOptions}
+                        selectedBookingOption={selectedBookingOption}
+                        selectedPickupLocation={selectedPickupLocation}
+                        onBookingOptionSelect={handleBookingOptionSelect}
+                        participantCount={
+                          guestCounts.adults +
+                          guestCounts.children +
+                          guestCounts.infants
+                        }
+                        showPricing={true}
+                        required={true}
+                        className="w-full"
+                      />
+                    ) : (
+                      selectedSession &&
                       selectedSession.pickupLocations &&
                       selectedSession.pickupLocations.length > 0 && (
                         <PickupLocationSelector
@@ -1053,60 +1166,8 @@ export function EnhancedBookingExperience({
                           showDirections={true}
                           required={true}
                         />
-                      )}
-
-                    {/* Pickup Service Information for products without session pickup locations */}
-                    {productHasPickupServices &&
-                      (!selectedSession?.pickupLocations ||
-                        selectedSession.pickupLocations.length === 0) && (
-                        <div className="bg-blue-50 rounded-lg p-4">
-                          <div className="flex items-start gap-3">
-                            <MapPin className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
-                            <div>
-                              <h3 className="font-medium text-blue-900 mb-2">
-                                {pickupServiceType === "door-to-door"
-                                  ? "Door-to-Door Service"
-                                  : pickupServiceType === "shuttle"
-                                  ? "Shuttle Service"
-                                  : "Pickup Service Available"}
-                              </h3>
-                              <div className="text-sm text-blue-800 space-y-1">
-                                {pickupServiceType === "door-to-door" && (
-                                  <p>
-                                    This tour includes convenient door-to-door
-                                    pickup service. Pickup details will be
-                                    confirmed after booking.
-                                  </p>
-                                )}
-                                {pickupServiceType === "shuttle" && (
-                                  <p>
-                                    Shuttle service is included. Pickup
-                                    locations and times will be provided upon
-                                    booking confirmation.
-                                  </p>
-                                )}
-                                {pickupServiceType === "designated-points" && (
-                                  <p>
-                                    Pickup is available from designated
-                                    locations. Specific pickup points will be
-                                    confirmed during booking.
-                                  </p>
-                                )}
-                                {mentionedPickupLocations.length > 0 && (
-                                  <div className="mt-2">
-                                    <span className="font-medium">
-                                      Available pickup areas:{" "}
-                                    </span>
-                                    <span>
-                                      {mentionedPickupLocations.join(", ")}
-                                    </span>
-                                  </div>
-                                )}
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      )}
+                      )
+                    )}
 
                     {/* Date Selection Validation */}
                     {!selectedSession && (
@@ -1133,8 +1194,8 @@ export function EnhancedBookingExperience({
                     </p>
                     {guests.length > 0 && (
                       <div className="flex items-center gap-2 text-sm">
-                        <CheckCircle className="h-4 w-4 text-green-600" />
-                        <span className="text-green-600">
+                        <CheckCircle className="h-4 w-4 text-brand-accent" />
+                        <span className="text-brand-accent">
                           {guestCounts.adults +
                             guestCounts.children +
                             guestCounts.infants}{" "}
@@ -1396,7 +1457,7 @@ export function EnhancedBookingExperience({
                   </CardHeader>
                   <CardContent className="space-y-4">
                     {/* Tour Details */}
-                    <div className="bg-gray-50 p-4 rounded-lg space-y-3">
+                    <div className="bg-muted/30 p-4 rounded-lg space-y-3">
                       <h4 className="font-medium text-lg">{product.name}</h4>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
                         <div className="flex items-center gap-2">
@@ -1435,10 +1496,20 @@ export function EnhancedBookingExperience({
                             {guestCounts.infants} infants)
                           </span>
                         </div>
-                        {selectedPickupLocation && (
+                        {selectedBookingOption && (
                           <div className="flex items-center gap-2">
                             <MapPin className="h-4 w-4 text-muted-foreground" />
-                            <span>{selectedPickupLocation.name}</span>
+                            <span>{selectedBookingOption.name}</span>
+                          </div>
+                        )}
+                        {selectedPickupLocation && (
+                          <div className="flex items-center gap-2 ml-6">
+                            <Clock className="h-4 w-4 text-muted-foreground" />
+                            <span>
+                              {selectedPickupLocation.name}
+                              {selectedPickupLocation.pickupTime &&
+                                ` at ${selectedPickupLocation.pickupTime}`}
+                            </span>
                           </div>
                         )}
                       </div>
@@ -1447,7 +1518,7 @@ export function EnhancedBookingExperience({
                     {/* Guest Details */}
                     <div>
                       <h4 className="font-medium mb-2">Guest Details</h4>
-                      <div className="bg-gray-50 p-4 rounded-lg">
+                      <div className="bg-muted/30 p-4 rounded-lg">
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm">
                           {guests.map((guest, index) => (
                             <div
@@ -1469,7 +1540,7 @@ export function EnhancedBookingExperience({
                     {/* Contact Information */}
                     <div>
                       <h4 className="font-medium mb-2">Contact Information</h4>
-                      <div className="bg-gray-50 p-4 rounded-lg text-sm space-y-1">
+                      <div className="bg-muted/30 p-4 rounded-lg text-sm space-y-1">
                         <div>
                           {contactInfo.firstName} {contactInfo.lastName}
                         </div>
@@ -1498,10 +1569,10 @@ export function EnhancedBookingExperience({
                     {selectedExtras.length > 0 && (
                       <div>
                         <h4 className="font-medium mb-2">Selected Extras</h4>
-                        <div className="bg-gray-50 p-4 rounded-lg space-y-2">
+                        <div className="bg-muted/30 p-4 rounded-lg space-y-2">
                           {selectedExtras.map((extra, index) => (
                             <div
-                              key={index}
+                              key={extra.extra.id}
                               className="flex justify-between text-sm"
                             >
                               <span>
@@ -1703,15 +1774,15 @@ export function EnhancedBookingExperience({
               <Card>
                 <CardContent className="pt-6 space-y-3">
                   <div className="flex items-center gap-2 text-sm">
-                    <Shield className="h-4 w-4 text-green-600" />
+                    <Shield className="h-4 w-4 text-brand-accent" />
                     <span>Secure SSL Payment</span>
                   </div>
                   <div className="flex items-center gap-2 text-sm">
-                    <CheckCircle className="h-4 w-4 text-green-600" />
+                    <CheckCircle className="h-4 w-4 text-brand-accent" />
                     <span>Free Cancellation 24h</span>
                   </div>
                   <div className="flex items-center gap-2 text-sm">
-                    <Star className="h-4 w-4 text-coral-500" />
+                    <Star className="h-4 w-4 text-brand-accent" />
                     <span>4.9/5 Customer Rating</span>
                   </div>
                 </CardContent>
@@ -1745,7 +1816,7 @@ export function EnhancedBookingExperience({
             <Button
               onClick={handleProceedToPayment}
               disabled={!canProceedToNextStep() || isProcessingPayment}
-              className="flex items-center gap-2 bg-coral-600 hover:bg-coral-700 text-white"
+              className="flex items-center gap-2 bg-brand-accent hover:bg-brand-accent/90 text-white"
               size="lg"
             >
               {isProcessingPayment ? (

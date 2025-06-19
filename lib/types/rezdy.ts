@@ -65,6 +65,26 @@ export interface RezdySession {
   totalPrice?: number;
   pickupId?: string;
   pickupLocations?: RezdyPickupLocation[];
+  bookingOptions?: RezdyBookingOption[];
+}
+
+export interface RezdyBookingOption {
+  id: string;
+  name: string;
+  description?: string;
+  price: number;
+  currency?: string;
+  pickupType:
+    | "brisbane"
+    | "gold-coast"
+    | "brisbane-city-loop"
+    | "tamborine-direct";
+  pickupLocations: RezdyPickupLocation[];
+  maxParticipants?: number;
+  availability: number;
+  requirements?: string[];
+  includedServices?: string[];
+  isPreferred?: boolean;
 }
 
 export interface RezdyPickupLocation {
@@ -74,6 +94,9 @@ export interface RezdyPickupLocation {
   address?: string | RezdyAddress;
   latitude?: number;
   longitude?: number;
+  region: "brisbane" | "gold-coast" | "tamborine";
+  facilityType?: "hotel" | "casino" | "landmark" | "transport-hub";
+  isPreferred?: boolean;
 }
 
 export interface RezdyBooking {

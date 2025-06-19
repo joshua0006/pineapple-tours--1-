@@ -24,7 +24,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 
-import { EnhancedBookingExperience } from "@/components/enhanced-booking-experience";
 import { ErrorState } from "@/components/error-state";
 import { DescriptionDisplay } from "@/components/ui/description-display";
 import {
@@ -55,7 +54,6 @@ export default function TourDetailPage({
   const [selectedProduct, setSelectedProduct] = useState<RezdyProduct | null>(
     null
   );
-  const [showBooking, setShowBooking] = useState(false);
   const [dateRange, setDateRange] = useState(30); // days to look ahead
   const [groupSize, setGroupSize] = useState(2); // number of adults
 
@@ -429,13 +427,14 @@ export default function TourDetailPage({
                         >
                           Check Dates
                         </Button>
-                        <Button
-                          size="sm"
-                          className="bg-brand-accent text-brand-secondary hover:bg-brand-accent/90"
-                          onClick={() => setShowBooking(true)}
-                        >
-                          Book Now
-                        </Button>
+                        <Link href={`/booking/${selectedProduct.productCode}`}>
+                          <Button
+                            size="sm"
+                            className="bg-brand-accent text-brand-secondary hover:bg-brand-accent/90"
+                          >
+                            Book Now
+                          </Button>
+                        </Link>
                       </div>
                     </div>
                   </CardContent>
@@ -585,12 +584,13 @@ export default function TourDetailPage({
                               >
                                 Add to Cart
                               </AddToCartButton>
-                              <Button
-                                className="bg-brand-accent text-brand-secondary hover:bg-brand-accent/90"
-                                onClick={() => setShowBooking(true)}
+                              <Link
+                                href={`/booking/${selectedProduct.productCode}`}
                               >
-                                Book Now - {price}
-                              </Button>
+                                <Button className="bg-brand-accent text-brand-secondary hover:bg-brand-accent/90">
+                                  Book Now - {price}
+                                </Button>
+                              </Link>
                             </div>
                           </div>
                         </CardContent>
@@ -675,7 +675,7 @@ export default function TourDetailPage({
                                       .slice(0, 5)
                                       .map((pickup, index) => (
                                         <div
-                                          key={pickup.id || index}
+                                          key={pickup.id ?? `pickup-${index}`}
                                           className="flex items-center gap-2"
                                         >
                                           <div className="w-2 h-2 bg-coral-500 rounded-full"></div>
@@ -725,63 +725,73 @@ export default function TourDetailPage({
                             </div>
                           ) : availableSessions.length > 0 ? (
                             <div className="space-y-3">
-                              {availableSessions.slice(0, 3).map((session) => {
-                                const sessionDate = new Date(
-                                  session.startTimeLocal
-                                );
-                                const isLowAvailability =
-                                  session.seatsAvailable <= 3;
+                              {availableSessions
+                                .slice(0, 3)
+                                .map((session, index) => {
+                                  const sessionDate = new Date(
+                                    session.startTimeLocal
+                                  );
+                                  const isLowAvailability =
+                                    session.seatsAvailable <= 3;
 
-                                return (
-                                  <div
-                                    key={session.id}
-                                    className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
-                                  >
-                                    <div>
-                                      <div className="font-medium text-gray-900">
-                                        {sessionDate.toLocaleDateString(
-                                          "en-US",
-                                          {
-                                            weekday: "short",
-                                            month: "short",
-                                            day: "numeric",
-                                          }
-                                        )}
-                                      </div>
-                                      <div className="text-sm text-gray-600">
-                                        {sessionDate.toLocaleTimeString(
-                                          "en-US",
-                                          {
-                                            hour: "2-digit",
-                                            minute: "2-digit",
-                                          }
-                                        )}{" "}
-                                        • {session.seatsAvailable} seats
-                                      </div>
-                                    </div>
-                                    <Button
-                                      size="sm"
-                                      className="bg-coral-500 text-white hover:bg-coral-600"
-                                      onClick={() => setShowBooking(true)}
-                                      disabled={session.seatsAvailable === 0}
+                                  return (
+                                    <div
+                                      key={session.id ?? `session-${index}`}
+                                      className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
                                     >
-                                      Book{" "}
-                                      {session.totalPrice
-                                        ? `$${session.totalPrice}`
-                                        : price}
-                                    </Button>
-                                  </div>
-                                );
-                              })}
+                                      <div>
+                                        <div className="font-medium text-gray-900">
+                                          {sessionDate.toLocaleDateString(
+                                            "en-US",
+                                            {
+                                              weekday: "short",
+                                              month: "short",
+                                              day: "numeric",
+                                            }
+                                          )}
+                                        </div>
+                                        <div className="text-sm text-gray-600">
+                                          {sessionDate.toLocaleTimeString(
+                                            "en-US",
+                                            {
+                                              hour: "2-digit",
+                                              minute: "2-digit",
+                                            }
+                                          )}{" "}
+                                          • {session.seatsAvailable} seats
+                                        </div>
+                                      </div>
+                                      <Link
+                                        href={`/booking/${selectedProduct.productCode}`}
+                                      >
+                                        <Button
+                                          size="sm"
+                                          className="bg-coral-500 text-white hover:bg-coral-600"
+                                          disabled={
+                                            session.seatsAvailable === 0
+                                          }
+                                        >
+                                          Book{" "}
+                                          {session.totalPrice
+                                            ? `$${session.totalPrice}`
+                                            : price}
+                                        </Button>
+                                      </Link>
+                                    </div>
+                                  );
+                                })}
 
                               <div className="text-center pt-3">
-                                <Button
-                                  variant="outline"
-                                  onClick={() => setShowBooking(true)}
-                                  className="border-coral-200 text-coral-700 hover:bg-coral-50"
+                                <Link
+                                  href={`/booking/${selectedProduct.productCode}`}
                                 >
-                                  View All Available Dates
-                                </Button>
+                                  <Button
+                                    variant="outline"
+                                    className="border-coral-200 text-coral-700 hover:bg-coral-50"
+                                  >
+                                    View All Available Dates
+                                  </Button>
+                                </Link>
                               </div>
                             </div>
                           ) : (
@@ -793,13 +803,14 @@ export default function TourDetailPage({
                               <p className="text-gray-600 mb-4">
                                 Contact us for custom dates and group bookings.
                               </p>
-                              <Button
-                                variant="outline"
-                                onClick={() => setShowBooking(true)}
-                                className="border-coral-200 text-coral-700 hover:bg-coral-50"
-                              >
-                                Contact Us
-                              </Button>
+                              <Link href="/contact">
+                                <Button
+                                  variant="outline"
+                                  className="border-coral-200 text-coral-700 hover:bg-coral-50"
+                                >
+                                  Contact Us
+                                </Button>
+                              </Link>
                             </div>
                           )}
                         </CardContent>
@@ -830,18 +841,17 @@ export default function TourDetailPage({
                             ? availableSessions[0]
                             : undefined
                         }
-                        className="w-full"
+                        className="w-full mb-2"
                         variant="outline"
                       >
                         Add to Cart
                       </AddToCartButton>
 
-                      <Button
-                        className="w-full bg-coral-500 text-white hover:bg-coral-600"
-                        onClick={() => setShowBooking(true)}
-                      >
-                        Book Now
-                      </Button>
+                      <Link href={`/booking/${selectedProduct.productCode}`}>
+                        <Button className="w-full bg-coral-500 text-white hover:bg-coral-600">
+                          Book Now
+                        </Button>
+                      </Link>
                     </div>
 
                     <div className="text-center text-sm text-gray-600 mb-6">
@@ -872,13 +882,14 @@ export default function TourDetailPage({
                     </div>
 
                     <div className="pt-6 border-t border-gray-200 mt-6">
-                      <Button
-                        variant="outline"
-                        className="w-full text-sm border-gray-300 text-gray-700 hover:bg-gray-50"
-                        onClick={() => setShowBooking(true)}
-                      >
-                        Need Help? Contact Us
-                      </Button>
+                      <Link href="/contact">
+                        <Button
+                          variant="outline"
+                          className="w-full text-sm border-gray-300 text-gray-700 hover:bg-gray-50"
+                        >
+                          Need Help? Contact Us
+                        </Button>
+                      </Link>
                     </div>
                   </CardContent>
                 </Card>
@@ -992,13 +1003,14 @@ export default function TourDetailPage({
                         Add to Cart
                       </AddToCartButton>
 
-                      <Button
-                        size="sm"
-                        className="bg-coral-500 text-white hover:bg-coral-600"
-                        onClick={() => setShowBooking(true)}
-                      >
-                        Book Now
-                      </Button>
+                      <Link href={`/booking/${selectedProduct.productCode}`}>
+                        <Button
+                          size="sm"
+                          className="bg-coral-500 text-white hover:bg-coral-600"
+                        >
+                          Book Now
+                        </Button>
+                      </Link>
                     </div>
                   </div>
                 </CardContent>
@@ -1007,30 +1019,6 @@ export default function TourDetailPage({
           </div>
         </div>
       </section>
-
-      {/* Booking Modal */}
-      {showBooking && (
-        <div
-          className="fixed inset-0 bg-black/50 z-50"
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="booking-modal-title"
-        >
-          <div className="h-screen w-screen">
-            <div className="bg-white h-full w-full">
-              <EnhancedBookingExperience
-                product={selectedProduct}
-                onClose={() => setShowBooking(false)}
-                onBookingComplete={(bookingData) => {
-                  console.log("Booking completed:", bookingData);
-                  // Here you could redirect to a confirmation page or show a success message
-                  setShowBooking(false);
-                }}
-              />
-            </div>
-          </div>
-        </div>
-      )}
     </>
   );
 }

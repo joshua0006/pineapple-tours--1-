@@ -1,4 +1,5 @@
 import Image from "next/image";
+import Link from "next/link";
 import { Clock, TrendingUp, DollarSign } from "lucide-react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -11,6 +12,7 @@ interface ActivityCardProps {
   duration: string;
   difficulty: string;
   price: number;
+  productCode?: string;
 }
 
 export function ActivityCard({
@@ -20,6 +22,7 @@ export function ActivityCard({
   duration,
   difficulty,
   price,
+  productCode,
 }: ActivityCardProps) {
   const getDifficultyColor = (difficulty: string) => {
     switch (difficulty.toLowerCase()) {
@@ -70,9 +73,17 @@ export function ActivityCard({
             <span className="text-2xl font-bold">${price}</span>
             <span className="text-sm text-muted-foreground">per person</span>
           </div>
-          <Button className="bg-brand-accent text-brand-secondary hover:bg-coral-600">
-            Book Now
-          </Button>
+          {productCode ? (
+            <Link href={`/booking/${productCode}`}>
+              <Button className="bg-brand-accent text-brand-secondary hover:bg-coral-600">
+                Book Now
+              </Button>
+            </Link>
+          ) : (
+            <Button className="bg-brand-accent text-brand-secondary hover:bg-coral-600">
+              Book Now
+            </Button>
+          )}
         </div>
       </CardContent>
     </Card>

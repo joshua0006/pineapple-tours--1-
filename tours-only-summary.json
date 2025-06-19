@@ -1,0 +1,55 @@
+{
+  "totalCount": 200,
+  "cached": false,
+  "lastUpdated": "2025-06-19T12:16:22.870Z",
+  "filterInfo": {
+    "type": "tours-only",
+    "excludes": [
+      "GIFT_CARD",
+      "vouchers",
+      "gift cards",
+      "certificates"
+    ],
+    "originalCount": 214,
+    "filteredCount": 200,
+    "excludedCount": 14
+  },
+  "sampleProducts": [
+    {
+      "productCode": "PH1FEA",
+      "name": " Hop on Hop off Bus - Tamborine Mountain - From Brisbane",
+      "productType": "CUSTOM",
+      "advertisedPrice": 99
+    },
+    {
+      "productCode": "PRPEE2",
+      "name": "27 Seat Minibus Charter South East QLD and Northern NSW - Hourly Rate",
+      "productType": "RENTAL",
+      "advertisedPrice": 240
+    },
+    {
+      "productCode": "PHKGRW",
+      "name": "3 Day Luxury Brisbane - Gold Coast - Bryon Bay Experience",
+      "productType": "DAYTOUR",
+      "advertisedPrice": 1995
+    }
+  ],
+  "productTypes": [
+    "CUSTOM",
+    "RENTAL",
+    "DAYTOUR",
+    "CHARTER",
+    "PRIVATE_TOUR",
+    "TRANSFER",
+    "LESSON",
+    "ACTIVITY",
+    "MERCHANDISE",
+    "TICKET",
+    "MULTIDAYTOUR"
+  ],
+  "priceRange": {
+    "min": 1,
+    "max": 2550,
+    "average": 290.72074468085106
+  }
+}

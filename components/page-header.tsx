@@ -73,7 +73,9 @@ export function PageHeader({
       variant: buttonVariant,
       className:
         buttonVariant === "outline"
-          ? "border-white text-white hover:bg-white hover:text-brand-primary"
+          ? variant === "muted"
+            ? "border-brand-accent text-brand-accent hover:bg-brand-accent hover:text-white"
+            : "border-white text-white hover:bg-white hover:text-brand-primary"
           : variant === "muted"
           ? "bg-brand-accent text-white hover:bg-brand-accent/90"
           : "bg-white text-brand-primary hover:bg-gray-100",

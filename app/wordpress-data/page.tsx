@@ -1,8 +1,6 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { SiteHeader } from "@/components/site-header";
-import { SiteFooter } from "@/components/site-footer";
 import {
   Card,
   CardContent,
@@ -70,8 +68,6 @@ export default function WordPressDataPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <SiteHeader />
-
       <main className="container mx-auto px-4 py-8">
         {loading && (
           <div className="flex items-center justify-center p-8">
@@ -309,8 +305,6 @@ export default function WordPressDataPage() {
           </div>
         )}
       </main>
-
-      <SiteFooter />
     </div>
   );
 }

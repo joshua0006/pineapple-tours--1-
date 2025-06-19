@@ -1619,7 +1619,7 @@ export function EnhancedBookingExperience({
                         >
                           I agree to the{" "}
                           <a
-                            href="/terms"
+                            href="/terms-and-conditions"
                             className="text-primary underline"
                             target="_blank"
                           >
@@ -1627,7 +1627,7 @@ export function EnhancedBookingExperience({
                           </a>{" "}
                           and{" "}
                           <a
-                            href="/privacy"
+                            href="/privacy-policy"
                             className="text-primary underline"
                             target="_blank"
                           >

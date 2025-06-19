@@ -19,8 +19,6 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { SiteHeader } from "@/components/site-header";
-import { SiteFooter } from "@/components/site-footer";
 import { TourCard } from "@/components/tour-card";
 import { TestimonialCard } from "@/components/testimonial-card";
 import { ActivityCard } from "@/components/activity-card";
@@ -31,7 +29,6 @@ import { DestinationStats } from "@/components/destination-stats";
 export default function PrivateToursPage() {
   return (
     <div className="flex min-h-screen flex-col">
-      <SiteHeader />
       <main className="flex-1">
         {/* Breadcrumb */}
         <div className="container py-4">
@@ -651,7 +648,6 @@ export default function PrivateToursPage() {
           </div>
         </section>
       </main>
-      <SiteFooter />
     </div>
   );
 }

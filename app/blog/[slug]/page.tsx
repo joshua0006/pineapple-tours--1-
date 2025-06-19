@@ -20,7 +20,6 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 
-import { SiteFooter } from "@/components/site-footer";
 import { BlogCard } from "@/components/blog-card";
 import { BlogError } from "@/components/ui/blog-error";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -90,7 +89,6 @@ function BlogPostSkeleton() {
           </div>
         </section>
       </main>
-      <SiteFooter />
     </div>
   );
 }
@@ -172,67 +170,58 @@ export default function BlogPostPage({ params }: BlogPostPageProps) {
 
   if (error) {
     return (
-      <div className="flex min-h-screen flex-col">
-        <main className="flex-1 container py-16">
-          <BlogError error={error} onRetry={refetch} variant="full" />
-        </main>
-        <SiteFooter />
+      <div className="container py-16">
+        <BlogError error={error} onRetry={refetch} variant="full" />
       </div>
     );
   }
 
   if (!post) {
     return (
-      <div className="flex min-h-screen flex-col">
-        <main className="flex-1 container py-16">
-          <div className="text-center">
-            <h1 className="text-2xl font-bold mb-4">Blog Post Not Found</h1>
-            <p className="text-muted-foreground mb-8">
-              The blog post you're looking for doesn't exist.
-            </p>
+      <div className="container py-16">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold mb-4">Blog Post Not Found</h1>
+          <p className="text-muted-foreground mb-8">
+            The blog post you're looking for doesn't exist.
+          </p>
 
-            {/* Debug info */}
-            {process.env.NODE_ENV === "development" && (
-              <div className="bg-gray-100 p-4 rounded mb-4 text-left">
-                <h3 className="font-semibold mb-2">Debug Info:</h3>
-                <p>
-                  <strong>Requested slug:</strong> {slug}
-                </p>
-                <p>
-                  <strong>Total posts loaded:</strong> {posts.length}
-                </p>
-                <p>
-                  <strong>Available slugs:</strong>
-                </p>
-                <ul className="list-disc list-inside text-sm">
-                  {posts.slice(0, 5).map((p) => (
-                    <li key={p.id}>
-                      {p.slug} - {p.title}
-                    </li>
-                  ))}
-                  {posts.length > 5 && <li>... and {posts.length - 5} more</li>}
-                </ul>
-              </div>
-            )}
-
-            <Link href="/blog">
-              <Button>
-                <ChevronLeft className="mr-2 h-4 w-4" />
-                Back to Blog
-              </Button>
-            </Link>
-
-            <div className="mt-4">
-              <Link
-                href="/debug-blog"
-                className="text-blue-600 hover:underline"
-              >
-                View Debug Page
-              </Link>
+          {/* Debug info */}
+          {process.env.NODE_ENV === "development" && (
+            <div className="bg-gray-100 p-4 rounded mb-4 text-left">
+              <h3 className="font-semibold mb-2">Debug Info:</h3>
+              <p>
+                <strong>Requested slug:</strong> {slug}
+              </p>
+              <p>
+                <strong>Total posts loaded:</strong> {posts.length}
+              </p>
+              <p>
+                <strong>Available slugs:</strong>
+              </p>
+              <ul className="list-disc list-inside text-sm">
+                {posts.slice(0, 5).map((p) => (
+                  <li key={p.id}>
+                    {p.slug} - {p.title}
+                  </li>
+                ))}
+                {posts.length > 5 && <li>... and {posts.length - 5} more</li>}
+              </ul>
             </div>
+          )}
+
+          <Link href="/blog">
+            <Button>
+              <ChevronLeft className="mr-2 h-4 w-4" />
+              Back to Blog
+            </Button>
+          </Link>
+
+          <div className="mt-4">
+            <Link href="/debug-blog" className="text-blue-600 hover:underline">
+              View Debug Page
+            </Link>
           </div>
-        </main>
-        <SiteFooter />
+        </div>
       </div>
     );
   }
@@ -563,7 +552,6 @@ export default function BlogPostPage({ params }: BlogPostPageProps) {
           </div>
         </section>
       </main>
-      <SiteFooter />
     </div>
   );
 }

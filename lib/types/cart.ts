@@ -1,50 +1,55 @@
-import { RezdyProduct, RezdySession, RezdyExtra } from './rezdy'
+import { RezdyProduct, RezdySession, RezdyExtra } from "./rezdy";
 
 export interface CartItem {
-  id: string
-  product: RezdyProduct
-  session: RezdySession
+  id: string;
+  product: RezdyProduct;
+  session: RezdySession;
   participants: {
-    adults: number
-    children?: number
-    infants?: number
-  }
-  selectedExtras: CartExtra[]
-  totalPrice: number
-  dateAdded: Date
+    adults: number;
+    children?: number;
+    infants?: number;
+  };
+  selectedExtras: CartExtra[];
+  totalPrice: number;
+  dateAdded: Date;
 }
 
 export interface CartExtra {
-  extra: RezdyExtra
-  quantity: number
-  totalPrice: number
+  extra: RezdyExtra;
+  quantity: number;
+  totalPrice: number;
 }
 
 export interface Cart {
-  items: CartItem[]
-  totalItems: number
-  totalPrice: number
-  currency: string
+  items: CartItem[];
+  totalItems: number;
+  totalPrice: number;
+  currency: string;
 }
 
 export interface CartContextType {
-  cart: Cart
-  addToCart: (item: Omit<CartItem, 'id' | 'dateAdded'>) => void
-  removeFromCart: (itemId: string) => void
-  updateCartItem: (itemId: string, updates: Partial<CartItem>) => void
-  clearCart: () => void
-  isInCart: (productCode: string, sessionId: string) => boolean
-  getCartItemCount: () => number
-  getCartTotal: () => number
+  cart: Cart;
+  addToCart: (item: Omit<CartItem, "id" | "dateAdded">) => void;
+  removeFromCart: (itemId: string) => void;
+  removeFromCartByProductSession: (
+    productCode: string,
+    sessionId: string
+  ) => void;
+  updateCartItem: (itemId: string, updates: Partial<CartItem>) => void;
+  clearCart: () => void;
+  isInCart: (productCode: string, sessionId: string) => boolean;
+  getCartItemCount: () => number;
+  getCartTotal: () => number;
+  openCart: () => void;
 }
 
 export interface AddToCartData {
-  product: RezdyProduct
-  session: RezdySession
+  product: RezdyProduct;
+  session: RezdySession;
   participants: {
-    adults: number
-    children?: number
-    infants?: number
-  }
-  selectedExtras?: CartExtra[]
-} 
+    adults: number;
+    children?: number;
+    infants?: number;
+  };
+  selectedExtras?: CartExtra[];
+}

@@ -7,7 +7,11 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { useCart } from "@/hooks/use-cart";
+import {
+  useCart,
+  registerCartOpener,
+  unregisterCartOpener,
+} from "@/hooks/use-cart";
 import { formatPrice, getPrimaryImageUrl } from "@/lib/utils/product-utils";
 import { generateBookingUrl } from "@/lib/utils/booking-utils";
 import { useResponsive } from "@/hooks/use-responsive";
@@ -36,6 +40,12 @@ export function CartIcon({
   const total = getCartTotal();
   const router = useRouter();
 
+  // Register cart opener function
+  useEffect(() => {
+    registerCartOpener(() => setIsOpen(true));
+    return () => unregisterCartOpener();
+  }, []);
+
   // Handle animation timing
   useEffect(() => {
     if (isOpen) {
@@ -44,7 +54,7 @@ export function CartIcon({
       const timer = setTimeout(() => setIsAnimating(false), 300);
       return () => clearTimeout(timer);
     }
-  }, []);
+  }, [isOpen]);
 
   // Close mobile menu when clicking outside or on escape
   useEffect(() => {

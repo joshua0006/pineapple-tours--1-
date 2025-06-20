@@ -37,6 +37,12 @@ export default function BlogPage() {
   } = useWordPressBlog();
 
   const [selectedCategory, setSelectedCategory] = useState("All");
+  const [isBackgroundLoading, setIsBackgroundLoading] = useState(false);
+
+  // Check if we're doing a background update (have data but cache is old)
+  const hasData = posts.length > 0;
+  const isInitialLoad = loading && !hasData;
+  const isBackgroundUpdate = hasData && cacheStats.cacheAge > 5 * 60 * 1000; // 5 minutes
 
   // Filter posts by selected category
   const filteredFeaturedPosts = useMemo(() => {
@@ -78,19 +84,53 @@ export default function BlogPage() {
         variant="default"
       />
 
+      {/* Background Loading Indicator */}
+      {isBackgroundUpdate && (
+        <div className="container">
+          <div className="flex items-center justify-center py-2 bg-brand-accent/5 border border-brand-accent/10 rounded-lg mb-4">
+            <RefreshCw className="w-4 h-4 animate-spin text-brand-accent mr-2" />
+            <span className="text-sm text-brand-accent">
+              Refreshing content in background...
+            </span>
+          </div>
+        </div>
+      )}
+
       {/* Error State */}
-      {error && (
+      {error && !hasData && (
         <section className="container py-8">
           <BlogError error={error} onRetry={refetch} variant="full" />
         </section>
       )}
 
+      {/* Error State with Cached Data */}
+      {error && hasData && (
+        <div className="container">
+          <div className="flex items-center justify-between py-3 px-4 bg-yellow-50 border border-yellow-200 rounded-lg mb-4">
+            <div className="flex items-center">
+              <RefreshCw className="w-4 h-4 text-yellow-600 mr-2" />
+              <span className="text-sm text-yellow-800">
+                Showing cached content. Unable to fetch latest updates.
+              </span>
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={refetch}
+              className="text-yellow-700 border-yellow-300 hover:bg-yellow-100"
+            >
+              Retry
+            </Button>
+          </div>
+        </div>
+      )}
+
       {/* Loading or Content */}
-      {!error && (
+      {!error || hasData ? (
         <>
           {/* Categories Filter */}
           <section className="container py-8">
-            {loading ? (
+            {isInitialLoad ? (
               <BlogCategoriesSkeleton />
             ) : (
               <div className="flex flex-wrap gap-2">
@@ -128,7 +168,7 @@ export default function BlogPage() {
 
           {/* Main Content */}
           <section className="container pb-16">
-            {loading ? (
+            {isInitialLoad ? (
               <BlogLoadingGrid />
             ) : (
               <div className="space-y-12">
@@ -177,7 +217,7 @@ export default function BlogPage() {
                 )}
 
                 {/* No Posts Found */}
-                {!loading &&
+                {!isInitialLoad &&
                   filteredFeaturedPosts.length === 0 &&
                   filteredRegularPosts.length === 0 && (
                     <div className="text-center py-12">
@@ -204,7 +244,7 @@ export default function BlogPage() {
             )}
           </section>
         </>
-      )}
+      ) : null}
     </>
   );
 }

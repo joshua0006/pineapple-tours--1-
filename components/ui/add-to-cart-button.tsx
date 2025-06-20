@@ -1,26 +1,32 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { ShoppingCart, Check, Users, Plus, Minus } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
-import { Label } from "@/components/ui/label"
-import { Separator } from "@/components/ui/separator"
-import { Badge } from "@/components/ui/badge"
-import { useCart } from "@/hooks/use-cart"
-import { RezdyProduct, RezdySession } from "@/lib/types/rezdy"
-import { formatPrice } from "@/lib/utils/product-utils"
-import { useToast } from "@/hooks/use-toast"
+import { useState } from "react";
+import { ShoppingCart, Check, Users, Plus, Minus, X } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { Separator } from "@/components/ui/separator";
+import { Badge } from "@/components/ui/badge";
+import { useCart } from "@/hooks/use-cart";
+import { RezdyProduct, RezdySession } from "@/lib/types/rezdy";
+import { formatPrice } from "@/lib/utils/product-utils";
+import { useToast } from "@/hooks/use-toast";
 
 interface AddToCartButtonProps {
-  product: RezdyProduct
-  session?: RezdySession
-  className?: string
-  variant?: "default" | "outline" | "ghost"
-  size?: "sm" | "default" | "lg"
-  showIcon?: boolean
-  children?: React.ReactNode
+  product: RezdyProduct;
+  session?: RezdySession;
+  className?: string;
+  variant?: "default" | "outline" | "ghost";
+  size?: "sm" | "default" | "lg";
+  showIcon?: boolean;
+  children?: React.ReactNode;
 }
 
 export function AddToCartButton({
@@ -30,110 +36,143 @@ export function AddToCartButton({
   variant = "default",
   size = "default",
   showIcon = true,
-  children
+  children,
 }: AddToCartButtonProps) {
-  const { addToCart, isInCart } = useCart()
-  const { toast } = useToast()
-  const [isOpen, setIsOpen] = useState(false)
-  const [adults, setAdults] = useState(2)
-  const [childrenCount, setChildrenCount] = useState(0)
-  const [isAdding, setIsAdding] = useState(false)
+  const { addToCart, isInCart, removeFromCartByProductSession, openCart } =
+    useCart();
+  const { toast } = useToast();
+  const [isOpen, setIsOpen] = useState(false);
+  const [adults, setAdults] = useState(2);
+  const [childrenCount, setChildrenCount] = useState(0);
+  const [isAdding, setIsAdding] = useState(false);
+  const [isRemoving, setIsRemoving] = useState(false);
 
   // Check if this specific session is already in cart
-  const alreadyInCart = session ? isInCart(product.productCode, session.id) : false
+  const alreadyInCart = session
+    ? isInCart(product.productCode, session.id)
+    : false;
 
-  const basePrice = session?.totalPrice || product.advertisedPrice || 0
-  const totalParticipants = adults + childrenCount
-  const totalPrice = basePrice * totalParticipants
+  const basePrice = session?.totalPrice || product.advertisedPrice || 0;
+  const totalParticipants = adults + childrenCount;
+  const totalPrice = basePrice * totalParticipants;
 
   const handleAddToCart = async () => {
     if (!session) {
       toast({
         title: "Please select a date",
-        description: "Choose a specific date and time to add this tour to your cart.",
-        variant: "destructive"
-      })
-      return
+        description:
+          "Choose a specific date and time to add this tour to your cart.",
+        variant: "destructive",
+      });
+      return;
     }
 
-    setIsAdding(true)
-    
+    setIsAdding(true);
+
     try {
       addToCart({
         product,
         session,
         participants: {
           adults,
-          children: childrenCount > 0 ? childrenCount : undefined
+          children: childrenCount > 0 ? childrenCount : undefined,
         },
         selectedExtras: [],
-        totalPrice
-      })
+        totalPrice,
+      });
 
       toast({
         title: "Added to cart!",
         description: `${product.name} has been added to your cart.`,
-        action: (
-          <Button variant="outline" size="sm">
-            View Cart
-          </Button>
-        )
-      })
+      });
 
-      setIsOpen(false)
+      setIsOpen(false);
     } catch (error) {
       toast({
         title: "Error",
         description: "Failed to add tour to cart. Please try again.",
-        variant: "destructive"
-      })
+        variant: "destructive",
+      });
     } finally {
-      setIsAdding(false)
+      setIsAdding(false);
     }
-  }
+  };
+
+  const handleRemoveFromCart = async () => {
+    if (!session) {
+      toast({
+        title: "Error",
+        description: "Cannot remove item without session information.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsRemoving(true);
+
+    try {
+      removeFromCartByProductSession(product.productCode, session.id);
+
+      toast({
+        title: "Removed from cart",
+        description: `${product.name} has been removed from your cart.`,
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to remove tour from cart. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsRemoving(false);
+    }
+  };
 
   const handleQuickAdd = () => {
     if (!session) {
-      setIsOpen(true)
-      return
+      setIsOpen(true);
+      return;
     }
-    
-    // Quick add with default 2 adults
-    handleAddToCart()
-  }
 
-  if (alreadyInCart) {
-    return (
-      <Button
-        variant="success"
-        size={size}
-        className={className}
-        disabled
-      >
-        <Check className="h-4 w-4 mr-2" />
-        In Cart
-      </Button>
-    )
-  }
+    // Quick add with default 2 adults
+    handleAddToCart();
+  };
 
   return (
     <>
       <Button
-        variant={variant}
+        variant={alreadyInCart ? "destructive" : variant}
         size={size}
         className={className}
         onClick={(e) => {
-          e.stopPropagation()
-          if (session) {
-            handleQuickAdd()
+          e.stopPropagation();
+          if (alreadyInCart) {
+            handleRemoveFromCart();
+          } else if (session) {
+            handleQuickAdd();
           } else {
-            setIsOpen(true)
+            setIsOpen(true);
           }
         }}
-        disabled={isAdding}
+        disabled={isAdding || isRemoving}
       >
-        {showIcon && <ShoppingCart className="h-4 w-4 mr-2" />}
-        {children || (isAdding ? "Adding..." : "Add to Cart")}
+        {showIcon && (
+          <>
+            {alreadyInCart ? (
+              <X className="h-4 w-4 mr-2" />
+            ) : (
+              <ShoppingCart className="h-4 w-4 mr-2" />
+            )}
+          </>
+        )}
+        {children ||
+          (alreadyInCart
+            ? isRemoving
+              ? "Removing..."
+              : "Remove from Cart"
+            : isAdding
+            ? "Adding..."
+            : "Add to Cart")}
       </Button>
 
       <Dialog open={isOpen} onOpenChange={setIsOpen}>
@@ -148,15 +187,23 @@ export function AddToCartButton({
               <h4 className="font-medium mb-1">{product.name}</h4>
               {session && (
                 <p className="text-sm text-muted-foreground">
-                  {new Date(session.startTimeLocal).toLocaleDateString('en-US', {
-                    weekday: 'long',
-                    year: 'numeric',
-                    month: 'long',
-                    day: 'numeric'
-                  })} at {new Date(session.startTimeLocal).toLocaleTimeString('en-US', {
-                    hour: '2-digit',
-                    minute: '2-digit'
-                  })}
+                  {new Date(session.startTimeLocal).toLocaleDateString(
+                    "en-US",
+                    {
+                      weekday: "long",
+                      year: "numeric",
+                      month: "long",
+                      day: "numeric",
+                    }
+                  )}{" "}
+                  at{" "}
+                  {new Date(session.startTimeLocal).toLocaleTimeString(
+                    "en-US",
+                    {
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    }
+                  )}
                 </p>
               )}
             </div>
@@ -165,8 +212,10 @@ export function AddToCartButton({
 
             {/* Participant Selection */}
             <div className="space-y-4">
-              <Label className="text-base font-medium">Select Participants</Label>
-              
+              <Label className="text-base font-medium">
+                Select Participants
+              </Label>
+
               {/* Adults */}
               <div className="flex items-center justify-between">
                 <div>
@@ -207,12 +256,16 @@ export function AddToCartButton({
                     variant="outline"
                     size="icon"
                     className="h-8 w-8"
-                    onClick={() => setChildrenCount(Math.max(0, childrenCount - 1))}
+                    onClick={() =>
+                      setChildrenCount(Math.max(0, childrenCount - 1))
+                    }
                     disabled={childrenCount <= 0}
                   >
                     <Minus className="h-3 w-3" />
                   </Button>
-                  <span className="w-8 text-center font-medium">{childrenCount}</span>
+                  <span className="w-8 text-center font-medium">
+                    {childrenCount}
+                  </span>
                   <Button
                     variant="outline"
                     size="icon"
@@ -238,7 +291,10 @@ export function AddToCartButton({
                   </div>
                   <div className="flex justify-between text-sm">
                     <span>Participants</span>
-                    <span>{totalParticipants} person{totalParticipants > 1 ? 's' : ''}</span>
+                    <span>
+                      {totalParticipants} person
+                      {totalParticipants > 1 ? "s" : ""}
+                    </span>
                   </div>
                   <Separator />
                   <div className="flex justify-between font-medium">
@@ -269,7 +325,10 @@ export function AddToCartButton({
 
             {!session && (
               <div className="text-center">
-                <Badge variant="outline" className="text-orange-600 border-orange-300">
+                <Badge
+                  variant="outline"
+                  className="text-orange-600 border-orange-300"
+                >
                   Please select a date first
                 </Badge>
               </div>
@@ -278,5 +337,5 @@ export function AddToCartButton({
         </DialogContent>
       </Dialog>
     </>
-  )
-} 
+  );
+}

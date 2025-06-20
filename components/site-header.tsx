@@ -266,8 +266,8 @@ export function SiteHeader() {
 
         {/* Mobile/Tablet Actions */}
         <div className={cn("flex lg:hidden items-center gap-2 sm:gap-3")}>
-          {/* Show cart on tablet+ */}
-          <div className="hidden sm:block">
+          {/* Cart icon - visible on all devices */}
+          <div>
             <CartIcon />
           </div>
 

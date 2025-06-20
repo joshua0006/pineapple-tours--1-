@@ -160,98 +160,147 @@ export function useWordPressBlog(): UseBlogResult {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchBlogData = useCallback(async (forceRefresh = false) => {
-    try {
-      setLoading(true);
-      setError(null);
+  const fetchBlogData = useCallback(
+    async (forceRefresh = false, backgroundUpdate = false) => {
+      try {
+        // Only show loading state if not a background update and no cached data exists
+        if (!backgroundUpdate) {
+          setLoading(true);
+        }
+        setError(null);
 
-      // Check cache first (unless force refresh)
-      if (!forceRefresh) {
+        // Check cache first (unless force refresh)
+        if (!forceRefresh) {
+          const cachedData = blogCache.getBlogData();
+          if (cachedData) {
+            console.log("📱 Loading blog data from cache", {
+              postsCount: cachedData.posts.length,
+              categoriesCount: cachedData.categories.length,
+              cacheAge: blogCache.getCacheAge(),
+            });
+            setPosts(cachedData.posts);
+            setCategories(cachedData.categories);
+
+            // If this is initial load and we have cache, stop loading immediately
+            if (!backgroundUpdate) {
+              setLoading(false);
+            }
+
+            // If cache is fresh enough (less than 5 minutes), don't fetch
+            if (blogCache.getCacheAge() < 5 * 60 * 1000) {
+              return;
+            }
+
+            // Cache exists but is stale, continue to fetch in background
+            console.log("🔄 Cache is stale, fetching fresh data in background");
+          }
+        }
+
+        console.log("🌐 Fetching fresh blog data from WordPress API");
+
+        // Fetch posts with embedded author and media data
+        const postsResponse = await fetch(
+          "https://pineappletours.com.au/wp-json/wp/v2/posts?_embed&per_page=50&status=publish",
+          {
+            headers: {
+              Accept: "application/json",
+            },
+          }
+        );
+
+        if (!postsResponse.ok) {
+          throw new Error(`Failed to fetch posts: ${postsResponse.statusText}`);
+        }
+
+        const postsData: WordPressBlogPost[] = await postsResponse.json();
+
+        // Fetch categories
+        const categoriesResponse = await fetch(
+          "https://pineappletours.com.au/wp-json/wp/v2/categories?per_page=50",
+          {
+            headers: {
+              Accept: "application/json",
+            },
+          }
+        );
+
+        if (!categoriesResponse.ok) {
+          throw new Error(
+            `Failed to fetch categories: ${categoriesResponse.statusText}`
+          );
+        }
+
+        const categoriesData: WordPressCategory[] =
+          await categoriesResponse.json();
+
+        // Transform and set data
+        const transformedPosts = postsData.map(transformWordPressPost);
+
+        // Cache the data
+        blogCache.setBlogData(transformedPosts, categoriesData);
+
+        console.log("💾 Cached fresh blog data", {
+          postsCount: transformedPosts.length,
+          categoriesCount: categoriesData.length,
+          isBackgroundUpdate: backgroundUpdate,
+        });
+
+        // Update state with fresh data
+        setPosts(transformedPosts);
+        setCategories(categoriesData);
+      } catch (err) {
+        console.error("Error fetching blog data:", err);
+
+        // Only set error if we don't have cached data to show
         const cachedData = blogCache.getBlogData();
-        if (cachedData) {
-          console.log("📱 Loading blog data from cache", {
-            postsCount: cachedData.posts.length,
-            categoriesCount: cachedData.categories.length,
-            cacheAge: blogCache.getCacheAge(),
-          });
+        if (!cachedData) {
+          setError(
+            err instanceof Error ? err.message : "Failed to fetch blog data"
+          );
+        } else {
+          console.log("⚠️ Background fetch failed, keeping cached data");
+          // For background updates, don't show error if we have cached data
+          if (!backgroundUpdate) {
+            setError(
+              err instanceof Error ? err.message : "Failed to fetch blog data"
+            );
+          }
+        }
+
+        // Try to load from cache as fallback on error
+        if (cachedData && !backgroundUpdate) {
+          console.log("⚠️ Loading stale cache data due to fetch error");
           setPosts(cachedData.posts);
           setCategories(cachedData.categories);
+        }
+      } finally {
+        if (!backgroundUpdate) {
           setLoading(false);
-          return;
         }
       }
-
-      console.log("🌐 Fetching fresh blog data from WordPress API");
-
-      // Fetch posts with embedded author and media data
-      const postsResponse = await fetch(
-        "https://pineappletours.com.au/wp-json/wp/v2/posts?_embed&per_page=50&status=publish",
-        {
-          headers: {
-            Accept: "application/json",
-          },
-        }
-      );
-
-      if (!postsResponse.ok) {
-        throw new Error(`Failed to fetch posts: ${postsResponse.statusText}`);
-      }
-
-      const postsData: WordPressBlogPost[] = await postsResponse.json();
-
-      // Fetch categories
-      const categoriesResponse = await fetch(
-        "https://pineappletours.com.au/wp-json/wp/v2/categories?per_page=50",
-        {
-          headers: {
-            Accept: "application/json",
-          },
-        }
-      );
-
-      if (!categoriesResponse.ok) {
-        throw new Error(
-          `Failed to fetch categories: ${categoriesResponse.statusText}`
-        );
-      }
-
-      const categoriesData: WordPressCategory[] =
-        await categoriesResponse.json();
-
-      // Transform and set data
-      const transformedPosts = postsData.map(transformWordPressPost);
-
-      // Cache the data
-      blogCache.setBlogData(transformedPosts, categoriesData);
-
-      console.log("💾 Cached fresh blog data", {
-        postsCount: transformedPosts.length,
-        categoriesCount: categoriesData.length,
-      });
-
-      setPosts(transformedPosts);
-      setCategories(categoriesData);
-    } catch (err) {
-      console.error("Error fetching blog data:", err);
-      setError(
-        err instanceof Error ? err.message : "Failed to fetch blog data"
-      );
-
-      // Try to load from cache as fallback on error
-      const cachedData = blogCache.getBlogData();
-      if (cachedData) {
-        console.log("⚠️ Loading stale cache data due to fetch error");
-        setPosts(cachedData.posts);
-        setCategories(cachedData.categories);
-        // Still show error but with cached data
-      }
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+    },
+    []
+  );
 
   useEffect(() => {
-    fetchBlogData();
+    // Check if we have cached data first
+    const cachedData = blogCache.getBlogData();
+
+    if (cachedData) {
+      // Load cached data immediately
+      console.log("⚡ Loading cached data immediately on mount");
+      setPosts(cachedData.posts);
+      setCategories(cachedData.categories);
+      setLoading(false);
+
+      // Then fetch fresh data in background
+      setTimeout(() => {
+        fetchBlogData(false, true); // backgroundUpdate = true
+      }, 100);
+    } else {
+      // No cache, fetch normally
+      fetchBlogData();
+    }
   }, [fetchBlogData]);
 
   const featuredPosts = posts.filter((post) => post.featured);

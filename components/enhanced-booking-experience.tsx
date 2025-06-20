@@ -1692,7 +1692,7 @@ export function EnhancedBookingExperience({
 
           {/* Sidebar - Booking Summary */}
           <div className="lg:col-span-1">
-            <div className="lg:sticky lg:top-6 space-y-4">
+            <div className="lg:sticky lg:top-24 space-y-4">
               {/* Product Summary */}
               <Card>
                 <CardHeader>

@@ -165,9 +165,8 @@ export function SiteHeader() {
         <Link
           href="/"
           className={cn(
-            "flex items-center gap-2 sm:gap-3 group transition-all duration-300 ease-in-out",
-            "hover:scale-105 rounded-xl p-1.5 sm:p-2 -m-1.5 sm:-m-2",
-            responsiveSpacing.focusRing
+            "flex items-center gap-2 sm:gap-3 group transition-transform duration-300 ease-in-out",
+            "hover:scale-105 rounded-xl p-1.5 sm:p-2 -m-1.5 sm:-m-2"
           )}
           aria-label="Pineapple Tours - Home"
         >
@@ -176,11 +175,10 @@ export function SiteHeader() {
               src="/pineapple-tour-logo.png"
               alt="Pineapple Tours"
               className={cn(
-                "transition-all duration-300 ease-in-out drop-shadow-sm",
+                "drop-shadow-sm",
                 responsiveSpacing.logoSize // Progressive sizing
               )}
             />
-            <div className="absolute inset-0 bg-gradient-to-br from-primary/10 to-transparent rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
           </div>
           {/* Hide text on very small screens, show on sm+ */}
           <div className="hidden xs:block sm:block"></div>
@@ -208,13 +206,13 @@ export function SiteHeader() {
                 <Link
                   href={item.href}
                   className={cn(
-                    "group relative py-2.5 font-medium rounded-lg transition-all duration-200",
+                    "group relative py-2.5 font-medium rounded-lg transition-transform duration-200",
                     "flex items-center justify-center",
                     tabSpacing.padding, // Responsive padding
                     tabSpacing.textSize, // Responsive text size
                     // Interactive states
-                    "hover:bg-accent/50 hover:text-accent-foreground hover:scale-105",
-                    "focus:bg-accent focus:text-accent-foreground focus:outline-none",
+                    "hover:scale-105",
+                    "focus:outline-none",
                     responsiveSpacing.focusRing,
                     "active:scale-95"
                   )}
@@ -225,13 +223,12 @@ export function SiteHeader() {
                       : "auto",
                     // Enhanced transitions
                     transition:
-                      "min-width 0.3s ease-in-out, background-color 0.2s ease-in-out, transform 0.2s ease-in-out, padding 0.2s ease-in-out",
+                      "min-width 0.3s ease-in-out, transform 0.2s ease-in-out",
                   }}
                 >
                   <span className="relative z-10 whitespace-nowrap">
                     {item.label}
                   </span>
-                  <div className="absolute inset-0 bg-gradient-to-r from-primary/5 to-transparent rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200" />
                 </Link>
               </li>
             ))}
@@ -252,8 +249,8 @@ export function SiteHeader() {
               size="sm"
               className={cn(
                 "bg-gradient-to-r from-primary to-primary/90",
-                "hover:from-primary/90 hover:to-primary hover:scale-105",
-                "shadow-md hover:shadow-lg transition-all duration-200",
+                "hover:scale-105",
+                "shadow-md transition-transform duration-200",
                 "font-semibold active:scale-95",
                 actionSpacing.padding // Responsive button padding
               )}
@@ -277,11 +274,7 @@ export function SiteHeader() {
               <Button
                 variant="ghost"
                 size="icon"
-                className={cn(
-                  "h-10 w-10 sm:h-11 sm:w-11 rounded-xl transition-all duration-200",
-                  "hover:bg-accent/50 active:scale-95",
-                  responsiveSpacing.focusRing
-                )}
+                className="h-10 w-10 sm:h-11 sm:w-11 transition-transform duration-200 active:scale-95"
                 aria-label={
                   isOpen ? "Close navigation menu" : "Open navigation menu"
                 }

@@ -91,6 +91,9 @@ import {
   PaymentConfirmation,
   BookingService,
 } from "@/lib/services/booking-service";
+import { loadStripe } from "@stripe/stripe-js";
+import { Elements } from "@stripe/react-stripe-js";
+import { StripePaymentForm } from "@/components/ui/stripe-payment-form";
 
 interface EnhancedBookingExperienceProps {
   product: RezdyProduct;
@@ -134,8 +137,13 @@ const BOOKING_STEPS = [
   },
   {
     id: 3,
-    title: "Review & Pay",
-    description: "Review your booking and proceed to secure payment",
+    title: "Review Booking",
+    description: "Review your booking details",
+  },
+  {
+    id: 4,
+    title: "Secure Payment",
+    description: "Complete your payment securely with Stripe",
   },
 ];
 
@@ -214,6 +222,14 @@ export function EnhancedBookingExperience({
 
   // Payment processing state
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
+
+  // Stripe state
+  const [stripePromise] = useState(() =>
+    loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!)
+  );
+  const [clientSecret, setClientSecret] = useState<string>("");
+  const [paymentIntentId, setPaymentIntentId] = useState<string>("");
+  const [orderNumber, setOrderNumber] = useState<string>("");
 
   // Initialize form data from cart item if provided
   useEffect(() => {
@@ -573,7 +589,9 @@ export function EnhancedBookingExperience({
           contactInfo.phone
         );
       case 3:
-        return agreeToTerms; // Only need terms agreement for final step
+        return agreeToTerms; // Terms agreement required to proceed to payment
+      case 4:
+        return false; // Payment step doesn't proceed to next step
       default:
         return false;
     }
@@ -607,6 +625,57 @@ export function EnhancedBookingExperience({
   ) => {
     setSelectedBookingOption(option);
     setSelectedPickupLocation(location);
+  };
+
+  // Stripe payment handlers
+  const handlePaymentSuccess = async (stripePaymentIntentId: string) => {
+    setIsProcessingPayment(true);
+    setBookingErrors([]);
+
+    try {
+      console.log("Payment succeeded, confirming with backend...");
+
+      // Confirm payment with our backend
+      const confirmResponse = await fetch(
+        "/api/payments/stripe/confirm-payment",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            paymentIntentId: stripePaymentIntentId,
+            orderNumber,
+          }),
+        }
+      );
+
+      const confirmResult = await confirmResponse.json();
+
+      if (confirmResult.success) {
+        console.log("Booking confirmed:", confirmResult.orderNumber);
+
+        // Redirect to confirmation page
+        window.location.href = `/booking/confirmation?orderNumber=${confirmResult.orderNumber}&transactionId=${confirmResult.transactionId}`;
+      } else {
+        console.error("Booking confirmation failed:", confirmResult.error);
+        setBookingErrors([
+          confirmResult.error ||
+            "Booking confirmation failed. Please contact support.",
+        ]);
+      }
+    } catch (error) {
+      console.error("Payment confirmation error:", error);
+      setBookingErrors(["Failed to confirm payment. Please contact support."]);
+    } finally {
+      setIsProcessingPayment(false);
+    }
+  };
+
+  const handlePaymentError = (error: string) => {
+    console.error("Payment error:", error);
+    setBookingErrors([error]);
+    setIsProcessingPayment(false);
   };
 
   const handleNextStep = () => {
@@ -693,40 +762,46 @@ export function EnhancedBookingExperience({
       }
 
       // Generate unique order number
-      const orderNumber = `ORD-${Date.now()}-${Math.floor(
+      const generatedOrderNumber = `ORD-${Date.now()}-${Math.floor(
         Math.random() * 1000
       )}`;
+      setOrderNumber(generatedOrderNumber);
 
-      // Initiate payment with Westpac and redirect to hosted payment page
-      console.log("Initiating payment with Westpac...");
-      const paymentResponse = await fetch("/api/payments/westpac/initiate", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          bookingData: formData,
-          orderNumber,
-        }),
-      });
+      // Create Stripe Checkout session
+      console.log("Creating Stripe Checkout session...");
+      const checkoutResponse = await fetch(
+        "/api/payments/stripe/create-checkout-session",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            bookingData: formData,
+            orderNumber: generatedOrderNumber,
+          }),
+        }
+      );
 
-      const paymentResult = await paymentResponse.json();
+      const checkoutResult = await checkoutResponse.json();
 
-      if (!paymentResult.success) {
-        setBookingErrors([paymentResult.error || "Failed to initiate payment"]);
+      if (!checkoutResult.success || !checkoutResult.url) {
+        setBookingErrors([
+          checkoutResult.error || "Failed to create checkout session",
+        ]);
         setIsProcessingPayment(false);
         return;
       }
 
-      // Redirect to Westpac hosted payment page
-      console.log("Redirecting to Westpac payment page...");
-      window.location.href = paymentResult.redirectUrl;
-
-      // Note: The rest of the booking process (payment confirmation and Rezdy registration)
-      // will be handled by the payment callback endpoint after successful payment
+      // Redirect user to Stripe-hosted Checkout page
+      window.location.href = checkoutResult.url as string;
+      // Note: no further code will execute after redirect, but keep for safety
+      return;
     } catch (error) {
-      console.error("Booking submission error:", error);
-      setBookingErrors(["Failed to process booking. Please try again."]);
+      console.error("Checkout session creation error:", error);
+      setBookingErrors([
+        "Failed to create checkout session. Please try again.",
+      ]);
       setIsProcessingPayment(false);
     }
   };
@@ -1066,7 +1141,7 @@ export function EnhancedBookingExperience({
 
                                 return (
                                   <Card
-                                    key={session.id}
+                                    key={`${session.id}-${session.startTimeLocal}`}
                                     className={cn(
                                       "cursor-pointer transition-all duration-200 border",
                                       isSelected
@@ -1440,7 +1515,7 @@ export function EnhancedBookingExperience({
               </Card>
             )}
 
-            {/* Step 3: Review & Pay */}
+            {/* Step 3: Review Booking */}
             {currentStep === 3 && (
               <div className="space-y-6">
                 {/* Booking Review */}
@@ -1572,7 +1647,7 @@ export function EnhancedBookingExperience({
                         <div className="bg-muted/30 p-4 rounded-lg space-y-2">
                           {selectedExtras.map((extra, index) => (
                             <div
-                              key={extra.extra.id}
+                              key={`${extra.extra.id}-${index}`}
                               className="flex justify-between text-sm"
                             >
                               <span>
@@ -1657,9 +1732,9 @@ export function EnhancedBookingExperience({
                     <Alert>
                       <Shield className="h-4 w-4" />
                       <AlertDescription>
-                        You will be redirected to Westpac's secure payment
-                        gateway to complete your payment. Your booking will be
-                        confirmed automatically after successful payment.
+                        You will proceed to our secure payment page powered by
+                        Stripe. Your booking will be confirmed automatically
+                        after successful payment.
                       </AlertDescription>
                     </Alert>
 
@@ -1668,15 +1743,15 @@ export function EnhancedBookingExperience({
                       <AlertTitle>What happens next?</AlertTitle>
                       <AlertDescription className="space-y-1 mt-2">
                         <div>
-                          1. You'll be redirected to Westpac's secure payment
-                          page
+                          1. You'll proceed to our secure payment page powered
+                          by Stripe
                         </div>
                         <div>
-                          2. Complete your payment using credit card, PayPal, or
-                          bank transfer
+                          2. Complete your payment using credit card, Apple Pay,
+                          or Google Pay
                         </div>
                         <div>
-                          3. You'll be redirected back with booking confirmation
+                          3. Your booking will be confirmed automatically
                         </div>
                         <div>
                           4. Confirmation email will be sent to{" "}
@@ -1684,6 +1759,53 @@ export function EnhancedBookingExperience({
                         </div>
                       </AlertDescription>
                     </Alert>
+                  </CardContent>
+                </Card>
+              </div>
+            )}
+
+            {/* Step 4: Secure Payment */}
+            {currentStep === 4 && clientSecret && (
+              <div className="space-y-6">
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Shield className="h-5 w-5" />
+                      Secure Payment
+                    </CardTitle>
+                    <p className="text-muted-foreground">
+                      Complete your booking payment securely with Stripe
+                    </p>
+                  </CardHeader>
+                  <CardContent>
+                    <Elements
+                      stripe={stripePromise}
+                      options={{
+                        clientSecret,
+                        appearance: {
+                          theme: "stripe",
+                          variables: {
+                            colorPrimary: "#FF585D",
+                            colorBackground: "#ffffff",
+                            colorText: "#424770",
+                            colorDanger: "#df1b41",
+                            fontFamily: "Inter, system-ui, sans-serif",
+                            spacingUnit: "4px",
+                            borderRadius: "8px",
+                          },
+                        },
+                      }}
+                    >
+                      <StripePaymentForm
+                        clientSecret={clientSecret}
+                        orderNumber={orderNumber}
+                        amount={pricingBreakdown.total}
+                        currency="AUD"
+                        onPaymentSuccess={handlePaymentSuccess}
+                        onPaymentError={handlePaymentError}
+                        loading={isProcessingPayment}
+                      />
+                    </Elements>
                   </CardContent>
                 </Card>
               </div>
@@ -1812,7 +1934,7 @@ export function EnhancedBookingExperience({
               Next
               <ArrowRight className="h-4 w-4" />
             </Button>
-          ) : (
+          ) : currentStep === 3 ? (
             <Button
               onClick={handleProceedToPayment}
               disabled={!canProceedToNextStep() || isProcessingPayment}
@@ -1822,7 +1944,7 @@ export function EnhancedBookingExperience({
               {isProcessingPayment ? (
                 <>
                   <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                  Redirecting to Payment...
+                  Creating Payment...
                 </>
               ) : (
                 <>
@@ -1831,6 +1953,11 @@ export function EnhancedBookingExperience({
                 </>
               )}
             </Button>
+          ) : (
+            // Step 4 (Payment) - no next button needed, payment form handles submission
+            <div className="text-sm text-muted-foreground">
+              Complete the payment form above to finish your booking
+            </div>
           )}
         </div>
       </div>

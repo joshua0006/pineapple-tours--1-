@@ -1,51 +1,59 @@
-"use client"
+"use client";
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { Separator } from "@/components/ui/separator"
-import { Button } from "@/components/ui/button"
-import { Info, TrendingDown, Calculator } from "lucide-react"
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
-import { 
-  type PricingBreakdown, 
-  formatCurrency, 
-  getTaxBreakdown, 
-  getFeeBreakdown, 
-  getDiscountInfo 
-} from "@/lib/utils/pricing-utils"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
+import { Button } from "@/components/ui/button";
+import { Info, TrendingDown, Calculator } from "lucide-react";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import {
+  type PricingBreakdown,
+  formatCurrency,
+  getTaxBreakdown,
+  getFeeBreakdown,
+  getDiscountInfo,
+} from "@/lib/utils/pricing-utils";
 
 interface PricingDisplayProps {
-  breakdown: PricingBreakdown
-  showDetails?: boolean
-  compact?: boolean
-  className?: string
+  breakdown: PricingBreakdown;
+  showDetails?: boolean;
+  compact?: boolean;
+  className?: string;
 }
 
-export function PricingDisplay({ 
-  breakdown, 
-  showDetails = false, 
+export function PricingDisplay({
+  breakdown,
+  showDetails = false,
   compact = false,
-  className = "" 
+  className = "",
 }: PricingDisplayProps) {
-  const discountInfo = getDiscountInfo(breakdown)
-  const taxBreakdown = getTaxBreakdown(breakdown.subtotal)
-  const feeBreakdown = getFeeBreakdown(breakdown.subtotal)
+  const discountInfo = getDiscountInfo(breakdown);
+  const taxBreakdown = getTaxBreakdown(breakdown.subtotal);
+  const feeBreakdown = getFeeBreakdown(breakdown.subtotal);
 
   if (compact) {
     return (
       <div className={`space-y-2 ${className}`}>
         <div className="flex justify-between items-center">
           <span className="text-sm text-muted-foreground">Total</span>
-          <span className="text-lg font-bold">{formatCurrency(breakdown.total)}</span>
+          <span className="text-lg font-bold">
+            {formatCurrency(breakdown.total)}
+          </span>
         </div>
         {discountInfo.hasDiscounts && (
           <div className="flex items-center gap-2">
             <TrendingDown className="h-4 w-4 text-green-600" />
-            <span className="text-sm text-green-600">{discountInfo.discountText}</span>
+            <span className="text-sm text-green-600">
+              {discountInfo.discountText}
+            </span>
           </div>
         )}
       </div>
-    )
+    );
   }
 
   return (
@@ -65,22 +73,28 @@ export function PricingDisplay({
                   <div>
                     <h4 className="font-medium mb-2">Tax Breakdown</h4>
                     <div className="space-y-1">
-                      {taxBreakdown.map((tax) => (
-                        <div key={tax.name} className="flex justify-between text-sm">
+                      {taxBreakdown.map((tax, idx) => (
+                        <div
+                          key={`${tax.name}-${idx}`}
+                          className="flex justify-between text-sm"
+                        >
                           <span>{tax.name}</span>
                           <span>{formatCurrency(tax.amount)}</span>
                         </div>
                       ))}
                     </div>
                   </div>
-                  
+
                   <Separator />
-                  
+
                   <div>
                     <h4 className="font-medium mb-2">Fee Breakdown</h4>
                     <div className="space-y-1">
-                      {feeBreakdown.map((fee) => (
-                        <div key={fee.name} className="flex justify-between text-sm">
+                      {feeBreakdown.map((fee, idx) => (
+                        <div
+                          key={`${fee.name}-${idx}`}
+                          className="flex justify-between text-sm"
+                        >
                           <span>{fee.name}</span>
                           <span>{formatCurrency(fee.amount)}</span>
                         </div>
@@ -97,63 +111,90 @@ export function PricingDisplay({
         {/* Guest breakdown */}
         {breakdown.adults > 0 && (
           <div className="flex justify-between">
-            <span>{breakdown.adults} Adult{breakdown.adults > 1 ? 's' : ''} × {formatCurrency(breakdown.adultPrice)}</span>
-            <span>{formatCurrency(breakdown.adults * breakdown.adultPrice)}</span>
+            <span>
+              {breakdown.adults} Adult{breakdown.adults > 1 ? "s" : ""} ×{" "}
+              {formatCurrency(breakdown.adultPrice)}
+            </span>
+            <span>
+              {formatCurrency(breakdown.adults * breakdown.adultPrice)}
+            </span>
           </div>
         )}
         {breakdown.children > 0 && (
           <div className="flex justify-between">
-            <span>{breakdown.children} Child{breakdown.children > 1 ? 'ren' : ''} × {formatCurrency(breakdown.childPrice)}</span>
-            <span>{formatCurrency(breakdown.children * breakdown.childPrice)}</span>
+            <span>
+              {breakdown.children} Child{breakdown.children > 1 ? "ren" : ""} ×{" "}
+              {formatCurrency(breakdown.childPrice)}
+            </span>
+            <span>
+              {formatCurrency(breakdown.children * breakdown.childPrice)}
+            </span>
           </div>
         )}
         {breakdown.infants > 0 && (
           <div className="flex justify-between">
-            <span>{breakdown.infants} Infant{breakdown.infants > 1 ? 's' : ''} × {formatCurrency(breakdown.infantPrice)}</span>
-            <span>{formatCurrency(breakdown.infants * breakdown.infantPrice)}</span>
+            <span>
+              {breakdown.infants} Infant{breakdown.infants > 1 ? "s" : ""} ×{" "}
+              {formatCurrency(breakdown.infantPrice)}
+            </span>
+            <span>
+              {formatCurrency(breakdown.infants * breakdown.infantPrice)}
+            </span>
           </div>
         )}
-        
+
         {/* Extras breakdown */}
         {breakdown.selectedExtras && breakdown.selectedExtras.length > 0 && (
           <>
             <Separator className="my-3" />
             <div className="space-y-2">
-              <h4 className="font-medium text-sm text-muted-foreground">Optional Extras</h4>
-              {breakdown.selectedExtras.map(({ extra, quantity }) => {
+              <h4 className="font-medium text-sm text-muted-foreground">
+                Optional Extras
+              </h4>
+              {breakdown.selectedExtras.map(({ extra, quantity }, idx) => {
                 const totalPrice = (() => {
-                  const guestCount = breakdown.adults + breakdown.children + breakdown.infants
+                  const guestCount =
+                    breakdown.adults + breakdown.children + breakdown.infants;
                   switch (extra.priceType) {
-                    case 'PER_PERSON':
-                      return extra.price * guestCount * quantity
-                    case 'PER_BOOKING':
-                      return extra.price * quantity
-                    case 'PER_DAY':
-                      return extra.price * quantity
+                    case "PER_PERSON":
+                      return extra.price * guestCount * quantity;
+                    case "PER_BOOKING":
+                      return extra.price * quantity;
+                    case "PER_DAY":
+                      return extra.price * quantity;
                     default:
-                      return extra.price * quantity
+                      return extra.price * quantity;
                   }
-                })()
-                
+                })();
+
                 return (
-                  <div key={extra.id} className="flex justify-between text-sm">
-                    <span>{extra.name} × {quantity}</span>
+                  <div
+                    key={`${extra.id}-${idx}`}
+                    className="flex justify-between text-sm"
+                  >
+                    <span>
+                      {extra.name} × {quantity}
+                    </span>
                     <span>{formatCurrency(totalPrice)}</span>
                   </div>
-                )
+                );
               })}
             </div>
           </>
         )}
-        
+
         {/* Discounts */}
         {discountInfo.hasDiscounts && (
           <div className="bg-green-50 border border-green-200 rounded-lg p-3">
             <div className="flex items-center gap-2">
               <TrendingDown className="h-4 w-4 text-green-600" />
-              <span className="text-sm font-medium text-green-800">Savings Applied</span>
+              <span className="text-sm font-medium text-green-800">
+                Savings Applied
+              </span>
             </div>
-            <p className="text-sm text-green-700 mt-1">{discountInfo.discountText}</p>
+            <p className="text-sm text-green-700 mt-1">
+              {discountInfo.discountText}
+            </p>
             {breakdown.savings && (
               <p className="text-sm font-medium text-green-800 mt-1">
                 You save {formatCurrency(breakdown.savings)}!
@@ -161,19 +202,19 @@ export function PricingDisplay({
             )}
           </div>
         )}
-        
+
         <div className="flex justify-between font-medium">
           <span>Tour Subtotal</span>
           <span>{formatCurrency(breakdown.subtotal)}</span>
         </div>
-        
+
         {breakdown.extrasSubtotal > 0 && (
           <div className="flex justify-between font-medium">
             <span>Extras Subtotal</span>
             <span>{formatCurrency(breakdown.extrasSubtotal)}</span>
           </div>
         )}
-        
+
         <div className="flex justify-between text-muted-foreground">
           <div className="flex items-center gap-1">
             <span>Taxes</span>
@@ -187,14 +228,16 @@ export function PricingDisplay({
                 <PopoverContent className="w-64">
                   <div className="space-y-2">
                     <h4 className="font-medium">Tax Details</h4>
-                    {taxBreakdown.map((tax) => (
-                      <div key={tax.name} className="space-y-1">
+                    {taxBreakdown.map((tax, idx) => (
+                      <div key={`${tax.name}-${idx}`} className="space-y-1">
                         <div className="flex justify-between text-sm">
                           <span>{tax.name}</span>
                           <span>{formatCurrency(tax.amount)}</span>
                         </div>
                         {tax.description && (
-                          <p className="text-xs text-muted-foreground">{tax.description}</p>
+                          <p className="text-xs text-muted-foreground">
+                            {tax.description}
+                          </p>
                         )}
                       </div>
                     ))}
@@ -205,7 +248,7 @@ export function PricingDisplay({
           </div>
           <span>{formatCurrency(breakdown.taxes)}</span>
         </div>
-        
+
         <div className="flex justify-between text-muted-foreground">
           <div className="flex items-center gap-1">
             <span>Service fees</span>
@@ -219,14 +262,16 @@ export function PricingDisplay({
                 <PopoverContent className="w-64">
                   <div className="space-y-2">
                     <h4 className="font-medium">Fee Details</h4>
-                    {feeBreakdown.map((fee) => (
-                      <div key={fee.name} className="space-y-1">
+                    {feeBreakdown.map((fee, idx) => (
+                      <div key={`${fee.name}-${idx}`} className="space-y-1">
                         <div className="flex justify-between text-sm">
                           <span>{fee.name}</span>
                           <span>{formatCurrency(fee.amount)}</span>
                         </div>
                         {fee.description && (
-                          <p className="text-xs text-muted-foreground">{fee.description}</p>
+                          <p className="text-xs text-muted-foreground">
+                            {fee.description}
+                          </p>
                         )}
                       </div>
                     ))}
@@ -237,36 +282,44 @@ export function PricingDisplay({
           </div>
           <span>{formatCurrency(breakdown.serviceFees)}</span>
         </div>
-        
+
         <Separator />
-        
+
         <div className="flex justify-between text-lg font-bold">
           <span>Total</span>
           <span>{formatCurrency(breakdown.total)}</span>
         </div>
-        
+
         <div className="text-center text-xs text-muted-foreground">
           All prices are in USD and include applicable taxes and fees
         </div>
       </CardContent>
     </Card>
-  )
+  );
 }
 
 interface PricingSummaryProps {
-  breakdown: PricingBreakdown
-  className?: string
+  breakdown: PricingBreakdown;
+  className?: string;
 }
 
-export function PricingSummary({ breakdown, className = "" }: PricingSummaryProps) {
-  const totalGuests = breakdown.adults + breakdown.children + breakdown.infants
-  const pricePerPerson = totalGuests > 0 ? Math.round(breakdown.total / totalGuests) : 0
+export function PricingSummary({
+  breakdown,
+  className = "",
+}: PricingSummaryProps) {
+  const totalGuests = breakdown.adults + breakdown.children + breakdown.infants;
+  const pricePerPerson =
+    totalGuests > 0 ? Math.round(breakdown.total / totalGuests) : 0;
 
   return (
     <div className={`bg-muted rounded-lg p-4 ${className}`}>
       <div className="flex items-center justify-between mb-2">
-        <span className="text-sm font-medium">Total for {totalGuests} guest{totalGuests !== 1 ? 's' : ''}</span>
-        <span className="text-2xl font-bold">{formatCurrency(breakdown.total)}</span>
+        <span className="text-sm font-medium">
+          Total for {totalGuests} guest{totalGuests !== 1 ? "s" : ""}
+        </span>
+        <span className="text-2xl font-bold">
+          {formatCurrency(breakdown.total)}
+        </span>
       </div>
       <div className="flex items-center justify-between text-sm text-muted-foreground">
         <span>Average per person</span>
@@ -281,5 +334,5 @@ export function PricingSummary({ breakdown, className = "" }: PricingSummaryProp
         </div>
       )}
     </div>
-  )
-} 
+  );
+}

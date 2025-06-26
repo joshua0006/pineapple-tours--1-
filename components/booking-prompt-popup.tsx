@@ -145,17 +145,31 @@ export function BookingPromptPopup({
     }, 100);
   }, []);
 
-  // Hide popup with animation
+  // Hide popup with animation and restart inactivity timer so the popup can
+  // re-appear after the same timeout period once it is dismissed.
   const hidePopup = useCallback(() => {
     setIsAnimating(false);
+
+    // Wait for the closing animation to complete before hiding the component
     setTimeout(() => {
       setIsVisible(false);
-      // Reset the flag after 1 second to allow popup to show again
+
+      // After a brief delay (to avoid race conditions with the visibility
+      // state), reset the "hasShown" flag and immediately start a fresh
+      // inactivity timer – this ensures the popup can show again without
+      // requiring extra user interaction.
       setTimeout(() => {
         hasShownPopupRef.current = false;
+
+        // Only start the timer if the tab is currently visible. If the user
+        // has switched tabs, the visibility handler will take care of
+        // scheduling the appropriate timer instead.
+        if (isTabVisible) {
+          startInactivityTimer("inactivity");
+        }
       }, 1000);
     }, 300); // Match animation duration
-  }, []);
+  }, [isTabVisible, startInactivityTimer]);
 
   // Handle user activity events
   const handleUserActivity = useCallback(() => {

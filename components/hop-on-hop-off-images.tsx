@@ -97,7 +97,6 @@ export function HopOnHopOffImages({ className = "" }: HopOnHopOffImagesProps) {
       </div>
     );
   }
-
   return (
     <div className={`grid gap-4 sm:grid-cols-2 ${className}`}>
       {/* Mobile: Show only first image */}

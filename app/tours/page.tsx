@@ -13,6 +13,7 @@ import {
   Calendar,
   ChevronLeft,
   ChevronRight,
+  Heart,
 } from "lucide-react";
 import { addDays, format } from "date-fns";
 
@@ -34,8 +35,9 @@ import { PageHeader } from "@/components/page-header";
 import { DynamicTourCard } from "@/components/dynamic-tour-card";
 import { TourGridSkeleton } from "@/components/tour-grid-skeleton";
 import { ErrorState } from "@/components/error-state";
-import { usePaginatedProducts } from "@/hooks/use-paginated-products";
+import { useAllProducts } from "@/hooks/use-all-products";
 import { useCityProducts } from "@/hooks/use-city-products";
+import { useBookingPrompt } from "@/hooks/use-booking-prompt";
 import {
   getSearchCategories,
   getCategoryDisplayName,
@@ -92,143 +94,152 @@ export default function ToursPage() {
   const [localQuery, setLocalQuery] = useState(filters.query);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
 
-  // Fetch products using pagination
-  const {
-    products,
-    loading,
-    error,
-    refreshProducts,
-    totalCount,
-    isCached,
-    hasMore,
-    fetchProducts,
-  } = usePaginatedProducts({
-    autoFetch: false, // We'll manually trigger fetches
-  });
+  // Get booking prompt data
+  const { promptData, hasPromptData } = useBookingPrompt();
+
+  // Check if this page was accessed from the booking prompt
+  const isFromBookingPrompt =
+    hasPromptData &&
+    ((searchParams.get("participants") &&
+      searchParams.get("participants") === promptData?.groupSize?.toString()) ||
+      (searchParams.get("checkIn") && promptData?.bookingDate));
+
+  // Fetch the entire catalogue (cached) once; we will paginate client-side
+  const { products, loading, error, refreshProducts, totalCount, isCached } =
+    useAllProducts();
 
   // Client-side filtering and sorting (applied to current page of server-side paginated data)
-  const { filteredProducts, totalFilteredCount, currentPage, totalPages } =
-    useMemo(() => {
-      let filtered = [...products];
+  const {
+    filteredProducts,
+    totalFilteredCount,
+    currentPage,
+    totalPages,
+    hasMore,
+  } = useMemo(() => {
+    let filtered = [...products];
 
-      // Exclude gift cards from tours page
+    // Exclude gift cards from tours page
+    filtered = filtered.filter(
+      (product) =>
+        product.productType !== "GIFT_CARD" &&
+        !product.name.toLowerCase().includes("gift card") &&
+        !product.name.toLowerCase().includes("gift voucher")
+    );
+
+    // Text search
+    if (filters.query) {
+      const query = filters.query.toLowerCase();
       filtered = filtered.filter(
         (product) =>
-          product.productType !== "GIFT_CARD" &&
-          !product.name.toLowerCase().includes("gift card") &&
-          !product.name.toLowerCase().includes("gift voucher")
+          product.name.toLowerCase().includes(query) ||
+          product.shortDescription?.toLowerCase().includes(query) ||
+          product.description?.toLowerCase().includes(query)
       );
+    }
 
-      // Text search
-      if (filters.query) {
-        const query = filters.query.toLowerCase();
-        filtered = filtered.filter(
-          (product) =>
-            product.name.toLowerCase().includes(query) ||
-            product.shortDescription?.toLowerCase().includes(query) ||
-            product.description?.toLowerCase().includes(query)
-        );
+    // Category filter
+    if (filters.category !== "all") {
+      filtered = filtered.filter((product) =>
+        doesProductMatchCategory(product, filters.category)
+      );
+    }
+
+    // Price range filter
+    if (filters.priceRange !== "all") {
+      switch (filters.priceRange) {
+        case "under-99":
+          filtered = filtered.filter(
+            (product) => (product.advertisedPrice || 0) < 99
+          );
+          break;
+        case "99-159":
+          filtered = filtered.filter((product) => {
+            const price = product.advertisedPrice || 0;
+            return price >= 99 && price <= 159;
+          });
+          break;
+        case "159-299":
+          filtered = filtered.filter((product) => {
+            const price = product.advertisedPrice || 0;
+            return price >= 159 && price <= 299;
+          });
+          break;
+        case "over-299":
+          filtered = filtered.filter(
+            (product) => (product.advertisedPrice || 0) > 299
+          );
+          break;
       }
+    }
 
-      // Category filter
-      if (filters.category !== "all") {
-        filtered = filtered.filter((product) =>
-          doesProductMatchCategory(product, filters.category)
-        );
-      }
-
-      // Price range filter
-      if (filters.priceRange !== "all") {
-        switch (filters.priceRange) {
-          case "under-99":
-            filtered = filtered.filter(
-              (product) => (product.advertisedPrice || 0) < 99
-            );
-            break;
-          case "99-159":
-            filtered = filtered.filter((product) => {
-              const price = product.advertisedPrice || 0;
-              return price >= 99 && price <= 159;
-            });
-            break;
-          case "159-299":
-            filtered = filtered.filter((product) => {
-              const price = product.advertisedPrice || 0;
-              return price >= 159 && price <= 299;
-            });
-            break;
-          case "over-299":
-            filtered = filtered.filter(
-              (product) => (product.advertisedPrice || 0) > 299
-            );
-            break;
+    // City/location filter
+    if (filters.city || filters.location) {
+      const locationFilter = filters.city || filters.location;
+      filtered = filtered.filter((product) => {
+        const address = product.locationAddress;
+        if (typeof address === "string") {
+          return address.toLowerCase().includes(locationFilter.toLowerCase());
+        } else if (address && typeof address === "object") {
+          return (
+            address.city
+              ?.toLowerCase()
+              .includes(locationFilter.toLowerCase()) ||
+            address.state
+              ?.toLowerCase()
+              .includes(locationFilter.toLowerCase()) ||
+            address.addressLine
+              ?.toLowerCase()
+              .includes(locationFilter.toLowerCase())
+          );
         }
-      }
+        return false;
+      });
+    }
 
-      // City/location filter
-      if (filters.city || filters.location) {
-        const locationFilter = filters.city || filters.location;
-        filtered = filtered.filter((product) => {
-          const address = product.locationAddress;
-          if (typeof address === "string") {
-            return address.toLowerCase().includes(locationFilter.toLowerCase());
-          } else if (address && typeof address === "object") {
-            return (
-              address.city
-                ?.toLowerCase()
-                .includes(locationFilter.toLowerCase()) ||
-              address.state
-                ?.toLowerCase()
-                .includes(locationFilter.toLowerCase()) ||
-              address.addressLine
-                ?.toLowerCase()
-                .includes(locationFilter.toLowerCase())
-            );
-          }
-          return false;
-        });
-      }
+    // Sorting
+    switch (filters.sortBy) {
+      case "name":
+        filtered.sort((a, b) => a.name.localeCompare(b.name));
+        break;
+      case "price-low":
+        filtered.sort(
+          (a, b) => (a.advertisedPrice || 0) - (b.advertisedPrice || 0)
+        );
+        break;
+      case "price-high":
+        filtered.sort(
+          (a, b) => (b.advertisedPrice || 0) - (a.advertisedPrice || 0)
+        );
+        break;
+      case "newest":
+        // Sort by productCode as a proxy for newest (if no dateCreated)
+        filtered.sort((a, b) => b.productCode.localeCompare(a.productCode));
+        break;
+      default:
+        // Relevance - keep original order
+        break;
+    }
 
-      // Sorting
-      switch (filters.sortBy) {
-        case "name":
-          filtered.sort((a, b) => a.name.localeCompare(b.name));
-          break;
-        case "price-low":
-          filtered.sort(
-            (a, b) => (a.advertisedPrice || 0) - (b.advertisedPrice || 0)
-          );
-          break;
-        case "price-high":
-          filtered.sort(
-            (a, b) => (b.advertisedPrice || 0) - (a.advertisedPrice || 0)
-          );
-          break;
-        case "newest":
-          // Sort by productCode as a proxy for newest (if no dateCreated)
-          filtered.sort((a, b) => b.productCode.localeCompare(a.productCode));
-          break;
-        default:
-          // Relevance - keep original order
-          break;
-      }
+    // --- Client-side pagination ---
+    const limit = parseInt(filters.limit) || 100;
+    const offset = parseInt(filters.offset) || 0;
 
-      // Calculate pagination info based on server-side pagination
-      const limit = parseInt(filters.limit) || 100;
-      const offset = parseInt(filters.offset) || 0;
-      const currentPage = Math.floor(offset / limit) + 1;
+    const currentPage = Math.floor(offset / limit) + 1;
 
-      // For server-side pagination, we estimate total pages based on hasMore
-      // This is a simplified approach - in a real app you'd want the server to return total count
-      const estimatedTotalPages = hasMore ? currentPage + 1 : currentPage;
+    // Slice the current page after all filters/sorting are applied
+    const paginated = filtered.slice(offset, offset + limit);
 
-      return {
-        filteredProducts: filtered,
-        totalFilteredCount: filtered.length,
-        currentPage,
-        totalPages: estimatedTotalPages,
-      };
-    }, [products, filters, hasMore]);
+    const totalPages = Math.max(1, Math.ceil(filtered.length / limit));
+    const hasMore = currentPage < totalPages;
+
+    return {
+      filteredProducts: paginated,
+      totalFilteredCount: paginated.length,
+      currentPage,
+      totalPages,
+      hasMore,
+    };
+  }, [products, filters]);
 
   // Sync URL parameters with filters when searchParams change
   useEffect(() => {
@@ -250,34 +261,7 @@ export default function ToursPage() {
     setLocalQuery(urlFilters.query);
   }, [searchParams]);
 
-  // Fetch products when filters change
-  useEffect(() => {
-    const limit = parseInt(filters.limit) || 100;
-    const offset = parseInt(filters.offset) || 0;
-    fetchProducts(limit, offset);
-  }, [filters.limit, filters.offset, fetchProducts]);
-
-  // Update URL when filters change
-  useEffect(() => {
-    const params = new URLSearchParams();
-
-    Object.entries(filters).forEach(([key, value]) => {
-      if (
-        value &&
-        value !== "" &&
-        value !== "all" &&
-        value !== "any" &&
-        value !== "2" &&
-        !(key === "limit" && value === "100") &&
-        !(key === "offset" && value === "0")
-      ) {
-        params.append(key, value.toString());
-      }
-    });
-
-    const newUrl = params.toString() ? `/tours?${params.toString()}` : "/tours";
-    router.replace(newUrl, { scroll: false });
-  }, [filters, router]);
+  // No need to refetch on every page change – we already have the full dataset.
 
   const updateFilter = (key: keyof Filters, value: string) => {
     setFilters((prev) => {
@@ -378,13 +362,55 @@ export default function ToursPage() {
     return displayNames[key]?.[value] || value;
   };
 
+  // Keep the URL in sync with the current filters so the page is shareable / bookmarkable
+  useEffect(() => {
+    const params = new URLSearchParams();
+
+    Object.entries(filters).forEach(([key, value]) => {
+      if (
+        value &&
+        value !== "" &&
+        value !== "all" &&
+        value !== "any" &&
+        value !== "2" &&
+        !(key === "limit" && value === "100") &&
+        !(key === "offset" && value === "0")
+      ) {
+        params.append(key, value.toString());
+      }
+    });
+
+    const newUrl = params.toString() ? `/tours?${params.toString()}` : "/tours";
+    router.replace(newUrl, { scroll: false });
+  }, [filters, router]);
+
+  // Scroll to top whenever the pagination offset changes so users start at the top of the list
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+  }, [filters.offset]);
+
   return (
     <>
       {/* Header */}
       <PageHeader
-        title="Discover Amazing Tours"
+        title={
+          isFromBookingPrompt ? "Your Perfect Tours" : "Discover Amazing Tours"
+        }
         subtitle={
-          hasResults
+          isFromBookingPrompt
+            ? `Tours for ${filters.participants} participant${
+                filters.participants !== "1" ? "s" : ""
+              }${
+                filters.checkIn && filters.checkOut
+                  ? ` • ${format(
+                      new Date(filters.checkIn),
+                      "MMM dd"
+                    )} - ${format(new Date(filters.checkOut), "MMM dd, yyyy")}`
+                  : ""
+              }`
+            : hasResults
             ? `Showing ${totalFilteredCount} tour${
                 totalFilteredCount !== 1 ? "s" : ""
               } on this page`
@@ -392,6 +418,27 @@ export default function ToursPage() {
         }
         variant="coral"
       />
+
+      {/* Booking Prompt Success Banner */}
+      {isFromBookingPrompt && (
+        <section className="bg-yellow-50 border-b border-yellow-200 py-4">
+          <div className="container">
+            <div className="flex items-center justify-center gap-3 text-yellow-800">
+              <Heart className="h-5 w-5 text-yellow-600" />
+              <span className="font-medium">Great choice!</span>
+              <span>We've found tours matching your preferences.</span>
+              {filters.checkIn && filters.checkOut && (
+                <Badge
+                  variant="secondary"
+                  className="bg-yellow-200 text-yellow-800"
+                >
+                  Available for your dates
+                </Badge>
+              )}
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* Search Bar */}
       <section className="border-b bg-white py-6">
@@ -423,7 +470,7 @@ export default function ToursPage() {
           <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
             {/* Left Sidebar - Filters */}
             <div className="lg:col-span-1">
-              <div className="sticky top-8 space-y-6">
+              <div className="sticky top-24 space-y-6">
                 {/* Filter Header */}
                 <div className="flex items-center justify-between">
                   <h3 className="text-lg font-semibold flex items-center gap-2">
@@ -439,7 +486,9 @@ export default function ToursPage() {
                               value !== "all" &&
                               value !== "any" &&
                               value !== "2" &&
-                              value !== "relevance"
+                              value !== "relevance" &&
+                              value !== "100" &&
+                              value !== "0"
                           ).length
                         }
                       </Badge>
@@ -456,6 +505,118 @@ export default function ToursPage() {
                     </Button>
                   )}
                 </div>
+
+                {/* Active filters */}
+                {hasActiveFilters && (
+                  <div className="flex flex-wrap gap-2">
+                    {filters.query && (
+                      <Badge
+                        variant="secondary"
+                        className="flex items-center gap-1 px-3 py-1 rounded-full"
+                      >
+                        <span>Search: "{filters.query}"</span>
+                        <button
+                          onClick={() => {
+                            clearFilter("query");
+                            setLocalQuery("");
+                          }}
+                          className="ml-1 hover:text-destructive"
+                        >
+                          <X className="h-3 w-3" />
+                        </button>
+                      </Badge>
+                    )}
+                    {(filters.city || filters.location) && (
+                      <Badge
+                        variant="secondary"
+                        className="flex items-center gap-1 px-3 py-1 rounded-full"
+                      >
+                        <span className="flex items-center gap-1">
+                          <MapPin className="h-3 w-3" />
+                          {filters.city || filters.location}
+                        </span>
+                        <button
+                          onClick={() => {
+                            clearFilter("city");
+                            clearFilter("location");
+                          }}
+                          className="ml-1 hover:text-destructive"
+                        >
+                          <X className="h-3 w-3" />
+                        </button>
+                      </Badge>
+                    )}
+                    {filters.category !== "all" && (
+                      <Badge
+                        variant="secondary"
+                        className="flex items-center gap-1 px-3 py-1 rounded-full"
+                      >
+                        <span>
+                          {getFilterDisplayName("category", filters.category)}
+                        </span>
+                        <button
+                          onClick={() => clearFilter("category")}
+                          className="ml-1 hover:text-destructive"
+                        >
+                          <X className="h-3 w-3" />
+                        </button>
+                      </Badge>
+                    )}
+                    {filters.priceRange !== "all" && (
+                      <Badge
+                        variant="secondary"
+                        className="flex items-center gap-1 px-3 py-1 rounded-full"
+                      >
+                        <span>
+                          {getFilterDisplayName(
+                            "priceRange",
+                            filters.priceRange
+                          )}
+                        </span>
+                        <button
+                          onClick={() => clearFilter("priceRange")}
+                          className="ml-1 hover:text-destructive"
+                        >
+                          <X className="h-3 w-3" />
+                        </button>
+                      </Badge>
+                    )}
+                    {filters.checkIn && (
+                      <Badge
+                        variant="secondary"
+                        className="flex items-center gap-1 px-3 py-1 rounded-full bg-orange-100 text-orange-800 border-orange-200"
+                      >
+                        <span className="flex items-center gap-1">
+                          <Calendar className="h-3 w-3" />
+                          Check-in: {filters.checkIn}
+                        </span>
+                        <button
+                          onClick={() => clearFilter("checkIn")}
+                          className="ml-1 hover:text-destructive"
+                        >
+                          <X className="h-3 w-3" />
+                        </button>
+                      </Badge>
+                    )}
+                    {filters.checkOut && (
+                      <Badge
+                        variant="secondary"
+                        className="flex items-center gap-1 px-3 py-1 rounded-full bg-orange-100 text-orange-800 border-orange-200"
+                      >
+                        <span className="flex items-center gap-1">
+                          <Calendar className="h-3 w-3" />
+                          Check-out: {filters.checkOut}
+                        </span>
+                        <button
+                          onClick={() => clearFilter("checkOut")}
+                          className="ml-1 hover:text-destructive"
+                        >
+                          <X className="h-3 w-3" />
+                        </button>
+                      </Badge>
+                    )}
+                  </div>
+                )}
 
                 {/* Filter Stack */}
                 <div className="space-y-4">
@@ -653,113 +814,6 @@ export default function ToursPage() {
                       </SelectContent>
                     </Select>
                   </div>
-                </div>
-
-                {/* Active filters */}
-                <div className="space-y-2">
-                  {filters.query && (
-                    <Badge
-                      variant="secondary"
-                      className="flex items-center gap-1 w-full justify-between"
-                    >
-                      <span>Search: "{filters.query}"</span>
-                      <button
-                        onClick={() => {
-                          clearFilter("query");
-                          setLocalQuery("");
-                        }}
-                        className="ml-1 hover:text-destructive"
-                      >
-                        <X className="h-3 w-3" />
-                      </button>
-                    </Badge>
-                  )}
-                  {(filters.city || filters.location) && (
-                    <Badge
-                      variant="secondary"
-                      className="flex items-center gap-1 w-full justify-between"
-                    >
-                      <span className="flex items-center gap-1">
-                        <MapPin className="h-3 w-3" />
-                        {filters.city || filters.location}
-                      </span>
-                      <button
-                        onClick={() => {
-                          clearFilter("city");
-                          clearFilter("location");
-                        }}
-                        className="ml-1 hover:text-destructive"
-                      >
-                        <X className="h-3 w-3" />
-                      </button>
-                    </Badge>
-                  )}
-                  {filters.category !== "all" && (
-                    <Badge
-                      variant="secondary"
-                      className="flex items-center gap-1 w-full justify-between"
-                    >
-                      <span>
-                        {getFilterDisplayName("category", filters.category)}
-                      </span>
-                      <button
-                        onClick={() => clearFilter("category")}
-                        className="ml-1 hover:text-destructive"
-                      >
-                        <X className="h-3 w-3" />
-                      </button>
-                    </Badge>
-                  )}
-                  {filters.priceRange !== "all" && (
-                    <Badge
-                      variant="secondary"
-                      className="flex items-center gap-1 w-full justify-between"
-                    >
-                      <span>
-                        {getFilterDisplayName("priceRange", filters.priceRange)}
-                      </span>
-                      <button
-                        onClick={() => clearFilter("priceRange")}
-                        className="ml-1 hover:text-destructive"
-                      >
-                        <X className="h-3 w-3" />
-                      </button>
-                    </Badge>
-                  )}
-                  {filters.checkIn && (
-                    <Badge
-                      variant="secondary"
-                      className="flex items-center gap-1 w-full justify-between bg-orange-100 text-orange-800 border-orange-200"
-                    >
-                      <span className="flex items-center gap-1">
-                        <Calendar className="h-3 w-3" />
-                        Check-in: {filters.checkIn}
-                      </span>
-                      <button
-                        onClick={() => clearFilter("checkIn")}
-                        className="ml-1 hover:text-destructive"
-                      >
-                        <X className="h-3 w-3" />
-                      </button>
-                    </Badge>
-                  )}
-                  {filters.checkOut && (
-                    <Badge
-                      variant="secondary"
-                      className="flex items-center gap-1 w-full justify-between bg-orange-100 text-orange-800 border-orange-200"
-                    >
-                      <span className="flex items-center gap-1">
-                        <Calendar className="h-3 w-3" />
-                        Check-out: {filters.checkOut}
-                      </span>
-                      <button
-                        onClick={() => clearFilter("checkOut")}
-                        className="ml-1 hover:text-destructive"
-                      >
-                        <X className="h-3 w-3" />
-                      </button>
-                    </Badge>
-                  )}
                 </div>
               </div>
             </div>

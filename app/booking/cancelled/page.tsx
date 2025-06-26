@@ -20,7 +20,7 @@ export default function BookingCancelledPage() {
   };
 
   const handleBrowseTours = () => {
-    window.location.href = "/search";
+    window.location.href = "/tours";
   };
 
   return (

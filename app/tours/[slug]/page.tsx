@@ -33,7 +33,8 @@ import {
 import { GoogleMaps } from "@/components/ui/google-maps";
 import { ImageGallery } from "@/components/ui/responsive-image";
 import { AddToCartButton } from "@/components/ui/add-to-cart-button";
-import { useRezdyProducts, useRezdyAvailability } from "@/hooks/use-rezdy";
+import { useRezdyAvailability } from "@/hooks/use-rezdy";
+import { useAllProducts } from "@/hooks/use-all-products";
 import {
   extractProductCodeFromSlug,
   getPrimaryImageUrl,
@@ -63,12 +64,12 @@ export default function TourDetailPage({
   // Extract product code from slug
   const productCode = extractProductCodeFromSlug(resolvedParams.slug);
 
-  // Fetch all products to find the one matching our slug
+  // Fetch complete product catalogue once (cached)
   const {
-    data: products,
+    products: products,
     loading: productsLoading,
     error: productsError,
-  } = useRezdyProducts(100, 0);
+  } = useAllProducts();
 
   // Set up availability checking based on user preferences
   const startDate = new Date().toISOString().split("T")[0];

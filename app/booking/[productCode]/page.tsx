@@ -23,11 +23,11 @@ async function getProduct(productCode: string) {
 
     const url = `${
       process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000"
-    }/api/rezdy/products?limit=1000`;
+    }/api/rezdy/products/all`;
 
     console.log(`getProduct: API URL: ${url}`);
 
-    const response = await fetch(url, { cache: "no-store" });
+    const response = await fetch(url);
 
     if (!response.ok) {
       console.error(

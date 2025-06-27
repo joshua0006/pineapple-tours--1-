@@ -123,7 +123,9 @@ export default function ToursPage() {
       (product) =>
         product.productType !== "GIFT_CARD" &&
         !product.name.toLowerCase().includes("gift card") &&
-        !product.name.toLowerCase().includes("gift voucher")
+        !product.name.toLowerCase().includes("gift voucher") &&
+        product.name !==
+          "3hr Koala and Kangaroo Wildlife Experience - From Brisbane"
     );
 
     // Text search

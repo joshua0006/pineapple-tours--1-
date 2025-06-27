@@ -75,7 +75,7 @@ export function PageHeader({
         buttonVariant === "outline"
           ? variant === "muted"
             ? "border-brand-accent text-brand-accent hover:bg-brand-accent hover:text-white"
-            : "border-white text-white hover:bg-white hover:text-brand-primary"
+            : "border-brand-accent text-brand-accent hover:bg-brand-accent hover:text-white"
           : variant === "muted"
           ? "bg-brand-accent text-white hover:bg-brand-accent/90"
           : "bg-white text-brand-primary hover:bg-gray-100",
@@ -131,7 +131,7 @@ export function PageHeader({
                 <ActionButton action={primaryAction} variant="default" />
               )}
               {secondaryAction && (
-                <ActionButton action={secondaryAction} variant="outline" />
+                <ActionButton action={secondaryAction} variant="default" />
               )}
             </div>
           )}

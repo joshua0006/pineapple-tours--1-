@@ -410,7 +410,7 @@ export default function ContactPage() {
             </Button>
             <Button
               variant="outline"
-              className="border-2 font-semibold transition-colors hover:bg-[#FF585D] hover:text-white hover:border-[#FF585D] bg-transparent text-[#FF585D]"
+              className="border-2 font-semibold transition-colors hover:bg-[#FF585D] hover:text-white hover:border-[#FF585D] bg-transparent text-white"
               style={{
                 borderColor: "#FF585D",
                 fontFamily: "Work Sans, sans-serif",

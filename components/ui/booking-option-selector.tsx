@@ -48,6 +48,11 @@ interface RegionGroup {
   options: RezdyBookingOption[];
 }
 
+interface DropdownPosition {
+  region: "below" | "above";
+  location: "below" | "above";
+}
+
 export function BookingOptionSelector({
   bookingOptions,
   selectedBookingOption,
@@ -70,9 +75,18 @@ export function BookingOptionSelector({
     location: false,
   });
 
+  const [dropdownPositions, setDropdownPositions] = useState<DropdownPosition>({
+    region: "below",
+    location: "below",
+  });
+
   const [errors, setErrors] = useState<string[]>([]);
   const [isAnimating, setIsAnimating] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
+  const regionButtonRef = useRef<HTMLButtonElement>(null);
+  const locationButtonRef = useRef<HTMLButtonElement>(null);
+  const regionDropdownRef = useRef<HTMLDivElement>(null);
+  const locationDropdownRef = useRef<HTMLDivElement>(null);
 
   // Group booking options by region
   const regionGroups: RegionGroup[] = useMemo(() => {
@@ -136,6 +150,73 @@ export function BookingOptionSelector({
       document.removeEventListener("mousedown", handleClickOutside);
     };
   }, []);
+
+  // Calculate dropdown position based on available space
+  const calculateDropdownPosition = (
+    buttonRef: React.RefObject<HTMLButtonElement | null>,
+    dropdownType: "region" | "location"
+  ): "below" | "above" => {
+    if (!buttonRef.current) return "below";
+
+    const buttonRect = buttonRef.current.getBoundingClientRect();
+    const viewportHeight = window.innerHeight;
+
+    // Estimate dropdown height based on content
+    const estimatedDropdownHeight =
+      dropdownType === "region"
+        ? Math.min(regionGroups.length * 80 + 16, 384) // max-h-96 = 384px
+        : Math.min(
+            (dropdownState.option?.pickupLocations.length || 0) * 64 + 16,
+            320
+          ); // max-h-80 = 320px
+
+    const spaceBelow = viewportHeight - buttonRect.bottom - 8; // 8px margin
+    const spaceAbove = buttonRect.top - 8; // 8px margin
+
+    // Prefer below, but use above if there's insufficient space below and more space above
+    if (spaceBelow < estimatedDropdownHeight && spaceAbove > spaceBelow) {
+      return "above";
+    }
+
+    return "below";
+  };
+
+  // Update dropdown positions when opening
+  const updateDropdownPosition = (dropdownType: "region" | "location") => {
+    const buttonRef =
+      dropdownType === "region" ? regionButtonRef : locationButtonRef;
+    const position = calculateDropdownPosition(buttonRef, dropdownType);
+
+    setDropdownPositions((prev) => ({
+      ...prev,
+      [dropdownType]: position,
+    }));
+  };
+
+  // Handle window resize to recalculate positions
+  useEffect(() => {
+    const handleResize = () => {
+      if (openDropdowns.region) {
+        updateDropdownPosition("region");
+      }
+      if (openDropdowns.location) {
+        updateDropdownPosition("location");
+      }
+    };
+
+    window.addEventListener("resize", handleResize);
+    window.addEventListener("scroll", handleResize);
+
+    return () => {
+      window.removeEventListener("resize", handleResize);
+      window.removeEventListener("scroll", handleResize);
+    };
+  }, [
+    openDropdowns.region,
+    openDropdowns.location,
+    regionGroups,
+    dropdownState.option,
+  ]);
 
   const handleRegionSelect = (regionId: string) => {
     const selectedRegion = regionGroups.find((g) => g.id === regionId);
@@ -208,6 +289,12 @@ export function BookingOptionSelector({
   };
 
   const toggleDropdown = (dropdown: keyof typeof openDropdowns) => {
+    const isOpening = !openDropdowns[dropdown];
+
+    if (isOpening) {
+      updateDropdownPosition(dropdown);
+    }
+
     setOpenDropdowns((prev) => ({
       region: false,
       location: false,
@@ -267,6 +354,7 @@ export function BookingOptionSelector({
 
           <div className="relative">
             <button
+              ref={regionButtonRef}
               onClick={() => toggleDropdown("region")}
               className={cn(
                 "w-full px-4 py-3 text-left bg-white border border-gray-300 rounded-lg",
@@ -321,7 +409,16 @@ export function BookingOptionSelector({
 
             {/* Region Dropdown */}
             {openDropdowns.region && (
-              <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-10 animate-in slide-in-from-top-1 duration-200 max-h-96 overflow-y-auto">
+              <div
+                ref={regionDropdownRef}
+                className={cn(
+                  "absolute left-0 right-0 bg-white border border-gray-200 rounded-lg shadow-lg z-10 max-h-96 overflow-y-auto",
+                  "transition-all duration-200",
+                  dropdownPositions.region === "above"
+                    ? "bottom-full mb-1 animate-in slide-in-from-bottom-1"
+                    : "top-full mt-1 animate-in slide-in-from-top-1"
+                )}
+              >
                 <div className="p-2">
                   {regionGroups.map((region) => (
                     <button
@@ -376,6 +473,7 @@ export function BookingOptionSelector({
 
           <div className="relative">
             <button
+              ref={locationButtonRef}
               onClick={() => toggleDropdown("location")}
               disabled={!dropdownState.option}
               className={cn(
@@ -427,7 +525,16 @@ export function BookingOptionSelector({
 
             {/* Location Dropdown */}
             {openDropdowns.location && dropdownState.option && (
-              <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-10 animate-in slide-in-from-top-1 duration-200">
+              <div
+                ref={locationDropdownRef}
+                className={cn(
+                  "absolute left-0 right-0 bg-white border border-gray-200 rounded-lg shadow-lg z-10",
+                  "transition-all duration-200",
+                  dropdownPositions.location === "above"
+                    ? "bottom-full mb-1 animate-in slide-in-from-bottom-1"
+                    : "top-full mt-1 animate-in slide-in-from-top-1"
+                )}
+              >
                 <div className="p-2 max-h-80 overflow-y-auto">
                   {dropdownState.option.pickupLocations.map((location) => (
                     <button

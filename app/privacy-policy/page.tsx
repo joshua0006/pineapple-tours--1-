@@ -71,7 +71,7 @@ const dataUse = [
   {
     purpose: "Marketing Communications",
     description:
-      "To send promotional materials, newsletters, and special offers (with your consent)",
+      "To send promotional materials and special offers (with your consent)",
     legal: "Consent",
   },
   {

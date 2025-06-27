@@ -136,6 +136,17 @@ export default async function BookingPage({
       if (sessionResponse.ok) {
         preSelectedSession = await sessionResponse.json();
         console.log("Pre-selected session loaded:", preSelectedSession);
+
+        // Ensure the session matches the current product; if not, ignore it
+        if (
+          preSelectedSession &&
+          preSelectedSession.productCode !== decodedProductCode
+        ) {
+          console.warn(
+            `Session ${preSelectedSession.id} does not belong to product ${decodedProductCode}. Ignoring preSelectedSession.`
+          );
+          preSelectedSession = null;
+        }
       }
     } catch (error) {
       console.warn("Failed to fetch pre-selected session:", error);
@@ -145,6 +156,7 @@ export default async function BookingPage({
   return (
     <div className="min-h-screen bg-background">
       <EnhancedBookingExperience
+        key={product.productCode}
         product={product}
         preSelectedParticipants={preSelectedParticipants}
         preSelectedExtras={preSelectedExtras}

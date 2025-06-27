@@ -415,22 +415,6 @@ export default function BlogPostPage({ params }: BlogPostPageProps) {
                     </div>
                   </CardContent>
                 </Card>
-
-                {/* Newsletter Signup */}
-                <Card className="bg-gradient-to-br from-brand-accent to-coral-600">
-                  <CardContent className="p-6 text-white">
-                    <h3 className="font-semibold font-barlow mb-2">
-                      Never Miss an Adventure
-                    </h3>
-                    <p className="text-sm text-white/90 mb-4 font-work-sans">
-                      Get our latest travel guides and exclusive tips delivered
-                      to your inbox.
-                    </p>
-                    <Button className="w-full bg-white text-brand-accent hover:bg-gray-100 font-work-sans">
-                      Subscribe Now
-                    </Button>
-                  </CardContent>
-                </Card>
               </div>
             </div>
           </div>

@@ -33,14 +33,6 @@ export const BLOG_CONFIG = {
       "Sustainable Travel",
     ],
   },
-
-  // Newsletter settings
-  newsletter: {
-    title: "Stay Updated",
-    description:
-      "Subscribe to our newsletter for the latest travel tips, tour guides, and exclusive offers.",
-    placeholder: "Enter your email",
-  },
 };
 
 // Static blog posts data - centralized for easy management

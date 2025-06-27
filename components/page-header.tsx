@@ -111,7 +111,7 @@ export function PageHeader({
         <div className="max-w-4xl mx-auto text-center">
           <h1
             className={cn(
-              "text-4xl md:text-5xl lg:text-6xl font-bold mb-6 font-barlow tracking-tight",
+              "text-3xl md:text-4xl lg:text-5xl font-bold mb-5 font-barlow tracking-tight",
               getTextClasses()
             )}
           >
@@ -119,7 +119,7 @@ export function PageHeader({
           </h1>
           <p
             className={cn(
-              "text-lg md:text-xl lg:text-2xl mb-8 font-work-sans max-w-3xl mx-auto",
+              "text-base md:text-lg lg:text-xl mb-6 font-work-sans max-w-3xl mx-auto",
               getSubtitleClasses()
             )}
           >

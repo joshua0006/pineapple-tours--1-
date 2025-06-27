@@ -60,6 +60,7 @@ import {
   RezdySession,
   RezdyPickupLocation,
   RezdyBookingOption,
+  RezdyAvailability,
 } from "@/lib/types/rezdy";
 import { FitTourDataService } from "@/lib/services/fit-tour-data";
 import {
@@ -216,9 +217,42 @@ export function EnhancedBookingExperience({
     accessibilityNeeds: "",
     specialRequests: "",
   });
+  // Inline field errors for contact inputs
+  const [contactFieldErrors, setContactFieldErrors] = useState<{
+    email?: string;
+    phone?: string;
+  }>({});
+
+  // Basic helpers
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+  const formatPhoneNumber = (value: string) => {
+    const cleaned = value.replace(/\D/g, "").slice(0, 10); // keep max 10 digits
+    const len = cleaned.length;
+    if (len < 4) return cleaned;
+    if (len < 7) return `(${cleaned.slice(0, 3)}) ${cleaned.slice(3)}`;
+    return `(${cleaned.slice(0, 3)}) ${cleaned.slice(3, 6)}-${cleaned.slice(
+      6
+    )}`;
+  };
+
+  const validateContactFields = () => {
+    const errors: { email?: string; phone?: string } = {};
+    if (!emailRegex.test(contactInfo.email)) {
+      errors.email = "Please enter a valid email address.";
+    }
+
+    const phoneDigits = contactInfo.phone.replace(/\D/g, "");
+    if (phoneDigits.length < 6) {
+      errors.phone = "Please enter a valid phone number.";
+    }
+
+    setContactFieldErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+
   // Payment info is handled by Westpac hosted page - no longer stored in component state
   const [agreeToTerms, setAgreeToTerms] = useState(false);
-  const [subscribeNewsletter, setSubscribeNewsletter] = useState(false);
 
   // Payment processing state
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
@@ -230,6 +264,56 @@ export function EnhancedBookingExperience({
   const [clientSecret, setClientSecret] = useState<string>("");
   const [paymentIntentId, setPaymentIntentId] = useState<string>("");
   const [orderNumber, setOrderNumber] = useState<string>("");
+
+  // Debug flag – set to true to see detailed console logs for calendar highlight logic
+  const DEBUG_CALENDAR = true;
+
+  // Helper function to ensure consistent date formatting across storage and retrieval
+  const getConsistentDateString = (input: Date | string): string => {
+    // For Date objects – easy path
+    if (input instanceof Date) {
+      return input.toISOString().split("T")[0];
+    }
+
+    // For string inputs coming from Rezdy (may be "YYYY-MM-DDTHH:mm:ss" or "YYYY-MM-DD HH:mm:ss")
+    if (typeof input === "string") {
+      // Fast path: if the string already contains a delimiter, slice before it
+      const tIndex = input.indexOf("T");
+      const spaceIndex = input.indexOf(" ");
+      const delimiterIndex = tIndex !== -1 ? tIndex : spaceIndex;
+      if (delimiterIndex !== -1) {
+        return input.slice(0, delimiterIndex).trim();
+      }
+
+      // Regex fallback: match YYYY-MM-DD at start
+      const match = input.match(/^(\d{4}-\d{2}-\d{2})/);
+      if (match) return match[1];
+    }
+
+    // As a last resort, return the input cast to string (this shouldn't normally happen)
+    return String(input);
+  };
+
+  // Reset all selection-related state when the displayed product changes
+  useEffect(() => {
+    // Start back at step 1
+    setCurrentStep(1);
+
+    // Clear session-specific selections so nothing remains highlighted
+    setSelectedDate(undefined);
+    setSelectedSession(null);
+    setSelectedPickupLocation(null);
+    setSelectedBookingOption(null);
+
+    // Clear extras and guests back to their defaults
+    setSelectedExtras([]);
+    setGuests([
+      { id: "1", firstName: "", lastName: "", age: 25, type: "ADULT" },
+    ]);
+
+    // Clear any errors displayed from the previous booking flow
+    setBookingErrors([]);
+  }, [product.productCode]);
 
   // Initialize form data from cart item if provided
   useEffect(() => {
@@ -328,7 +412,7 @@ export function EnhancedBookingExperience({
   );
 
   // Fallback mock data for when API is not working
-  const mockAvailabilityData = useMemo(() => {
+  const mockAvailabilityData: RezdyAvailability[] = useMemo(() => {
     const sessions = [];
     const today = new Date();
 
@@ -363,7 +447,7 @@ export function EnhancedBookingExperience({
       }
     }
 
-    return [{ productCode: product.productCode, sessions }];
+    return [{ productCode: product.productCode, sessions }] as any;
   }, [product.productCode, product.advertisedPrice]);
 
   // Use mock data if API fails or returns no data
@@ -389,10 +473,6 @@ export function EnhancedBookingExperience({
       !availabilityData[0]?.sessions ||
       availabilityData[0].sessions.length === 0
     ) {
-      console.log("Using mock availability data due to API issue:", {
-        availabilityError,
-        availabilityData,
-      });
       return mockAvailabilityData;
     }
 
@@ -404,79 +484,125 @@ export function EnhancedBookingExperience({
     mockAvailabilityData,
   ]);
 
-  // Debug logging for availability data
+  // Helper: flatten all sessions across availability entries
+  const allSessions: RezdySession[] = useMemo(() => {
+    if (!effectiveAvailabilityData) return [] as RezdySession[];
+
+    return effectiveAvailabilityData.flatMap(
+      (entry) => entry.sessions || []
+    ) as RezdySession[];
+  }, [effectiveAvailabilityData]);
+
+  // Debug: log the flattened sessions whenever they change (placed after allSessions is defined)
   useEffect(() => {
-    console.log("Enhanced Booking Experience - Availability Debug:", {
-      productCode: product.productCode,
-      startDateRange,
-      endDateRange,
-      guestCounts,
-      availabilityLoading,
-      availabilityError,
-      availabilityData,
-      effectiveAvailabilityData,
-      sessionsCount: effectiveAvailabilityData?.[0]?.sessions?.length || 0,
-      firstSessionExample: effectiveAvailabilityData?.[0]?.sessions?.[0],
-    });
-  }, [
-    product.productCode,
-    startDateRange,
-    endDateRange,
-    guestCounts,
-    availabilityLoading,
-    availabilityError,
-    availabilityData,
-    effectiveAvailabilityData,
-  ]);
+    if (!DEBUG_CALENDAR) return;
+    console.groupCollapsed("[CalendarDebug] allSessions updated");
+    console.table(
+      allSessions.map((s: RezdySession) => ({
+        date: s.startTimeLocal?.split("T")[0],
+        start: s.startTimeLocal,
+        seatsAvailable: (s as any).seatsAvailable,
+        seatsRemaining: (s as any).seatsRemaining,
+      }))
+    );
+    console.groupEnd();
+  }, [allSessions]);
 
   // Extract available dates with seat availability
   const availableDates = useMemo(() => {
-    if (!effectiveAvailabilityData || !effectiveAvailabilityData[0]?.sessions)
-      return new Set<string>();
+    if (allSessions.length === 0) return new Set<string>();
 
     const dates = new Set<string>();
-    effectiveAvailabilityData[0].sessions.forEach((session) => {
-      if (session.seatsAvailable > 0 && session.startTimeLocal) {
-        const sessionDate = session.startTimeLocal.split("T")[0];
+    allSessions.forEach((session: RezdySession) => {
+      // Handle seats in various formats (number, string, undefined)
+      const rawSeats =
+        (session as any).seatsRemaining ?? (session as any).seatsAvailable;
+      let hasSeats = true;
+
+      if (rawSeats !== undefined && rawSeats !== null) {
+        const numeric = Number(rawSeats);
+        hasSeats = isNaN(numeric) ? true : numeric > 0;
+      }
+
+      if (DEBUG_CALENDAR) {
+        console.log(`[CalendarDebug] Processing session:`, {
+          date: session.startTimeLocal?.split("T")[0],
+          rawSeats,
+          hasSeats,
+          startTime: session.startTimeLocal,
+        });
+      }
+
+      if (hasSeats && session.startTimeLocal) {
+        const sessionDate = getConsistentDateString(session.startTimeLocal);
         dates.add(sessionDate);
+        if (DEBUG_CALENDAR) {
+          console.log(
+            `[CalendarDebug] Added date to availableDates:`,
+            sessionDate
+          );
+        }
       }
     });
+
+    if (DEBUG_CALENDAR) {
+      console.log(
+        `[CalendarDebug] Final availableDates Set:`,
+        Array.from(dates)
+      );
+    }
+
     return dates;
-  }, [effectiveAvailabilityData]);
+  }, [allSessions]);
 
   // Get seat availability for a specific date
   const getDateSeatAvailability = useMemo(() => {
-    if (!effectiveAvailabilityData || !effectiveAvailabilityData[0]?.sessions)
-      return new Map<string, number>();
+    if (allSessions.length === 0) return new Map<string, number>();
 
     const seatMap = new Map<string, number>();
-    effectiveAvailabilityData[0].sessions.forEach((session) => {
+    allSessions.forEach((session: RezdySession) => {
       if (session.startTimeLocal) {
-        const sessionDate = session.startTimeLocal.split("T")[0];
+        const sessionDate = getConsistentDateString(session.startTimeLocal);
         const currentSeats = seatMap.get(sessionDate) || 0;
-        seatMap.set(
-          sessionDate,
-          Math.max(currentSeats, session.seatsAvailable)
-        );
+        const rawSeats =
+          (session as any).seatsRemaining ?? (session as any).seatsAvailable;
+        const numericSeats = Number(rawSeats);
+        const seats = isNaN(numericSeats)
+          ? Number.MAX_SAFE_INTEGER
+          : numericSeats;
+        seatMap.set(sessionDate, Math.max(currentSeats, seats));
       }
     });
     return seatMap;
-  }, [effectiveAvailabilityData]);
+  }, [allSessions]);
 
   // Get all dates that have sessions (regardless of availability)
   const datesWithSessions = useMemo(() => {
-    if (!effectiveAvailabilityData || !effectiveAvailabilityData[0]?.sessions)
-      return new Set<string>();
+    if (allSessions.length === 0) return new Set<string>();
 
     const dates = new Set<string>();
-    effectiveAvailabilityData[0].sessions.forEach((session) => {
+    allSessions.forEach((session) => {
       if (session.startTimeLocal) {
-        const sessionDate = session.startTimeLocal.split("T")[0];
+        const sessionDate = getConsistentDateString(session.startTimeLocal);
         dates.add(sessionDate);
       }
     });
     return dates;
-  }, [effectiveAvailabilityData]);
+  }, [allSessions]);
+
+  // Helper to guarantee session.id exists
+  const normalizeSessionId = (session: RezdySession): string => {
+    if (session.id !== undefined && session.id !== null && session.id !== "") {
+      return String(session.id);
+    }
+    // Generate deterministic id based on start & end times
+    const generatedId = `${session.startTimeLocal ?? "unknown"}___${
+      session.endTimeLocal ?? ""
+    }`;
+    // Mutate the object so future comparisons use same id
+    (session as any).id = generatedId;
+    return generatedId;
+  };
 
   // Get sessions for selected date
   const availableSessions = useMemo(() => {
@@ -487,14 +613,19 @@ export function EnhancedBookingExperience({
     )
       return [];
 
-    const selectedDateString = format(selectedDate, "yyyy-MM-dd");
+    const selectedDateString = getConsistentDateString(selectedDate);
     return effectiveAvailabilityData[0].sessions
+      .map((s: RezdySession) => {
+        // ensure id exists
+        normalizeSessionId(s);
+        return s;
+      })
       .filter(
         (session) =>
           session.startTimeLocal &&
-          session.startTimeLocal.startsWith(selectedDateString)
+          getConsistentDateString(session.startTimeLocal) === selectedDateString
       )
-      .sort((a, b) => {
+      .sort((a: RezdySession, b: RezdySession) => {
         if (!a.startTimeLocal || !b.startTimeLocal) return 0;
         return (
           new Date(a.startTimeLocal).getTime() -
@@ -605,7 +736,10 @@ export function EnhancedBookingExperience({
   };
 
   const handleSessionSelect = (session: RezdySession) => {
-    setSelectedSession(session);
+    // ensure id exists before storing
+    const sid = normalizeSessionId(session);
+
+    setSelectedSession({ ...session });
     // Reset booking option selection when session changes
     setSelectedBookingOption(null);
     setSelectedPickupLocation(null);
@@ -633,8 +767,6 @@ export function EnhancedBookingExperience({
     setBookingErrors([]);
 
     try {
-      console.log("Payment succeeded, confirming with backend...");
-
       // Confirm payment with our backend
       const confirmResponse = await fetch(
         "/api/payments/stripe/confirm-payment",
@@ -653,8 +785,6 @@ export function EnhancedBookingExperience({
       const confirmResult = await confirmResponse.json();
 
       if (confirmResult.success) {
-        console.log("Booking confirmed:", confirmResult.orderNumber);
-
         // Redirect to confirmation page
         window.location.href = `/booking/confirmation?orderNumber=${confirmResult.orderNumber}&transactionId=${confirmResult.transactionId}`;
       } else {
@@ -679,6 +809,11 @@ export function EnhancedBookingExperience({
   };
 
   const handleNextStep = () => {
+    // Additional validation for contact step
+    if (currentStep === 2 && !validateContactFields()) {
+      return; // stop if errors
+    }
+
     if (canProceedToNextStep() && currentStep < 4) {
       setCurrentStep(currentStep + 1);
       setBookingErrors([]);
@@ -768,7 +903,6 @@ export function EnhancedBookingExperience({
       setOrderNumber(generatedOrderNumber);
 
       // Create Stripe Checkout session
-      console.log("Creating Stripe Checkout session...");
       const checkoutResponse = await fetch(
         "/api/payments/stripe/create-checkout-session",
         {
@@ -808,62 +942,79 @@ export function EnhancedBookingExperience({
 
   const isDateAvailable = (date: Date): boolean => {
     try {
-      const dateString = format(date, "yyyy-MM-dd");
-      return availableDates.has(dateString);
-    } catch {
+      const dateString = getConsistentDateString(date);
+      const available = availableDates.has(dateString);
+      if (DEBUG_CALENDAR) {
+        console.log(`[CalendarDebug] isDateAvailable(${dateString}) ->`, {
+          available,
+          availableDatesSize: availableDates.size,
+          availableDatesArray: Array.from(availableDates),
+          allSessionsCount: allSessions.length,
+          // Show both formats for debugging timezone issues
+          localFormat: format(date, "yyyy-MM-dd"),
+          utcFormat: dateString,
+          formatMismatch: format(date, "yyyy-MM-dd") !== dateString,
+        });
+      }
+      return available;
+    } catch (err) {
+      if (DEBUG_CALENDAR) {
+        console.warn("[CalendarDebug] isDateAvailable error", err);
+      }
       return false;
     }
   };
 
   const isDateDisabled = (date: Date): boolean => {
     try {
-      const dateString = format(date, "yyyy-MM-dd");
-      const hasAvailabilityData = Boolean(
-        effectiveAvailabilityData &&
-          effectiveAvailabilityData[0]?.sessions &&
-          effectiveAvailabilityData[0].sessions.length > 0
-      );
+      const dateString = getConsistentDateString(date);
+      const hasAvailabilityData = Boolean(allSessions.length > 0);
 
-      // Disable if date is in the past or beyond our range
       if (date < today || date > endDate) {
         return true;
       }
 
-      // If we don't have availability data yet, don't disable dates (let them load)
-      if (!hasAvailabilityData) {
-        return false;
-      }
+      if (!hasAvailabilityData) return false;
 
-      // If we have availability data, only disable dates that have sessions but no seats
       const hasSessionsOnDate = datesWithSessions.has(dateString);
       const hasSeatsOnDate = (getDateSeatAvailability.get(dateString) || 0) > 0;
+      const disabled = hasSessionsOnDate && !hasSeatsOnDate;
 
-      // Disable if there are sessions on this date but no seats available
-      return hasSessionsOnDate && !hasSeatsOnDate;
-    } catch {
+      if (DEBUG_CALENDAR) {
+        console.log(
+          `[CalendarDebug] isDateDisabled(${dateString}) ->`,
+          disabled
+        );
+      }
+
+      return disabled;
+    } catch (err) {
+      if (DEBUG_CALENDAR)
+        console.warn("[CalendarDebug] isDateDisabled error", err);
       return true;
     }
   };
 
   const isDateSoldOut = (date: Date): boolean => {
     try {
-      const dateString = format(date, "yyyy-MM-dd");
-      const hasAvailabilityData = Boolean(
-        effectiveAvailabilityData &&
-          effectiveAvailabilityData[0]?.sessions &&
-          effectiveAvailabilityData[0].sessions.length > 0
-      );
+      const dateString = getConsistentDateString(date);
+      const hasAvailabilityData = Boolean(allSessions.length > 0);
 
-      // Only mark as sold out if we have availability data, there are sessions on this date, but no seats available
-      if (!hasAvailabilityData) {
-        return false;
-      }
+      if (!hasAvailabilityData) return false;
 
       const hasSessionsOnDate = datesWithSessions.has(dateString);
       const hasSeatsOnDate = (getDateSeatAvailability.get(dateString) || 0) > 0;
 
-      return hasSessionsOnDate && !hasSeatsOnDate;
-    } catch {
+      const soldOut = hasSessionsOnDate && !hasSeatsOnDate;
+
+      if (DEBUG_CALENDAR) {
+        console.log(`[CalendarDebug] isDateSoldOut(${dateString}) ->`, soldOut);
+      }
+
+      return soldOut;
+    } catch (err) {
+      if (DEBUG_CALENDAR)
+        console.warn("[CalendarDebug] isDateSoldOut error", err);
       return false;
     }
   };
@@ -1137,18 +1288,32 @@ export function EnhancedBookingExperience({
                                 );
                                 const endTime = new Date(session.endTimeLocal!);
                                 const isSelected =
-                                  selectedSession?.id === session.id;
+                                  selectedSession !== null &&
+                                  normalizeSessionId(session) ===
+                                    normalizeSessionId(
+                                      selectedSession as RezdySession
+                                    );
+
+                                // Debug logs – remove once issue resolved
+                                console.debug("[Booking] Render session card", {
+                                  sessionId: session.id,
+                                  selectedSessionId: selectedSession?.id,
+                                  isSelected,
+                                });
 
                                 return (
                                   <Card
                                     key={`${session.id}-${session.startTimeLocal}`}
                                     className={cn(
-                                      "cursor-pointer transition-all duration-200 border",
+                                      "cursor-pointer transition-all duration-200 border flex flex-col sm:flex-row items-stretch group",
                                       isSelected
-                                        ? "ring-2 ring-brand-accent bg-brand-accent/5 border-brand-accent"
-                                        : "border-gray-200",
+                                        ? "border-2 border-brand-accent bg-brand-accent/15 shadow-lg ring-2 ring-brand-accent/80 scale-[1.01] z-10"
+                                        : "border border-gray-200 bg-card hover:border-brand-accent/40 hover:bg-muted/50",
                                       session.seatsAvailable === 0 &&
-                                        "opacity-50 cursor-not-allowed"
+                                        "opacity-50 cursor-not-allowed",
+                                      // Responsive: make highlight more obvious on mobile
+                                      isSelected &&
+                                        "sm:scale-100 sm:shadow-lg sm:bg-brand-accent/10"
                                     )}
                                     onClick={() =>
                                       session.seatsAvailable > 0 &&
@@ -1379,9 +1544,15 @@ export function EnhancedBookingExperience({
                             email: e.target.value,
                           }))
                         }
+                        onBlur={validateContactFields}
                         placeholder="Enter email address"
                         required
                       />
+                      {contactFieldErrors.email && (
+                        <p className="mt-1 text-xs text-destructive">
+                          {contactFieldErrors.email}
+                        </p>
+                      )}
                     </div>
                     <div>
                       <Label htmlFor="contact-phone">Phone Number *</Label>
@@ -1389,15 +1560,22 @@ export function EnhancedBookingExperience({
                         id="contact-phone"
                         type="tel"
                         value={contactInfo.phone}
-                        onChange={(e) =>
+                        onChange={(e) => {
+                          const formatted = formatPhoneNumber(e.target.value);
                           setContactInfo((prev) => ({
                             ...prev,
-                            phone: e.target.value,
-                          }))
-                        }
-                        placeholder="Enter phone number"
+                            phone: formatted,
+                          }));
+                        }}
+                        onBlur={validateContactFields}
+                        placeholder="(123) 456-7890"
                         required
                       />
+                      {contactFieldErrors.phone && (
+                        <p className="mt-1 text-xs text-destructive">
+                          {contactFieldErrors.phone}
+                        </p>
+                      )}
                     </div>
                   </div>
 
@@ -1578,7 +1756,7 @@ export function EnhancedBookingExperience({
                           </div>
                         )}
                         {selectedPickupLocation && (
-                          <div className="flex items-center gap-2 ml-6">
+                          <div className="flex items-start gap-2 ml-6">
                             <Clock className="h-4 w-4 text-muted-foreground" />
                             <span>
                               {selectedPickupLocation.name}
@@ -1708,23 +1886,6 @@ export function EnhancedBookingExperience({
                           >
                             privacy policy
                           </a>
-                        </Label>
-                      </div>
-
-                      <div className="flex items-start space-x-2">
-                        <Checkbox
-                          id="newsletter"
-                          checked={subscribeNewsletter}
-                          onCheckedChange={(checked) =>
-                            setSubscribeNewsletter(checked as boolean)
-                          }
-                        />
-                        <Label
-                          htmlFor="newsletter"
-                          className="text-sm leading-tight"
-                        >
-                          Subscribe to our newsletter for exclusive offers and
-                          travel tips
                         </Label>
                       </div>
                     </div>

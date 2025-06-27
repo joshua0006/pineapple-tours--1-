@@ -203,8 +203,10 @@ export function InteractiveCustomTourBuilder({
       <div className="mb-6 bg-white rounded-lg shadow-sm border p-4">
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-4">
-            <h2 className="text-xl font-bold text-gray-900">Build Your Tour</h2>
-            <div className="text-lg font-bold text-brand-accent">
+            <h2 className="text-lg font-semibold text-gray-900">
+              Build Your Tour
+            </h2>
+            <div className="text-base font-bold text-brand-accent">
               ${totalPrice}
             </div>
           </div>
@@ -257,7 +259,7 @@ export function InteractiveCustomTourBuilder({
         {currentStep === "region" && (
           <div className="p-4">
             <div className="text-center mb-6">
-              <h3 className="text-xl font-bold text-gray-900 mb-1">
+              <h3 className="text-lg font-semibold text-gray-900 mb-1">
                 Where would you like to explore?
               </h3>
               <p className="text-gray-600 text-sm">
@@ -333,7 +335,7 @@ export function InteractiveCustomTourBuilder({
 
                       {/* Content */}
                       <div className="flex-1 flex flex-col justify-end">
-                        <h4 className="text-2xl font-bold text-white mb-2 font-['Barlow'] drop-shadow-lg">
+                        <h4 className="text-xl font-bold text-white mb-2 font-['Barlow'] drop-shadow-lg">
                           {region.name}
                         </h4>
 
@@ -385,7 +387,7 @@ export function InteractiveCustomTourBuilder({
         {currentStep === "experiences" && selection.region && (
           <div className="p-4">
             <div className="text-center mb-6">
-              <h3 className="text-xl font-bold text-gray-900 mb-1">
+              <h3 className="text-lg font-semibold text-gray-900 mb-1">
                 What experiences interest you?
               </h3>
               <p className="text-gray-600 text-sm">
@@ -518,7 +520,7 @@ export function InteractiveCustomTourBuilder({
         {currentStep === "customize" && (
           <div className="p-4">
             <div className="text-center mb-6">
-              <h3 className="text-xl font-bold text-gray-900 mb-1">
+              <h3 className="text-lg font-semibold text-gray-900 mb-1">
                 Customize your experience
               </h3>
               <p className="text-gray-600 text-sm">
@@ -550,7 +552,7 @@ export function InteractiveCustomTourBuilder({
                     >
                       <Minus className="w-3 h-3" />
                     </Button>
-                    <div className="text-xl font-bold w-12 text-center">
+                    <div className="text-lg font-bold w-10 text-center">
                       {selection.participants}
                     </div>
                     <Button
@@ -637,7 +639,7 @@ export function InteractiveCustomTourBuilder({
         {currentStep === "summary" && (
           <div className="p-6">
             <div className="text-center mb-8">
-              <h3 className="text-2xl font-bold text-gray-900 mb-2">
+              <h3 className="text-xl font-semibold text-gray-900 mb-2">
                 Review your custom tour
               </h3>
               <p className="text-gray-600">
@@ -762,7 +764,7 @@ export function InteractiveCustomTourBuilder({
 
                     <Separator />
 
-                    <div className="flex justify-between text-xl font-bold">
+                    <div className="flex justify-between text-lg font-bold">
                       <span>Total</span>
                       <span className="text-brand-accent">${totalPrice}</span>
                     </div>

@@ -763,7 +763,7 @@ export default function TourDetailPage({
                                         </div>
                                       </div>
                                       <Link
-                                        href={`/booking/${selectedProduct.productCode}`}
+                                        href={`/booking/${selectedProduct.productCode}?sessionId=${session.id}`}
                                       >
                                         <Button
                                           size="sm"
@@ -956,16 +956,23 @@ export default function TourDetailPage({
                         size="sm"
                         className="w-full mt-3 text-xs border-gray-300 text-gray-700 hover:bg-gray-50"
                         onClick={() => {
-                          // Switch to location tab
-                          const locationTab =
-                            document.querySelector('[value="location"]');
-                          if (locationTab) {
-                            (locationTab as HTMLElement).click();
-                            locationTab.scrollIntoView({
-                              behavior: "smooth",
-                              block: "start",
-                            });
-                          }
+                          // Create Google Maps URL with the location
+                          const address =
+                            typeof selectedProduct.locationAddress === "string"
+                              ? selectedProduct.locationAddress
+                              : [
+                                  selectedProduct.locationAddress?.addressLine,
+                                  selectedProduct.locationAddress?.city,
+                                  selectedProduct.locationAddress?.state,
+                                  selectedProduct.locationAddress?.postCode,
+                                ]
+                                  .filter(Boolean)
+                                  .join(", ");
+
+                          const googleMapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
+                            address
+                          )}`;
+                          window.open(googleMapsUrl, "_blank");
                         }}
                       >
                         View on Map

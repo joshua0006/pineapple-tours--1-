@@ -1163,15 +1163,6 @@ export function EnhancedBookingExperience({
                     <p className="text-muted-foreground">
                       Choose your preferred tour date and session first
                     </p>
-                    {selectedSession && (
-                      <div className="flex items-center gap-2 text-sm">
-                        <CheckCircle className="h-4 w-4 text-brand-accent" />
-                        <span className="text-brand-accent">
-                          Session selected for{" "}
-                          {selectedDate && format(selectedDate, "MMM dd, yyyy")}
-                        </span>
-                      </div>
-                    )}
                   </CardHeader>
                   <CardContent className="space-y-6">
                     {/* Date Selection */}

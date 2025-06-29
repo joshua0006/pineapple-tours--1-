@@ -1,44 +1,72 @@
 import { RezdyProduct } from "@/lib/types/rezdy";
 import { cache } from "react";
 
+const REZDY_BASE_URL = "https://api.rezdy.com/v1";
+const API_KEY = process.env.REZDY_API_KEY;
+
 /**
  * getRezdyProducts
  * ----------------
- * Small server-side helper that talks to our existing edge function at
- * `/api/rezdy/products` but with Next.js native caching semantics. Because
- * this executes in a React Server Component (RSC) context it will be run
- * **at build-time** for `force-static`/ISR pages and **on the server** for
- * dynamic pages.  We keep the inner `fetch` cached for one hour via the
- * `revalidate` option – downstream requests hit the same cache-entry so we
- * don't re-query Rezdy more than once per hour across the entire app.
- *
- * NOTE: We purposefully talk to our own internal API route rather than the
- * external Rezdy API so we can reuse the existing `simpleCacheManager`
- * logic and rate-limit handling already implemented there.
+ * Server-side helper that fetches products from Rezdy API directly during build time
+ * and falls back to internal API during runtime. This avoids URL parsing issues
+ * during static generation when NEXT_PUBLIC_SITE_URL might not be available.
  */
 export const getRezdyProducts = cache(
   async (limit: number = 100, offset: number = 0): Promise<RezdyProduct[]> => {
-    // Internal relative request – This is resolved by Next.js / Edge-runtime
-    // without an external network hop.
-    const res = await fetch(
-      `${
-        process.env.NEXT_PUBLIC_SITE_URL ?? ""
-      }/api/rezdy/products?limit=${limit}&offset=${offset}`,
-      {
-        // Revalidate once every 3600 seconds (1 h). You can tune this easily.
-        next: { revalidate: 3600 },
-        // Keep identical requests deduped.
-        cache: "force-cache",
+    try {
+      // During build time or when NEXT_PUBLIC_SITE_URL is not available,
+      // call Rezdy API directly to avoid URL parsing issues
+      const siteUrl = process.env.NEXT_PUBLIC_SITE_URL;
+      const isBuilding = !siteUrl || siteUrl === "";
+
+      if (isBuilding) {
+        // Direct API call to Rezdy during build time
+        if (!API_KEY) {
+          console.warn(
+            "⚠️ REZDY_API_KEY not found, returning empty products array"
+          );
+          return [];
+        }
+
+        const url = `${REZDY_BASE_URL}/products?apiKey=${API_KEY}&limit=${limit}&offset=${offset}`;
+        const res = await fetch(url, {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            Accept: "application/json",
+          },
+          next: { revalidate: 3600 },
+          cache: "force-cache",
+        });
+
+        if (!res.ok) {
+          console.error(`Failed to fetch from Rezdy API: ${res.status}`);
+          return [];
+        }
+
+        const data = await res.json();
+        return (data.products ?? data.data ?? []) as RezdyProduct[];
+      } else {
+        // Runtime: Use internal API route
+        const res = await fetch(
+          `${siteUrl}/api/rezdy/products?limit=${limit}&offset=${offset}`,
+          {
+            next: { revalidate: 3600 },
+            cache: "force-cache",
+          }
+        );
+
+        if (!res.ok) {
+          console.error(`Failed to preload Rezdy products – ${res.status}`);
+          return [];
+        }
+
+        const json = await res.json();
+        return (json.products ?? json.data ?? []) as RezdyProduct[];
       }
-    );
-
-    if (!res.ok) {
-      // Surface a friendlier error for the calling component.
-      throw new Error(`Failed to preload Rezdy products – ${res.status}`);
+    } catch (error) {
+      console.error("Error in getRezdyProducts:", error);
+      return [];
     }
-
-    const json = await res.json();
-    // The API returns either `products` or `data` – normalise that.
-    return (json.products ?? json.data ?? []) as RezdyProduct[];
   }
 );

@@ -1,14 +1,14 @@
-import Redis from 'ioredis';
-import { gzip, gunzip } from 'zlib';
-import { promisify } from 'util';
+import Redis from "ioredis";
+import { gzip, gunzip } from "zlib";
+import { promisify } from "util";
 import {
   CacheConfig,
   CacheMetrics,
   RezdyProduct,
   RezdyBooking,
   RezdyAvailability,
-  PerformanceMetrics
-} from '@/lib/types/rezdy';
+  PerformanceMetrics,
+} from "@/lib/types/rezdy";
 
 const gzipAsync = promisify(gzip);
 const gunzipAsync = promisify(gunzip);
@@ -51,9 +51,9 @@ export class EnhancedCacheManager {
     totalRequests: 0,
     compressionRatio: 0,
     memoryUsage: 0,
-    redisConnected: false
+    redisConnected: false,
   };
-  
+
   private config: CacheConfig & {
     enableCompression: boolean;
     compressionThreshold: number;
@@ -63,11 +63,11 @@ export class EnhancedCacheManager {
   } = {
     ttl: 300,
     max_size: 2000, // Increased from 1000
-    eviction_policy: 'lru',
+    eviction_policy: "lru",
     enableCompression: true,
     compressionThreshold: 1024, // Compress data > 1KB
     enableRedis: true,
-    enableAnalytics: true
+    enableAnalytics: true,
   };
 
   private analytics: CacheAnalytics = {
@@ -75,33 +75,43 @@ export class EnhancedCacheManager {
     averageResponseTime: {},
     cacheEffectiveness: 0,
     memoryTrends: [],
-    popularKeys: []
+    popularKeys: [],
   };
 
   private dependencies: Record<string, string[]> = {
-    'products': ['product-list', 'search-results', 'categories', 'featured-products'],
-    'availability': ['sessions', 'calendar', 'pricing', 'product-availability'],
-    'bookings': ['customer-history', 'revenue-reports', 'availability', 'analytics'],
-    'customers': ['customer-segments', 'analytics', 'reports']
+    products: [
+      "product-list",
+      "search-results",
+      "categories",
+      "featured-products",
+    ],
+    availability: ["sessions", "calendar", "pricing", "product-availability"],
+    bookings: [
+      "customer-history",
+      "revenue-reports",
+      "availability",
+      "analytics",
+    ],
+    customers: ["customer-segments", "analytics", "reports"],
   };
 
   // Optimized TTL values based on data volatility
   private ttlConfig: Record<string, number> = {
-    'products': 1800, // 30 minutes (increased from 10)
-    'product': 1800,
-    'availability': 60, // 1 minute (real-time critical)
-    'bookings': 180, // 3 minutes
-    'sessions': 900, // 15 minutes (increased from 5)
-    'search': 600, // 10 minutes (increased from 5)
-    'categories': 3600, // 1 hour (very stable)
-    'featured': 1800 // 30 minutes
+    products: 1800, // 30 minutes (increased from 10)
+    product: 1800,
+    availability: 60, // 1 minute (real-time critical)
+    bookings: 180, // 3 minutes
+    sessions: 900, // 15 minutes (increased from 5)
+    search: 600, // 10 minutes (increased from 5)
+    categories: 3600, // 1 hour (very stable)
+    featured: 1800, // 30 minutes
   };
 
   constructor(config?: Partial<typeof EnhancedCacheManager.prototype.config>) {
     if (config) {
       this.config = { ...this.config, ...config };
     }
-    
+
     this.initializeRedis();
     this.setupPeriodicTasks();
   }
@@ -109,42 +119,57 @@ export class EnhancedCacheManager {
   private async initializeRedis(): Promise<void> {
     if (!this.config.enableRedis) return;
 
+    // Skip Redis initialization during build time (Vercel build environment)
+    if (process.env.NODE_ENV === "production" && !process.env.REDIS_URL) {
+      console.log("⚠️ Skipping Redis initialization during build time");
+      return;
+    }
+
     try {
-      const redisUrl = this.config.redisUrl || process.env.REDIS_URL || 'redis://localhost:6379';
+      const redisUrl =
+        this.config.redisUrl ||
+        process.env.REDIS_URL ||
+        "redis://localhost:6379";
       this.redis = new Redis(redisUrl, {
         maxRetriesPerRequest: 3,
-        lazyConnect: true
+        lazyConnect: true,
+        enableOfflineQueue: false,
       });
 
-      this.redis.on('connect', () => {
+      this.redis.on("connect", () => {
         this.cacheStats.redisConnected = true;
-        console.log('✅ Redis connected successfully');
+        console.log("✅ Redis connected successfully");
       });
 
-      this.redis.on('error', (error) => {
+      this.redis.on("error", (error) => {
         this.cacheStats.redisConnected = false;
-        console.warn('⚠️ Redis connection error:', error.message);
+        console.warn("⚠️ Redis connection error:", error.message);
+        // Don't throw error, just continue without Redis
       });
 
       await this.redis.connect();
     } catch (error) {
-      console.warn('⚠️ Redis initialization failed, falling back to memory-only caching:', error);
+      console.warn(
+        "⚠️ Redis initialization failed, falling back to memory-only caching:",
+        error
+      );
       this.redis = null;
+      this.cacheStats.redisConnected = false;
     }
   }
 
   private setupPeriodicTasks(): void {
     // Cleanup expired entries every minute
     setInterval(() => this.cleanup(), 60000);
-    
+
     // Cache warming every 5 minutes
     setInterval(() => this.warmCache(), 300000);
-    
+
     // Analytics collection every 30 seconds
     if (this.config.enableAnalytics) {
       setInterval(() => this.collectAnalytics(), 30000);
     }
-    
+
     // Memory usage tracking every 10 seconds
     setInterval(() => this.updateMemoryUsage(), 10000);
   }
@@ -153,7 +178,7 @@ export class EnhancedCacheManager {
   async get<T>(key: string): Promise<T | null> {
     const startTime = Date.now();
     this.cacheStats.totalRequests++;
-    
+
     try {
       // Level 1: Memory cache
       const memoryEntry = this.memoryCache.get(key);
@@ -162,7 +187,10 @@ export class EnhancedCacheManager {
         memoryEntry.lastAccessed = Date.now();
         this.cacheStats.hits++;
         this.updateAnalytics(key, Date.now() - startTime, true);
-        return await this.decompressData<T>(memoryEntry.data, memoryEntry.compressed);
+        return await this.decompressData<T>(
+          memoryEntry.data,
+          memoryEntry.compressed
+        );
       }
 
       // Level 2: Redis cache
@@ -170,8 +198,11 @@ export class EnhancedCacheManager {
         const redisValue = await this.redis.get(key);
         if (redisValue) {
           const parsed = JSON.parse(redisValue);
-          const decompressed = await this.decompressData<T>(parsed.data, parsed.compressed);
-          
+          const decompressed = await this.decompressData<T>(
+            parsed.data,
+            parsed.compressed
+          );
+
           // Store back in memory cache
           const entry: CacheEntry<T> = {
             data: parsed.compressed ? parsed.data : decompressed,
@@ -180,10 +211,10 @@ export class EnhancedCacheManager {
             accessCount: 1,
             lastAccessed: Date.now(),
             compressed: parsed.compressed,
-            size: parsed.size
+            size: parsed.size,
           };
           this.memoryCache.set(key, entry);
-          
+
           this.cacheStats.hits++;
           this.updateAnalytics(key, Date.now() - startTime, true);
           return decompressed;
@@ -194,7 +225,7 @@ export class EnhancedCacheManager {
       this.updateAnalytics(key, Date.now() - startTime, false);
       return null;
     } catch (error) {
-      console.error('Cache get error:', error);
+      console.error("Cache get error:", error);
       this.cacheStats.misses++;
       return null;
     }
@@ -204,9 +235,10 @@ export class EnhancedCacheManager {
     try {
       const entryTtl = ttl || this.getTTLForKey(key);
       const serialized = JSON.stringify(value);
-      const shouldCompress = this.config.enableCompression && 
-                           serialized.length > this.config.compressionThreshold;
-      
+      const shouldCompress =
+        this.config.enableCompression &&
+        serialized.length > this.config.compressionThreshold;
+
       let finalData = value;
       let compressed = false;
       let size = serialized.length;
@@ -214,16 +246,19 @@ export class EnhancedCacheManager {
       if (shouldCompress) {
         try {
           const compressedBuffer = await gzipAsync(Buffer.from(serialized));
-          finalData = compressedBuffer.toString('base64') as any;
+          finalData = compressedBuffer.toString("base64") as any;
           compressed = true;
           size = compressedBuffer.length;
-          
+
           // Update compression ratio
           const ratio = size / serialized.length;
-          this.cacheStats.compressionRatio = 
+          this.cacheStats.compressionRatio =
             (this.cacheStats.compressionRatio + ratio) / 2;
         } catch (compressionError) {
-          console.warn('Compression failed, storing uncompressed:', compressionError);
+          console.warn(
+            "Compression failed, storing uncompressed:",
+            compressionError
+          );
         }
       }
 
@@ -234,7 +269,7 @@ export class EnhancedCacheManager {
         accessCount: 1,
         lastAccessed: Date.now(),
         compressed,
-        size
+        size,
       };
 
       // Check memory cache size and evict if necessary
@@ -252,49 +287,71 @@ export class EnhancedCacheManager {
           timestamp: entry.timestamp,
           ttl: entryTtl,
           compressed,
-          size
+          size,
         };
         await this.redis.setex(key, entryTtl, JSON.stringify(redisEntry));
       }
     } catch (error) {
-      console.error('Cache set error:', error);
+      console.error("Cache set error:", error);
     }
   }
 
   // Specialized cache methods with optimized TTL
-  async cacheProducts(products: RezdyProduct[], key: string = 'products:all'): Promise<void> {
+  async cacheProducts(
+    products: RezdyProduct[],
+    key: string = "products:all"
+  ): Promise<void> {
     await this.set(key, products, this.ttlConfig.products);
-    
+
     // Cache individual products
-    const promises = products.map(product => 
-      this.set(`product:${product.productCode}`, product, this.ttlConfig.product)
+    const promises = products.map((product) =>
+      this.set(
+        `product:${product.productCode}`,
+        product,
+        this.ttlConfig.product
+      )
     );
     await Promise.all(promises);
   }
 
-  async getProducts(key: string = 'products:all'): Promise<RezdyProduct[] | null> {
+  async getProducts(
+    key: string = "products:all"
+  ): Promise<RezdyProduct[] | null> {
     return this.get<RezdyProduct[]>(key);
   }
 
-  async cacheAvailability(availability: RezdyAvailability[], productCode: string): Promise<void> {
+  async cacheAvailability(
+    availability: RezdyAvailability[],
+    productCode: string
+  ): Promise<void> {
     const key = `availability:${productCode}`;
     await this.set(key, availability, this.ttlConfig.availability);
   }
 
-  async getAvailability(productCode: string): Promise<RezdyAvailability[] | null> {
+  async getAvailability(
+    productCode: string
+  ): Promise<RezdyAvailability[] | null> {
     const key = `availability:${productCode}`;
     return this.get<RezdyAvailability[]>(key);
   }
 
-  async cacheBookings(bookings: RezdyBooking[], key: string = 'bookings:all'): Promise<void> {
+  async cacheBookings(
+    bookings: RezdyBooking[],
+    key: string = "bookings:all"
+  ): Promise<void> {
     await this.set(key, bookings, this.ttlConfig.bookings);
   }
 
-  async getBookings(key: string = 'bookings:all'): Promise<RezdyBooking[] | null> {
+  async getBookings(
+    key: string = "bookings:all"
+  ): Promise<RezdyBooking[] | null> {
     return this.get<RezdyBooking[]>(key);
   }
 
-  async cacheSearchResults(results: RezdyProduct[], searchKey: string): Promise<void> {
+  async cacheSearchResults(
+    results: RezdyProduct[],
+    searchKey: string
+  ): Promise<void> {
     const key = `search:${this.hashSearchKey(searchKey)}`;
     await this.set(key, results, this.ttlConfig.search);
   }
@@ -307,44 +364,52 @@ export class EnhancedCacheManager {
   // Enhanced cache warming with background preloading
   async warmCache(): Promise<void> {
     try {
-      console.log('🔥 Starting cache warming...');
-      
+      console.log("🔥 Starting cache warming...");
+
       // Warm critical data in parallel
       await Promise.allSettled([
         this.warmProductCache(),
         this.warmCategoryCache(),
-        this.warmPopularSearches()
+        this.warmPopularSearches(),
       ]);
-      
-      console.log('✅ Cache warming completed');
+
+      console.log("✅ Cache warming completed");
     } catch (error) {
-      console.error('❌ Cache warming failed:', error);
+      console.error("❌ Cache warming failed:", error);
     }
   }
 
   private async warmProductCache(): Promise<void> {
     try {
       // Pre-fetch featured products
-      const response = await fetch('/api/rezdy/products?limit=50&featured=true');
+      const response = await fetch(
+        "/api/rezdy/products?limit=50&featured=true"
+      );
       if (response.ok) {
         const data = await response.json();
         const products = data.products || data.data || [];
-        await this.cacheProducts(products, 'products:featured');
+        await this.cacheProducts(products, "products:featured");
       }
     } catch (error) {
-      console.warn('Failed to warm product cache:', error);
+      console.warn("Failed to warm product cache:", error);
     }
   }
 
   private async warmCategoryCache(): Promise<void> {
-    const categories = ['adventure', 'cultural', 'food', 'nature', 'family'];
-    
+    const categories = ["adventure", "cultural", "food", "nature", "family"];
+
     const promises = categories.map(async (category) => {
       try {
-        const response = await fetch(`/api/search?category=${category}&limit=20`);
+        const response = await fetch(
+          `/api/search?category=${category}&limit=20`
+        );
         if (response.ok) {
           const data = await response.json();
-          await this.set(`category:${category}`, data.products || [], this.ttlConfig.categories);
+          await this.set(
+            `category:${category}`,
+            data.products || [],
+            this.ttlConfig.categories
+          );
         }
       } catch (error) {
         console.warn(`Failed to warm ${category} cache:`, error);
@@ -356,16 +421,18 @@ export class EnhancedCacheManager {
 
   private async warmPopularSearches(): Promise<void> {
     const popularSearches = [
-      'sydney harbour',
-      'wine tour',
-      'cultural experience',
-      'adventure tour',
-      'food tour'
+      "sydney harbour",
+      "wine tour",
+      "cultural experience",
+      "adventure tour",
+      "food tour",
     ];
 
     const promises = popularSearches.map(async (search) => {
       try {
-        const response = await fetch(`/api/search?query=${encodeURIComponent(search)}&limit=10`);
+        const response = await fetch(
+          `/api/search?query=${encodeURIComponent(search)}&limit=10`
+        );
         if (response.ok) {
           const data = await response.json();
           await this.cacheSearchResults(data.products || [], search);
@@ -381,15 +448,15 @@ export class EnhancedCacheManager {
   // Enhanced invalidation with dependency tracking
   async invalidate(pattern: string): Promise<void> {
     const keysToDelete: string[] = [];
-    
+
     // Memory cache invalidation
     for (const key of this.memoryCache.keys()) {
       if (key.includes(pattern)) {
         keysToDelete.push(key);
       }
     }
-    
-    keysToDelete.forEach(key => {
+
+    keysToDelete.forEach((key) => {
       this.memoryCache.delete(key);
       this.cacheStats.evictions++;
     });
@@ -402,15 +469,18 @@ export class EnhancedCacheManager {
           await this.redis.del(...redisKeys);
         }
       } catch (error) {
-        console.warn('Redis invalidation error:', error);
+        console.warn("Redis invalidation error:", error);
       }
     }
   }
 
-  async invalidateRelated(dataType: string, identifier?: string): Promise<void> {
+  async invalidateRelated(
+    dataType: string,
+    identifier?: string
+  ): Promise<void> {
     const relatedCaches = this.dependencies[dataType] || [];
-    
-    const promises = relatedCaches.map(cacheType => {
+
+    const promises = relatedCaches.map((cacheType) => {
       if (identifier) {
         return this.invalidate(`${cacheType}:${identifier}`);
       } else {
@@ -425,18 +495,21 @@ export class EnhancedCacheManager {
   private async compressData(data: any): Promise<string> {
     const serialized = JSON.stringify(data);
     const compressed = await gzipAsync(Buffer.from(serialized));
-    return compressed.toString('base64');
+    return compressed.toString("base64");
   }
 
-  private async decompressData<T>(data: any, isCompressed: boolean): Promise<T> {
+  private async decompressData<T>(
+    data: any,
+    isCompressed: boolean
+  ): Promise<T> {
     if (!isCompressed) return data;
-    
+
     try {
-      const buffer = Buffer.from(data as string, 'base64');
+      const buffer = Buffer.from(data as string, "base64");
       const decompressed = await gunzipAsync(buffer);
       return JSON.parse(decompressed.toString());
     } catch (error) {
-      console.error('Decompression error:', error);
+      console.error("Decompression error:", error);
       return data; // Fallback to original data
     }
   }
@@ -451,7 +524,7 @@ export class EnhancedCacheManager {
   }
 
   private isExpired(entry: CacheEntry<any>): boolean {
-    return Date.now() > (entry.timestamp + entry.ttl);
+    return Date.now() > entry.timestamp + entry.ttl;
   }
 
   private hashSearchKey(searchKey: string): string {
@@ -459,7 +532,7 @@ export class EnhancedCacheManager {
     let hash = 0;
     for (let i = 0; i < searchKey.length; i++) {
       const char = searchKey.charCodeAt(i);
-      hash = ((hash << 5) - hash) + char;
+      hash = (hash << 5) - hash + char;
       hash = hash & hash; // Convert to 32-bit integer
     }
     return Math.abs(hash).toString(36);
@@ -467,15 +540,15 @@ export class EnhancedCacheManager {
 
   private evictEntries(): void {
     const evictCount = Math.floor(this.config.max_size * 0.1); // Evict 10%
-    
+
     switch (this.config.eviction_policy) {
-      case 'lru':
+      case "lru":
         this.evictLRU(evictCount);
         break;
-      case 'fifo':
+      case "fifo":
         this.evictFIFO(evictCount);
         break;
-      case 'ttl':
+      case "ttl":
         this.evictByTTL(evictCount);
         break;
     }
@@ -506,7 +579,7 @@ export class EnhancedCacheManager {
   private evictByTTL(count: number): void {
     const now = Date.now();
     const entries = Array.from(this.memoryCache.entries())
-      .sort(([, a], [, b]) => (a.timestamp + a.ttl) - (b.timestamp + b.ttl))
+      .sort(([, a], [, b]) => a.timestamp + a.ttl - (b.timestamp + b.ttl))
       .slice(0, count);
 
     entries.forEach(([key]) => {
@@ -525,7 +598,7 @@ export class EnhancedCacheManager {
       }
     }
 
-    keysToDelete.forEach(key => {
+    keysToDelete.forEach((key) => {
       this.memoryCache.delete(key);
       this.cacheStats.evictions++;
     });
@@ -535,21 +608,25 @@ export class EnhancedCacheManager {
     }
   }
 
-  private updateAnalytics(key: string, responseTime: number, hit: boolean): void {
+  private updateAnalytics(
+    key: string,
+    responseTime: number,
+    hit: boolean
+  ): void {
     if (!this.config.enableAnalytics) return;
 
-    const endpoint = key.split(':')[0];
-    
+    const endpoint = key.split(":")[0];
+
     // Update hit rate by endpoint
     if (!this.analytics.hitRateByEndpoint[endpoint]) {
       this.analytics.hitRateByEndpoint[endpoint] = 0;
     }
-    
+
     // Update average response time
     if (!this.analytics.averageResponseTime[endpoint]) {
       this.analytics.averageResponseTime[endpoint] = responseTime;
     } else {
-      this.analytics.averageResponseTime[endpoint] = 
+      this.analytics.averageResponseTime[endpoint] =
         (this.analytics.averageResponseTime[endpoint] + responseTime) / 2;
     }
   }
@@ -558,8 +635,9 @@ export class EnhancedCacheManager {
     if (!this.config.enableAnalytics) return;
 
     // Update cache effectiveness
-    this.analytics.cacheEffectiveness = 
-      this.cacheStats.hits / (this.cacheStats.hits + this.cacheStats.misses) || 0;
+    this.analytics.cacheEffectiveness =
+      this.cacheStats.hits / (this.cacheStats.hits + this.cacheStats.misses) ||
+      0;
 
     // Update memory trends
     this.analytics.memoryTrends.push(this.cacheStats.memoryUsage);
@@ -572,7 +650,7 @@ export class EnhancedCacheManager {
       .map(([key, entry]) => ({ key, accessCount: entry.accessCount }))
       .sort((a, b) => b.accessCount - a.accessCount)
       .slice(0, 10);
-    
+
     this.analytics.popularKeys = keyStats;
   }
 
@@ -590,17 +668,21 @@ export class EnhancedCacheManager {
       hit_rate: this.cacheStats.hits / this.cacheStats.totalRequests || 0,
       miss_rate: this.cacheStats.misses / this.cacheStats.totalRequests || 0,
       eviction_count: this.cacheStats.evictions,
-      memory_usage: this.cacheStats.memoryUsage
+      memory_usage: this.cacheStats.memoryUsage,
     };
   }
 
   getPerformanceMetrics(): PerformanceMetrics {
     return {
-      cache_hit_ratio: this.cacheStats.hits / this.cacheStats.totalRequests || 0,
-      api_response_time: Object.values(this.analytics.averageResponseTime).reduce((a, b) => a + b, 0) / 
-                        Object.keys(this.analytics.averageResponseTime).length || 0,
+      cache_hit_ratio:
+        this.cacheStats.hits / this.cacheStats.totalRequests || 0,
+      api_response_time:
+        Object.values(this.analytics.averageResponseTime).reduce(
+          (a, b) => a + b,
+          0
+        ) / Object.keys(this.analytics.averageResponseTime).length || 0,
       data_freshness: this.calculateDataFreshness(),
-      error_rate: 0 // TODO: Implement error tracking
+      error_rate: 0, // TODO: Implement error tracking
     };
   }
 
@@ -612,22 +694,22 @@ export class EnhancedCacheManager {
     return {
       ...this.cacheStats,
       size: this.memoryCache.size,
-      config: this.config
+      config: this.config,
     };
   }
 
   private calculateDataFreshness(): number {
     if (this.memoryCache.size === 0) return 1;
-    
+
     const now = Date.now();
     let totalFreshness = 0;
-    
+
     for (const entry of this.memoryCache.values()) {
       const age = now - entry.timestamp;
-      const freshness = Math.max(0, 1 - (age / entry.ttl));
+      const freshness = Math.max(0, 1 - age / entry.ttl);
       totalFreshness += freshness;
     }
-    
+
     return totalFreshness / this.memoryCache.size;
   }
 
@@ -635,11 +717,11 @@ export class EnhancedCacheManager {
   clear(): void {
     this.memoryCache.clear();
     if (this.redis && this.cacheStats.redisConnected) {
-      this.redis.flushdb().catch(error => 
-        console.warn('Redis flush error:', error)
-      );
+      this.redis
+        .flushdb()
+        .catch((error) => console.warn("Redis flush error:", error));
     }
-    
+
     // Reset stats
     this.cacheStats.hits = 0;
     this.cacheStats.misses = 0;
@@ -657,18 +739,23 @@ export class EnhancedCacheManager {
 
 // Export singleton instance
 export const enhancedCacheManager = new EnhancedCacheManager({
-  enableRedis: process.env.NODE_ENV === 'production',
+  enableRedis: process.env.NODE_ENV === "production",
   enableCompression: true,
-  enableAnalytics: true
+  enableAnalytics: true,
 });
 
 export const smartCacheInvalidation = {
-  async invalidateRelated(dataType: string, identifier?: string): Promise<void> {
+  async invalidateRelated(
+    dataType: string,
+    identifier?: string
+  ): Promise<void> {
     await enhancedCacheManager.invalidateRelated(dataType, identifier);
   },
-  
+
   async invalidateByPattern(patterns: string[]): Promise<void> {
-    const promises = patterns.map(pattern => enhancedCacheManager.invalidate(pattern));
+    const promises = patterns.map((pattern) =>
+      enhancedCacheManager.invalidate(pattern)
+    );
     await Promise.allSettled(promises);
-  }
+  },
 };

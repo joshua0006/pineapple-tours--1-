@@ -1,3 +1,5 @@
+"use client";
+
 import { useState, useMemo } from "react";
 import {
   ArrowLeft,
@@ -33,8 +35,6 @@ import {
   getCategoryBySlug,
 } from "@/lib/constants/categories";
 import { RezdyProduct } from "@/lib/types/rezdy";
-
-("use client");
 
 interface Props {
   initialProducts: RezdyProduct[];

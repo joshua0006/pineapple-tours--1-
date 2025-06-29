@@ -2,9 +2,7 @@ import { getRezdyProducts } from "@/lib/services/rezdy-server";
 import dynamicImport from "next/dynamic";
 
 // @ts-ignore
-const HopOnHopOffClient = dynamicImport(() => import("./HopOnHopOffClient"), {
-  ssr: false,
-});
+const HopOnHopOffClient = dynamicImport(() => import("./HopOnHopOffClient"));
 
 export const dynamic = "force-static";
 export const revalidate = 3600;

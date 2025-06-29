@@ -2,9 +2,7 @@ import { getRezdyProducts } from "@/lib/services/rezdy-server";
 import dynamicImport from "next/dynamic";
 
 // @ts-ignore – Client component ships separately; type accuracy not critical here.
-const RezdyDataClient = dynamicImport(() => import("./RezdyDataClient"), {
-  ssr: false,
-});
+const RezdyDataClient = dynamicImport(() => import("./RezdyDataClient"));
 
 export const dynamic = "force-static"; // build time, still supports on-demand ISR revalidate below
 export const revalidate = 3600; // 1-hour incremental revalidation

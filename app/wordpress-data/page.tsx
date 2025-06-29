@@ -3,8 +3,7 @@ import dynamicImport from "next/dynamic";
 
 // @ts-ignore
 const WordPressDataClient = dynamicImport(
-  () => import("./WordPressDataClient"),
-  { ssr: false }
+  () => import("./WordPressDataClient")
 );
 
 export const dynamic = "force-static";

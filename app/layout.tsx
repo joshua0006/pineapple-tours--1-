@@ -7,6 +7,9 @@ import { CartProvider } from "@/hooks/use-cart";
 import { Toaster } from "@/components/ui/toaster";
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
+import { PreloadResources } from "@/components/preload-resources";
+import { Prefetcher } from "@/components/prefetcher";
+import { OrganizationSchema } from "@/components/schema-markup";
 
 const barlow = Barlow({
   subsets: ["latin"],
@@ -27,10 +30,69 @@ const workSans = Work_Sans({
 });
 
 export const metadata = {
-  title: "Pineapple Tours",
+  title: {
+    default:
+      "Pineapple Tours - Gold Coast & Brisbane Wine Tours | Day Tours Australia",
+    template: "%s | Pineapple Tours",
+  },
   description:
-    "Discover paradise with Pineapple Tours. We specialize in creating unforgettable tropical vacation experiences in Hawaii, the Caribbean, Fiji, and beyond.",
-  generator: "v0.dev",
+    "Experience the best of Queensland with Pineapple Tours. Wine tours, brewery tours, day trips, and hop-on hop-off tours in Gold Coast, Brisbane & Scenic Rim. Book online today!",
+  keywords: [
+    "gold coast wine tours",
+    "brisbane brewery tours",
+    "scenic rim day trips",
+    "hop on hop off brisbane",
+    "private winery tours",
+    "queensland tours",
+    "day tours australia",
+  ],
+  authors: [{ name: "Pineapple Tours" }],
+  creator: "Pineapple Tours",
+  publisher: "Pineapple Tours",
+  formatDetection: {
+    email: false,
+    address: false,
+    telephone: false,
+  },
+  metadataBase: new URL("https://pineappletours.com"),
+  alternates: {
+    canonical: "/",
+  },
+  openGraph: {
+    title: "Pineapple Tours - Gold Coast & Brisbane Wine Tours",
+    description:
+      "Experience the best of Queensland with premium wine tours, brewery tours, and day trips in Gold Coast, Brisbane & Scenic Rim.",
+    url: "https://pineappletours.com",
+    siteName: "Pineapple Tours",
+    images: [
+      {
+        url: "/pineapple-tour-logo.png",
+        width: 1200,
+        height: 630,
+        alt: "Pineapple Tours - Queensland Wine & Brewery Tours",
+      },
+    ],
+    locale: "en_AU",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Pineapple Tours - Gold Coast & Brisbane Wine Tours",
+    description:
+      "Experience the best of Queensland with premium wine tours, brewery tours, and day trips.",
+    images: ["/pineapple-tour-logo.png"],
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-video-preview": -1,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+    },
+  },
   icons: {
     icon: [
       { url: "/pineapple-tour-logo.png", sizes: "16x16", type: "image/png" },
@@ -69,6 +131,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
+        <PreloadResources />
         <meta
           name="viewport"
           content="width=device-width, initial-scale=1, maximum-scale=5, user-scalable=yes"
@@ -86,6 +149,8 @@ export default function RootLayout({
             </div>
             <BookingPromptWrapper />
             <Toaster />
+            <Prefetcher />
+            <OrganizationSchema />
           </CartProvider>
         </ThemeProvider>
       </body>

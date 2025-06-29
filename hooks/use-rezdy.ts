@@ -15,14 +15,23 @@ interface UseRezdyDataState<T> {
   error: string | null;
 }
 
-export function useRezdyProducts(limit = 100, offset = 0) {
+export function useRezdyProducts(
+  limit = 100,
+  offset = 0,
+  initialData?: RezdyProduct[]
+) {
   const [state, setState] = useState<UseRezdyDataState<RezdyProduct[]>>({
-    data: null,
-    loading: true,
+    data: initialData ?? null,
+    loading: initialData ? false : true,
     error: null,
   });
 
   useEffect(() => {
+    // Skip fetch if we already have initial data (will still revalidate in background)
+    if (initialData && initialData.length > 0) {
+      return;
+    }
+
     const fetchProducts = async () => {
       try {
         setState((prev) => ({ ...prev, loading: true, error: null }));
@@ -66,7 +75,7 @@ export function useRezdyProducts(limit = 100, offset = 0) {
     };
 
     fetchProducts();
-  }, [limit, offset]);
+  }, [limit, offset, initialData]);
 
   return state;
 }

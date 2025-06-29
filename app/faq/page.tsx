@@ -226,7 +226,7 @@ export default function FAQPage() {
                       value={`${categoryIndex}-${faqIndex}`}
                       className="border border-gray-200 rounded-lg px-6"
                     >
-                      <AccordionTrigger className="text-left font-medium hover:no-underline font-secondary">
+                      <AccordionTrigger className="text-left font-medium hover:no-underline font-secondary text-md">
                         {faq.question}
                       </AccordionTrigger>
                       <AccordionContent className="text-muted-foreground pt-2 font-text">

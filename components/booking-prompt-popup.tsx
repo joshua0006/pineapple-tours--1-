@@ -38,7 +38,7 @@ interface BookingPromptPopupProps {
   className?: string;
 }
 
-const INACTIVITY_TIMEOUT = 10000; // 1 minute
+const INACTIVITY_TIMEOUT = 30000; // 30 seconds
 
 export function BookingPromptPopup({
   onStartBooking,

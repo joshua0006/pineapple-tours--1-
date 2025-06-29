@@ -1,0 +1,12 @@
+User-agent: *
+Allow: /
+
+# Block test and demo pages from indexing
+Disallow: /test-*
+Disallow: /demo/
+Disallow: /debug-*
+Disallow: /api/
+Disallow: /cache-*
+
+# Sitemap location
+Sitemap: https://pineappletours.com/sitemap.xml 

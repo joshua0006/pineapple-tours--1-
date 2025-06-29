@@ -186,11 +186,11 @@ export default function AllergiesDietaryPage() {
             </p>
           </div>
 
-          <div className="grid md:grid-cols-4 gap-4 max-w-4xl mx-auto">
+          <div className="grid md:grid-cols-3 lg:grid-cols-4 gap-6 max-w-5xl mx-auto">
             {commonAllergies.map((allergy, index) => (
               <Card
                 key={index}
-                className={`text-center border-l-4 ${
+                className={`text-center border-l-4 hover:shadow-lg transition-shadow duration-200 ${
                   allergy.color === "red"
                     ? "border-l-red-500"
                     : allergy.color === "yellow"
@@ -198,8 +198,8 @@ export default function AllergiesDietaryPage() {
                     : "border-l-green-500"
                 }`}
               >
-                <CardContent className="p-4">
-                  <h3 className="font-semibold mb-2 font-secondary">
+                <CardContent className="p-6">
+                  <h3 className="font-semibold mb-3 font-secondary text-base">
                     {allergy.name}
                   </h3>
                   <Badge
@@ -210,7 +210,7 @@ export default function AllergiesDietaryPage() {
                         ? "default"
                         : "secondary"
                     }
-                    className="text-xs"
+                    className="text-sm px-3 py-1"
                   >
                     {allergy.severity}
                   </Badge>

@@ -52,10 +52,19 @@ export function PreloadResources() {
       {/* Prefetch critical API endpoints for faster navigation */}
       <link rel="prefetch" href="/api/tours" />
       <link rel="prefetch" href="/api/categories" />
+      <link rel="prefetch" href="/api/rezdy/products?limit=100&offset=0" />
+      <link rel="prefetch" href="/api/rezdy/products?limit=20&offset=0" />
 
       {/* DNS prefetch for external services */}
       <link rel="dns-prefetch" href="//api.rezdy.com" />
       <link rel="dns-prefetch" href="//maps.googleapis.com" />
+
+      {/* Preconnect to Rezdy API for faster data fetching */}
+      <link rel="preconnect" href="https://api.rezdy.com" />
+
+      {/* Prefetch common product data endpoints */}
+      <link rel="prefetch" href="/api/rezdy/categories" />
+      <link rel="prefetch" href="/api/tour-categories" />
 
       {/* Future-critical JS bundles (inlined via Next.js) are automatically pushed; we only
           need to handle third-party scripts. Example shown for analytics. */}

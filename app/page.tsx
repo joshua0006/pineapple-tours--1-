@@ -29,6 +29,7 @@ import { HopOnHopOffImages } from "@/components/hop-on-hop-off-images";
 import { BlogSection } from "@/components/blog-section";
 import { ContactSection } from "@/components/contact-section";
 import { TestimonialsSection } from "@/components/testimonials-section";
+import { FeaturedProductsSection } from "@/components/featured-products-section";
 
 // Video Overlay Component with customizable options
 interface VideoOverlayProps {
@@ -157,6 +158,16 @@ export default function Home() {
 
       {/* Categories Section */}
       <CategoriesSection />
+
+      {/* Featured Products Section */}
+      <FeaturedProductsSection
+        maxProducts={8}
+        title="Featured Tours"
+        description="Discover our most popular tours and experiences, preloaded for your convenience"
+        showCacheStatus={process.env.NODE_ENV === "development"}
+        enableRefresh={true}
+        showViewAll={true}
+      />
 
       {/* Hop on Hop off Section */}
       <section className="py-16 bg-gray-50">

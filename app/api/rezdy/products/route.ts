@@ -19,6 +19,10 @@ export async function GET(request: NextRequest) {
     const featured = searchParams.get("featured");
     const stats = searchParams.get("stats");
 
+    // Check for preload priority header
+    const preloadPriority = request.headers.get("X-Preload-Priority");
+    const isHighPriority = preloadPriority === "high";
+
     // Return cache statistics if requested
     if (stats === "true") {
       const cacheStats = simpleCacheManager.getCacheStats();
@@ -70,7 +74,10 @@ export async function GET(request: NextRequest) {
       method: "GET",
       headers: {
         "Content-Type": "application/json",
+        ...(isHighPriority && { Priority: "u=1, i" }), // High priority header for urgent requests
       },
+      // Add timeout for high priority requests
+      ...(isHighPriority && { signal: AbortSignal.timeout(15000) }),
     });
 
     if (!response.ok) {

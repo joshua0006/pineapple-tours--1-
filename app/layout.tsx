@@ -9,6 +9,8 @@ import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
 import { PreloadResources } from "@/components/preload-resources";
 import { Prefetcher } from "@/components/prefetcher";
+import { DataPreloader } from "@/components/data-preloader";
+import { PreloadMonitor } from "@/components/preload-monitor";
 import { OrganizationSchema } from "@/components/schema-markup";
 
 const barlow = Barlow({
@@ -150,6 +152,15 @@ export default function RootLayout({
             <BookingPromptWrapper />
             <Toaster />
             <Prefetcher />
+            <DataPreloader
+              enabled={true}
+              priority="high"
+              initialLimit={100}
+              enableBackground={true}
+              enableWarmup={true}
+              debug={process.env.NODE_ENV === "development"}
+            />
+            <PreloadMonitor compact={true} />
             <OrganizationSchema />
           </CartProvider>
         </ThemeProvider>

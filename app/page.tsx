@@ -159,16 +159,6 @@ export default function Home() {
       {/* Categories Section */}
       <CategoriesSection />
 
-      {/* Featured Products Section */}
-      <FeaturedProductsSection
-        maxProducts={8}
-        title="Featured Tours"
-        description="Discover our most popular tours and experiences, preloaded for your convenience"
-        showCacheStatus={process.env.NODE_ENV === "development"}
-        enableRefresh={true}
-        showViewAll={true}
-      />
-
       {/* Hop on Hop off Section */}
       <section className="py-16 bg-gray-50">
         <div className="container px-4 sm:px-6 lg:px-8">

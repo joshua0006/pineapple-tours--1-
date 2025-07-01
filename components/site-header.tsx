@@ -128,12 +128,21 @@ export function SiteHeader() {
   }, [isOpen]);
 
   const navigationItems = [
-    { href: "/tours", label: "Tours", icon: <MapPin className="w-5 h-5" /> },
-    // {
-    //   href: "/custom-tours",
-    //   label: "Custom Tours",
-    //   icon: <Bus className="w-5 h-5" />,
-    // },
+    {
+      href: "/daily-tours",
+      label: "Daily Tours",
+      icon: <Calendar className="w-5 h-5" />,
+    },
+    {
+      href: "/private-tours",
+      label: "Private Tours",
+      icon: <Users className="w-5 h-5" />,
+    },
+    {
+      href: "/tours",
+      label: "All Tours",
+      icon: <MapPin className="w-5 h-5" />,
+    },
     { href: "/blog", label: "Blog", icon: <BookOpen className="w-5 h-5" /> },
     {
       href: "/contact",

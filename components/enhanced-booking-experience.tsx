@@ -22,6 +22,7 @@ import {
   ArrowLeft,
   ArrowRight,
   Home,
+  ShoppingCart,
 } from "lucide-react";
 import { format, addDays, isSameDay } from "date-fns";
 
@@ -141,11 +142,6 @@ const BOOKING_STEPS = [
     title: "Review Booking",
     description: "Review your booking details",
   },
-  {
-    id: 4,
-    title: "Secure Payment",
-    description: "Complete your payment securely with Stripe",
-  },
 ];
 
 const COUNTRIES = [
@@ -174,7 +170,6 @@ export function EnhancedBookingExperience({
   preSelectedParticipants,
   preSelectedExtras,
 }: EnhancedBookingExperienceProps) {
-  const [currentStep, setCurrentStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [bookingErrors, setBookingErrors] = useState<string[]>([]);
 
@@ -296,9 +291,6 @@ export function EnhancedBookingExperience({
 
   // Reset all selection-related state when the displayed product changes
   useEffect(() => {
-    // Start back at step 1
-    setCurrentStep(1);
-
     // Clear session-specific selections so nothing remains highlighted
     setSelectedDate(undefined);
     setSelectedSession(null);
@@ -381,6 +373,17 @@ export function EnhancedBookingExperience({
       }
     }
   }, [preSelectedSession, preSelectedParticipants]);
+
+  // Auto-populate contact info from first guest
+  useEffect(() => {
+    if (guests.length > 0 && guests[0].firstName && guests[0].lastName) {
+      setContactInfo((prev) => ({
+        ...prev,
+        firstName: guests[0].firstName,
+        lastName: guests[0].lastName,
+      }));
+    }
+  }, [guests]);
 
   // Date range for availability
   const today = new Date();
@@ -684,48 +687,30 @@ export function EnhancedBookingExperience({
 
   // Step validation
   const canProceedToNextStep = () => {
-    switch (currentStep) {
-      case 1:
-        const hasValidGuests = guests.every(
-          (g) => g.firstName.trim() && g.lastName.trim()
-        );
-        const hasValidSession =
-          selectedSession && validationErrors.length === 0;
+    const hasValidGuests = guests.every(
+      (g) => g.firstName.trim() && g.lastName.trim()
+    );
+    const hasValidSession = selectedSession && validationErrors.length === 0;
 
-        // Check if pickup location is required and selected
-        const needsPickupLocation =
-          productHasPickupServices &&
-          selectedSession?.pickupLocations &&
-          selectedSession.pickupLocations.length > 0;
-        const hasValidPickupLocation =
-          !needsPickupLocation || selectedPickupLocation;
+    // Check if pickup location is required and selected
+    const needsPickupLocation =
+      productHasPickupServices &&
+      selectedSession?.pickupLocations &&
+      selectedSession.pickupLocations.length > 0;
+    const hasValidPickupLocation =
+      !needsPickupLocation || selectedPickupLocation;
 
-        // Check if FIT tour booking option is required and selected
-        const needsBookingOption = hasFitTourOptions;
-        const hasValidBookingOption =
-          !needsBookingOption ||
-          (selectedBookingOption && selectedPickupLocation);
+    // Check if FIT tour booking option is required and selected
+    const needsBookingOption = hasFitTourOptions;
+    const hasValidBookingOption =
+      !needsBookingOption || (selectedBookingOption && selectedPickupLocation);
 
-        return (
-          hasValidGuests &&
-          hasValidSession &&
-          hasValidPickupLocation &&
-          hasValidBookingOption
-        );
-      case 2:
-        return (
-          contactInfo.firstName &&
-          contactInfo.lastName &&
-          contactInfo.email &&
-          contactInfo.phone
-        );
-      case 3:
-        return agreeToTerms; // Terms agreement required to proceed to payment
-      case 4:
-        return false; // Payment step doesn't proceed to next step
-      default:
-        return false;
-    }
+    return (
+      hasValidGuests &&
+      hasValidSession &&
+      hasValidPickupLocation &&
+      hasValidBookingOption
+    );
   };
 
   // Event handlers
@@ -806,29 +791,6 @@ export function EnhancedBookingExperience({
     console.error("Payment error:", error);
     setBookingErrors([error]);
     setIsProcessingPayment(false);
-  };
-
-  const handleNextStep = () => {
-    // Additional validation for contact step
-    if (currentStep === 2 && !validateContactFields()) {
-      return; // stop if errors
-    }
-
-    if (canProceedToNextStep() && currentStep < 4) {
-      setCurrentStep(currentStep + 1);
-      setBookingErrors([]);
-      // Scroll to top of the page
-      window.scrollTo({ top: 0, behavior: "smooth" });
-    }
-  };
-
-  const handlePrevStep = () => {
-    if (currentStep > 1) {
-      setCurrentStep(currentStep - 1);
-      setBookingErrors([]);
-      // Scroll to top of the page
-      window.scrollTo({ top: 0, behavior: "smooth" });
-    }
   };
 
   const handleProceedToPayment = async () => {
@@ -1019,10 +981,6 @@ export function EnhancedBookingExperience({
     }
   };
 
-  const getStepProgress = () => {
-    return ((currentStep - 1) / (BOOKING_STEPS.length - 1)) * 100;
-  };
-
   return (
     <div className="w-full min-h-screen bg-background">
       <div className="max-w-6xl mx-auto p-4 sm:p-6 space-y-4 sm:space-y-6">
@@ -1077,47 +1035,6 @@ export function EnhancedBookingExperience({
           </div>
         </div>
 
-        {/* Progress Bar */}
-        <div className="space-y-2">
-          <div className="flex items-center justify-between text-sm">
-            <span>
-              Step {currentStep} of {BOOKING_STEPS.length}
-            </span>
-            <span>{Math.round(getStepProgress())}% Complete</span>
-          </div>
-          <Progress value={getStepProgress()} className="h-2" />
-        </div>
-
-        {/* Step Indicator */}
-        <div className="flex items-center justify-between overflow-x-auto pb-2">
-          {BOOKING_STEPS.map((step, index) => (
-            <div key={step.id} className="flex items-center flex-shrink-0">
-              <div
-                className={cn(
-                  "w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center text-xs sm:text-sm font-medium transition-colors",
-                  currentStep >= step.id
-                    ? "bg-brand-accent text-white"
-                    : "bg-muted text-muted-foreground"
-                )}
-              >
-                {currentStep > step.id ? (
-                  <CheckCircle className="h-4 w-4 sm:h-5 sm:w-5" />
-                ) : (
-                  step.id
-                )}
-              </div>
-              {index < BOOKING_STEPS.length - 1 && (
-                <div
-                  className={cn(
-                    "w-12 sm:w-16 h-0.5 mx-1 sm:mx-2 transition-colors flex-shrink-0",
-                    currentStep > step.id ? "bg-brand-accent" : "bg-muted"
-                  )}
-                />
-              )}
-            </div>
-          ))}
-        </div>
-
         {/* Error Display */}
         {(bookingErrors.length > 0 || validationErrors.length > 0) && (
           <Alert variant="destructive">
@@ -1150,889 +1067,594 @@ export function EnhancedBookingExperience({
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
           {/* Main Content */}
           <div className="lg:col-span-2 space-y-4 sm:space-y-6">
-            {/* Step 1: Date & Guest Details */}
-            {currentStep === 1 && (
-              <div className="space-y-6">
-                {/* Date & Time Selection */}
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <Calendar className="h-5 w-5" />
-                      Select Date & Time
-                    </CardTitle>
-                    <p className="text-muted-foreground">
-                      Choose your preferred tour date and session first
-                    </p>
-                  </CardHeader>
-                  <CardContent className="space-y-6">
-                    {/* Date Selection */}
-                    <div>
-                      <Label className="text-base font-medium">
-                        Select Date
-                      </Label>
-                      <div className="mt-2">
-                        <Popover>
-                          <PopoverTrigger asChild>
-                            <Button
-                              variant="outline"
-                              className={cn(
-                                "w-full justify-start text-left font-normal h-12",
-                                !selectedDate && "text-muted-foreground"
-                              )}
-                            >
-                              <CalendarIcon className="mr-2 h-4 w-4" />
-                              {selectedDate
-                                ? format(selectedDate, "EEEE, MMMM do, yyyy")
-                                : "Choose your tour date"}
-                            </Button>
-                          </PopoverTrigger>
-                          <PopoverContent className="w-auto p-0" align="start">
-                            <CalendarComponent
-                              mode="single"
-                              selected={selectedDate}
-                              onSelect={handleDateSelect}
-                              disabled={isDateDisabled}
-                              modifiers={{
-                                available: isDateAvailable,
-                                soldOut: isDateSoldOut,
-                              }}
-                              modifiersStyles={{
-                                available: {
-                                  backgroundColor: "rgb(255 88 93 / 0.1)",
-                                  color: "#FF585D",
-                                  fontWeight: "bold",
-                                },
-                                soldOut: {
-                                  backgroundColor: "rgb(64 64 64 / 0.1)",
-                                  color: "#404040",
-                                  textDecoration: "line-through",
-                                },
-                              }}
-                              initialFocus
-                            />
-                            <div className="p-3 border-t space-y-2">
-                              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                                <div className="w-3 h-3 bg-brand-accent/20 rounded"></div>
-                                <span>Available dates</span>
-                              </div>
-                              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                                <div className="w-3 h-3 bg-muted rounded"></div>
-                                <span>Sold out</span>
-                              </div>
-                              {availabilityLoading && (
-                                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                                  <div className="w-3 h-3 bg-muted rounded animate-pulse"></div>
-                                  <span>Loading availability...</span>
-                                </div>
-                              )}
-                              {availabilityError && (
-                                <div className="flex items-center gap-2 text-sm text-destructive">
-                                  <AlertCircle className="h-3 w-3" />
-                                  <span>Error loading availability</span>
-                                </div>
-                              )}
-                              {!availabilityLoading &&
-                                !availabilityError &&
-                                effectiveAvailabilityData && (
-                                  <div className="text-xs text-muted-foreground">
-                                    {effectiveAvailabilityData[0]?.sessions
-                                      ?.length || 0}{" "}
-                                    sessions found
-                                    {availabilityError ||
-                                    !availabilityData ||
-                                    !availabilityData[0]?.sessions?.length
-                                      ? " (using demo data)"
-                                      : ""}
-                                  </div>
-                                )}
-                            </div>
-                          </PopoverContent>
-                        </Popover>
-                      </div>
-                    </div>
-
-                    {/* Time Selection */}
-                    {selectedDate && (
-                      <div>
-                        <Label className="text-base font-medium">
-                          Select Time
-                        </Label>
-                        {availabilityLoading ? (
-                          <div className="mt-2 space-y-2">
-                            {[1, 2, 3].map((i) => (
-                              <div
-                                key={i}
-                                className="h-16 bg-muted/50 rounded-lg animate-pulse"
-                              />
-                            ))}
+            {/* Date & Time Selection */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Calendar className="h-5 w-5" />
+                  Select Date & Time
+                </CardTitle>
+                <p className="text-muted-foreground">
+                  Choose your preferred tour date and session first
+                </p>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                {/* Date Selection */}
+                <div>
+                  <Label className="text-base font-medium">Select Date</Label>
+                  <div className="mt-2">
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant="outline"
+                          className={cn(
+                            "w-full justify-start text-left font-normal h-12",
+                            !selectedDate && "text-muted-foreground"
+                          )}
+                        >
+                          <CalendarIcon className="mr-2 h-4 w-4" />
+                          {selectedDate
+                            ? format(selectedDate, "EEEE, MMMM do, yyyy")
+                            : "Choose your tour date"}
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0" align="start">
+                        <CalendarComponent
+                          mode="single"
+                          selected={selectedDate}
+                          onSelect={handleDateSelect}
+                          disabled={isDateDisabled}
+                          modifiers={{
+                            available: isDateAvailable,
+                            soldOut: isDateSoldOut,
+                          }}
+                          modifiersStyles={{
+                            available: {
+                              backgroundColor: "rgb(255 88 93 / 0.1)",
+                              color: "#FF585D",
+                              fontWeight: "bold",
+                            },
+                            soldOut: {
+                              backgroundColor: "rgb(64 64 64 / 0.1)",
+                              color: "#404040",
+                              textDecoration: "line-through",
+                            },
+                          }}
+                          initialFocus
+                        />
+                        <div className="p-3 border-t space-y-2">
+                          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                            <div className="w-3 h-3 bg-brand-accent/20 rounded"></div>
+                            <span>Available dates</span>
                           </div>
-                        ) : availableSessions.length > 0 ? (
-                          <div className="mt-2 space-y-3">
-                            {availableSessions
-                              .filter(
-                                (session) =>
-                                  session.startTimeLocal && session.endTimeLocal
-                              )
-                              .map((session) => {
-                                const startTime = new Date(
-                                  session.startTimeLocal!
+                          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                            <div className="w-3 h-3 bg-muted rounded"></div>
+                            <span>Sold out</span>
+                          </div>
+                          {availabilityLoading && (
+                            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                              <div className="w-3 h-3 bg-muted rounded animate-pulse"></div>
+                              <span>Loading availability...</span>
+                            </div>
+                          )}
+                          {availabilityError && (
+                            <div className="flex items-center gap-2 text-sm text-destructive">
+                              <AlertCircle className="h-3 w-3" />
+                              <span>Error loading availability</span>
+                            </div>
+                          )}
+                          {!availabilityLoading &&
+                            !availabilityError &&
+                            effectiveAvailabilityData && (
+                              <div className="text-xs text-muted-foreground">
+                                {effectiveAvailabilityData[0]?.sessions
+                                  ?.length || 0}{" "}
+                                sessions found
+                                {availabilityError ||
+                                !availabilityData ||
+                                !availabilityData[0]?.sessions?.length
+                                  ? " (using demo data)"
+                                  : ""}
+                              </div>
+                            )}
+                        </div>
+                      </PopoverContent>
+                    </Popover>
+                  </div>
+                </div>
+
+                {/* Time Selection */}
+                {selectedDate && (
+                  <div>
+                    <Label className="text-base font-medium">Select Time</Label>
+                    {availabilityLoading ? (
+                      <div className="mt-2 space-y-2">
+                        {[1, 2, 3].map((i) => (
+                          <div
+                            key={i}
+                            className="h-16 bg-muted/50 rounded-lg animate-pulse"
+                          />
+                        ))}
+                      </div>
+                    ) : availableSessions.length > 0 ? (
+                      <div className="mt-2 space-y-3">
+                        {availableSessions
+                          .filter(
+                            (session) =>
+                              session.startTimeLocal && session.endTimeLocal
+                          )
+                          .map((session) => {
+                            const startTime = new Date(session.startTimeLocal!);
+                            const endTime = new Date(session.endTimeLocal!);
+                            const isSelected =
+                              selectedSession !== null &&
+                              normalizeSessionId(session) ===
+                                normalizeSessionId(
+                                  selectedSession as RezdySession
                                 );
-                                const endTime = new Date(session.endTimeLocal!);
-                                const isSelected =
-                                  selectedSession !== null &&
-                                  normalizeSessionId(session) ===
-                                    normalizeSessionId(
-                                      selectedSession as RezdySession
-                                    );
 
-                                // Debug logs – remove once issue resolved
-                                console.debug("[Booking] Render session card", {
-                                  sessionId: session.id,
-                                  selectedSessionId: selectedSession?.id,
-                                  isSelected,
-                                });
+                            // Debug logs – remove once issue resolved
+                            console.debug("[Booking] Render session card", {
+                              sessionId: session.id,
+                              selectedSessionId: selectedSession?.id,
+                              isSelected,
+                            });
 
-                                return (
-                                  <Card
-                                    key={`${session.id}-${session.startTimeLocal}`}
-                                    className={cn(
-                                      "cursor-pointer transition-all duration-200 border flex flex-col sm:flex-row items-stretch group",
-                                      isSelected
-                                        ? "border-2 border-brand-accent bg-brand-accent/15 shadow-lg ring-2 ring-brand-accent/80 scale-[1.01] z-10"
-                                        : "border border-gray-200 bg-card hover:border-brand-accent/40 hover:bg-muted/50",
-                                      session.seatsAvailable === 0 &&
-                                        "opacity-50 cursor-not-allowed",
-                                      // Responsive: make highlight more obvious on mobile
-                                      isSelected &&
-                                        "sm:scale-100 sm:shadow-lg sm:bg-brand-accent/10"
-                                    )}
-                                    onClick={() =>
-                                      session.seatsAvailable > 0 &&
-                                      handleSessionSelect(session)
-                                    }
-                                  >
-                                    <CardContent className="p-4">
-                                      <div className="flex items-center justify-between">
-                                        <div className="flex items-center gap-4">
-                                          <div className="text-center">
-                                            <div className="text-lg font-bold">
-                                              {format(startTime, "HH:mm")}
-                                            </div>
-                                            <div className="text-sm text-muted-foreground">
-                                              {format(endTime, "HH:mm")}
-                                            </div>
-                                          </div>
-                                          <div>
-                                            <div className="font-medium">
-                                              {format(startTime, "h:mm a")} -{" "}
-                                              {format(endTime, "h:mm a")}
-                                            </div>
-                                            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                                              <Users className="h-4 w-4" />
-                                              <span>
-                                                {session.seatsAvailable > 0
-                                                  ? `${session.seatsAvailable} seats available`
-                                                  : "Sold out"}
-                                              </span>
-                                            </div>
-                                          </div>
+                            return (
+                              <Card
+                                key={`${session.id}-${session.startTimeLocal}`}
+                                className={cn(
+                                  "cursor-pointer transition-all duration-200 border flex flex-col sm:flex-row items-stretch group",
+                                  isSelected
+                                    ? "border-2 border-brand-accent bg-brand-accent/15 shadow-lg ring-2 ring-brand-accent/80 scale-[1.01] z-10"
+                                    : "border border-gray-200 bg-card hover:border-brand-accent/40 hover:bg-muted/50",
+                                  session.seatsAvailable === 0 &&
+                                    "opacity-50 cursor-not-allowed",
+                                  // Responsive: make highlight more obvious on mobile
+                                  isSelected &&
+                                    "sm:scale-100 sm:shadow-lg sm:bg-brand-accent/10"
+                                )}
+                                onClick={() =>
+                                  session.seatsAvailable > 0 &&
+                                  handleSessionSelect(session)
+                                }
+                              >
+                                <CardContent className="p-4">
+                                  <div className="flex items-center justify-between">
+                                    <div className="flex items-center gap-4">
+                                      <div className="text-center">
+                                        <div className="text-lg font-bold">
+                                          {format(startTime, "HH:mm")}
                                         </div>
-                                        <div className="text-right">
-                                          <div className="text-lg font-bold">
-                                            {formatCurrency(
-                                              session.totalPrice ||
-                                                product.advertisedPrice ||
-                                                0
-                                            )}
-                                          </div>
-                                          <div className="text-sm text-muted-foreground">
-                                            per adult
-                                          </div>
-                                          {typeof session.id === "string" &&
-                                          session.id.startsWith("mock-") ? (
-                                            <div className="text-xs text-brand-accent mt-1">
-                                              Demo
-                                            </div>
-                                          ) : null}
+                                        <div className="text-sm text-muted-foreground">
+                                          {format(endTime, "HH:mm")}
                                         </div>
                                       </div>
-                                    </CardContent>
-                                  </Card>
-                                );
-                              })}
-                          </div>
-                        ) : (
-                          <div className="mt-2 p-4 text-center text-muted-foreground bg-muted/30 rounded-lg">
-                            No sessions available for this date. Please select
-                            another date.
-                          </div>
-                        )}
+                                      <div>
+                                        <div className="font-medium">
+                                          {format(startTime, "h:mm a")} -{" "}
+                                          {format(endTime, "h:mm a")}
+                                        </div>
+                                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                                          <Users className="h-4 w-4" />
+                                          <span>
+                                            {session.seatsAvailable > 0
+                                              ? `${session.seatsAvailable} seats available`
+                                              : "Sold out"}
+                                          </span>
+                                        </div>
+                                      </div>
+                                    </div>
+                                    <div className="text-right">
+                                      <div className="text-lg font-bold">
+                                        {formatCurrency(
+                                          session.totalPrice ||
+                                            product.advertisedPrice ||
+                                            0
+                                        )}
+                                      </div>
+                                      <div className="text-sm text-muted-foreground">
+                                        per adult
+                                      </div>
+                                      {typeof session.id === "string" &&
+                                      session.id.startsWith("mock-") ? (
+                                        <div className="text-xs text-brand-accent mt-1">
+                                          Demo
+                                        </div>
+                                      ) : null}
+                                    </div>
+                                  </div>
+                                </CardContent>
+                              </Card>
+                            );
+                          })}
                       </div>
-                    )}
-
-                    {/* FIT Tour Booking Options or Standard Pickup Location Selection */}
-                    {selectedSession && hasFitTourOptions ? (
-                      <BookingOptionSelector
-                        bookingOptions={fitTourBookingOptions}
-                        selectedBookingOption={selectedBookingOption}
-                        selectedPickupLocation={selectedPickupLocation}
-                        onBookingOptionSelect={handleBookingOptionSelect}
-                        participantCount={
-                          guestCounts.adults +
-                          guestCounts.children +
-                          guestCounts.infants
-                        }
-                        showPricing={true}
-                        required={true}
-                        className="w-full"
-                      />
                     ) : (
-                      selectedSession &&
-                      selectedSession.pickupLocations &&
-                      selectedSession.pickupLocations.length > 0 && (
-                        <PickupLocationSelector
-                          pickupLocations={selectedSession.pickupLocations}
-                          selectedPickupLocation={selectedPickupLocation}
-                          onPickupLocationSelect={setSelectedPickupLocation}
-                          showDirections={true}
-                          required={true}
-                        />
-                      )
-                    )}
-
-                    {/* Date Selection Validation */}
-                    {!selectedSession && (
-                      <Alert>
-                        <Info className="h-4 w-4" />
-                        <AlertDescription>
-                          Please select a date and time session before adding
-                          guest details.
-                        </AlertDescription>
-                      </Alert>
-                    )}
-                  </CardContent>
-                </Card>
-
-                {/* Guest Details Section */}
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <Users className="h-5 w-5" />
-                      {BOOKING_STEPS[0].title}
-                    </CardTitle>
-                    <p className="text-muted-foreground">
-                      Add guest information for your selected session
-                    </p>
-                    {guests.length > 0 && (
-                      <div className="flex items-center gap-2 text-sm">
-                        <CheckCircle className="h-4 w-4 text-brand-accent" />
-                        <span className="text-brand-accent">
-                          {guestCounts.adults +
-                            guestCounts.children +
-                            guestCounts.infants}{" "}
-                          guests added
-                        </span>
+                      <div className="mt-2 p-4 text-center text-muted-foreground bg-muted/30 rounded-lg">
+                        No sessions available for this date. Please select
+                        another date.
                       </div>
                     )}
-                  </CardHeader>
-                  <CardContent>
-                    <GuestManager
-                      guests={guests}
-                      onGuestsChange={setGuests}
-                      maxGuests={product.quantityRequiredMax || 10}
-                      minGuests={product.quantityRequiredMin || 1}
-                      requireAdult={true}
-                    />
-                  </CardContent>
-                </Card>
+                  </div>
+                )}
 
-                {/* Optional Extras */}
-                {product.extras && product.extras.length > 0 && (
-                  <ExtrasSelector
-                    extras={product.extras}
-                    selectedExtras={selectedExtras}
-                    onExtrasChange={setSelectedExtras}
-                    guestCount={
+                {/* FIT Tour Booking Options or Standard Pickup Location Selection */}
+                {selectedSession && hasFitTourOptions ? (
+                  <BookingOptionSelector
+                    bookingOptions={fitTourBookingOptions}
+                    selectedBookingOption={selectedBookingOption}
+                    selectedPickupLocation={selectedPickupLocation}
+                    onBookingOptionSelect={handleBookingOptionSelect}
+                    participantCount={
                       guestCounts.adults +
                       guestCounts.children +
                       guestCounts.infants
                     }
+                    showPricing={true}
+                    required={true}
+                    className="w-full"
                   />
+                ) : (
+                  selectedSession &&
+                  selectedSession.pickupLocations &&
+                  selectedSession.pickupLocations.length > 0 && (
+                    <PickupLocationSelector
+                      pickupLocations={selectedSession.pickupLocations}
+                      selectedPickupLocation={selectedPickupLocation}
+                      onPickupLocationSelect={setSelectedPickupLocation}
+                      showDirections={true}
+                      required={true}
+                    />
+                  )
                 )}
 
-                {/* Guest Details Validation */}
-                {guests.length > 0 &&
-                  !guests.every(
-                    (g) => g.firstName.trim() && g.lastName.trim()
-                  ) && (
-                    <Alert>
-                      <Info className="h-4 w-4" />
-                      <AlertDescription>
-                        Please complete all guest names to proceed to the next
-                        step.
-                      </AlertDescription>
-                    </Alert>
-                  )}
-              </div>
+                {/* Date Selection Validation */}
+                {!selectedSession && (
+                  <Alert>
+                    <Info className="h-4 w-4" />
+                    <AlertDescription>
+                      Please select a date and time session before adding guest
+                      details.
+                    </AlertDescription>
+                  </Alert>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Guest Details Section */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Users className="h-5 w-5" />
+                  {BOOKING_STEPS[0].title}
+                </CardTitle>
+                <p className="text-muted-foreground">
+                  Add guest information for your selected session
+                </p>
+                {guests.length > 0 && (
+                  <div className="flex items-center gap-2 text-sm">
+                    <CheckCircle className="h-4 w-4 text-brand-accent" />
+                    <span className="text-brand-accent">
+                      {guestCounts.adults +
+                        guestCounts.children +
+                        guestCounts.infants}{" "}
+                      guests added
+                    </span>
+                  </div>
+                )}
+              </CardHeader>
+              <CardContent>
+                <GuestManager
+                  guests={guests}
+                  onGuestsChange={setGuests}
+                  maxGuests={product.quantityRequiredMax || 10}
+                  minGuests={product.quantityRequiredMin || 1}
+                  requireAdult={true}
+                />
+              </CardContent>
+            </Card>
+
+            {/* Optional Extras */}
+            {product.extras && product.extras.length > 0 && (
+              <ExtrasSelector
+                extras={product.extras}
+                selectedExtras={selectedExtras}
+                onExtrasChange={setSelectedExtras}
+                guestCount={
+                  guestCounts.adults +
+                  guestCounts.children +
+                  guestCounts.infants
+                }
+              />
             )}
 
-            {/* Step 2: Contact Information */}
-            {currentStep === 2 && (
+            {/* Guest Details Validation */}
+            {guests.length > 0 &&
+              !guests.every((g) => g.firstName.trim() && g.lastName.trim()) && (
+                <Alert>
+                  <Info className="h-4 w-4" />
+                  <AlertDescription>
+                    Please complete all guest names to proceed to the next step.
+                  </AlertDescription>
+                </Alert>
+              )}
+
+            {/* Contact Information */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Mail className="h-5 w-5" />
+                  {BOOKING_STEPS[1].title}
+                </CardTitle>
+                <p className="text-muted-foreground">
+                  {BOOKING_STEPS[1].description}
+                </p>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="contact-first-name">First Name *</Label>
+                    <Input
+                      id="contact-first-name"
+                      value={contactInfo.firstName}
+                      onChange={(e) =>
+                        setContactInfo((prev) => ({
+                          ...prev,
+                          firstName: e.target.value,
+                        }))
+                      }
+                      placeholder="Enter first name"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="contact-last-name">Last Name *</Label>
+                    <Input
+                      id="contact-last-name"
+                      value={contactInfo.lastName}
+                      onChange={(e) =>
+                        setContactInfo((prev) => ({
+                          ...prev,
+                          lastName: e.target.value,
+                        }))
+                      }
+                      placeholder="Enter last name"
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="contact-email">Email Address *</Label>
+                    <Input
+                      id="contact-email"
+                      type="email"
+                      value={contactInfo.email}
+                      onChange={(e) =>
+                        setContactInfo((prev) => ({
+                          ...prev,
+                          email: e.target.value,
+                        }))
+                      }
+                      onBlur={validateContactFields}
+                      placeholder="Enter email address"
+                      required
+                    />
+                    {contactFieldErrors.email && (
+                      <p className="mt-1 text-xs text-destructive">
+                        {contactFieldErrors.email}
+                      </p>
+                    )}
+                  </div>
+                  <div>
+                    <Label htmlFor="contact-phone">Phone Number *</Label>
+                    <Input
+                      id="contact-phone"
+                      type="tel"
+                      value={contactInfo.phone}
+                      onChange={(e) => {
+                        const formatted = formatPhoneNumber(e.target.value);
+                        setContactInfo((prev) => ({
+                          ...prev,
+                          phone: formatted,
+                        }));
+                      }}
+                      onBlur={validateContactFields}
+                      placeholder="(123) 456-7890"
+                      required
+                    />
+                    {contactFieldErrors.phone && (
+                      <p className="mt-1 text-xs text-destructive">
+                        {contactFieldErrors.phone}
+                      </p>
+                    )}
+                  </div>
+                </div>
+
+                <div>
+                  <Label htmlFor="contact-country">Country</Label>
+                  <Select
+                    value={contactInfo.country}
+                    onValueChange={(value) =>
+                      setContactInfo((prev) => ({ ...prev, country: value }))
+                    }
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select your country" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {COUNTRIES.map((country) => (
+                        <SelectItem key={country} value={country}>
+                          {country}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <Separator />
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="emergency-contact">Emergency Contact</Label>
+                    <Input
+                      id="emergency-contact"
+                      value={contactInfo.emergencyContact}
+                      onChange={(e) =>
+                        setContactInfo((prev) => ({
+                          ...prev,
+                          emergencyContact: e.target.value,
+                        }))
+                      }
+                      placeholder="Emergency contact name"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="emergency-phone">Emergency Phone</Label>
+                    <Input
+                      id="emergency-phone"
+                      type="tel"
+                      value={contactInfo.emergencyPhone}
+                      onChange={(e) =>
+                        setContactInfo((prev) => ({
+                          ...prev,
+                          emergencyPhone: e.target.value,
+                        }))
+                      }
+                      placeholder="Emergency contact phone"
+                    />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Terms and Payment */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Shield className="h-5 w-5" />
+                  Terms & Payment
+                </CardTitle>
+                <p className="text-muted-foreground">
+                  Agree to terms and proceed to secure payment
+                </p>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-3">
+                  <div className="flex items-start space-x-2">
+                    <Checkbox
+                      id="terms"
+                      checked={agreeToTerms}
+                      onCheckedChange={(checked) =>
+                        setAgreeToTerms(checked as boolean)
+                      }
+                      required
+                    />
+                    <Label htmlFor="terms" className="text-sm leading-tight">
+                      I agree to the{" "}
+                      <a
+                        href="/terms-and-conditions"
+                        className="text-primary underline"
+                        target="_blank"
+                      >
+                        terms and conditions
+                      </a>{" "}
+                      and{" "}
+                      <a
+                        href="/privacy-policy"
+                        className="text-primary underline"
+                        target="_blank"
+                      >
+                        privacy policy
+                      </a>
+                    </Label>
+                  </div>
+                </div>
+
+                <Alert>
+                  <Shield className="h-4 w-4" />
+                  <AlertDescription>
+                    You will proceed to our secure payment page powered by
+                    Stripe. Your booking will be confirmed automatically after
+                    successful payment.
+                  </AlertDescription>
+                </Alert>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Sidebar */}
+          <div className="lg:col-span-1">
+            <div className="lg:sticky lg:top-24 space-y-4">
+              {/* Booking Summary */}
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
-                    <Mail className="h-5 w-5" />
-                    {BOOKING_STEPS[1].title}
+                    <ShoppingCart className="h-5 w-5" />
+                    Booking Summary
                   </CardTitle>
                   <p className="text-muted-foreground">
-                    {BOOKING_STEPS[1].description}
+                    Review your booking details and total price
                   </p>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <Label htmlFor="contact-first-name">First Name *</Label>
-                      <Input
-                        id="contact-first-name"
-                        value={contactInfo.firstName}
-                        onChange={(e) =>
-                          setContactInfo((prev) => ({
-                            ...prev,
-                            firstName: e.target.value,
-                          }))
-                        }
-                        placeholder="Enter first name"
-                        required
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="contact-last-name">Last Name *</Label>
-                      <Input
-                        id="contact-last-name"
-                        value={contactInfo.lastName}
-                        onChange={(e) =>
-                          setContactInfo((prev) => ({
-                            ...prev,
-                            lastName: e.target.value,
-                          }))
-                        }
-                        placeholder="Enter last name"
-                        required
-                      />
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <Label htmlFor="contact-email">Email Address *</Label>
-                      <Input
-                        id="contact-email"
-                        type="email"
-                        value={contactInfo.email}
-                        onChange={(e) =>
-                          setContactInfo((prev) => ({
-                            ...prev,
-                            email: e.target.value,
-                          }))
-                        }
-                        onBlur={validateContactFields}
-                        placeholder="Enter email address"
-                        required
-                      />
-                      {contactFieldErrors.email && (
-                        <p className="mt-1 text-xs text-destructive">
-                          {contactFieldErrors.email}
-                        </p>
-                      )}
-                    </div>
-                    <div>
-                      <Label htmlFor="contact-phone">Phone Number *</Label>
-                      <Input
-                        id="contact-phone"
-                        type="tel"
-                        value={contactInfo.phone}
-                        onChange={(e) => {
-                          const formatted = formatPhoneNumber(e.target.value);
-                          setContactInfo((prev) => ({
-                            ...prev,
-                            phone: formatted,
-                          }));
-                        }}
-                        onBlur={validateContactFields}
-                        placeholder="(123) 456-7890"
-                        required
-                      />
-                      {contactFieldErrors.phone && (
-                        <p className="mt-1 text-xs text-destructive">
-                          {contactFieldErrors.phone}
-                        </p>
-                      )}
-                    </div>
-                  </div>
-
-                  <div>
-                    <Label htmlFor="contact-country">Country</Label>
-                    <Select
-                      value={contactInfo.country}
-                      onValueChange={(value) =>
-                        setContactInfo((prev) => ({ ...prev, country: value }))
-                      }
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select your country" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {COUNTRIES.map((country) => (
-                          <SelectItem key={country} value={country}>
-                            {country}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <Separator />
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <Label htmlFor="emergency-contact">
-                        Emergency Contact
-                      </Label>
-                      <Input
-                        id="emergency-contact"
-                        value={contactInfo.emergencyContact}
-                        onChange={(e) =>
-                          setContactInfo((prev) => ({
-                            ...prev,
-                            emergencyContact: e.target.value,
-                          }))
-                        }
-                        placeholder="Emergency contact name"
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="emergency-phone">Emergency Phone</Label>
-                      <Input
-                        id="emergency-phone"
-                        type="tel"
-                        value={contactInfo.emergencyPhone}
-                        onChange={(e) =>
-                          setContactInfo((prev) => ({
-                            ...prev,
-                            emergencyPhone: e.target.value,
-                          }))
-                        }
-                        placeholder="Emergency contact phone"
-                      />
-                    </div>
-                  </div>
-
-                  <Separator />
-
-                  <div>
-                    <Label htmlFor="dietary-requirements">
-                      Dietary Requirements
-                    </Label>
-                    <Textarea
-                      id="dietary-requirements"
-                      value={contactInfo.dietaryRequirements}
-                      onChange={(e) =>
-                        setContactInfo((prev) => ({
-                          ...prev,
-                          dietaryRequirements: e.target.value,
-                        }))
-                      }
-                      placeholder="Please specify any dietary restrictions or allergies"
-                      rows={2}
-                    />
-                  </div>
-
-                  <div>
-                    <Label htmlFor="accessibility-needs">
-                      Accessibility Needs
-                    </Label>
-                    <Textarea
-                      id="accessibility-needs"
-                      value={contactInfo.accessibilityNeeds}
-                      onChange={(e) =>
-                        setContactInfo((prev) => ({
-                          ...prev,
-                          accessibilityNeeds: e.target.value,
-                        }))
-                      }
-                      placeholder="Please specify any accessibility requirements"
-                      rows={2}
-                    />
-                  </div>
-
-                  <div>
-                    <Label htmlFor="special-requests">Special Requests</Label>
-                    <Textarea
-                      id="special-requests"
-                      value={contactInfo.specialRequests}
-                      onChange={(e) =>
-                        setContactInfo((prev) => ({
-                          ...prev,
-                          specialRequests: e.target.value,
-                        }))
-                      }
-                      placeholder="Any other special requests or information"
-                      rows={2}
-                    />
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-
-            {/* Step 3: Review Booking */}
-            {currentStep === 3 && (
-              <div className="space-y-6">
-                {/* Booking Review */}
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <CheckCircle className="h-5 w-5" />
-                      Review Your Booking
-                    </CardTitle>
-                    <p className="text-muted-foreground">
-                      Please review your booking details before proceeding to
-                      payment
-                    </p>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    {/* Tour Details */}
-                    <div className="bg-muted/30 p-4 rounded-lg space-y-3">
-                      <h4 className="font-medium text-lg">{product.name}</h4>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+                  {/* Tour Details */}
+                  <div className="bg-muted/30 p-4 rounded-lg space-y-3">
+                    <h4 className="font-medium text-lg">{product.name}</h4>
+                    <div className="space-y-2 text-sm">
+                      {selectedDate && (
                         <div className="flex items-center gap-2">
                           <Calendar className="h-4 w-4 text-muted-foreground" />
-                          <span>
-                            {selectedDate &&
-                              format(selectedDate, "EEEE, MMMM do, yyyy")}
-                          </span>
+                          <span>{format(selectedDate, "MMM dd, yyyy")}</span>
                         </div>
-                        {selectedSession &&
-                          selectedSession.startTimeLocal &&
-                          selectedSession.endTimeLocal && (
-                            <div className="flex items-center gap-2">
-                              <Clock className="h-4 w-4 text-muted-foreground" />
-                              <span>
-                                {format(
-                                  new Date(selectedSession.startTimeLocal),
-                                  "h:mm a"
-                                )}{" "}
-                                -
-                                {format(
-                                  new Date(selectedSession.endTimeLocal),
-                                  "h:mm a"
-                                )}
-                              </span>
-                            </div>
-                          )}
+                      )}
+                      {selectedSession &&
+                        selectedSession.startTimeLocal &&
+                        selectedSession.endTimeLocal && (
+                          <div className="flex items-center gap-2">
+                            <Clock className="h-4 w-4 text-muted-foreground" />
+                            <span>
+                              {format(
+                                new Date(selectedSession.startTimeLocal),
+                                "h:mm a"
+                              )}{" "}
+                              -
+                              {format(
+                                new Date(selectedSession.endTimeLocal),
+                                "h:mm a"
+                              )}
+                            </span>
+                          </div>
+                        )}
+                      {guests.length > 0 && (
                         <div className="flex items-center gap-2">
                           <Users className="h-4 w-4 text-muted-foreground" />
                           <span>
                             {guestCounts.adults +
                               guestCounts.children +
                               guestCounts.infants}{" "}
-                            guests ({guestCounts.adults} adults,{" "}
-                            {guestCounts.children} children,{" "}
-                            {guestCounts.infants} infants)
+                            guests
                           </span>
                         </div>
-                        {selectedBookingOption && (
-                          <div className="flex items-center gap-2">
-                            <MapPin className="h-4 w-4 text-muted-foreground" />
-                            <span>{selectedBookingOption.name}</span>
-                          </div>
-                        )}
-                        {selectedPickupLocation && (
-                          <div className="flex items-start gap-2 ml-6">
-                            <Clock className="h-4 w-4 text-muted-foreground" />
-                            <span>
+                      )}
+                      {selectedPickupLocation && (
+                        <div className="flex items-start gap-2">
+                          <MapPin className="h-4 w-4 mt-0.5 text-muted-foreground" />
+                          <div>
+                            <div className="font-medium">
                               {selectedPickupLocation.name}
-                              {selectedPickupLocation.pickupTime &&
-                                ` at ${selectedPickupLocation.pickupTime}`}
-                            </span>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Guest Details */}
-                    <div>
-                      <h4 className="font-medium mb-2">Guest Details</h4>
-                      <div className="bg-muted/30 p-4 rounded-lg">
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm">
-                          {guests.map((guest, index) => (
-                            <div
-                              key={guest.id}
-                              className="flex justify-between"
-                            >
-                              <span>
-                                {guest.firstName} {guest.lastName}
-                              </span>
-                              <span className="text-muted-foreground">
-                                {guest.age}yo {guest.type.toLowerCase()}
-                              </span>
                             </div>
-                          ))}
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Contact Information */}
-                    <div>
-                      <h4 className="font-medium mb-2">Contact Information</h4>
-                      <div className="bg-muted/30 p-4 rounded-lg text-sm space-y-1">
-                        <div>
-                          {contactInfo.firstName} {contactInfo.lastName}
-                        </div>
-                        <div>{contactInfo.email}</div>
-                        <div>{contactInfo.phone}</div>
-                        {contactInfo.emergencyContact && (
-                          <div className="text-muted-foreground">
-                            Emergency: {contactInfo.emergencyContact} (
-                            {contactInfo.emergencyPhone})
+                            {selectedPickupLocation.pickupTime && (
+                              <div className="text-muted-foreground">
+                                Pickup: {selectedPickupLocation.pickupTime}
+                              </div>
+                            )}
                           </div>
-                        )}
-                        {contactInfo.dietaryRequirements && (
-                          <div className="text-muted-foreground">
-                            Dietary: {contactInfo.dietaryRequirements}
-                          </div>
-                        )}
-                        {contactInfo.specialRequests && (
-                          <div className="text-muted-foreground">
-                            Special requests: {contactInfo.specialRequests}
-                          </div>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Selected Extras */}
-                    {selectedExtras.length > 0 && (
-                      <div>
-                        <h4 className="font-medium mb-2">Selected Extras</h4>
-                        <div className="bg-muted/30 p-4 rounded-lg space-y-2">
-                          {selectedExtras.map((extra, index) => (
-                            <div
-                              key={`${extra.extra.id}-${index}`}
-                              className="flex justify-between text-sm"
-                            >
-                              <span>
-                                {extra.extra.name} x{extra.quantity}
-                              </span>
-                              <span>
-                                {formatCurrency(
-                                  extra.extra.price * extra.quantity
-                                )}
-                              </span>
-                            </div>
-                          ))}
                         </div>
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
-
-                {/* Terms and Payment */}
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <Shield className="h-5 w-5" />
-                      Terms & Payment
-                    </CardTitle>
-                    <p className="text-muted-foreground">
-                      Agree to terms and proceed to secure payment
-                    </p>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div className="space-y-3">
-                      <div className="flex items-start space-x-2">
-                        <Checkbox
-                          id="terms"
-                          checked={agreeToTerms}
-                          onCheckedChange={(checked) =>
-                            setAgreeToTerms(checked as boolean)
-                          }
-                          required
-                        />
-                        <Label
-                          htmlFor="terms"
-                          className="text-sm leading-tight"
-                        >
-                          I agree to the{" "}
-                          <a
-                            href="/terms-and-conditions"
-                            className="text-primary underline"
-                            target="_blank"
-                          >
-                            terms and conditions
-                          </a>{" "}
-                          and{" "}
-                          <a
-                            href="/privacy-policy"
-                            className="text-primary underline"
-                            target="_blank"
-                          >
-                            privacy policy
-                          </a>
-                        </Label>
-                      </div>
-                    </div>
-
-                    <Alert>
-                      <Shield className="h-4 w-4" />
-                      <AlertDescription>
-                        You will proceed to our secure payment page powered by
-                        Stripe. Your booking will be confirmed automatically
-                        after successful payment.
-                      </AlertDescription>
-                    </Alert>
-
-                    <Alert>
-                      <Info className="h-4 w-4" />
-                      <AlertTitle>What happens next?</AlertTitle>
-                      <AlertDescription className="space-y-1 mt-2">
-                        <div>
-                          1. You'll proceed to our secure payment page powered
-                          by Stripe
-                        </div>
-                        <div>
-                          2. Complete your payment using credit card, Apple Pay,
-                          or Google Pay
-                        </div>
-                        <div>
-                          3. Your booking will be confirmed automatically
-                        </div>
-                        <div>
-                          4. Confirmation email will be sent to{" "}
-                          {contactInfo.email}
-                        </div>
-                      </AlertDescription>
-                    </Alert>
-                  </CardContent>
-                </Card>
-              </div>
-            )}
-
-            {/* Step 4: Secure Payment */}
-            {currentStep === 4 && clientSecret && (
-              <div className="space-y-6">
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <Shield className="h-5 w-5" />
-                      Secure Payment
-                    </CardTitle>
-                    <p className="text-muted-foreground">
-                      Complete your booking payment securely with Stripe
-                    </p>
-                  </CardHeader>
-                  <CardContent>
-                    <Elements
-                      stripe={stripePromise}
-                      options={{
-                        clientSecret,
-                        appearance: {
-                          theme: "stripe",
-                          variables: {
-                            colorPrimary: "#FF585D",
-                            colorBackground: "#ffffff",
-                            colorText: "#424770",
-                            colorDanger: "#df1b41",
-                            fontFamily: "Inter, system-ui, sans-serif",
-                            spacingUnit: "4px",
-                            borderRadius: "8px",
-                          },
-                        },
-                      }}
-                    >
-                      <StripePaymentForm
-                        clientSecret={clientSecret}
-                        orderNumber={orderNumber}
-                        amount={pricingBreakdown.total}
-                        currency="AUD"
-                        onPaymentSuccess={handlePaymentSuccess}
-                        onPaymentError={handlePaymentError}
-                        loading={isProcessingPayment}
-                      />
-                    </Elements>
-                  </CardContent>
-                </Card>
-              </div>
-            )}
-          </div>
-
-          {/* Sidebar - Booking Summary */}
-          <div className="lg:col-span-1">
-            <div className="lg:sticky lg:top-24 space-y-4">
-              {/* Product Summary */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-lg">Booking Summary</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  <div>
-                    <div className="font-medium">{product.name}</div>
-                    <div className="text-sm text-muted-foreground">
-                      {getLocationString(product.locationAddress)}
+                      )}
                     </div>
                   </div>
-
-                  {selectedDate && (
-                    <div className="flex items-center gap-2 text-sm">
-                      <Calendar className="h-4 w-4" />
-                      <span>{format(selectedDate, "MMM dd, yyyy")}</span>
-                    </div>
-                  )}
-
-                  {selectedSession &&
-                    selectedSession.startTimeLocal &&
-                    selectedSession.endTimeLocal && (
-                      <div className="flex items-center gap-2 text-sm">
-                        <Clock className="h-4 w-4" />
-                        <span>
-                          {format(
-                            new Date(selectedSession.startTimeLocal),
-                            "h:mm a"
-                          )}{" "}
-                          -
-                          {format(
-                            new Date(selectedSession.endTimeLocal),
-                            "h:mm a"
-                          )}
-                        </span>
-                      </div>
-                    )}
-
-                  {guests.length > 0 && (
-                    <div className="flex items-center gap-2 text-sm">
-                      <Users className="h-4 w-4" />
-                      <span>
-                        {guestCounts.adults +
-                          guestCounts.children +
-                          guestCounts.infants}{" "}
-                        guests
-                      </span>
-                    </div>
-                  )}
-
-                  {selectedPickupLocation && (
-                    <div className="flex items-start gap-2 text-sm">
-                      <MapPin className="h-4 w-4 mt-0.5" />
-                      <div>
-                        <div className="font-medium">
-                          {selectedPickupLocation.name}
-                        </div>
-                        {selectedPickupLocation.pickupTime && (
-                          <div className="text-muted-foreground">
-                            Pickup: {selectedPickupLocation.pickupTime}
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  )}
                 </CardContent>
               </Card>
 
@@ -2065,52 +1687,26 @@ export function EnhancedBookingExperience({
           </div>
         </div>
 
-        {/* Navigation Buttons */}
-        <div className="flex items-center justify-between pt-6 border-t">
+        {/* Payment Button */}
+        <div className="flex justify-center pt-6 border-t">
           <Button
-            variant="outline"
-            onClick={handlePrevStep}
-            disabled={currentStep === 1}
-            className="flex items-center gap-2"
+            onClick={handleProceedToPayment}
+            disabled={!canProceedToNextStep() || isProcessingPayment}
+            className="flex items-center gap-2 bg-brand-accent hover:bg-brand-accent/90 text-white"
+            size="lg"
           >
-            <ArrowLeft className="h-4 w-4" />
-            Previous
+            {isProcessingPayment ? (
+              <>
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                Creating Payment...
+              </>
+            ) : (
+              <>
+                <Shield className="h-4 w-4" />
+                Complete Booking • {formatCurrency(pricingBreakdown.total)}
+              </>
+            )}
           </Button>
-
-          {currentStep < 3 ? (
-            <Button
-              onClick={handleNextStep}
-              disabled={!canProceedToNextStep()}
-              className="flex items-center gap-2"
-            >
-              Next
-              <ArrowRight className="h-4 w-4" />
-            </Button>
-          ) : currentStep === 3 ? (
-            <Button
-              onClick={handleProceedToPayment}
-              disabled={!canProceedToNextStep() || isProcessingPayment}
-              className="flex items-center gap-2 bg-brand-accent hover:bg-brand-accent/90 text-white"
-              size="lg"
-            >
-              {isProcessingPayment ? (
-                <>
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                  Creating Payment...
-                </>
-              ) : (
-                <>
-                  <Shield className="h-4 w-4" />
-                  Proceed to Payment • {formatCurrency(pricingBreakdown.total)}
-                </>
-              )}
-            </Button>
-          ) : (
-            // Step 4 (Payment) - no next button needed, payment form handles submission
-            <div className="text-sm text-muted-foreground">
-              Complete the payment form above to finish your booking
-            </div>
-          )}
         </div>
       </div>
     </div>

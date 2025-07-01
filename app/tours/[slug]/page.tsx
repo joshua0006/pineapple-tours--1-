@@ -449,22 +449,7 @@ export default function TourDetailPage({
                 {/* Essential Tour Information - Simplified */}
                 <Card className="border border-gray-200">
                   <CardContent className="p-6">
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-brand-accent/10 rounded-lg flex items-center justify-center">
-                          <Users className="h-5 w-5 text-brand-accent" />
-                        </div>
-                        <div>
-                          <div className="text-sm text-gray-600">
-                            Group Size
-                          </div>
-                          <div className="font-semibold text-gray-900">
-                            {selectedProduct.quantityRequiredMin || 1}-
-                            {selectedProduct.quantityRequiredMax || 20} people
-                          </div>
-                        </div>
-                      </div>
-
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                       <div className="flex items-center gap-3">
                         <div className="w-10 h-10 bg-brand-accent/10 rounded-lg flex items-center justify-center">
                           <Clock className="h-5 w-5 text-brand-accent" />

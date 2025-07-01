@@ -188,63 +188,6 @@ export function CategoriesSection() {
     retry,
   } = useEnhancedRezdyProducts(hookOptions);
 
-  const [categoriesWithCounts, setCategoriesWithCounts] = useState<
-    TourCategory[]
-  >([]);
-
-  // Calculate tour counts for all categories
-  useEffect(() => {
-    if (products) {
-      const allCategories = TOUR_CATEGORIES.map((category) => {
-        const filteredProducts = filterProductsByCategory(products, category);
-        const tourCount = filteredProducts.length;
-
-        return {
-          ...category,
-          tourCount,
-          icon: CATEGORY_ICONS[category.id as keyof typeof CATEGORY_ICONS],
-        };
-      });
-      setCategoriesWithCounts(allCategories);
-    }
-  }, [products]);
-
-  // Calculate product count for each top-level category
-  const getCategoryProductCount = (
-    category: (typeof TOP_LEVEL_CATEGORIES)[0]
-  ) => {
-    if (!products?.length) return 0;
-
-    let filteredProducts = category.subcategories.reduce(
-      (acc: RezdyProduct[], subcategoryId) => {
-        const subcategory = categoriesWithCounts.find(
-          (cat) => cat.id === subcategoryId
-        );
-        if (subcategory) {
-          const subProducts = filterProductsByCategory(products, subcategory);
-          subProducts.forEach((product) => {
-            if (!acc.find((p) => p.productCode === product.productCode)) {
-              acc.push(product);
-            }
-          });
-        }
-        return acc;
-      },
-      []
-    );
-
-    // Filter out gift vouchers/gift cards
-    const validProducts = filteredProducts.filter(
-      (product) =>
-        product.productType !== "GIFT_CARD" &&
-        product.productType !== "GIFT_VOUCHER" &&
-        !product.name.toLowerCase().includes("gift card") &&
-        !product.name.toLowerCase().includes("gift voucher")
-    );
-
-    return validProducts.length;
-  };
-
   // Show initial loading skeleton
   if (loading.isInitialLoading && !products) {
     return <CategoriesSectionSkeleton />;
@@ -319,7 +262,6 @@ export function CategoriesSection() {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6 lg:gap-8">
             {TOP_LEVEL_CATEGORIES.map((category) => {
               const Icon = category.icon;
-              const productCount = getCategoryProductCount(category);
 
               return (
                 <Link
@@ -327,46 +269,46 @@ export function CategoriesSection() {
                   href={`/tours?category=${category.id}`}
                   className="group block"
                 >
-                  <div className="relative overflow-hidden rounded-xl transition-all duration-300 hover:scale-[1.02] hover:shadow-xl hover:shadow-[#FF585D]/20 h-full min-h-[280px] sm:min-h-[320px] flex flex-col">
+                  <div className="relative overflow-hidden rounded-2xl transition-all duration-500 hover:scale-[1.02] hover:shadow-2xl hover:shadow-[#FF585D]/30 h-full min-h-[280px] sm:min-h-[320px] flex flex-col bg-white/5 backdrop-blur-sm border border-white/10 hover:border-[#FF585D]/50">
                     {/* Background Image */}
                     <div
-                      className="absolute inset-0 bg-cover bg-center transition-transform duration-300 group-hover:scale-110"
+                      className="absolute inset-0 bg-cover bg-center transition-transform duration-700 group-hover:scale-110 opacity-60 group-hover:opacity-80"
                       style={{
                         backgroundImage: `url(${category.image})`,
                       }}
                     />
 
-                    {/* Dark overlay for better text readability */}
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-black/20" />
+                    {/* Gradient overlay */}
+                    <div className="absolute inset-0 bg-gradient-to-br from-black/60 via-black/40 to-transparent" />
 
-                    {/* Hover overlay */}
-                    <div className="absolute inset-0 bg-gradient-to-t from-[#FF585D]/20 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                    {/* Hover gradient overlay */}
+                    <div className="absolute inset-0 bg-gradient-to-br from-[#FF585D]/20 via-[#FF585D]/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+
+                    {/* Icon */}
+                    <div className="relative z-10 p-6 sm:p-8">
+                      <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-2xl bg-white/10 backdrop-blur-md group-hover:bg-[#FF585D]/20 flex items-center justify-center transition-all duration-500 group-hover:scale-110 group-hover:rotate-3 border border-white/20 group-hover:border-[#FF585D]/50">
+                        <Icon className="h-6 w-6 sm:h-8 sm:w-8 text-white group-hover:text-[#FF585D] transition-colors duration-500" />
+                      </div>
+                    </div>
 
                     {/* Content */}
-                    <div className="relative z-10 p-6 sm:p-8 h-full flex flex-col">
-                      {/* Content */}
-                      <div className="flex-1 flex flex-col">
-                        <h3 className="text-xl sm:text-2xl font-bold text-white mb-2 sm:mb-3 font-['Barlow'] drop-shadow-lg">
+                    <div className="relative z-10 p-6 sm:p-8 pt-0 h-full flex flex-col justify-end">
+                      <div className="space-y-3 sm:space-y-4">
+                        <h3 className="text-xl sm:text-2xl font-bold text-white mb-2 font-['Barlow'] drop-shadow-lg group-hover:text-[#FF585D] transition-colors duration-300">
                           {category.title}
                         </h3>
 
-                        <p className="text-sm sm:text-base text-white/90 font-['Work_Sans'] mb-4 sm:mb-6 flex-1 line-clamp-3 drop-shadow-md">
+                        <p className="text-sm sm:text-base text-white/90 font-['Work_Sans'] line-clamp-3 drop-shadow-md leading-relaxed">
                           {category.description}
                         </p>
 
-                        {/* Tour Count and Arrow */}
-                        <div className="flex items-center justify-between">
-                          <div className="flex flex-col">
-                            <span className="text-xs text-white/70 uppercase tracking-wide font-['Work_Sans'] mb-1 drop-shadow-sm">
-                              Available Tours
-                            </span>
-                            <span className="text-lg sm:text-3xl font-bold text-white font-['Barlow'] drop-shadow-lg">
-                              {productCount}
-                            </span>
-                          </div>
-
-                          <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-white/10 backdrop-blur-sm group-hover:bg-[#FF585D] flex items-center justify-center transition-all duration-300 group-hover:scale-110">
-                            <ChevronRight className="h-4 w-4 sm:h-5 sm:w-5 text-white transition-colors duration-300" />
+                        {/* Call to action */}
+                        <div className="flex items-center gap-2 pt-2">
+                          <span className="text-sm font-medium text-white/80 group-hover:text-white transition-colors duration-300 font-['Work_Sans']">
+                            Explore Tours
+                          </span>
+                          <div className="w-8 h-8 rounded-full bg-white/10 backdrop-blur-sm group-hover:bg-[#FF585D] flex items-center justify-center transition-all duration-300 group-hover:scale-110 group-hover:translate-x-1">
+                            <ChevronRight className="h-4 w-4 text-white transition-all duration-300" />
                           </div>
                         </div>
                       </div>

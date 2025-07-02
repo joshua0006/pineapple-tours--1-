@@ -40,6 +40,32 @@ interface BookingPromptPopupProps {
 }
 
 const INACTIVITY_TIMEOUT = 30000; // 30 seconds
+const SESSION_STORAGE_KEY = "pineapple_tours_popup_shown";
+const INITIAL_POPUP_DELAY = 30000; // 30 seconds delay on page load
+
+// Session management utilities
+const sessionManager = {
+  isPopupShownInSession(): boolean {
+    try {
+      return sessionStorage.getItem(SESSION_STORAGE_KEY) === "true";
+    } catch (error) {
+      console.warn("SessionStorage not available:", error);
+      return false;
+    }
+  },
+
+  markPopupAsShown(): void {
+    try {
+      sessionStorage.setItem(SESSION_STORAGE_KEY, "true");
+    } catch (error) {
+      console.warn("Failed to save popup state:", error);
+    }
+  },
+
+  isNewSession(): boolean {
+    return !this.isPopupShownInSession();
+  },
+};
 
 export function BookingPromptPopup({
   onStartBooking,
@@ -53,14 +79,31 @@ export function BookingPromptPopup({
   const [bookingDate, setBookingDate] = useState<Date | undefined>(undefined);
   const [hasUserInteracted, setHasUserInteracted] = useState(false);
   const [isTabVisible, setIsTabVisible] = useState(true);
+  const [sessionChecked, setSessionChecked] = useState(false);
 
   const inactivityTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const initialPopupTimerRef = useRef<NodeJS.Timeout | null>(null);
   const popupRef = useRef<HTMLDivElement>(null);
   const hasShownPopupRef = useRef(false);
-  const timerReasonRef = useRef<"inactivity" | "tab-out" | null>(null);
+  const timerReasonRef = useRef<"inactivity" | "tab-out" | "initial" | null>(
+    null
+  );
 
   // Check if user is on a booking page
   const isOnBookingPage = pathname?.startsWith("/booking");
+
+  // Clear all timers
+  const clearAllTimers = useCallback(() => {
+    if (inactivityTimerRef.current) {
+      clearTimeout(inactivityTimerRef.current);
+      inactivityTimerRef.current = null;
+    }
+    if (initialPopupTimerRef.current) {
+      clearTimeout(initialPopupTimerRef.current);
+      initialPopupTimerRef.current = null;
+    }
+    timerReasonRef.current = null;
+  }, []);
 
   // Clear the inactivity timer
   const clearInactivityTimer = useCallback(() => {
@@ -68,7 +111,9 @@ export function BookingPromptPopup({
       clearTimeout(inactivityTimerRef.current);
       inactivityTimerRef.current = null;
     }
-    timerReasonRef.current = null;
+    if (timerReasonRef.current !== "initial") {
+      timerReasonRef.current = null;
+    }
   }, []);
 
   // Start inactivity timer with specified reason
@@ -76,15 +121,15 @@ export function BookingPromptPopup({
     (reason: "inactivity" | "tab-out") => {
       clearInactivityTimer();
 
-      // Don't start timer if popup already shown or user is on booking page
-      if (hasShownPopupRef.current || isOnBookingPage) {
+      // Don't start timer if popup already shown in session or user is on booking page
+      if (sessionManager.isPopupShownInSession() || isOnBookingPage) {
         return;
       }
 
       timerReasonRef.current = reason;
       inactivityTimerRef.current = setTimeout(() => {
         // Only show popup if conditions are still met
-        if (!hasShownPopupRef.current && !isOnBookingPage) {
+        if (!sessionManager.isPopupShownInSession() && !isOnBookingPage) {
           // For tab-out scenario, only show if tab is still hidden
           if (reason === "tab-out" && isTabVisible) {
             return;
@@ -96,6 +141,26 @@ export function BookingPromptPopup({
     [isTabVisible, isOnBookingPage]
   );
 
+  // Start initial popup timer for new sessions
+  const startInitialPopupTimer = useCallback(() => {
+    // Don't show if popup already shown in session or user is on booking page
+    if (sessionManager.isPopupShownInSession() || isOnBookingPage) {
+      return;
+    }
+
+    timerReasonRef.current = "initial";
+    initialPopupTimerRef.current = setTimeout(() => {
+      // Double-check conditions before showing
+      if (
+        !sessionManager.isPopupShownInSession() &&
+        !isOnBookingPage &&
+        isTabVisible
+      ) {
+        showPopup();
+      }
+    }, INITIAL_POPUP_DELAY);
+  }, [isOnBookingPage, isTabVisible]);
+
   // Reset inactivity timer (for user activity within tab)
   const resetInactivityTimer = useCallback(() => {
     // Only handle inactivity timer if tab is visible and not on booking page
@@ -103,8 +168,8 @@ export function BookingPromptPopup({
 
     clearInactivityTimer();
 
-    // Don't start timer if popup is already visible
-    if (isVisible || hasShownPopupRef.current) {
+    // Don't start timer if popup is already visible or shown in session
+    if (isVisible || sessionManager.isPopupShownInSession()) {
       return;
     }
 
@@ -140,13 +205,18 @@ export function BookingPromptPopup({
 
   // Show popup with animation
   const showPopup = useCallback(() => {
-    // Don't show popup if user is on booking page
-    if (isOnBookingPage) {
+    // Don't show popup if user is on booking page or already shown in session
+    if (isOnBookingPage || sessionManager.isPopupShownInSession()) {
       return;
     }
 
-    // Reset the flag to allow popup to show again after some time
+    // Mark popup as shown in this session
+    sessionManager.markPopupAsShown();
     hasShownPopupRef.current = true;
+
+    // Clear all timers since popup is now showing
+    clearAllTimers();
+
     setIsVisible(true);
     setIsAnimating(true);
 
@@ -159,49 +229,39 @@ export function BookingPromptPopup({
         firstFocusable?.focus();
       }
     }, 100);
-  }, [isOnBookingPage]);
+  }, [isOnBookingPage, clearAllTimers]);
 
-  // Hide popup with animation and restart inactivity timer so the popup can
-  // re-appear after the same timeout period once it is dismissed.
+  // Hide popup with animation
   const hidePopup = useCallback(() => {
     setIsAnimating(false);
 
     // Wait for the closing animation to complete before hiding the component
     setTimeout(() => {
       setIsVisible(false);
-
-      // After a brief delay (to avoid race conditions with the visibility
-      // state), reset the "hasShown" flag and immediately start a fresh
-      // inactivity timer – this ensures the popup can show again without
-      // requiring extra user interaction.
-      setTimeout(() => {
-        hasShownPopupRef.current = false;
-
-        // Only start the timer if the tab is currently visible and not on booking page
-        if (isTabVisible && !isOnBookingPage) {
-          startInactivityTimer("inactivity");
-        }
-      }, 1000);
     }, 300); // Match animation duration
-  }, [isTabVisible, startInactivityTimer, isOnBookingPage]);
+  }, []);
 
   // Handle user activity events
   const handleUserActivity = useCallback(() => {
     if (!hasUserInteracted) {
       setHasUserInteracted(true);
     }
-    // Only reset timer if tab is visible and not on booking page
-    if (isTabVisible && !isOnBookingPage) {
+    // Only reset timer if tab is visible and not on booking page and not shown in session
+    if (
+      isTabVisible &&
+      !isOnBookingPage &&
+      !sessionManager.isPopupShownInSession()
+    ) {
       resetInactivityTimer();
     }
   }, [hasUserInteracted, isTabVisible, resetInactivityTimer, isOnBookingPage]);
 
   // Handle popup dismissal
   const handleDismiss = useCallback(() => {
-    clearInactivityTimer();
+    clearAllTimers();
     hidePopup();
     onDismiss?.();
-  }, [hidePopup, onDismiss, clearInactivityTimer]);
+  }, [hidePopup, onDismiss, clearAllTimers]);
 
   // Handle start booking
   const handleStartBooking = useCallback(() => {
@@ -211,10 +271,10 @@ export function BookingPromptPopup({
       hasInteracted: true,
     };
 
-    clearInactivityTimer();
+    clearAllTimers();
     hidePopup();
     onStartBooking?.(bookingData);
-  }, [groupSize, bookingDate, hidePopup, onStartBooking, clearInactivityTimer]);
+  }, [groupSize, bookingDate, hidePopup, onStartBooking, clearAllTimers]);
 
   // Handle escape key
   const handleKeyDown = useCallback(
@@ -225,6 +285,24 @@ export function BookingPromptPopup({
     },
     [isVisible, handleDismiss]
   );
+
+  // Initialize session check and popup behavior
+  useEffect(() => {
+    if (sessionChecked) return;
+
+    setSessionChecked(true);
+
+    // Don't proceed if on booking page
+    if (isOnBookingPage) {
+      return;
+    }
+
+    // Check if this is a new session
+    if (sessionManager.isNewSession()) {
+      // Start initial popup timer for new session
+      startInitialPopupTimer();
+    }
+  }, [sessionChecked, isOnBookingPage, startInitialPopupTimer]);
 
   // Set up event listeners for user activity and tab visibility
   useEffect(() => {
@@ -249,11 +327,6 @@ export function BookingPromptPopup({
     // Initialize tab visibility state
     setIsTabVisible(!document.hidden);
 
-    // Start initial timer only if tab is visible and not on booking page
-    if (!document.hidden && !isOnBookingPage) {
-      resetInactivityTimer();
-    }
-
     return () => {
       // Cleanup all event listeners
       events.forEach((event) => {
@@ -263,29 +336,27 @@ export function BookingPromptPopup({
       document.removeEventListener("visibilitychange", handleVisibilityChange);
 
       // Clear any pending timers
-      clearInactivityTimer();
+      clearAllTimers();
     };
   }, [
     handleUserActivity,
     handleKeyDown,
     handleVisibilityChange,
-    resetInactivityTimer,
-    clearInactivityTimer,
-    isOnBookingPage,
+    clearAllTimers,
   ]);
 
   // Effect to handle route changes - hide popup and clear timers when navigating to booking page
   useEffect(() => {
     if (isOnBookingPage) {
       // Clear any existing timers
-      clearInactivityTimer();
+      clearAllTimers();
 
       // Hide popup if currently visible
       if (isVisible) {
         handleDismiss();
       }
     }
-  }, [isOnBookingPage, isVisible, clearInactivityTimer, handleDismiss]);
+  }, [isOnBookingPage, isVisible, clearAllTimers, handleDismiss]);
 
   // Trap focus within popup for accessibility
   const handleTabKey = useCallback((event: React.KeyboardEvent) => {

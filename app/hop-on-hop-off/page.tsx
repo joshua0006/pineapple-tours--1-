@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 
 import { PageHeader } from "@/components/page-header";
 import { Button } from "@/components/ui/button";
@@ -23,6 +24,7 @@ import {
   Route,
   Calendar,
   RefreshCw,
+  ArrowLeft,
 } from "lucide-react";
 import Link from "next/link";
 import { useRezdyProducts } from "@/hooks/use-rezdy";
@@ -33,6 +35,7 @@ export default function HopOnHopOffPage() {
   const [hopOnHopOffProducts, setHopOnHopOffProducts] = useState<
     RezdyProduct[]
   >([]);
+  const router = useRouter();
 
   // Filter products for hop-on hop-off tours
   useEffect(() => {
@@ -139,6 +142,11 @@ export default function HopOnHopOffPage() {
         secondaryAction={{
           label: "View Routes",
           onClick: () => console.log("View routes clicked"),
+        }}
+        backButton={{
+          label: "Back to Tours",
+          icon: ArrowLeft,
+          onClick: () => router.push("/tours"),
         }}
       />
 

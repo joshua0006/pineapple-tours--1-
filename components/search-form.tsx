@@ -48,16 +48,7 @@ import { useCityProducts } from "@/hooks/use-city-products";
 import { useRezdyDataManager } from "@/hooks/use-rezdy-data-manager";
 
 // Static pickup locations (fallback)
-const STATIC_PICKUP_LOCATIONS = [
-  "Brisbane",
-  "Broadbeach",
-  "Currumbin wildlife sanctuary",
-  "Gold Coast",
-  "Miami",
-  "Mount Nathan",
-  "Mount Tamborine",
-  "Surfers Paradise",
-];
+const STATIC_PICKUP_LOCATIONS = ["Brisbane", "Gold Coast", "Mount Tamborine"];
 
 interface SearchFormProps {
   onSearch?: (searchData: any) => void;
@@ -89,46 +80,10 @@ export function SearchForm({
     autoRefresh: false,
   });
 
-  // Extract unique pickup locations from Rezdy products with tour counts
+  // Use only the 3 static pickup locations
   const pickupLocations = useMemo(() => {
-    const locationCounts = new Map<string, number>();
-
-    // Add static locations
-    STATIC_PICKUP_LOCATIONS.forEach((location) => {
-      if (!locationCounts.has(location)) {
-        locationCounts.set(location, 0);
-      }
-    });
-
-    // Add locations from Rezdy products and count tours
-    rezdyData.products.forEach((product) => {
-      let locationName = "";
-
-      if (product.locationAddress) {
-        if (typeof product.locationAddress === "string") {
-          locationName = product.locationAddress;
-        } else if (product.locationAddress.city) {
-          locationName = product.locationAddress.city;
-        }
-      }
-
-      if (locationName) {
-        // Normalize Tamborine variations to "Mount Tamborine"
-        if (locationName.toLowerCase().includes("tamborine")) {
-          locationName = "Mount Tamborine";
-        }
-
-        locationCounts.set(
-          locationName,
-          (locationCounts.get(locationName) || 0) + 1
-        );
-      }
-    });
-
-    return Array.from(locationCounts.entries())
-      .map(([location, count]) => ({ location, count }))
-      .sort((a, b) => a.location.localeCompare(b.location));
-  }, [rezdyData.products]);
+    return STATIC_PICKUP_LOCATIONS.map((location) => ({ location, count: 0 }));
+  }, []);
 
   // Form state for simplified search
   const [selectedLocation, setSelectedLocation] = useState<string>("all");
@@ -385,7 +340,7 @@ export function SearchForm({
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">All Locations</SelectItem>
-                    {pickupLocations.map(({ location, count }) => (
+                    {pickupLocations.map(({ location }) => (
                       <SelectItem key={location} value={location}>
                         {location}
                       </SelectItem>

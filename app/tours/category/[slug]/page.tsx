@@ -2,7 +2,25 @@
 
 import { use, useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Filter, Grid, List } from "lucide-react";
+import {
+  ArrowLeft,
+  Filter,
+  Grid,
+  List,
+  Clock,
+  Users,
+  DollarSign,
+  Wine,
+  Beer,
+  Bus,
+  Building,
+  Sparkles,
+  Heart,
+  Activity,
+  Car,
+  Search,
+  X,
+} from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -14,15 +32,124 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { PageHeader } from "@/components/page-header";
 import { DynamicTourCard } from "@/components/dynamic-tour-card";
 import { TourGridSkeleton } from "@/components/tour-grid-skeleton";
 import { ErrorState } from "@/components/error-state";
-import { useRezdyProducts } from "@/hooks/use-rezdy";
+import { useToursOnly } from "@/hooks/use-tours-only";
 import { RezdyProduct } from "@/lib/types/rezdy";
 import {
   getCategoryBySlug,
   filterProductsByCategory,
 } from "@/lib/constants/categories";
+
+// Category-specific configurations for PageHeader
+const getCategoryHeaderConfig = (categorySlug: string, categoryConfig: any) => {
+  const configs: Record<string, any> = {
+    "winery-tours": {
+      backgroundImage:
+        "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?ixlib=rb-4.0.3&auto=format&fit=crop&w=1600&q=80",
+      featureCards: [
+        { icon: Wine, title: "Wine Tasting" },
+        { icon: Users, title: "Expert Guides" },
+        { icon: Clock, title: "Full Experience" },
+      ],
+    },
+    "brewery-tours": {
+      backgroundImage:
+        "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?ixlib=rb-4.0.3&auto=format&fit=crop&w=1600&q=80",
+      featureCards: [
+        { icon: Beer, title: "Craft Beer" },
+        { icon: Users, title: "Local Breweries" },
+        { icon: Clock, title: "Behind Scenes" },
+      ],
+    },
+    "hop-on-hop-off": {
+      backgroundImage:
+        "https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?ixlib=rb-4.0.3&auto=format&fit=crop&w=1600&q=80",
+      featureCards: [
+        { icon: Bus, title: "Flexible Routes" },
+        { icon: Clock, title: "Your Schedule" },
+        { icon: DollarSign, title: "Great Value" },
+      ],
+    },
+    "bus-charter": {
+      backgroundImage:
+        "https://images.unsplash.com/photo-1570125909232-eb263c188f7e?ixlib=rb-4.0.3&auto=format&fit=crop&w=1600&q=80",
+      featureCards: [
+        { icon: Bus, title: "Private Charter" },
+        { icon: Users, title: "Group Travel" },
+        { icon: Building, title: "Professional Service" },
+      ],
+    },
+    "day-tours": {
+      backgroundImage:
+        "https://images.unsplash.com/photo-1469474968028-56623f02e42e?ixlib=rb-4.0.3&auto=format&fit=crop&w=1600&q=80",
+      featureCards: [
+        { icon: Clock, title: "Full Day" },
+        { icon: Users, title: "Small Groups" },
+        { icon: DollarSign, title: "All Inclusive" },
+      ],
+    },
+    "corporate-tours": {
+      backgroundImage:
+        "https://images.unsplash.com/photo-1511632765486-a01980e01a18?ixlib=rb-4.0.3&auto=format&fit=crop&w=1600&q=80",
+      featureCards: [
+        { icon: Building, title: "Team Building" },
+        { icon: Users, title: "Professional" },
+        { icon: Clock, title: "Customizable" },
+      ],
+    },
+    "barefoot-luxury": {
+      backgroundImage:
+        "https://images.unsplash.com/photo-1540979388789-6cee28a1cdc9?ixlib=rb-4.0.3&auto=format&fit=crop&w=1600&q=80",
+      featureCards: [
+        { icon: Sparkles, title: "Luxury Experience" },
+        { icon: Users, title: "Premium Service" },
+        { icon: Wine, title: "Exclusive Access" },
+      ],
+    },
+    "hens-party": {
+      backgroundImage:
+        "https://images.unsplash.com/photo-1529636798458-92182e662485?ixlib=rb-4.0.3&auto=format&fit=crop&w=1600&q=80",
+      featureCards: [
+        { icon: Heart, title: "Special Celebration" },
+        { icon: Users, title: "Girls Day Out" },
+        { icon: Sparkles, title: "Memorable Fun" },
+      ],
+    },
+    activities: {
+      backgroundImage:
+        "https://images.unsplash.com/photo-1551632811-561732d1e306?ixlib=rb-4.0.3&auto=format&fit=crop&w=1600&q=80",
+      featureCards: [
+        { icon: Activity, title: "Adventure" },
+        { icon: Users, title: "Fun Activities" },
+        { icon: Clock, title: "Exciting Experience" },
+      ],
+    },
+    "private-tours": {
+      backgroundImage: "/private-tours/brisbane-tours.webp",
+      featureCards: [
+        { icon: Users, title: "Private Group" },
+        { icon: Clock, title: "Flexible Timing" },
+        { icon: Car, title: "Personal Guide" },
+      ],
+    },
+  };
+
+  return (
+    configs[categorySlug] || {
+      backgroundImage:
+        "https://images.unsplash.com/photo-1469474968028-56623f02e42e?ixlib=rb-4.0.3&auto=format&fit=crop&w=1600&q=80",
+      featureCards: [
+        { icon: Clock, title: "Great Experience" },
+        { icon: Users, title: "Expert Guides" },
+        { icon: DollarSign, title: "Best Value" },
+      ],
+    }
+  );
+};
 
 export default function CategoryPage({
   params,
@@ -35,20 +162,37 @@ export default function CategoryPage({
 
   const [sortBy, setSortBy] = useState("name");
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
+  const [searchQuery, setSearchQuery] = useState("");
 
-  const { data: allProducts, loading, error } = useRezdyProducts(100, 0);
+  const { data: allProducts, loading, error } = useToursOnly();
 
   // Get category configuration
   const categoryConfig = getCategoryBySlug(categorySlug);
 
   // Enhanced filtering logic using shared helper function
-  const filteredProducts =
+  const categoryFilteredProducts =
     allProducts && categoryConfig
       ? filterProductsByCategory(allProducts, categoryConfig)
       : [];
 
+  // Apply search filter
+  const searchFilteredProducts = categoryFilteredProducts.filter((product) => {
+    if (!searchQuery.trim()) return true;
+
+    const searchText = `${product.name} ${product.shortDescription || ""} ${
+      product.description || ""
+    } ${product.locationAddress || ""}`.toLowerCase();
+    const queryTerms = searchQuery
+      .toLowerCase()
+      .split(" ")
+      .filter((term) => term.length > 0);
+
+    // Check if all query terms are found in the search text
+    return queryTerms.every((term) => searchText.includes(term));
+  });
+
   // Sort products
-  const sortedProducts = [...filteredProducts].sort((a, b) => {
+  const sortedProducts = [...searchFilteredProducts].sort((a, b) => {
     switch (sortBy) {
       case "price-low":
         return (a.advertisedPrice || 0) - (b.advertisedPrice || 0);
@@ -73,43 +217,53 @@ export default function CategoryPage({
     );
   }
 
+  // Get header configuration for this category
+  const headerConfig = getCategoryHeaderConfig(categorySlug, categoryConfig);
+
   return (
     <div>
-      {/* Header */}
-      <section className="border-b bg-muted/30">
-        <div className="container py-8">
-          <div className="flex items-center gap-4 mb-4">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => router.back()}
-              className="flex items-center gap-2"
-            >
-              <ArrowLeft className="h-4 w-4" />
-              Back
-            </Button>
-          </div>
+      {/* Header using PageHeader component */}
+      <PageHeader
+        title={categoryConfig.title}
+        subtitle={categoryConfig.description}
+        backgroundImage={headerConfig.backgroundImage}
+        overlayOpacity={0.6}
+        featureCards={headerConfig.featureCards}
+        backButton={{
+          label: "Back to Tours",
+          icon: ArrowLeft,
+          onClick: () => router.push("/tours"),
+        }}
+      />
 
-          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-            <div>
-              <h1 className="text-3xl font-bold tracking-tight md:text-4xl">
-                {categoryConfig.title}
-              </h1>
-              <p className="text-muted-foreground mt-2">
-                {categoryConfig.description}
-              </p>
-              <div className="flex items-center gap-2 mt-4">
-                <Badge variant="secondary">
-                  {filteredProducts.length}{" "}
-                  {filteredProducts.length === 1 ? "tour" : "tours"} available
-                </Badge>
-                <Badge variant="outline" className="capitalize">
-                  {categoryConfig.categoryGroup}
-                </Badge>
+      {/* Filters Section */}
+      <section className="border-b bg-white py-6">
+        <div className="container">
+          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+            {/* Search Bar */}
+            <div className="flex-1 max-w-md">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Search tours in this category..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-10 pr-10"
+                />
+                {searchQuery && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setSearchQuery("")}
+                    className="absolute right-1 top-1/2 transform -translate-y-1/2 h-6 w-6 p-0 hover:bg-muted"
+                  >
+                    <X className="h-3 w-3" />
+                  </Button>
+                )}
               </div>
             </div>
 
-            {/* Filters and View Controls */}
+            {/* Controls */}
             <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
               <Select value={sortBy} onValueChange={setSortBy}>
                 <SelectTrigger className="w-[180px]">
@@ -121,32 +275,13 @@ export default function CategoryPage({
                   <SelectItem value="price-high">Price: High to Low</SelectItem>
                 </SelectContent>
               </Select>
-
-              <div className="flex items-center border rounded-md">
-                <Button
-                  variant={viewMode === "grid" ? "default" : "ghost"}
-                  size="sm"
-                  onClick={() => setViewMode("grid")}
-                  className="rounded-r-none"
-                >
-                  <Grid className="h-4 w-4" />
-                </Button>
-                <Button
-                  variant={viewMode === "list" ? "default" : "ghost"}
-                  size="sm"
-                  onClick={() => setViewMode("list")}
-                  className="rounded-l-none"
-                >
-                  <List className="h-4 w-4" />
-                </Button>
-              </div>
             </div>
           </div>
         </div>
       </section>
 
       {/* Tours Grid */}
-      <section className="py-12">
+      <section className="py-8">
         <div className="container">
           {loading && <TourGridSkeleton count={9} />}
 
@@ -179,18 +314,44 @@ export default function CategoryPage({
                 <Card className="p-12 text-center">
                   <CardContent>
                     <div className="mx-auto mb-4 h-12 w-12 rounded-full bg-muted flex items-center justify-center">
-                      <Filter className="h-6 w-6 text-muted-foreground" />
+                      {searchQuery ? (
+                        <Search className="h-6 w-6 text-muted-foreground" />
+                      ) : (
+                        <Filter className="h-6 w-6 text-muted-foreground" />
+                      )}
                     </div>
                     <h3 className="text-lg font-semibold mb-2">
-                      No tours found
+                      {searchQuery
+                        ? "No tours match your search"
+                        : "No tours found"}
                     </h3>
                     <p className="text-muted-foreground mb-4">
-                      We don't have any {categoryConfig.title.toLowerCase()}{" "}
-                      available at the moment.
+                      {searchQuery ? (
+                        <>
+                          No {categoryConfig.title.toLowerCase()} match "
+                          <span className="font-medium">{searchQuery}</span>".
+                          Try adjusting your search terms.
+                        </>
+                      ) : (
+                        <>
+                          We don't have any {categoryConfig.title.toLowerCase()}{" "}
+                          available at the moment.
+                        </>
+                      )}
                     </p>
-                    <Button onClick={() => router.push("/tours")}>
-                      Browse all tours
-                    </Button>
+                    <div className="flex flex-col sm:flex-row gap-2 justify-center">
+                      {searchQuery && (
+                        <Button
+                          variant="outline"
+                          onClick={() => setSearchQuery("")}
+                        >
+                          Clear search
+                        </Button>
+                      )}
+                      <Button onClick={() => router.push("/tours")}>
+                        Browse all tours
+                      </Button>
+                    </div>
                   </CardContent>
                 </Card>
               )}

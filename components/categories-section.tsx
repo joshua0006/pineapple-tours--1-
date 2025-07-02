@@ -256,7 +256,7 @@ export function CategoriesSection() {
               return (
                 <Link
                   key={category.id}
-                  href={`/tours?category=${category.id}`}
+                  href={`/tours/category/${category.id}`}
                   className="group block"
                 >
                   <div className="relative overflow-hidden rounded-2xl transition-all duration-500 hover:scale-[1.02] hover:shadow-2xl hover:shadow-[#FF585D]/30 h-full min-h-[280px] sm:min-h-[320px] flex flex-col bg-white/5 backdrop-blur-sm border border-white/10 hover:border-[#FF585D]/50">
@@ -284,11 +284,11 @@ export function CategoriesSection() {
                     {/* Content */}
                     <div className="relative z-10 p-6 sm:p-8 pt-0 h-full flex flex-col justify-end">
                       <div className="space-y-3 sm:space-y-4">
-                        <h3 className="text-xl sm:text-2xl font-bold text-white mb-2 font-['Barlow'] drop-shadow-lg group-hover:text-[#FF585D] transition-colors duration-300">
+                        <h3 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-white mb-2 font-['Barlow'] drop-shadow-lg group-hover:text-[#FF585D] transition-colors duration-300">
                           {category.title}
                         </h3>
 
-                        <p className="text-sm sm:text-base text-white/90 font-['Work_Sans'] line-clamp-3 drop-shadow-md leading-relaxed">
+                        <p className="text-sm sm:text-base text-white/90 font-['Work_Sans'] line-clamp-3 drop-shadow-md leading-relaxed h-[4.5rem] sm:h-[5.25rem]">
                           {category.description}
                         </p>
 

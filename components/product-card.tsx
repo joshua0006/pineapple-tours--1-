@@ -22,6 +22,9 @@ interface ProductCardProps {
   isFeatured?: boolean;
   slug: string;
   onBookNow?: () => void;
+  selectedDate?: string; // Date in YYYY-MM-DD format
+  participants?: string; // Number of participants
+  selectedLocation?: string; // Selected pickup location from search form
 }
 
 export function ProductCard({
@@ -41,14 +44,51 @@ export function ProductCard({
   isFeatured = false,
   slug,
   onBookNow,
+  selectedDate,
+  participants,
+  selectedLocation,
 }: ProductCardProps) {
   const handleBookNow = () => {
     if (onBookNow) {
       onBookNow();
     } else {
-      // Default booking behavior - redirect to booking page
-      window.location.href = `/booking/${slug}`;
+      // Default booking behavior - redirect to booking page with optional parameters
+      const params = new URLSearchParams();
+      if (selectedDate) {
+        params.append("date", selectedDate);
+      }
+      if (participants) {
+        params.append("adults", participants);
+      }
+      if (selectedLocation && selectedLocation !== "all") {
+        params.append("location", selectedLocation);
+      }
+      const queryString = params.toString();
+      const url = queryString
+        ? `/booking/${slug}?${queryString}`
+        : `/booking/${slug}`;
+      window.location.href = url;
     }
+  };
+
+  // Build tour details URL with search parameters preserved
+  const buildTourDetailsUrl = () => {
+    const baseUrl = `/tours/${slug}`;
+    const params = new URLSearchParams();
+
+    if (selectedDate) {
+      params.append("tourDate", selectedDate);
+    }
+
+    if (participants) {
+      params.append("participants", participants);
+    }
+
+    if (selectedLocation && selectedLocation !== "all") {
+      params.append("location", selectedLocation);
+    }
+
+    return params.toString() ? `${baseUrl}?${params.toString()}` : baseUrl;
   };
 
   const formatDuration = (hours: number) => {
@@ -175,7 +215,7 @@ export function ProductCard({
       {/* Action Buttons */}
       <CardFooter className="p-4 pt-0 flex gap-2">
         <Button variant="outline" className="flex-1" asChild>
-          <Link href={`/tours/${slug}`}>View Details</Link>
+          <Link href={buildTourDetailsUrl()}>View Details</Link>
         </Button>
         <Button
           className="flex-1 bg-brand-accent text-brand-secondary hover:bg-coral-600"

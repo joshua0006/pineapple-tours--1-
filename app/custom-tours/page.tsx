@@ -3,9 +3,12 @@
 import { InteractiveCustomTourBuilder } from "@/components/interactive-custom-tour-builder";
 import { PageHeader } from "@/components/page-header";
 import { ContactSection } from "@/components/contact-section";
-import { Calendar } from "lucide-react";
+import { Calendar, ArrowLeft } from "lucide-react";
+import { useRouter } from "next/navigation";
 
 export default function CustomToursPage() {
+  const router = useRouter();
+
   return (
     <div className="min-h-screen">
       {/* Standard Header */}
@@ -29,6 +32,11 @@ export default function CustomToursPage() {
             // Navigate to contact page
             window.location.href = "/contact";
           },
+        }}
+        backButton={{
+          label: "Back to Tours",
+          icon: ArrowLeft,
+          onClick: () => router.push("/tours"),
         }}
       />
 

@@ -17,11 +17,17 @@ import {
 interface DynamicTourCardProps {
   product: RezdyProduct;
   loading?: boolean;
+  selectedDate?: string; // Date in YYYY-MM-DD format
+  participants?: string; // Number of participants
+  selectedLocation?: string; // Selected pickup location from search form
 }
 
 export function DynamicTourCard({
   product,
   loading = false,
+  selectedDate,
+  participants,
+  selectedLocation,
 }: DynamicTourCardProps) {
   if (loading) {
     return (
@@ -43,6 +49,46 @@ export function DynamicTourCard({
   const primaryImageUrl = getPrimaryImageUrl(product);
   const location = getLocationString(product.locationAddress);
   const slug = generateProductSlug(product);
+
+  // Build booking URL with date, participants, and location if available
+  const buildBookingUrl = () => {
+    const baseUrl = `/booking/${product.productCode}`;
+    const params = new URLSearchParams();
+
+    if (selectedDate) {
+      params.append("date", selectedDate);
+    }
+
+    if (participants) {
+      params.append("adults", participants);
+    }
+
+    if (selectedLocation && selectedLocation !== "all") {
+      params.append("location", selectedLocation);
+    }
+
+    return params.toString() ? `${baseUrl}?${params.toString()}` : baseUrl;
+  };
+
+  // Build tour details URL with search parameters preserved
+  const buildTourDetailsUrl = () => {
+    const baseUrl = `/tours/${slug}`;
+    const params = new URLSearchParams();
+
+    if (selectedDate) {
+      params.append("tourDate", selectedDate);
+    }
+
+    if (participants) {
+      params.append("participants", participants);
+    }
+
+    if (selectedLocation && selectedLocation !== "all") {
+      params.append("location", selectedLocation);
+    }
+
+    return params.toString() ? `${baseUrl}?${params.toString()}` : baseUrl;
+  };
 
   return (
     <Card className="overflow-hidden group hover:shadow-xl transition-all duration-300 border-0 shadow-md bg-white">
@@ -111,7 +157,7 @@ export function DynamicTourCard({
 
       <CardFooter className="p-6 pt-0">
         <div className="flex gap-3 w-full">
-          <Link href={`/tours/${slug}`} className="flex-1">
+          <Link href={buildTourDetailsUrl()} className="flex-1">
             <Button
               variant="outline"
               className="w-full border-brand-accent text-brand-accent hover:text-brand-accent hover:bg-brand-accent/10 transition-all duration-200 py-3 font-semibold"
@@ -120,7 +166,7 @@ export function DynamicTourCard({
               View Details
             </Button>
           </Link>
-          <Link href={`/booking/${product.productCode}`} className="flex-1">
+          <Link href={buildBookingUrl()} className="flex-1">
             <Button
               className="w-full bg-brand-accent text-brand-secondary hover:bg-brand-accent/90 hover:shadow-lg transform hover:-translate-y-0.5 transition-all duration-200 py-3 font-semibold"
               aria-label={`Book ${product.name} tour now`}

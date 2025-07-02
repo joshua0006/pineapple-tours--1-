@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import {
   ChevronRight,
   MapPin,
@@ -60,6 +61,9 @@ export default function TourDetailPage({
 
   // Unwrap params Promise using React.use()
   const resolvedParams = use(params);
+
+  // Get search parameters from URL (passed from search form)
+  const searchParams = useSearchParams();
 
   // Extract product code from slug
   const productCode = extractProductCodeFromSlug(resolvedParams.slug);
@@ -300,9 +304,24 @@ export default function TourDetailPage({
   const availableSessions = availability?.[0]?.sessions || [];
   const tourInfoItems = createTourInfoItems(selectedProduct);
 
-  // Helper function to get booking URL
+  // Helper function to get booking URL with preserved parameters
   const getBookingUrl = () => {
-    return `/booking/${selectedProduct.productCode}`;
+    const params = new URLSearchParams();
+
+    // Get parameters from search form
+    const participants = searchParams.get("participants");
+    const tourDate = searchParams.get("tourDate");
+    const location = searchParams.get("location");
+
+    // Add parameters if they exist
+    if (participants) params.append("adults", participants);
+    if (tourDate) params.append("date", tourDate);
+    if (location) params.append("location", location);
+
+    const queryString = params.toString();
+    return `/booking/${selectedProduct.productCode}${
+      queryString ? `?${queryString}` : ""
+    }`;
   };
 
   // Helper function to get first available session for cart button

@@ -67,6 +67,7 @@ interface Filters {
   location: string;
   limit: string;
   offset: string;
+  tourDate: string;
 }
 
 export default function ToursPage() {
@@ -92,6 +93,7 @@ export default function ToursPage() {
     location: searchParams.get("location") || "",
     limit: searchParams.get("limit") || "100",
     offset: searchParams.get("offset") || "0",
+    tourDate: searchParams.get("tourDate") || "",
   });
 
   const [localQuery, setLocalQuery] = useState(filters.query);
@@ -260,6 +262,7 @@ export default function ToursPage() {
       location: searchParams.get("location") || "",
       limit: searchParams.get("limit") || "100",
       offset: searchParams.get("offset") || "0",
+      tourDate: searchParams.get("tourDate") || "",
     };
 
     setFilters(urlFilters);
@@ -309,6 +312,7 @@ export default function ToursPage() {
       location: "",
       limit: "100",
       offset: "0",
+      tourDate: "",
     };
     updateFilter(key, defaultValues[key]);
   };
@@ -326,6 +330,7 @@ export default function ToursPage() {
       location: "",
       limit: "100",
       offset: "0",
+      tourDate: "",
     });
     setLocalQuery("");
   };
@@ -420,6 +425,11 @@ export default function ToursPage() {
             title: "Multiple Destinations",
           },
         ]}
+        backButton={{
+          label: "Back to Home",
+          icon: ArrowLeft,
+          onClick: () => router.push("/"),
+        }}
       />
 
       {/* Booking Prompt Success Banner */}
@@ -874,6 +884,9 @@ export default function ToursPage() {
                           <DynamicTourCard
                             key={product.productCode}
                             product={product}
+                            selectedDate={filters.tourDate}
+                            participants={filters.participants}
+                            selectedLocation={filters.location}
                           />
                         ))}
                       </div>

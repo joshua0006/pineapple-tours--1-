@@ -153,6 +153,11 @@ export default function DailyToursPage() {
             title: "Great Value",
           },
         ]}
+        backButton={{
+          label: "Back to Tours",
+          icon: ChevronLeft,
+          onClick: () => router.push("/tours"),
+        }}
       />
 
       {/* Search Bar */}

@@ -25,6 +25,12 @@ interface PageHeaderProps {
     onClick?: () => void;
     href?: string;
   };
+  backButton?: {
+    label?: string;
+    icon?: LucideIcon;
+    onClick?: () => void;
+    href?: string;
+  };
   variant?: "default" | "coral" | "muted";
   className?: string;
   backgroundImage?: string;
@@ -38,6 +44,7 @@ export function PageHeader({
   icon: Icon,
   primaryAction,
   secondaryAction,
+  backButton,
   variant = "default",
   className,
   backgroundImage,
@@ -133,9 +140,45 @@ export function PageHeader({
     );
   };
 
+  const BackButtonComponent = () => {
+    if (!backButton) return null;
+
+    const buttonContent = (
+      <>
+        {backButton.icon && <backButton.icon className="h-4 w-4 mr-2" />}
+        {backButton.label || "Back"}
+      </>
+    );
+
+    const buttonProps = {
+      variant: "ghost" as const,
+      size: "sm" as const,
+      className: cn(
+        "absolute top-4 left-4 z-20",
+        "bg-black/20 backdrop-blur-sm border border-white/30",
+        "text-white hover:bg-black/40 hover:text-white",
+        "transition-all duration-200"
+      ),
+    };
+
+    if (backButton.href) {
+      return (
+        <Button asChild {...buttonProps}>
+          <a href={backButton.href}>{buttonContent}</a>
+        </Button>
+      );
+    }
+
+    return (
+      <Button onClick={backButton.onClick} {...buttonProps}>
+        {buttonContent}
+      </Button>
+    );
+  };
+
   return (
     <section
-      className={cn("py-16 md:py-20", getBackgroundClasses(), className)}
+      className={cn("py-8 md:py-12", getBackgroundClasses(), className)}
       style={
         backgroundImage
           ? {
@@ -155,11 +198,14 @@ export function PageHeader({
         />
       )}
 
+      {/* Back Button */}
+      <BackButtonComponent />
+
       <div className="container mx-auto px-4 relative z-10">
         <div className="max-w-4xl mx-auto text-center">
           <h1
             className={cn(
-              "text-3xl md:text-4xl lg:text-5xl font-bold mb-5 font-barlow tracking-tight",
+              "text-2xl md:text-3xl lg:text-4xl font-bold mb-3 font-barlow tracking-tight",
               getTextClasses()
             )}
           >
@@ -167,14 +213,14 @@ export function PageHeader({
           </h1>
           <p
             className={cn(
-              "text-base md:text-lg lg:text-xl mb-6 font-work-sans max-w-3xl mx-auto",
+              "text-sm md:text-base lg:text-lg mb-4 font-work-sans max-w-3xl mx-auto",
               getSubtitleClasses()
             )}
           >
             {subtitle}
           </p>
           {(primaryAction || secondaryAction) && (
-            <div className="flex flex-col sm:flex-row gap-4 justify-center relative z-10">
+            <div className="flex flex-col sm:flex-row gap-3 justify-center relative z-10 mb-4">
               {primaryAction && (
                 <ActionButton action={primaryAction} variant="default" />
               )}
@@ -186,17 +232,17 @@ export function PageHeader({
 
           {/* Feature Cards */}
           {featureCards && featureCards.length > 0 && (
-            <div className="mt-12 relative z-10">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 lg:gap-6 max-w-5xl mx-auto">
+            <div className="mt-6 relative z-10">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3 lg:gap-4 max-w-4xl mx-auto">
                 {featureCards.map((card, index) => (
                   <div key={index} className="cursor-default">
                     {/* Content */}
-                    <div className="p-6 lg:p-8 text-center">
-                      <div className="flex flex-col items-center space-y-4">
+                    <div className="p-4 lg:p-5 text-center">
+                      <div className="flex flex-col items-center space-y-2">
                         {/* Icon container */}
                         <div
                           className={cn(
-                            "p-4 rounded-full",
+                            "p-3 rounded-full",
                             backgroundImage
                               ? "bg-white/10 border border-white/30"
                               : "bg-primary/10 border border-primary/20"
@@ -204,7 +250,7 @@ export function PageHeader({
                         >
                           <card.icon
                             className={cn(
-                              "h-7 w-7 lg:h-8 lg:w-8",
+                              "h-5 w-5 lg:h-6 lg:w-6",
                               backgroundImage ? "text-white" : "text-primary",
                               "drop-shadow-sm"
                             )}
@@ -214,7 +260,7 @@ export function PageHeader({
                         {/* Title */}
                         <h3
                           className={cn(
-                            "font-bold text-lg lg:text-xl",
+                            "font-bold text-sm lg:text-base",
                             backgroundImage ? "text-white" : "text-foreground",
                             "drop-shadow-sm"
                           )}

@@ -13,6 +13,7 @@ interface BookingPageProps {
     infants?: string;
     extras?: string;
     date?: string;
+    location?: string;
   }>;
 }
 
@@ -164,6 +165,7 @@ export default async function BookingPage({
         preSelectedSession={preSelectedSession}
         preSelectedDate={searchParamsData.date}
         preSelectedSessionId={searchParamsData.sessionId}
+        preSelectedLocation={searchParamsData.location}
       />
     </div>
   );

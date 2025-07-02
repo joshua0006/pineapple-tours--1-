@@ -32,6 +32,7 @@ interface BookingOptionSelectorProps {
   required?: boolean;
   showPricing?: boolean;
   participantCount?: number;
+  preSelectedRegion?: string; // Region to pre-select based on search form location
 }
 
 interface DropdownState {
@@ -63,6 +64,7 @@ export function BookingOptionSelector({
   required = false,
   showPricing = true,
   participantCount = 1,
+  preSelectedRegion,
 }: BookingOptionSelectorProps) {
   const [dropdownState, setDropdownState] = useState<DropdownState>({
     region: null,
@@ -126,6 +128,33 @@ export function BookingOptionSelector({
       });
     }
   }, [selectedBookingOption, selectedPickupLocation, regionGroups]);
+
+  // Auto-select region based on preSelectedRegion from search form
+  useEffect(() => {
+    if (
+      preSelectedRegion &&
+      regionGroups.length > 0 &&
+      !dropdownState.region &&
+      !selectedBookingOption // Don't override if there's already a selected booking option
+    ) {
+      const matchingRegion = regionGroups.find(
+        (region) => region.id === preSelectedRegion
+      );
+
+      if (matchingRegion && matchingRegion.options.length > 0) {
+        console.log(
+          "Auto-selecting region based on search form location:",
+          preSelectedRegion
+        );
+        handleRegionSelect(preSelectedRegion);
+      }
+    }
+  }, [
+    preSelectedRegion,
+    regionGroups,
+    dropdownState.region,
+    selectedBookingOption,
+  ]);
 
   // Clear errors when state changes
   useEffect(() => {

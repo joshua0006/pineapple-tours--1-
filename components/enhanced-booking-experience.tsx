@@ -111,6 +111,7 @@ interface EnhancedBookingExperienceProps {
   preSelectedExtras?: SelectedExtra[];
   preSelectedDate?: string; // ISO date string (YYYY-MM-DD)
   preSelectedSessionId?: string; // Session ID to auto-select when availability loads
+  preSelectedLocation?: string; // Pickup location from search form
 }
 
 interface ContactInfo {
@@ -119,8 +120,6 @@ interface ContactInfo {
   email: string;
   phone: string;
   country: string;
-  emergencyContact: string;
-  emergencyPhone: string;
   dietaryRequirements: string;
   accessibilityNeeds: string;
   specialRequests: string;
@@ -165,6 +164,21 @@ const COUNTRIES = [
   "Other",
 ];
 
+// Helper function to map search form locations to booking regions
+const mapLocationToRegion = (location: string): string | undefined => {
+  const locationLower = location.toLowerCase();
+
+  if (locationLower.includes("brisbane")) {
+    return "brisbane";
+  } else if (locationLower.includes("gold coast")) {
+    return "gold-coast";
+  } else if (locationLower.includes("tamborine")) {
+    return "tamborine-direct";
+  }
+
+  return undefined;
+};
+
 export function EnhancedBookingExperience({
   product,
   onClose,
@@ -173,9 +187,15 @@ export function EnhancedBookingExperience({
   preSelectedExtras,
   preSelectedDate,
   preSelectedSessionId,
+  preSelectedLocation,
 }: EnhancedBookingExperienceProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [bookingErrors, setBookingErrors] = useState<string[]>([]);
+
+  // Map the preSelectedLocation to a region for FIT tours
+  const preSelectedRegion = preSelectedLocation
+    ? mapLocationToRegion(preSelectedLocation)
+    : undefined;
 
   // Check if product has pickup services
   const productHasPickupServices = hasPickupServices(product);
@@ -198,6 +218,7 @@ export function EnhancedBookingExperience({
     useState<RezdyPickupLocation | null>(null);
   const [selectedBookingOption, setSelectedBookingOption] =
     useState<RezdyBookingOption | null>(null);
+  const [wasSessionAutoSelected, setWasSessionAutoSelected] = useState(false);
   const [guests, setGuests] = useState<GuestInfo[]>([
     { id: "1", firstName: "", lastName: "", age: 25, type: "ADULT" },
   ]);
@@ -210,8 +231,6 @@ export function EnhancedBookingExperience({
     email: "",
     phone: "",
     country: "",
-    emergencyContact: "",
-    emergencyPhone: "",
     dietaryRequirements: "",
     accessibilityNeeds: "",
     specialRequests: "",
@@ -388,11 +407,11 @@ export function EnhancedBookingExperience({
 
   // Auto-populate contact info from first guest
   useEffect(() => {
-    if (guests.length > 0 && guests[0].firstName && guests[0].lastName) {
+    if (guests.length > 0) {
       setContactInfo((prev) => ({
         ...prev,
-        firstName: guests[0].firstName,
-        lastName: guests[0].lastName,
+        firstName: guests[0].firstName || "",
+        lastName: guests[0].lastName || "",
       }));
     }
   }, [guests]);
@@ -730,10 +749,11 @@ export function EnhancedBookingExperience({
     setSelectedDate(date);
     setSelectedSession(null);
     setSelectedPickupLocation(null);
+    setWasSessionAutoSelected(false); // Reset auto-selection flag when date changes
   };
 
   const handleSessionSelect = useCallback(
-    (session: RezdySession) => {
+    (session: RezdySession, isAutoSelection = false) => {
       // ensure id exists before storing
       const sid = normalizeSessionId(session);
 
@@ -741,6 +761,12 @@ export function EnhancedBookingExperience({
       // Reset booking option selection when session changes
       setSelectedBookingOption(null);
       setSelectedPickupLocation(null);
+
+      // Clear auto-selection flag if this is a manual selection
+      if (!isAutoSelection) {
+        setWasSessionAutoSelected(false);
+      }
+
       // Auto-select first pickup location if available (for non-FIT tours)
       if (
         !hasFitTourOptions &&
@@ -770,7 +796,7 @@ export function EnhancedBookingExperience({
 
       if (matchingSession) {
         console.log("Auto-selecting session from URL:", matchingSession);
-        handleSessionSelect(matchingSession);
+        handleSessionSelect(matchingSession, true);
       }
     }
   }, [
@@ -779,6 +805,67 @@ export function EnhancedBookingExperience({
     selectedDate,
     selectedSession,
     handleSessionSelect,
+  ]);
+
+  // Auto-select session when there's only one available session for the selected date
+  useEffect(() => {
+    if (
+      selectedDate &&
+      availableSessions.length === 1 &&
+      !selectedSession &&
+      !preSelectedSessionId // Don't auto-select if we're waiting for a specific session ID
+    ) {
+      console.log(
+        "Auto-selecting single available session:",
+        availableSessions[0]
+      );
+      handleSessionSelect(availableSessions[0], true);
+      setWasSessionAutoSelected(true);
+    }
+  }, [
+    selectedDate,
+    availableSessions,
+    selectedSession,
+    preSelectedSessionId,
+    handleSessionSelect,
+  ]);
+
+  // Auto-select pickup location for regular tours based on preSelectedLocation
+  useEffect(() => {
+    if (
+      selectedSession &&
+      !hasFitTourOptions &&
+      preSelectedLocation &&
+      selectedSession.pickupLocations &&
+      selectedSession.pickupLocations.length > 0 &&
+      !selectedPickupLocation
+    ) {
+      // Find a pickup location that matches the search form location
+      const matchingLocation = selectedSession.pickupLocations.find(
+        (location) => {
+          const locationName = location.name.toLowerCase();
+          const searchLocation = preSelectedLocation.toLowerCase();
+
+          return (
+            locationName.includes(searchLocation) ||
+            searchLocation.includes(locationName.split(" ")[0])
+          );
+        }
+      );
+
+      if (matchingLocation) {
+        console.log(
+          "Auto-selecting pickup location based on search form:",
+          matchingLocation.name
+        );
+        setSelectedPickupLocation(matchingLocation);
+      }
+    }
+  }, [
+    selectedSession,
+    hasFitTourOptions,
+    preSelectedLocation,
+    selectedPickupLocation,
   ]);
 
   const handleBookingOptionSelect = (
@@ -1210,6 +1297,7 @@ export function EnhancedBookingExperience({
                 {selectedDate && (
                   <div>
                     <Label className="text-base font-medium">Select Time</Label>
+
                     {availabilityLoading ? (
                       <div className="mt-2 space-y-2">
                         {[1, 2, 3].map((i) => (
@@ -1300,12 +1388,20 @@ export function EnhancedBookingExperience({
                                       <div className="text-sm text-muted-foreground">
                                         per adult
                                       </div>
-                                      {typeof session.id === "string" &&
-                                      session.id.startsWith("mock-") ? (
-                                        <div className="inline-flex items-center px-2 py-1 text-xs bg-brand-accent/10 text-brand-accent rounded-full">
-                                          Demo
-                                        </div>
-                                      ) : null}
+                                      <div className="flex flex-col gap-1">
+                                        {typeof session.id === "string" &&
+                                        session.id.startsWith("mock-") ? (
+                                          <div className="inline-flex items-center px-2 py-1 text-xs bg-brand-accent/10 text-brand-accent rounded-full">
+                                            Demo
+                                          </div>
+                                        ) : null}
+                                        {isSelected &&
+                                          wasSessionAutoSelected && (
+                                            <div className="inline-flex items-center px-2 py-1 text-xs bg-green-100 text-green-800 rounded-full">
+                                              Auto-selected
+                                            </div>
+                                          )}
+                                      </div>
                                     </div>
                                   </div>
                                 </CardContent>
@@ -1337,6 +1433,7 @@ export function EnhancedBookingExperience({
                     showPricing={true}
                     required={true}
                     className="w-full"
+                    preSelectedRegion={preSelectedRegion}
                   />
                 ) : (
                   selectedSession &&
@@ -1437,39 +1534,6 @@ export function EnhancedBookingExperience({
               <CardContent className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <Label htmlFor="contact-first-name">First Name *</Label>
-                    <Input
-                      id="contact-first-name"
-                      value={contactInfo.firstName}
-                      onChange={(e) =>
-                        setContactInfo((prev) => ({
-                          ...prev,
-                          firstName: e.target.value,
-                        }))
-                      }
-                      placeholder="Enter first name"
-                      required
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="contact-last-name">Last Name *</Label>
-                    <Input
-                      id="contact-last-name"
-                      value={contactInfo.lastName}
-                      onChange={(e) =>
-                        setContactInfo((prev) => ({
-                          ...prev,
-                          lastName: e.target.value,
-                        }))
-                      }
-                      placeholder="Enter last name"
-                      required
-                    />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
                     <Label htmlFor="contact-email">Email Address *</Label>
                     <Input
                       id="contact-email"
@@ -1535,40 +1599,6 @@ export function EnhancedBookingExperience({
                       ))}
                     </SelectContent>
                   </Select>
-                </div>
-
-                <Separator />
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="emergency-contact">Emergency Contact</Label>
-                    <Input
-                      id="emergency-contact"
-                      value={contactInfo.emergencyContact}
-                      onChange={(e) =>
-                        setContactInfo((prev) => ({
-                          ...prev,
-                          emergencyContact: e.target.value,
-                        }))
-                      }
-                      placeholder="Emergency contact name"
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="emergency-phone">Emergency Phone</Label>
-                    <Input
-                      id="emergency-phone"
-                      type="tel"
-                      value={contactInfo.emergencyPhone}
-                      onChange={(e) =>
-                        setContactInfo((prev) => ({
-                          ...prev,
-                          emergencyPhone: e.target.value,
-                        }))
-                      }
-                      placeholder="Emergency contact phone"
-                    />
-                  </div>
                 </div>
               </CardContent>
             </Card>

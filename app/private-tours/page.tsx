@@ -14,6 +14,7 @@ import {
   Calendar,
   Sparkles,
   Settings,
+  ArrowLeft,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -159,6 +160,11 @@ export default function PrivateToursPage() {
             title: "Private Groups",
           },
         ]}
+        backButton={{
+          label: "Back to Tours",
+          icon: ArrowLeft,
+          onClick: () => router.push("/tours"),
+        }}
       />
 
       {/* Search Bar */}

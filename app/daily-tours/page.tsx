@@ -1,29 +1,24 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import {
   Search,
   MapPin,
   Star,
-  X,
-  Calendar,
+  RefreshCw,
+  ChevronLeft,
+  ChevronRight,
   Clock,
-  Grid,
-  List,
-  Heart,
+  Calendar,
+  Users,
+  DollarSign,
+  Shield,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Card } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 
 import { PageHeader } from "@/components/page-header";
@@ -31,42 +26,51 @@ import { DynamicTourCard } from "@/components/dynamic-tour-card";
 import { TourGridSkeleton } from "@/components/tour-grid-skeleton";
 import { ErrorState } from "@/components/error-state";
 import { useAllProducts } from "@/hooks/use-all-products";
-import { useCityProducts } from "@/hooks/use-city-products";
-import {
-  getSearchCategories,
-  getCategoryDisplayName,
-  doesProductMatchCategory,
-} from "@/lib/constants/categories";
+import { RezdyProduct } from "@/lib/types/rezdy";
 
 export default function DailyToursPage() {
   const router = useRouter();
-  const { cities, loading: citiesLoading } = useCityProducts();
-  const searchCategories = getSearchCategories();
 
-  const [filters, setFilters] = useState({
-    query: "",
-    category: "all",
-    priceRange: "all",
-    city: "all",
-    sortBy: "popularity",
-    viewMode: "grid" as "grid" | "list",
-  });
+  // Local state for search and pagination
+  const [searchQuery, setSearchQuery] = useState("");
+  const [localQuery, setLocalQuery] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 12;
 
-  const [localQuery, setLocalQuery] = useState(filters.query);
-  const { products, loading, error, refreshProducts } = useAllProducts();
+  // Fetch all products
+  const { products, loading, error, refreshProducts, totalCount, isCached } =
+    useAllProducts();
 
+  // Filter for daily tours (exclude private tours, custom tours, gift cards)
   const dailyTours = useMemo(() => {
-    return products.filter((product) => {
-      // Only show products with productType "DAYTOUR"
-      return product.productType === "DAYTOUR";
+    let filtered = [...products];
+
+    // Filter for daily tours only
+    filtered = filtered.filter((product) => {
+      const name = product.name.toLowerCase();
+      const description = product.shortDescription?.toLowerCase() || "";
+
+      // Exclude private tours, custom tours, gift cards
+      const isPrivate =
+        name.includes("private") ||
+        name.includes("charter") ||
+        description.includes("private");
+      const isCustom =
+        name.includes("custom") ||
+        name.includes("bespoke") ||
+        description.includes("custom");
+      const isGiftCard =
+        product.productType === "GIFT_CARD" ||
+        name.includes("gift card") ||
+        name.includes("gift voucher");
+
+      // Include only scheduled daily tours
+      return !isPrivate && !isCustom && !isGiftCard;
     });
-  }, [products]);
 
-  const filteredTours = useMemo(() => {
-    let filtered = [...dailyTours];
-
-    if (filters.query) {
-      const query = filters.query.toLowerCase();
+    // Apply search filter
+    if (searchQuery) {
+      const query = searchQuery.toLowerCase();
       filtered = filtered.filter(
         (product) =>
           product.name.toLowerCase().includes(query) ||
@@ -75,278 +79,297 @@ export default function DailyToursPage() {
       );
     }
 
-    if (filters.category !== "all") {
-      filtered = filtered.filter((product) =>
-        doesProductMatchCategory(product, filters.category)
-      );
-    }
-
-    if (filters.priceRange !== "all") {
-      switch (filters.priceRange) {
-        case "under-99":
-          filtered = filtered.filter(
-            (product) => (product.advertisedPrice || 0) < 99
-          );
-          break;
-        case "99-159":
-          filtered = filtered.filter((product) => {
-            const price = product.advertisedPrice || 0;
-            return price >= 99 && price <= 159;
-          });
-          break;
-        case "159-299":
-          filtered = filtered.filter((product) => {
-            const price = product.advertisedPrice || 0;
-            return price >= 159 && price <= 299;
-          });
-          break;
-        case "over-299":
-          filtered = filtered.filter(
-            (product) => (product.advertisedPrice || 0) > 299
-          );
-          break;
-      }
-    }
-
-    if (filters.city && filters.city !== "all") {
-      filtered = filtered.filter((product) => {
-        const address = product.locationAddress;
-        if (typeof address === "string") {
-          return address.toLowerCase().includes(filters.city.toLowerCase());
-        } else if (address && typeof address === "object") {
-          return (
-            address.city?.toLowerCase().includes(filters.city.toLowerCase()) ||
-            address.state?.toLowerCase().includes(filters.city.toLowerCase())
-          );
-        }
-        return false;
-      });
-    }
-
-    switch (filters.sortBy) {
-      case "price-low":
-        filtered.sort(
-          (a, b) => (a.advertisedPrice || 0) - (b.advertisedPrice || 0)
-        );
-        break;
-      case "price-high":
-        filtered.sort(
-          (a, b) => (b.advertisedPrice || 0) - (a.advertisedPrice || 0)
-        );
-        break;
-      case "name":
-        filtered.sort((a, b) => a.name.localeCompare(b.name));
-        break;
-      default:
-        break;
-    }
+    // Sort by name for consistency
+    filtered.sort((a, b) => a.name.localeCompare(b.name));
 
     return filtered;
-  }, [dailyTours, filters]);
+  }, [products, searchQuery]);
 
-  const updateFilter = (key: string, value: string) => {
-    setFilters((prev) => ({ ...prev, [key]: value }));
-  };
+  // Pagination
+  const { paginatedTours, totalPages } = useMemo(() => {
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+    const paginated = dailyTours.slice(startIndex, endIndex);
+    const pages = Math.max(1, Math.ceil(dailyTours.length / itemsPerPage));
 
-  const clearAllFilters = () => {
-    setFilters({
-      query: "",
-      category: "all",
-      priceRange: "all",
-      city: "all",
-      sortBy: "popularity",
-      viewMode: "grid",
-    });
-    setLocalQuery("");
-  };
+    return {
+      paginatedTours: paginated,
+      totalPages: pages,
+    };
+  }, [dailyTours, currentPage, itemsPerPage]);
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    updateFilter("query", localQuery);
+    setSearchQuery(localQuery);
+    setCurrentPage(1); // Reset to first page when searching
   };
 
-  const activeFiltersCount = Object.entries(filters).filter(([key, value]) => {
-    if (key === "viewMode" || key === "sortBy") return false;
-    return value !== "" && value !== "all";
-  }).length;
+  const handleRetry = () => {
+    refreshProducts();
+  };
 
-  if (error) {
-    return (
-      <div className="container py-8">
-        <ErrorState
-          title="Failed to load daily tours"
-          message="We couldn't load the daily tours at the moment. Please try again."
-          onRetry={refreshProducts}
-        />
-      </div>
-    );
-  }
+  const goToPage = (page: number) => {
+    setCurrentPage(page);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  const nextPage = () => {
+    if (currentPage < totalPages) {
+      goToPage(currentPage + 1);
+    }
+  };
+
+  const prevPage = () => {
+    if (currentPage > 1) {
+      goToPage(currentPage - 1);
+    }
+  };
+
+  const clearSearch = () => {
+    setSearchQuery("");
+    setLocalQuery("");
+    setCurrentPage(1);
+  };
 
   return (
-    <div className="flex min-h-screen flex-col">
-      <main className="flex-1">
-        <PageHeader
-          title="Daily Tours"
-          subtitle="Discover our scheduled daily tours with fixed departure times and shared experiences. Perfect for meeting fellow travelers and exploring Queensland's best destinations."
-        />
+    <>
+      {/* Header */}
+      <PageHeader
+        title="Daily Tours"
+        subtitle="Join our scheduled group tours departing daily. Perfect for meeting fellow travelers and exploring with expert guides at fixed departure times."
+        backgroundImage="/private-tours/brisbane-tours.webp"
+        overlayOpacity={0.6}
+        featureCards={[
+          {
+            icon: Clock,
+            title: "Fixed Schedules",
+          },
+          {
+            icon: Users,
+            title: "Social Experience",
+          },
+          {
+            icon: DollarSign,
+            title: "Great Value",
+          },
+        ]}
+      />
 
-        <div className="container py-8">
-          <div className="mb-8 space-y-4">
-            <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-              <form onSubmit={handleSearchSubmit} className="flex flex-1 gap-2">
-                <div className="relative flex-1">
-                  <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                  <Input
-                    placeholder="Search daily tours..."
-                    value={localQuery}
-                    onChange={(e) => setLocalQuery(e.target.value)}
-                    className="pl-9"
-                  />
-                </div>
-                <Button type="submit">Search</Button>
-              </form>
+      {/* Search Bar */}
+      <section className="border-b bg-white py-6">
+        <div className="container">
+          <form onSubmit={handleSearchSubmit} className="mb-0">
+            <div className="relative max-w-2xl mx-auto">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Search daily tours..."
+                value={localQuery}
+                onChange={(e) => setLocalQuery(e.target.value)}
+                className="pl-10 pr-20 h-12 text-base"
+              />
+              <Button
+                type="submit"
+                size="sm"
+                className="absolute right-2 top-1/2 transform -translate-y-1/2"
+              >
+                Search
+              </Button>
+            </div>
+          </form>
+          {searchQuery && (
+            <div className="text-center mt-4">
+              <Badge variant="secondary" className="px-4 py-2">
+                Searching for: "{searchQuery}"
+                <button
+                  onClick={clearSearch}
+                  className="ml-2 hover:text-destructive"
+                >
+                  ✕
+                </button>
+              </Badge>
+            </div>
+          )}
+        </div>
+      </section>
 
-              <div className="flex items-center gap-2">
-                <Button
-                  variant={filters.viewMode === "grid" ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => updateFilter("viewMode", "grid")}
-                >
-                  <Grid className="h-4 w-4" />
-                </Button>
-                <Button
-                  variant={filters.viewMode === "list" ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => updateFilter("viewMode", "list")}
-                >
-                  <List className="h-4 w-4" />
-                </Button>
+      {/* Main Content */}
+      <section className="py-8">
+        <div className="container">
+          {/* Results count and status */}
+          <div className="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div className="flex items-center gap-2">
+              <div className="text-sm text-muted-foreground">
+                {loading ? (
+                  <span className="flex items-center gap-2">
+                    <RefreshCw className="h-4 w-4 animate-spin" />
+                    Loading daily tours...
+                  </span>
+                ) : (
+                  <>
+                    {paginatedTours.length > 0
+                      ? `Showing ${paginatedTours.length} of ${dailyTours.length} daily tours`
+                      : dailyTours.length === 0
+                      ? "No daily tours found"
+                      : ""}
+                    {totalPages > 1 && (
+                      <span className="text-muted-foreground">
+                        {` • Page ${currentPage} of ${totalPages}`}
+                      </span>
+                    )}
+                  </>
+                )}
               </div>
             </div>
-
-            <div className="flex flex-wrap gap-4">
-              <Select
-                value={filters.category}
-                onValueChange={(value) => updateFilter("category", value)}
-              >
-                <SelectTrigger className="w-[180px]">
-                  <SelectValue placeholder="Category" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Categories</SelectItem>
-                  {searchCategories.map((category) => (
-                    <SelectItem key={category.id} value={category.id}>
-                      {category.title}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-
-              <Select
-                value={filters.priceRange}
-                onValueChange={(value) => updateFilter("priceRange", value)}
-              >
-                <SelectTrigger className="w-[180px]">
-                  <SelectValue placeholder="Price Range" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Prices</SelectItem>
-                  <SelectItem value="under-99">Under $99</SelectItem>
-                  <SelectItem value="99-159">$99 - $159</SelectItem>
-                  <SelectItem value="159-299">$159 - $299</SelectItem>
-                  <SelectItem value="over-299">Over $299</SelectItem>
-                </SelectContent>
-              </Select>
-
-              <Select
-                value={filters.city}
-                onValueChange={(value) => updateFilter("city", value)}
-              >
-                <SelectTrigger className="w-[180px]">
-                  <SelectValue placeholder="Location" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Locations</SelectItem>
-                  {!citiesLoading &&
-                    cities.map((city) => (
-                      <SelectItem key={city} value={city}>
-                        {city}
-                      </SelectItem>
-                    ))}
-                </SelectContent>
-              </Select>
-
-              <Select
-                value={filters.sortBy}
-                onValueChange={(value) => updateFilter("sortBy", value)}
-              >
-                <SelectTrigger className="w-[180px]">
-                  <SelectValue placeholder="Sort By" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="popularity">Most Popular</SelectItem>
-                  <SelectItem value="price-low">Price: Low to High</SelectItem>
-                  <SelectItem value="price-high">Price: High to Low</SelectItem>
-                  <SelectItem value="name">Name A-Z</SelectItem>
-                </SelectContent>
-              </Select>
-
-              {activeFiltersCount > 0 && (
-                <Button variant="outline" onClick={clearAllFilters}>
-                  <X className="mr-2 h-4 w-4" />
-                  Clear Filters ({activeFiltersCount})
-                </Button>
-              )}
-            </div>
           </div>
 
-          <div className="mb-6 flex items-center justify-between">
-            <div>
-              <h2 className="text-2xl font-bold">
-                {loading
-                  ? "Loading..."
-                  : `${filteredTours.length} Daily Tours Available`}
-              </h2>
-              <p className="text-muted-foreground">
-                Scheduled tours with fixed departure times
-              </p>
-            </div>
-          </div>
+          {/* Results */}
+          {error && (
+            <ErrorState
+              title="Daily Tours Loading Error"
+              message={error}
+              onRetry={handleRetry}
+            />
+          )}
 
-          {loading && <TourGridSkeleton />}
+          {loading && <TourGridSkeleton count={6} />}
 
-          {!loading && (
+          {!loading && !error && (
             <>
-              {filteredTours.length === 0 ? (
-                <div className="py-16 text-center">
-                  <div className="mx-auto max-w-md">
-                    <Calendar className="mx-auto h-12 w-12 text-muted-foreground" />
-                    <h3 className="mt-4 text-lg font-semibold">
-                      No daily tours found
-                    </h3>
-                    <p className="mt-2 text-muted-foreground">
-                      Try adjusting your filters or search terms to find more
-                      tours.
-                    </p>
-                    <Button onClick={clearAllFilters} className="mt-4">
-                      Clear All Filters
-                    </Button>
+              {paginatedTours.length > 0 ? (
+                <>
+                  <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                    {paginatedTours.map((product: RezdyProduct) => (
+                      <DynamicTourCard
+                        key={product.productCode}
+                        product={product}
+                      />
+                    ))}
                   </div>
-                </div>
+
+                  {/* Pagination Controls */}
+                  {totalPages > 1 && (
+                    <div className="mt-8 flex items-center justify-center gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={prevPage}
+                        disabled={currentPage === 1}
+                        className="flex items-center gap-1"
+                      >
+                        <ChevronLeft className="h-4 w-4" />
+                        Previous
+                      </Button>
+
+                      <div className="flex items-center gap-1">
+                        {Array.from(
+                          { length: Math.min(5, totalPages) },
+                          (_, i) => {
+                            let pageNum;
+                            if (totalPages <= 5) {
+                              pageNum = i + 1;
+                            } else if (currentPage <= 3) {
+                              pageNum = i + 1;
+                            } else if (currentPage >= totalPages - 2) {
+                              pageNum = totalPages - 4 + i;
+                            } else {
+                              pageNum = currentPage - 2 + i;
+                            }
+
+                            return (
+                              <Button
+                                key={pageNum}
+                                variant={
+                                  currentPage === pageNum
+                                    ? "default"
+                                    : "outline"
+                                }
+                                size="sm"
+                                onClick={() => goToPage(pageNum)}
+                                className="w-10 h-10 p-0"
+                              >
+                                {pageNum}
+                              </Button>
+                            );
+                          }
+                        )}
+                      </div>
+
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={nextPage}
+                        disabled={currentPage === totalPages}
+                        className="flex items-center gap-1"
+                      >
+                        Next
+                        <ChevronRight className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  )}
+                </>
               ) : (
-                <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-                  {filteredTours.map((product) => (
-                    <DynamicTourCard
-                      key={product.productCode}
-                      product={product}
-                    />
-                  ))}
+                <div className="text-center py-12">
+                  <div className="mx-auto max-w-md">
+                    <Clock className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
+                    <h3 className="text-lg font-semibold mb-2">
+                      {searchQuery
+                        ? "No daily tours found"
+                        : "Loading daily tours..."}
+                    </h3>
+                    <p className="text-muted-foreground mb-4">
+                      {searchQuery
+                        ? "Try adjusting your search terms or browse all daily tours."
+                        : "Our daily tours feature scheduled departures and group experiences."}
+                    </p>
+                    <div className="space-y-2">
+                      {searchQuery && (
+                        <Button
+                          onClick={clearSearch}
+                          variant="outline"
+                          className="w-full"
+                        >
+                          Clear search
+                        </Button>
+                      )}
+                      <Button
+                        onClick={() => router.push("/tours")}
+                        className="w-full"
+                      >
+                        Browse all tours
+                      </Button>
+                    </div>
+                  </div>
                 </div>
               )}
             </>
           )}
         </div>
-      </main>
-    </div>
+      </section>
+
+      {/* Call to Action */}
+      <section className="bg-muted py-16">
+        <div className="container text-center">
+          <h2 className="text-3xl font-bold tracking-tight">
+            Need a Private Experience?
+          </h2>
+          <p className="mx-auto mt-4 max-w-2xl text-muted-foreground">
+            Looking for a more personalized tour experience? Check out our
+            private tours with flexible schedules and customized itineraries.
+          </p>
+          <div className="mt-8 flex flex-col gap-4 sm:flex-row sm:justify-center">
+            <Button size="lg" onClick={() => router.push("/private-tours")}>
+              Explore Private Tours
+            </Button>
+            <Button
+              size="lg"
+              variant="outline"
+              onClick={() => router.push("/contact")}
+            >
+              Contact Us
+            </Button>
+          </div>
+        </div>
+      </section>
+    </>
   );
 }

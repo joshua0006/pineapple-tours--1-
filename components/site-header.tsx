@@ -7,7 +7,6 @@ import {
   Phone,
   ChevronDown,
   MapPin,
-  Calendar,
   Users,
   MessageCircle,
   Database,
@@ -15,6 +14,8 @@ import {
   Gift,
   BookOpen,
   X,
+  Clock,
+  Crown,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -41,7 +42,7 @@ export function SiteHeader() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [categoryTabWidth, setCategoryTabWidth] = useState<number | null>(null);
   const categoryTabRef = useRef<HTMLLIElement>(null);
-  const { isMobile, isTablet, isDesktop, md, lg } = useResponsive();
+  const { isMobile, isTablet, isDesktop, md, lg, xl, width } = useResponsive();
   const { calculateOptimalTabWidth, tabSpacing, actionSpacing } =
     useResponsiveSpacing();
 
@@ -129,19 +130,19 @@ export function SiteHeader() {
 
   const navigationItems = [
     {
+      href: "/tours",
+      label: "All Tours",
+      icon: <MapPin className="w-5 h-5" />,
+    },
+    {
       href: "/daily-tours",
       label: "Daily Tours",
-      icon: <Calendar className="w-5 h-5" />,
+      icon: <Clock className="w-5 h-5" />,
     },
     {
       href: "/private-tours",
       label: "Private Tours",
-      icon: <Users className="w-5 h-5" />,
-    },
-    {
-      href: "/tours",
-      label: "All Tours",
-      icon: <MapPin className="w-5 h-5" />,
+      icon: <Crown className="w-5 h-5" />,
     },
     { href: "/blog", label: "Blog", icon: <BookOpen className="w-5 h-5" /> },
     {
@@ -151,10 +152,54 @@ export function SiteHeader() {
     },
   ];
 
+  // Calculate responsive tab distribution
+  const getTabStyles = () => {
+    const totalTabs = navigationItems.length + 1; // +1 for categories dropdown
+
+    if (width >= 1536) {
+      // 2xl and above - can accommodate larger tabs
+      return {
+        containerWidth: "w-full",
+        tabWidth: "flex-1 max-w-[160px]",
+        gap: "gap-2",
+        padding: "px-3.5 py-3",
+        textSize: "text-base",
+      };
+    } else if (width >= 1280) {
+      // xl - reduce tab size slightly for more tabs
+      return {
+        containerWidth: "w-full",
+        tabWidth: "flex-1 max-w-[140px]",
+        gap: "gap-1.5",
+        padding: "px-3 py-2.5",
+        textSize: "text-sm",
+      };
+    } else if (width >= 1024) {
+      // lg - more compact for 6 total tabs
+      return {
+        containerWidth: "w-full",
+        tabWidth: "flex-1 max-w-[120px]",
+        gap: "gap-1",
+        padding: "px-2.5 py-2.5",
+        textSize: "text-sm",
+      };
+    }
+
+    return {
+      containerWidth: "w-full",
+      tabWidth: "flex-1",
+      gap: "gap-1",
+      padding: "px-2 py-2",
+      textSize: "text-xs",
+    };
+  };
+
+  const tabStyles = getTabStyles();
+
   return (
     <header
       className={cn(
-        // Mobile-first base styles
+        // Full width base styles
         "sticky top-0 z-50 w-full border-b transition-all duration-300 ease-in-out",
         responsiveSpacing.navHeight, // Progressive height increase
         // Background with enhanced blur and transparency
@@ -166,76 +211,72 @@ export function SiteHeader() {
     >
       <div
         className={cn(
-          "container flex items-center justify-between h-full",
-          responsiveSpacing.containerPadding
+          // Full width container with edge-to-edge content
+          "w-full flex items-center justify-between h-full",
+          "px-3 sm:px-4 md:px-6 lg:px-8 xl:px-12 2xl:px-16"
         )}
       >
-        {/* Logo Section - Mobile First */}
-        <Link
-          href="/"
-          className={cn(
-            "flex items-center gap-2 sm:gap-3 group transition-transform duration-300 ease-in-out",
-            "hover:scale-105 rounded-xl p-1.5 sm:p-2 -m-1.5 sm:-m-2"
-          )}
-          aria-label="Pineapple Tours - Home"
-        >
-          <div className="relative">
-            <img
-              src="/pineapple-tour-logo.png"
-              alt="Pineapple Tours"
-              className={cn(
-                "drop-shadow-sm",
-                responsiveSpacing.logoSize // Progressive sizing
-              )}
-            />
-          </div>
-          {/* Hide text on very small screens, show on sm+ */}
-          <div className="hidden xs:block sm:block"></div>
-        </Link>
+        {/* Logo Section - Flexible width */}
+        <div className="flex-shrink-0">
+          <Link
+            href="/"
+            className={cn(
+              "flex items-center gap-2 sm:gap-3 group transition-transform duration-300 ease-in-out",
+              "hover:scale-105 rounded-xl p-1.5 sm:p-2 -m-1.5 sm:-m-2"
+            )}
+            aria-label="Pineapple Tours - Home"
+          >
+            <div className="relative">
+              <img
+                src="/pineapple-tour-logo.png"
+                alt="Pineapple Tours"
+                className={cn(
+                  "drop-shadow-sm",
+                  responsiveSpacing.logoSize // Progressive sizing
+                )}
+              />
+            </div>
+            {/* Hide text on very small screens, show on sm+ */}
+            <div className="hidden xs:block sm:block"></div>
+          </Link>
+        </div>
 
-        {/* Desktop Navigation - Hidden on mobile/tablet */}
+        {/* Desktop Navigation - Full width distribution */}
         <nav
           className={cn(
             "hidden lg:flex flex-1 items-center justify-center",
-            tabSpacing.margin // Responsive margin adjustments
+            "px-4 xl:px-8 2xl:px-12" // Additional spacing for better distribution
           )}
           aria-label="Main navigation"
         >
           <ul
             className={cn(
-              "flex items-center",
-              tabSpacing.gap // Responsive gap adjustments
+              "flex items-center justify-center w-full max-w-5xl",
+              tabStyles.gap
             )}
           >
-            <li ref={categoryTabRef}>
-              <TourCategoriesDropdown />
+            <li ref={categoryTabRef} className={tabStyles.tabWidth}>
+              <div className="flex justify-center">
+                <TourCategoriesDropdown />
+              </div>
             </li>
             {navigationItems.map((item) => (
-              <li key={item.href}>
+              <li key={item.href} className={tabStyles.tabWidth}>
                 <Link
                   href={item.href}
                   className={cn(
-                    "group relative py-2.5 font-medium rounded-lg transition-transform duration-200",
-                    "flex items-center justify-center",
-                    tabSpacing.padding, // Responsive padding
-                    tabSpacing.textSize, // Responsive text size
+                    "group relative font-medium rounded-lg transition-all duration-200",
+                    "flex items-center justify-center w-full",
+                    tabStyles.padding,
+                    tabStyles.textSize,
                     // Interactive states
-                    "hover:scale-105",
+                    "hover:scale-105 hover:bg-primary/5",
                     "focus:outline-none",
                     responsiveSpacing.focusRing,
                     "active:scale-95"
                   )}
-                  style={{
-                    // Dynamic width based on category tab, with responsive constraints
-                    minWidth: categoryTabWidth
-                      ? `${categoryTabWidth}px`
-                      : "auto",
-                    // Enhanced transitions
-                    transition:
-                      "min-width 0.3s ease-in-out, transform 0.2s ease-in-out",
-                  }}
                 >
-                  <span className="relative z-10 whitespace-nowrap">
+                  <span className="relative z-10 whitespace-nowrap text-center">
                     {item.label}
                   </span>
                 </Link>
@@ -244,11 +285,11 @@ export function SiteHeader() {
           </ul>
         </nav>
 
-        {/* Desktop Actions - Hidden on mobile/tablet */}
+        {/* Desktop Actions - Flexible width */}
         <div
           className={cn(
-            "hidden lg:flex items-center",
-            actionSpacing.gap // Responsive gap adjustments for actions
+            "hidden lg:flex items-center flex-shrink-0",
+            actionSpacing.gap
           )}
         >
           <PhoneNumber phoneNumber="0466 331 232" variant="desktop" />
@@ -261,7 +302,7 @@ export function SiteHeader() {
                 "hover:scale-105",
                 "shadow-md transition-transform duration-200",
                 "font-semibold active:scale-95",
-                actionSpacing.padding // Responsive button padding
+                actionSpacing.padding
               )}
             >
               <span className="hidden xl:inline">Book Now</span>
@@ -271,7 +312,11 @@ export function SiteHeader() {
         </div>
 
         {/* Mobile/Tablet Actions */}
-        <div className={cn("flex lg:hidden items-center gap-2 sm:gap-3")}>
+        <div
+          className={cn(
+            "flex lg:hidden items-center gap-2 sm:gap-3 flex-shrink-0"
+          )}
+        >
           {/* Cart icon - visible on all devices */}
           <div>
             <CartIcon />

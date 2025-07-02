@@ -300,6 +300,16 @@ export default function TourDetailPage({
   const availableSessions = availability?.[0]?.sessions || [];
   const tourInfoItems = createTourInfoItems(selectedProduct);
 
+  // Helper function to get booking URL
+  const getBookingUrl = () => {
+    return `/booking/${selectedProduct.productCode}`;
+  };
+
+  // Helper function to get first available session for cart button
+  const getSelectedSession = () => {
+    return availableSessions.length > 0 ? availableSessions[0] : undefined;
+  };
+
   return (
     <>
       {/* Breadcrumb */}
@@ -414,12 +424,11 @@ export default function TourDetailPage({
                           variant="outline"
                           className="border-brand-accent/20 text-brand-accent hover:bg-brand-accent/10"
                           onClick={() => {
-                            const availabilityTab = document.querySelector(
-                              '[value="availability"]'
-                            );
-                            if (availabilityTab) {
-                              (availabilityTab as HTMLElement).click();
-                              availabilityTab.scrollIntoView({
+                            const locationTab =
+                              document.querySelector('[value="location"]');
+                            if (locationTab) {
+                              (locationTab as HTMLElement).click();
+                              locationTab.scrollIntoView({
                                 behavior: "smooth",
                                 block: "start",
                               });
@@ -428,7 +437,7 @@ export default function TourDetailPage({
                         >
                           Check Dates
                         </Button>
-                        <Link href={`/booking/${selectedProduct.productCode}`}>
+                        <Link href={getBookingUrl()}>
                           <Button
                             size="sm"
                             className="bg-brand-accent text-brand-secondary hover:bg-brand-accent/90"
@@ -560,19 +569,13 @@ export default function TourDetailPage({
                             <div className="flex flex-col sm:flex-row gap-3">
                               <AddToCartButton
                                 product={selectedProduct}
-                                session={
-                                  availableSessions.length > 0
-                                    ? availableSessions[0]
-                                    : undefined
-                                }
+                                session={getSelectedSession()}
                                 variant="outline"
                                 className="border-brand-accent/30 text-brand-accent hover:bg-brand-accent/10"
                               >
                                 Add to Cart
                               </AddToCartButton>
-                              <Link
-                                href={`/booking/${selectedProduct.productCode}`}
-                              >
+                              <Link href={getBookingUrl()}>
                                 <Button className="bg-brand-accent text-brand-secondary hover:bg-brand-accent/90">
                                   Book Now - {price}
                                 </Button>
@@ -723,7 +726,7 @@ export default function TourDetailPage({
                                   return (
                                     <div
                                       key={session.id ?? `session-${index}`}
-                                      className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
+                                      className="flex items-center justify-between p-3 rounded-lg transition-all bg-gray-50 border-2 border-transparent hover:border-coral-200"
                                     >
                                       <div>
                                         <div className="font-medium text-gray-900">
@@ -743,26 +746,36 @@ export default function TourDetailPage({
                                               hour: "2-digit",
                                               minute: "2-digit",
                                             }
-                                          )}{" "}
-                                          • {session.seatsAvailable} seats
+                                          )}
                                         </div>
                                       </div>
-                                      <Link
-                                        href={`/booking/${selectedProduct.productCode}?sessionId=${session.id}`}
-                                      >
+                                      <div className="flex gap-2">
                                         <Button
                                           size="sm"
                                           className="bg-coral-500 text-white hover:bg-coral-600"
                                           disabled={
                                             session.seatsAvailable === 0
                                           }
+                                          onClick={() => {
+                                            // Navigate to booking page with selected session and date
+                                            const sessionId = session.id;
+                                            const sessionDate = new Date(
+                                              session.startTimeLocal
+                                            )
+                                              .toISOString()
+                                              .split("T")[0];
+                                            const bookingUrl = sessionId
+                                              ? `/booking/${selectedProduct.productCode}?sessionId=${sessionId}&date=${sessionDate}`
+                                              : `/booking/${selectedProduct.productCode}?date=${sessionDate}`;
+                                            window.location.href = bookingUrl;
+                                          }}
                                         >
                                           Book{" "}
                                           {session.totalPrice
                                             ? `$${session.totalPrice}`
                                             : price}
                                         </Button>
-                                      </Link>
+                                      </div>
                                     </div>
                                   );
                                 })}
@@ -822,18 +835,14 @@ export default function TourDetailPage({
                     <div className="space-y-3 mb-6">
                       <AddToCartButton
                         product={selectedProduct}
-                        session={
-                          availableSessions.length > 0
-                            ? availableSessions[0]
-                            : undefined
-                        }
+                        session={getSelectedSession()}
                         className="w-full mb-2"
                         variant="outline"
                       >
                         Add to Cart
                       </AddToCartButton>
 
-                      <Link href={`/booking/${selectedProduct.productCode}`}>
+                      <Link href={getBookingUrl()}>
                         <Button className="w-full bg-coral-500 text-white hover:bg-coral-600">
                           Book Now
                         </Button>
@@ -983,11 +992,7 @@ export default function TourDetailPage({
                     <div className="flex gap-3">
                       <AddToCartButton
                         product={selectedProduct}
-                        session={
-                          availableSessions.length > 0
-                            ? availableSessions[0]
-                            : undefined
-                        }
+                        session={getSelectedSession()}
                         size="sm"
                         variant="outline"
                         className="border-coral-200 text-coral-700 hover:bg-coral-50"
@@ -996,7 +1001,7 @@ export default function TourDetailPage({
                         Add to Cart
                       </AddToCartButton>
 
-                      <Link href={`/booking/${selectedProduct.productCode}`}>
+                      <Link href={getBookingUrl()}>
                         <Button
                           size="sm"
                           className="bg-coral-500 text-white hover:bg-coral-600"

@@ -144,7 +144,7 @@ const REGIONS: RegionConfig[] = [
     description:
       "Explore wineries, rainforest walks, and scenic attractions at your own pace",
     baseTransportPrice: 99,
-    image: "/private-tours/tamborine-mountain.avif",
+    image: "/scenic-rim-landscape.jpg",
     availableModules: [
       "hop-on-hop-off",
       "winery-experience",
@@ -175,7 +175,7 @@ const REGIONS: RegionConfig[] = [
     description:
       "Discover hidden gems and natural wonders with flexible transport",
     baseTransportPrice: 99,
-    image: "/private-tours/gold-coast.avif",
+    image: "/cea291bc40ef4c8a8ac060ed77c6fd3cLuxury_Wine_Tour_lg.avif",
     availableModules: [
       "hop-on-hop-off",
       "adventure-activities",

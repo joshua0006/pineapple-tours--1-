@@ -33,14 +33,6 @@ export function PreloadResources() {
         type="image/png"
       />
 
-      {/* Private tours hero image */}
-      <link
-        rel="preload"
-        href="/private-tours/gold-coast.avif"
-        as="image"
-        type="image/avif"
-      />
-
       {/* Hop-on hop-off critical images */}
       <link
         rel="preload"

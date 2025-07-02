@@ -1,22 +1,28 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { RezdyProduct } from "@/lib/types/rezdy"
-import { RezdyProductCard } from "./rezdy-product-card"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
-import { Skeleton } from "@/components/ui/skeleton"
-import { MapPin, Package, RefreshCw, Grid, List } from "lucide-react"
-import { getCityFromLocation } from "@/lib/utils/product-utils"
+import { useState } from "react";
+import { RezdyProduct } from "@/lib/types/rezdy";
+import { RezdyProductCard } from "./rezdy-product-card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
+import { MapPin, Package, RefreshCw, Grid, List } from "lucide-react";
+import { getCityFromLocation } from "@/lib/utils/product-utils";
 
 interface CityProductDisplayProps {
-  products: RezdyProduct[]
-  selectedCity: string
-  loading?: boolean
-  error?: string | null
-  onProductSelect?: (product: RezdyProduct) => void
-  onRefresh?: () => void
+  products: RezdyProduct[];
+  selectedCity: string;
+  loading?: boolean;
+  error?: string | null;
+  onProductSelect?: (product: RezdyProduct) => void;
+  onRefresh?: () => void;
 }
 
 export function CityProductDisplay({
@@ -25,19 +31,20 @@ export function CityProductDisplay({
   loading = false,
   error = null,
   onProductSelect,
-  onRefresh
+  onRefresh,
 }: CityProductDisplayProps) {
-  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
+  const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
 
   // Group products by city for better organization
   const productsByCity = products.reduce((acc, product) => {
-    const city = getCityFromLocation(product.locationAddress) || 'Unknown Location'
+    const city =
+      getCityFromLocation(product.locationAddress) || "Unknown Location";
     if (!acc[city]) {
-      acc[city] = []
+      acc[city] = [];
     }
-    acc[city].push(product)
-    return acc
-  }, {} as Record<string, RezdyProduct[]>)
+    acc[city].push(product);
+    return acc;
+  }, {} as Record<string, RezdyProduct[]>);
 
   const LoadingSkeleton = () => (
     <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
@@ -55,7 +62,7 @@ export function CityProductDisplay({
         </Card>
       ))}
     </div>
-  )
+  );
 
   if (loading) {
     return (
@@ -68,7 +75,7 @@ export function CityProductDisplay({
         </div>
         <LoadingSkeleton />
       </div>
-    )
+    );
   }
 
   if (error) {
@@ -86,7 +93,7 @@ export function CityProductDisplay({
           )}
         </CardContent>
       </Card>
-    )
+    );
   }
 
   if (products.length === 0) {
@@ -95,13 +102,14 @@ export function CityProductDisplay({
         <CardContent>
           <MapPin className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
           <CardTitle className="mb-2">
-            {selectedCity === 'all' ? 'No Products Available' : `No Tours Found in ${selectedCity}`}
+            {selectedCity === "all"
+              ? "No Products Available"
+              : `No Tours Found in ${selectedCity}`}
           </CardTitle>
           <CardDescription className="mb-4">
-            {selectedCity === 'all' 
-              ? 'There are currently no tours available. Please try again later.'
-              : `We don't have any tours available in ${selectedCity} at the moment. Try selecting a different location.`
-            }
+            {selectedCity === "all"
+              ? "There are currently no tours available. Please try again later."
+              : `We don't have any tours available in ${selectedCity} at the moment. Try selecting a different location.`}
           </CardDescription>
           {onRefresh && (
             <Button onClick={onRefresh} variant="outline">
@@ -111,7 +119,7 @@ export function CityProductDisplay({
           )}
         </CardContent>
       </Card>
-    )
+    );
   }
 
   return (
@@ -121,13 +129,13 @@ export function CityProductDisplay({
         <div className="flex items-center gap-2">
           <MapPin className="h-5 w-5 text-coral-500" />
           <span className="text-lg font-medium">
-            {selectedCity === 'all' ? 'All Locations' : selectedCity}
+            {selectedCity === "all" ? "All Locations" : selectedCity}
           </span>
           <Badge variant="secondary">
-            {products.length} tour{products.length !== 1 ? 's' : ''}
+            {products.length} tour{products.length !== 1 ? "s" : ""}
           </Badge>
         </div>
-        
+
         <div className="flex items-center gap-2">
           {onRefresh && (
             <Button onClick={onRefresh} variant="ghost" size="sm">
@@ -136,17 +144,17 @@ export function CityProductDisplay({
           )}
           <div className="flex border rounded-md">
             <Button
-              variant={viewMode === 'grid' ? 'default' : 'ghost'}
+              variant={viewMode === "grid" ? "default" : "ghost"}
               size="sm"
-              onClick={() => setViewMode('grid')}
+              onClick={() => setViewMode("grid")}
               className="rounded-r-none"
             >
               <Grid className="h-4 w-4" />
             </Button>
             <Button
-              variant={viewMode === 'list' ? 'default' : 'ghost'}
+              variant={viewMode === "list" ? "default" : "ghost"}
               size="sm"
-              onClick={() => setViewMode('list')}
+              onClick={() => setViewMode("list")}
               className="rounded-l-none"
             >
               <List className="h-4 w-4" />
@@ -156,7 +164,7 @@ export function CityProductDisplay({
       </div>
 
       {/* Products display */}
-      {selectedCity === 'all' ? (
+      {selectedCity === "all" ? (
         // Show products grouped by city when "all" is selected
         <div className="space-y-8">
           {Object.entries(productsByCity).map(([city, cityProducts]) => (
@@ -165,19 +173,21 @@ export function CityProductDisplay({
                 <MapPin className="h-4 w-4 text-muted-foreground" />
                 <h3 className="text-lg font-semibold">{city}</h3>
                 <Badge variant="outline">
-                  {cityProducts.length} tour{cityProducts.length !== 1 ? 's' : ''}
+                  {cityProducts.length} tour
+                  {cityProducts.length !== 1 ? "s" : ""}
                 </Badge>
               </div>
-              <div className={
-                viewMode === 'grid' 
-                  ? "grid gap-6 md:grid-cols-2 lg:grid-cols-3" 
-                  : "space-y-4"
-              }>
+              <div
+                className={
+                  viewMode === "grid"
+                    ? "grid gap-6 md:grid-cols-2 lg:grid-cols-3"
+                    : "space-y-4"
+                }
+              >
                 {cityProducts.map((product) => (
                   <RezdyProductCard
                     key={product.productCode}
                     product={product}
-                    onViewDetails={onProductSelect}
                   />
                 ))}
               </div>
@@ -186,20 +196,18 @@ export function CityProductDisplay({
         </div>
       ) : (
         // Show products for selected city
-        <div className={
-          viewMode === 'grid' 
-            ? "grid gap-6 md:grid-cols-2 lg:grid-cols-3" 
-            : "space-y-4"
-        }>
+        <div
+          className={
+            viewMode === "grid"
+              ? "grid gap-6 md:grid-cols-2 lg:grid-cols-3"
+              : "space-y-4"
+          }
+        >
           {products.map((product) => (
-            <RezdyProductCard
-              key={product.productCode}
-              product={product}
-              onViewDetails={onProductSelect}
-            />
+            <RezdyProductCard key={product.productCode} product={product} />
           ))}
         </div>
       )}
     </div>
-  )
-} 
+  );
+}

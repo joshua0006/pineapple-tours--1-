@@ -1,40 +1,48 @@
-import { RezdyProduct, RezdyAddress } from '@/lib/types/rezdy';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { MapPin, Users, DollarSign } from 'lucide-react';
-import Image from 'next/image';
-import { ResponsiveImage } from '@/components/ui/responsive-image';
-import { getValidImages } from '@/lib/utils/product-utils';
+import { RezdyProduct, RezdyAddress } from "@/lib/types/rezdy";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+  CardFooter,
+} from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { MapPin, Users, DollarSign } from "lucide-react";
+import Image from "next/image";
+import Link from "next/link";
+import { ResponsiveImage } from "@/components/ui/responsive-image";
+import { getValidImages } from "@/lib/utils/product-utils";
 
 interface RezdyProductCardProps {
   product: RezdyProduct;
-  onViewDetails?: (product: RezdyProduct) => void;
 }
 
 // Helper function to format address
 const formatAddress = (address: string | RezdyAddress | undefined): string => {
-  if (!address) return '';
-  
-  if (typeof address === 'string') {
+  if (!address) return "";
+
+  if (typeof address === "string") {
     return address;
   }
-  
+
   // Handle address object
   const parts = [];
   if (address.addressLine) parts.push(address.addressLine);
   if (address.city) parts.push(address.city);
   if (address.state) parts.push(address.state);
   if (address.postCode) parts.push(address.postCode);
-  
-  return parts.join(', ');
+
+  return parts.join(", ");
 };
 
-export function RezdyProductCard({ product, onViewDetails }: RezdyProductCardProps) {
+export function RezdyProductCard({ product }: RezdyProductCardProps) {
   const validImages = getValidImages(product);
   const formattedAddress = formatAddress(product.locationAddress);
 
   return (
-    <Card className="overflow-hidden hover:shadow-lg transition-shadow cursor-pointer" onClick={() => onViewDetails?.(product)}>
+    <Card className="overflow-hidden hover:shadow-lg transition-shadow">
       {validImages.length > 0 && (
         <div className="relative h-48 w-full">
           <ResponsiveImage
@@ -45,7 +53,7 @@ export function RezdyProductCard({ product, onViewDetails }: RezdyProductCardPro
           />
         </div>
       )}
-      
+
       <CardHeader>
         <div className="flex items-start justify-between">
           <div className="flex-1">
@@ -70,10 +78,13 @@ export function RezdyProductCard({ product, onViewDetails }: RezdyProductCardPro
           {product.quantityRequiredMin && product.quantityRequiredMax && (
             <div className="flex items-center gap-1">
               <Users className="h-4 w-4" />
-              <span>{product.quantityRequiredMin}-{product.quantityRequiredMax} people</span>
+              <span>
+                {product.quantityRequiredMin}-{product.quantityRequiredMax}{" "}
+                people
+              </span>
             </div>
           )}
-          
+
           {formattedAddress && (
             <div className="flex items-center gap-1">
               <MapPin className="h-4 w-4" />
@@ -86,16 +97,16 @@ export function RezdyProductCard({ product, onViewDetails }: RezdyProductCardPro
           <Badge variant="secondary" className="text-xs">
             {product.productCode}
           </Badge>
-          
+
           {product.productType && (
             <Badge variant="outline" className="text-xs">
               {product.productType}
             </Badge>
           )}
-          
+
           {product.status && (
-            <Badge 
-              variant={product.status === 'ACTIVE' ? 'default' : 'destructive'} 
+            <Badge
+              variant={product.status === "ACTIVE" ? "default" : "destructive"}
               className="text-xs"
             >
               {product.status}
@@ -109,6 +120,26 @@ export function RezdyProductCard({ product, onViewDetails }: RezdyProductCardPro
           </p>
         )}
       </CardContent>
+
+      <CardFooter className="flex gap-2 pt-4">
+        <Link href={`/tours/${product.productCode}`} className="flex-1">
+          <Button
+            variant="outline"
+            size="sm"
+            className="w-full border-primary text-primary hover:bg-primary/10"
+          >
+            View Details
+          </Button>
+        </Link>
+        <Link href={`/booking/${product.productCode}`} className="flex-1">
+          <Button
+            size="sm"
+            className="w-full bg-primary text-primary-foreground hover:bg-primary/90"
+          >
+            Book Now
+          </Button>
+        </Link>
+      </CardFooter>
     </Card>
   );
-} 
+}

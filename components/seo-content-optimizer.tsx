@@ -116,11 +116,7 @@ export function PopularDestinations({ className }: PopularDestinationsProps) {
       href: "/tours/category/day-tours",
       count: "15+ tours",
     },
-    {
-      name: "Private Tours",
-      href: "/private-tours",
-      count: "Custom experiences",
-    },
+
     {
       name: "Hop-On Hop-Off",
       href: "/hop-on-hop-off",
@@ -173,11 +169,6 @@ export function BlogToToursLinking({
       name: "View All Day Tours",
       href: "/tours/category/day-tours",
       category: "day-trip",
-    },
-    {
-      name: "Private Tour Options",
-      href: "/private-tours",
-      category: "private",
     },
   ];
 

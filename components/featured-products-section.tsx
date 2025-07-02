@@ -177,14 +177,7 @@ export function FeaturedProductsSection({
           <>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-12">
               {displayProducts.map((product) => (
-                <RezdyProductCard
-                  key={product.productCode}
-                  product={product}
-                  onViewDetails={(product) => {
-                    // Navigate to product details or open booking modal
-                    window.location.href = `/booking/${product.productCode}`;
-                  }}
-                />
+                <RezdyProductCard key={product.productCode} product={product} />
               ))}
             </div>
 

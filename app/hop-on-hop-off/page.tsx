@@ -272,11 +272,27 @@ export default function HopOnHopOffPage() {
                           "Experience the city with our hop-on hop-off tour service."}
                       </p>
                     </div>
-                    <Link href={`/tours/${product.productCode}`}>
-                      <Button className="w-full bg-brand-accent hover:bg-brand-accent/90 text-brand-secondary">
-                        View Details & Book
-                      </Button>
-                    </Link>
+                    <div className="flex gap-3">
+                      <Link
+                        href={`/tours/${product.productCode}`}
+                        className="flex-1"
+                      >
+                        <Button
+                          variant="outline"
+                          className="w-full border-brand-accent text-brand-accent hover:bg-brand-accent/10"
+                        >
+                          View Details
+                        </Button>
+                      </Link>
+                      <Link
+                        href={`/booking/${product.productCode}`}
+                        className="flex-1"
+                      >
+                        <Button className="w-full bg-brand-accent hover:bg-brand-accent/90 text-brand-secondary">
+                          Book Now
+                        </Button>
+                      </Link>
+                    </div>
                   </CardContent>
                 </Card>
               ))}

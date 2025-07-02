@@ -110,14 +110,25 @@ export function DynamicTourCard({
       </CardContent>
 
       <CardFooter className="p-6 pt-0">
-        <Link href={`/tours/${slug}`} className="w-full">
-          <Button
-            className="w-full bg-brand-accent text-brand-secondary hover:bg-brand-accent/90 hover:shadow-lg transform hover:-translate-y-0.5 transition-all duration-200 py-3 font-semibold"
-            aria-label={`View details and book ${product.name} tour`}
-          >
-            View Details & Book
-          </Button>
-        </Link>
+        <div className="flex gap-3 w-full">
+          <Link href={`/tours/${slug}`} className="flex-1">
+            <Button
+              variant="outline"
+              className="w-full border-brand-accent text-brand-accent hover:text-brand-accent hover:bg-brand-accent/10 transition-all duration-200 py-3 font-semibold"
+              aria-label={`View details for ${product.name} tour`}
+            >
+              View Details
+            </Button>
+          </Link>
+          <Link href={`/booking/${product.productCode}`} className="flex-1">
+            <Button
+              className="w-full bg-brand-accent text-brand-secondary hover:bg-brand-accent/90 hover:shadow-lg transform hover:-translate-y-0.5 transition-all duration-200 py-3 font-semibold"
+              aria-label={`Book ${product.name} tour now`}
+            >
+              Book Now
+            </Button>
+          </Link>
+        </div>
       </CardFooter>
     </Card>
   );

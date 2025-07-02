@@ -9,6 +9,9 @@ import {
   Clock,
   BookOpen,
   RefreshCw,
+  Users,
+  Target,
+  Lightbulb,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -80,8 +83,22 @@ export default function BlogPage() {
       <PageHeader
         title="Travel Stories & Tips"
         subtitle="Discover insider tips, destination guides, and inspiring travel stories from our expert team at Pineapple Tours."
-        icon={BookOpen}
-        variant="default"
+        backgroundImage="/scenic-rim-landscape.jpg"
+        overlayOpacity={0.5}
+        featureCards={[
+          {
+            icon: Users,
+            title: "Local Insights",
+          },
+          {
+            icon: Target,
+            title: "Expert Tips",
+          },
+          {
+            icon: Lightbulb,
+            title: "Travel Inspiration",
+          },
+        ]}
       />
 
       {/* Background Loading Indicator */}

@@ -112,11 +112,21 @@ export function TourCard({
           <span className="text-2xl font-bold">${cardData.price}</span>
           <span className="text-sm text-muted-foreground ml-1">per person</span>
         </div>
-        <Link href={`/tours/${cardData.id}`}>
-          <Button className="w-full bg-accent text-accent-foreground hover:bg-accent/90">
-            View Details
-          </Button>
-        </Link>
+        <div className="flex gap-2">
+          <Link href={`/tours/${cardData.id}`}>
+            <Button
+              variant="outline"
+              className="border-accent text-accent hover:bg-accent/10"
+            >
+              View Details
+            </Button>
+          </Link>
+          <Link href={`/booking/${cardData.id}`}>
+            <Button className="bg-accent text-accent-foreground hover:bg-accent/90">
+              Book Now
+            </Button>
+          </Link>
+        </div>
       </CardFooter>
     </Card>
   );

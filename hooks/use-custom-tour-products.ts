@@ -173,8 +173,7 @@ export function useCustomTourProducts(): UseCustomTourProductsReturn {
         name: "Queensland Custom Tours",
         description: `Explore Queensland with ${customProducts.length} custom tour options`,
         image:
-          getPrimaryImageUrl(customProducts[0]) ||
-          "/private-tours/tamborine-mountain.avif",
+          getPrimaryImageUrl(customProducts[0]) || "/scenic-rim-landscape.jpg",
         basePrice,
         travelTime: "Various locations across Queensland",
         highlights: [
@@ -229,8 +228,7 @@ export function useCustomTourProducts(): UseCustomTourProductsReturn {
               name: `${locationName} Tours`,
               description: `Custom tours in ${locationName} with ${products.length} available options`,
               image:
-                getPrimaryImageUrl(products[0]) ||
-                "/private-tours/tamborine-mountain.avif",
+                getPrimaryImageUrl(products[0]) || "/scenic-rim-landscape.jpg",
               basePrice: Math.min(
                 ...products.map((p) => p.advertisedPrice || 99)
               ),

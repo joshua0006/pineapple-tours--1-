@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 import Link from "next/link";
 import {
   Calendar as CalendarIcon,
@@ -109,6 +109,8 @@ interface EnhancedBookingExperienceProps {
     infants?: number;
   };
   preSelectedExtras?: SelectedExtra[];
+  preSelectedDate?: string; // ISO date string (YYYY-MM-DD)
+  preSelectedSessionId?: string; // Session ID to auto-select when availability loads
 }
 
 interface ContactInfo {
@@ -169,6 +171,8 @@ export function EnhancedBookingExperience({
   preSelectedSession,
   preSelectedParticipants,
   preSelectedExtras,
+  preSelectedDate,
+  preSelectedSessionId,
 }: EnhancedBookingExperienceProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [bookingErrors, setBookingErrors] = useState<string[]>([]);
@@ -309,8 +313,16 @@ export function EnhancedBookingExperience({
 
   // Initialize form data from cart item if provided
   useEffect(() => {
+    // Handle pre-selected date from URL parameter
+    if (preSelectedDate) {
+      const dateFromUrl = new Date(preSelectedDate);
+      if (!isNaN(dateFromUrl.getTime())) {
+        setSelectedDate(dateFromUrl);
+      }
+    }
+
     if (preSelectedSession) {
-      // Set the selected date from the session
+      // Set the selected date from the session (this takes precedence over URL date)
       const sessionDate = new Date(preSelectedSession.startTimeLocal);
       setSelectedDate(sessionDate);
 
@@ -372,7 +384,7 @@ export function EnhancedBookingExperience({
         setGuests(newGuests);
       }
     }
-  }, [preSelectedSession, preSelectedParticipants]);
+  }, [preSelectedSession, preSelectedParticipants, preSelectedDate]);
 
   // Auto-populate contact info from first guest
   useEffect(() => {
@@ -720,23 +732,54 @@ export function EnhancedBookingExperience({
     setSelectedPickupLocation(null);
   };
 
-  const handleSessionSelect = (session: RezdySession) => {
-    // ensure id exists before storing
-    const sid = normalizeSessionId(session);
+  const handleSessionSelect = useCallback(
+    (session: RezdySession) => {
+      // ensure id exists before storing
+      const sid = normalizeSessionId(session);
 
-    setSelectedSession({ ...session });
-    // Reset booking option selection when session changes
-    setSelectedBookingOption(null);
-    setSelectedPickupLocation(null);
-    // Auto-select first pickup location if available (for non-FIT tours)
+      setSelectedSession({ ...session });
+      // Reset booking option selection when session changes
+      setSelectedBookingOption(null);
+      setSelectedPickupLocation(null);
+      // Auto-select first pickup location if available (for non-FIT tours)
+      if (
+        !hasFitTourOptions &&
+        session.pickupLocations &&
+        session.pickupLocations.length > 0
+      ) {
+        setSelectedPickupLocation(session.pickupLocations[0]);
+      }
+    },
+    [hasFitTourOptions]
+  );
+
+  // Auto-select session when availability data loads and we have a sessionId from URL
+  useEffect(() => {
     if (
-      !hasFitTourOptions &&
-      session.pickupLocations &&
-      session.pickupLocations.length > 0
+      preSelectedSessionId &&
+      allSessions.length > 0 &&
+      selectedDate &&
+      !selectedSession
     ) {
-      setSelectedPickupLocation(session.pickupLocations[0]);
+      // Find the session that matches the preSelectedSessionId
+      const matchingSession = allSessions.find(
+        (session) =>
+          session.id === preSelectedSessionId ||
+          String(session.id) === preSelectedSessionId
+      );
+
+      if (matchingSession) {
+        console.log("Auto-selecting session from URL:", matchingSession);
+        handleSessionSelect(matchingSession);
+      }
     }
-  };
+  }, [
+    preSelectedSessionId,
+    allSessions,
+    selectedDate,
+    selectedSession,
+    handleSessionSelect,
+  ]);
 
   const handleBookingOptionSelect = (
     option: RezdyBookingOption,
@@ -1204,49 +1247,50 @@ export function EnhancedBookingExperience({
                               <Card
                                 key={`${session.id}-${session.startTimeLocal}`}
                                 className={cn(
-                                  "cursor-pointer transition-all duration-200 border flex flex-col sm:flex-row items-stretch group",
+                                  "cursor-pointer transition-all duration-200 border group",
                                   isSelected
-                                    ? "border-2 border-brand-accent bg-brand-accent/15 shadow-lg ring-2 ring-brand-accent/80 scale-[1.01] z-10"
-                                    : "border border-gray-200 bg-card hover:border-brand-accent/40 hover:bg-muted/50",
+                                    ? "border-2 border-brand-accent bg-brand-accent/15 shadow-lg ring-2 ring-brand-accent/80"
+                                    : "border border-gray-200 bg-card hover:border-brand-accent/40 hover:shadow-md",
                                   session.seatsAvailable === 0 &&
-                                    "opacity-50 cursor-not-allowed",
-                                  // Responsive: make highlight more obvious on mobile
-                                  isSelected &&
-                                    "sm:scale-100 sm:shadow-lg sm:bg-brand-accent/10"
+                                    "opacity-50 cursor-not-allowed"
                                 )}
                                 onClick={() =>
                                   session.seatsAvailable > 0 &&
                                   handleSessionSelect(session)
                                 }
                               >
-                                <CardContent className="p-4">
+                                <CardContent className="p-6">
                                   <div className="flex items-center justify-between">
-                                    <div className="flex items-center gap-4">
-                                      <div className="text-center">
-                                        <div className="text-lg font-bold">
+                                    <div className="flex items-center gap-6">
+                                      <div className="flex flex-col items-center justify-center w-16 h-16 bg-brand-accent/10 rounded-lg">
+                                        <div className="text-xl font-bold text-brand-accent">
                                           {format(startTime, "HH:mm")}
                                         </div>
-                                        <div className="text-sm text-muted-foreground">
-                                          {format(endTime, "HH:mm")}
+                                        <div className="text-xs text-muted-foreground">
+                                          {format(startTime, "a")}
                                         </div>
                                       </div>
-                                      <div>
-                                        <div className="font-medium">
+                                      <div className="space-y-1">
+                                        <div className="font-semibold text-lg">
                                           {format(startTime, "h:mm a")} -{" "}
                                           {format(endTime, "h:mm a")}
                                         </div>
                                         <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                                          <Users className="h-4 w-4" />
+                                          <Clock className="h-4 w-4" />
                                           <span>
-                                            {session.seatsAvailable > 0
-                                              ? `${session.seatsAvailable} seats available`
-                                              : "Sold out"}
+                                            Duration:{" "}
+                                            {Math.round(
+                                              (endTime.getTime() -
+                                                startTime.getTime()) /
+                                                (1000 * 60 * 60)
+                                            )}{" "}
+                                            hours
                                           </span>
                                         </div>
                                       </div>
                                     </div>
-                                    <div className="text-right">
-                                      <div className="text-lg font-bold">
+                                    <div className="text-right space-y-1">
+                                      <div className="text-2xl font-bold text-brand-accent">
                                         {formatCurrency(
                                           session.totalPrice ||
                                             product.advertisedPrice ||
@@ -1258,7 +1302,7 @@ export function EnhancedBookingExperience({
                                       </div>
                                       {typeof session.id === "string" &&
                                       session.id.startsWith("mock-") ? (
-                                        <div className="text-xs text-brand-accent mt-1">
+                                        <div className="inline-flex items-center px-2 py-1 text-xs bg-brand-accent/10 text-brand-accent rounded-full">
                                           Demo
                                         </div>
                                       ) : null}

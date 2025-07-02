@@ -24,6 +24,7 @@ interface PreloadStats {
   successfulPreloads: number;
   failedPreloads: number;
   averageLoadTime: number;
+  cacheHits: number;
   cacheHitRate: number;
   lastPreloadTime?: number;
 }
@@ -35,6 +36,7 @@ export class DataPreloader {
     successfulPreloads: 0,
     failedPreloads: 0,
     averageLoadTime: 0,
+    cacheHits: 0,
     cacheHitRate: 0,
   };
 
@@ -349,19 +351,20 @@ export class DataPreloader {
   private updateStats(result: PreloadResult, startTime: number): void {
     this.preloadStats.totalPreloads++;
 
+    // Track success/failure counts
     if (result.success) {
       this.preloadStats.successfulPreloads++;
     } else {
       this.preloadStats.failedPreloads++;
     }
 
+    // Track cache hits and update hit rate on every preload
     if (result.fromCache) {
-      this.preloadStats.cacheHitRate =
-        (this.preloadStats.cacheHitRate *
-          (this.preloadStats.totalPreloads - 1) +
-          1) /
-        this.preloadStats.totalPreloads;
+      this.preloadStats.cacheHits++;
     }
+
+    this.preloadStats.cacheHitRate =
+      this.preloadStats.cacheHits / this.preloadStats.totalPreloads;
 
     const loadTime = Date.now() - startTime;
     this.loadTimes.push(loadTime);
@@ -391,6 +394,7 @@ export class DataPreloader {
       successfulPreloads: 0,
       failedPreloads: 0,
       averageLoadTime: 0,
+      cacheHits: 0,
       cacheHitRate: 0,
     };
     this.loadTimes = [];

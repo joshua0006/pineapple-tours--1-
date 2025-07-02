@@ -74,11 +74,7 @@ const TOP_LEVEL_CATEGORIES = [
     icon: Bus,
     image:
       "https://images.unsplash.com/photo-1570125909232-eb263c188f7e?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
-    subcategories: [
-      "bus-charter",
-      "corporate-tours",
-      "private-tours",
-    ] as string[],
+    subcategories: ["bus-charter", "corporate-tours"] as string[],
   },
   {
     id: "day-tours",
@@ -101,12 +97,7 @@ const TOP_LEVEL_CATEGORIES = [
     icon: Building,
     image:
       "https://images.unsplash.com/photo-1511632765486-a01980e01a18?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
-    subcategories: [
-      "corporate-tours",
-      "private-tours",
-      "bus-charter",
-      "activities",
-    ] as string[],
+    subcategories: ["corporate-tours", "bus-charter", "activities"] as string[],
   },
   {
     id: "hens-party",
@@ -131,7 +122,6 @@ const TOP_LEVEL_CATEGORIES = [
       "https://images.unsplash.com/photo-1540979388789-6cee28a1cdc9?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
     subcategories: [
       "barefoot-luxury",
-      "private-tours",
       "winery-tours",
       "corporate-tours",
     ] as string[],
@@ -149,7 +139,7 @@ const CATEGORY_ICONS = {
   "hens-party": Heart,
   "barefoot-luxury": Sparkles,
   activities: Activity,
-  "private-tours": Users,
+
   "multiday-tours": Package,
   transfers: Car,
   lessons: GraduationCap,

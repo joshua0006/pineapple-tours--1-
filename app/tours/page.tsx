@@ -14,6 +14,9 @@ import {
   ChevronLeft,
   ChevronRight,
   Heart,
+  Globe,
+  Award,
+  Clock,
 } from "lucide-react";
 import { addDays, format } from "date-fns";
 
@@ -400,25 +403,23 @@ export default function ToursPage() {
         title={
           isFromBookingPrompt ? "Your Perfect Tours" : "Discover Amazing Tours"
         }
-        subtitle={
-          isFromBookingPrompt
-            ? `Tours for ${filters.participants} participant${
-                filters.participants !== "1" ? "s" : ""
-              }${
-                filters.checkIn && filters.checkOut
-                  ? ` • ${format(
-                      new Date(filters.checkIn),
-                      "MMM dd"
-                    )} - ${format(new Date(filters.checkOut), "MMM dd, yyyy")}`
-                  : ""
-              }`
-            : hasResults
-            ? `Showing ${totalFilteredCount} tour${
-                totalFilteredCount !== 1 ? "s" : ""
-              } on this page`
-            : "Explore our collection of handpicked tours and experiences from around the world"
-        }
-        variant="coral"
+        subtitle="Explore our collection of handpicked tours and experiences from around the world"
+        backgroundImage="/scenic-rim-landscape.jpg"
+        overlayOpacity={0.5}
+        featureCards={[
+          {
+            icon: Globe,
+            title: "Complete Catalog",
+          },
+          {
+            icon: Award,
+            title: "Expert Curation",
+          },
+          {
+            icon: MapPin,
+            title: "Multiple Destinations",
+          },
+        ]}
       />
 
       {/* Booking Prompt Success Banner */}

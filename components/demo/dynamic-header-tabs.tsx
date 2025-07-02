@@ -54,11 +54,6 @@ export function DynamicHeaderTabsDemo() {
 
   const navigationItems = [
     { href: "/tours", label: "Tours", icon: <MapPin className="w-4 h-4" /> },
-    {
-      href: "/private-tours",
-      label: "Private Tours",
-      icon: <Users className="w-4 h-4" />,
-    },
     { href: "/blog", label: "Blog", icon: <BookOpen className="w-4 h-4" /> },
     {
       href: "/contact",

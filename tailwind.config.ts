@@ -138,6 +138,10 @@ const config = {
             transform: "translateY(0)",
           },
         },
+        shimmer: {
+          "0%": { backgroundPosition: "200% 0" },
+          "100%": { backgroundPosition: "-200% 0" },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
@@ -145,6 +149,7 @@ const config = {
         "dropdown-in": "dropdown-in 0.3s ease-out",
         "dropdown-out": "dropdown-out 0.2s ease-in",
         "fade-in-up": "fade-in-up 0.3s ease-out",
+        shimmer: "shimmer 2s ease-in-out infinite",
       },
     },
   },

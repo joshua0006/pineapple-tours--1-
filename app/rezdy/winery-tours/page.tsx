@@ -1,32 +1,51 @@
-'use client';
+"use client";
 
-import { useState, useMemo } from 'react';
-import { ArrowLeft, Wine, RefreshCw, Search, Grid, Code, DollarSign, Package, AlertCircle } from 'lucide-react';
-import { useRouter } from 'next/navigation';
+import { useState, useMemo } from "react";
+import {
+  ArrowLeft,
+  Wine,
+  RefreshCw,
+  Search,
+  Grid,
+  Code,
+  DollarSign,
+  Package,
+  AlertCircle,
+} from "lucide-react";
+import { useRouter } from "next/navigation";
 
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Skeleton } from '@/components/ui/skeleton';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
-import { useRezdyProducts } from '@/hooks/use-rezdy';
-import { RezdyProductCard } from '@/components/rezdy-product-card';
-import { filterProductsByCategory, getCategoryBySlug } from '@/lib/constants/categories';
-import { RezdyProduct } from '@/lib/types/rezdy';
+import { useRezdyProducts } from "@/hooks/use-rezdy";
+import { RezdyProductCard } from "@/components/rezdy-product-card";
+import {
+  filterProductsByCategory,
+  getCategoryBySlug,
+} from "@/lib/constants/categories";
+import { RezdyProduct } from "@/lib/types/rezdy";
 
 export default function WineryToursRezdyPage() {
   const router = useRouter();
-  const [searchTerm, setSearchTerm] = useState('');
-  const [viewMode, setViewMode] = useState<'cards' | 'json'>('cards');
-  
+  const [searchTerm, setSearchTerm] = useState("");
+  const [viewMode, setViewMode] = useState<"cards" | "json">("cards");
+
   const { data: allProducts, loading, error } = useRezdyProducts(1000, 0);
-  
+
   // Get category configuration
-  const categoryConfig = getCategoryBySlug('winery-tours');
-  
+  const categoryConfig = getCategoryBySlug("winery-tours");
+
   // Filter products for this category
   const categoryProducts = useMemo(() => {
     if (!allProducts || !categoryConfig) return [];
@@ -36,18 +55,19 @@ export default function WineryToursRezdyPage() {
   // Apply search filter
   const filteredProducts = useMemo(() => {
     if (!searchTerm) return categoryProducts;
-    
-    return categoryProducts.filter(product =>
-      product.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      product.productCode?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      product.description?.toLowerCase().includes(searchTerm.toLowerCase())
+
+    return categoryProducts.filter(
+      (product) =>
+        product.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        product.productCode?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        product.description?.toLowerCase().includes(searchTerm.toLowerCase())
     );
   }, [categoryProducts, searchTerm]);
 
   // Group products by product type
   const groupedProducts = useMemo(() => {
     const grouped = filteredProducts.reduce((acc, product) => {
-      const type = product.productType || 'Uncategorized';
+      const type = product.productType || "Uncategorized";
       if (!acc[type]) {
         acc[type] = [];
       }
@@ -57,9 +77,11 @@ export default function WineryToursRezdyPage() {
 
     // Sort groups by type name
     const sortedGroups: Record<string, RezdyProduct[]> = {};
-    Object.keys(grouped).sort().forEach(key => {
-      sortedGroups[key] = grouped[key];
-    });
+    Object.keys(grouped)
+      .sort()
+      .forEach((key) => {
+        sortedGroups[key] = grouped[key];
+      });
 
     return sortedGroups;
   }, [filteredProducts]);
@@ -67,17 +89,19 @@ export default function WineryToursRezdyPage() {
   // Calculate statistics
   const stats = useMemo(() => {
     const totalProducts = categoryProducts.length;
-    const avgPrice = categoryProducts.reduce((sum, p) => sum + (p.advertisedPrice || 0), 0) / totalProducts || 0;
+    const avgPrice =
+      categoryProducts.reduce((sum, p) => sum + (p.advertisedPrice || 0), 0) /
+        totalProducts || 0;
     const priceRange = {
-      min: Math.min(...categoryProducts.map(p => p.advertisedPrice || 0)),
-      max: Math.max(...categoryProducts.map(p => p.advertisedPrice || 0))
+      min: Math.min(...categoryProducts.map((p) => p.advertisedPrice || 0)),
+      max: Math.max(...categoryProducts.map((p) => p.advertisedPrice || 0)),
     };
-    
+
     return {
       totalProducts,
       avgPrice,
       priceRange,
-      productTypes: Object.keys(groupedProducts).length
+      productTypes: Object.keys(groupedProducts).length,
     };
   }, [categoryProducts, groupedProducts]);
 
@@ -125,11 +149,13 @@ export default function WineryToursRezdyPage() {
             Back
           </Button>
         </div>
-        
+
         <div className="flex items-center gap-3">
           <Wine className="h-8 w-8 text-purple-600" />
           <div>
-            <h1 className="text-3xl font-bold tracking-tight">Winery Tours - Rezdy Data</h1>
+            <h1 className="text-3xl font-bold tracking-tight">
+              Winery Tours - Rezdy Data
+            </h1>
             <p className="text-muted-foreground">
               Complete data analysis for winery tour products from Rezdy API
             </p>
@@ -141,7 +167,9 @@ export default function WineryToursRezdyPage() {
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Products</CardTitle>
+            <CardTitle className="text-sm font-medium">
+              Total Products
+            </CardTitle>
             <Package className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -151,33 +179,33 @@ export default function WineryToursRezdyPage() {
             </p>
           </CardContent>
         </Card>
-        
+
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Average Price</CardTitle>
             <DollarSign className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">${stats.avgPrice.toFixed(0)}</div>
-            <p className="text-xs text-muted-foreground">
-              Per person average
-            </p>
+            <div className="text-2xl font-bold">
+              ${stats.avgPrice.toFixed(0)}
+            </div>
+            <p className="text-xs text-muted-foreground">Per person average</p>
           </CardContent>
         </Card>
-        
+
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Price Range</CardTitle>
             <DollarSign className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">${stats.priceRange.min} - ${stats.priceRange.max}</div>
-            <p className="text-xs text-muted-foreground">
-              Min to max pricing
-            </p>
+            <div className="text-2xl font-bold">
+              ${stats.priceRange.min} - ${stats.priceRange.max}
+            </div>
+            <p className="text-xs text-muted-foreground">Min to max pricing</p>
           </CardContent>
         </Card>
-        
+
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Product Types</CardTitle>
@@ -215,7 +243,8 @@ export default function WineryToursRezdyPage() {
             <CardHeader>
               <CardTitle>Winery Tour Products</CardTitle>
               <CardDescription>
-                All winery tour products available in Rezdy, filtered by wine-related keywords and product types
+                All winery tour products available in Rezdy, filtered by
+                wine-related keywords and product types
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -231,18 +260,18 @@ export default function WineryToursRezdyPage() {
                     />
                   </div>
                   <Button
-                    variant={viewMode === 'cards' ? 'default' : 'outline'}
+                    variant={viewMode === "cards" ? "default" : "outline"}
                     size="sm"
-                    onClick={() => setViewMode('cards')}
+                    onClick={() => setViewMode("cards")}
                     className="flex items-center gap-2"
                   >
                     <Grid className="h-4 w-4" />
                     Cards
                   </Button>
                   <Button
-                    variant={viewMode === 'json' ? 'default' : 'outline'}
+                    variant={viewMode === "json" ? "default" : "outline"}
                     size="sm"
-                    onClick={() => setViewMode('json')}
+                    onClick={() => setViewMode("json")}
                     className="flex items-center gap-2"
                   >
                     <Code className="h-4 w-4" />
@@ -264,31 +293,38 @@ export default function WineryToursRezdyPage() {
               {loading ? (
                 <LoadingSkeleton />
               ) : filteredProducts.length > 0 ? (
-                viewMode === 'cards' ? (
+                viewMode === "cards" ? (
                   <div className="space-y-8">
-                    {Object.entries(groupedProducts).map(([type, typeProducts]) => (
-                      <div key={type} className="space-y-4">
-                        <div className="flex items-center gap-3">
-                          <h3 className="text-xl font-semibold">{type}</h3>
-                          <Badge variant="outline">{typeProducts.length} products</Badge>
+                    {Object.entries(groupedProducts).map(
+                      ([type, typeProducts]) => (
+                        <div key={type} className="space-y-4">
+                          <div className="flex items-center gap-3">
+                            <h3 className="text-xl font-semibold">{type}</h3>
+                            <Badge variant="outline">
+                              {typeProducts.length} products
+                            </Badge>
+                          </div>
+                          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                            {typeProducts.map((product) => (
+                              <RezdyProductCard
+                                key={product.productCode}
+                                product={product}
+                              />
+                            ))}
+                          </div>
                         </div>
-                        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-                          {typeProducts.map((product) => (
-                            <RezdyProductCard
-                              key={product.productCode}
-                              product={product}
-                              onViewDetails={(product) => console.log('View details:', product)}
-                            />
-                          ))}
-                        </div>
-                      </div>
-                    ))}
+                      )
+                    )}
                   </div>
                 ) : (
                   <div className="space-y-4">
                     <div className="flex items-center justify-between">
-                      <h3 className="text-lg font-semibold">Winery Tours JSON Data</h3>
-                      <Badge variant="outline">{filteredProducts.length} products</Badge>
+                      <h3 className="text-lg font-semibold">
+                        Winery Tours JSON Data
+                      </h3>
+                      <Badge variant="outline">
+                        {filteredProducts.length} products
+                      </Badge>
                     </div>
                     <div className="bg-slate-50 dark:bg-slate-900 rounded-lg p-4 overflow-auto max-h-[600px]">
                       <pre className="text-sm">
@@ -300,11 +336,13 @@ export default function WineryToursRezdyPage() {
               ) : (
                 <div className="text-center py-12">
                   <Wine className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                  <h3 className="text-lg font-medium mb-2">No winery tours found</h3>
+                  <h3 className="text-lg font-medium mb-2">
+                    No winery tours found
+                  </h3>
                   <p className="text-muted-foreground">
-                    {searchTerm 
-                      ? 'Try adjusting your search terms.' 
-                      : 'No winery tour products available.'}
+                    {searchTerm
+                      ? "Try adjusting your search terms."
+                      : "No winery tour products available."}
                   </p>
                 </div>
               )}
@@ -322,12 +360,19 @@ export default function WineryToursRezdyPage() {
               <CardContent>
                 <div className="space-y-3">
                   {Object.entries(groupedProducts).map(([type, products]) => (
-                    <div key={type} className="flex items-center justify-between">
+                    <div
+                      key={type}
+                      className="flex items-center justify-between"
+                    >
                       <span className="text-sm font-medium">{type}</span>
                       <div className="flex items-center gap-2">
                         <Badge variant="secondary">{products.length}</Badge>
                         <span className="text-sm text-muted-foreground">
-                          {((products.length / filteredProducts.length) * 100).toFixed(1)}%
+                          {(
+                            (products.length / filteredProducts.length) *
+                            100
+                          ).toFixed(1)}
+                          %
                         </span>
                       </div>
                     </div>
@@ -352,7 +397,9 @@ export default function WineryToursRezdyPage() {
                   </div>
                   <div className="flex justify-between">
                     <span className="text-sm">Average Price:</span>
-                    <span className="font-medium">${stats.avgPrice.toFixed(2)}</span>
+                    <span className="font-medium">
+                      ${stats.avgPrice.toFixed(2)}
+                    </span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-sm">Total Products:</span>
@@ -385,4 +432,4 @@ export default function WineryToursRezdyPage() {
       </Tabs>
     </div>
   );
-} 
+}

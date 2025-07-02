@@ -17,7 +17,6 @@ import { Badge } from "@/components/ui/badge";
 import { useCart } from "@/hooks/use-cart";
 import { RezdyProduct, RezdySession } from "@/lib/types/rezdy";
 import { formatPrice } from "@/lib/utils/product-utils";
-import { useToast } from "@/hooks/use-toast";
 
 interface AddToCartButtonProps {
   product: RezdyProduct;
@@ -40,7 +39,6 @@ export function AddToCartButton({
 }: AddToCartButtonProps) {
   const { addToCart, isInCart, removeFromCartByProductSession, openCart } =
     useCart();
-  const { toast } = useToast();
   const [isOpen, setIsOpen] = useState(false);
   const [adults, setAdults] = useState(2);
   const [childrenCount, setChildrenCount] = useState(0);
@@ -58,12 +56,6 @@ export function AddToCartButton({
 
   const handleAddToCart = async () => {
     if (!session) {
-      toast({
-        title: "Please select a date",
-        description:
-          "Choose a specific date and time to add this tour to your cart.",
-        variant: "destructive",
-      });
       return;
     }
 
@@ -81,18 +73,9 @@ export function AddToCartButton({
         totalPrice,
       });
 
-      toast({
-        title: "Added to cart!",
-        description: `${product.name} has been added to your cart.`,
-      });
-
       setIsOpen(false);
     } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to add tour to cart. Please try again.",
-        variant: "destructive",
-      });
+      console.error("Failed to add tour to cart:", error);
     } finally {
       setIsAdding(false);
     }
@@ -100,11 +83,6 @@ export function AddToCartButton({
 
   const handleRemoveFromCart = async () => {
     if (!session) {
-      toast({
-        title: "Error",
-        description: "Cannot remove item without session information.",
-        variant: "destructive",
-      });
       return;
     }
 
@@ -112,17 +90,8 @@ export function AddToCartButton({
 
     try {
       removeFromCartByProductSession(product.productCode, session.id);
-
-      toast({
-        title: "Removed from cart",
-        description: `${product.name} has been removed from your cart.`,
-      });
     } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to remove tour from cart. Please try again.",
-        variant: "destructive",
-      });
+      console.error("Failed to remove tour from cart:", error);
     } finally {
       setIsRemoving(false);
     }

@@ -14,6 +14,7 @@ interface BookingPageProps {
     extras?: string;
     date?: string;
     location?: string;
+    pickupLocation?: string;
   }>;
 }
 
@@ -25,11 +26,14 @@ async function getProduct(productCode: string) {
 
     const url = `${
       process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000"
-    }/api/rezdy/products/all`;
+    }/api/tours/${productCode}`;
 
-    console.log(`getProduct: API URL: ${url}`);
+    console.log(`getProduct: Fetching single tour via: ${url}`);
 
-    const response = await fetch(url);
+    const response = await fetch(url, {
+      // Ensure we bypass any stale cache when LIVE_PREVIEW or similar is set
+      cache: "no-store",
+    });
 
     if (!response.ok) {
       console.error(
@@ -39,28 +43,17 @@ async function getProduct(productCode: string) {
     }
 
     const data = await response.json();
-    console.log(`getProduct: API response keys:`, Object.keys(data));
 
-    const products = data.products || data.data || [];
-    console.log(`getProduct: Found ${products.length} products`);
-
-    if (products.length > 0) {
-      console.log(
-        `getProduct: Sample product codes:`,
-        products.slice(0, 3).map((p: any) => p.productCode)
+    if (!data || !data.tour) {
+      console.warn(
+        `getProduct: Response did not include tour property for code ${productCode}`
       );
+      return null;
     }
 
-    // Find the product with the matching product code
-    const product = products.find((p: any) => p.productCode === productCode);
+    console.log(`getProduct: Successfully fetched tour ${data.tour.name}`);
 
-    console.log(`getProduct: Product lookup result:`, {
-      searchedCode: productCode,
-      found: !!product,
-      productName: product?.name,
-    });
-
-    return product || null;
+    return data.tour;
   } catch (error) {
     console.error("getProduct: Error fetching product:", error);
     return null;
@@ -165,7 +158,9 @@ export default async function BookingPage({
         preSelectedSession={preSelectedSession}
         preSelectedDate={searchParamsData.date}
         preSelectedSessionId={searchParamsData.sessionId}
-        preSelectedLocation={searchParamsData.location}
+        preSelectedLocation={
+          searchParamsData.pickupLocation || searchParamsData.location
+        }
       />
     </div>
   );

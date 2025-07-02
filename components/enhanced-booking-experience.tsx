@@ -320,15 +320,28 @@ export function EnhancedBookingExperience({
     setSelectedPickupLocation(null);
     setSelectedBookingOption(null);
 
-    // Clear extras and guests back to their defaults
+    // Clear extras
     setSelectedExtras([]);
-    setGuests([
-      { id: "1", firstName: "", lastName: "", age: 25, type: "ADULT" },
-    ]);
+
+    // Set initial guest count based on product requirements
+    const minGuests = product.quantityRequiredMin || 1;
+    const initialGuests: GuestInfo[] = [];
+
+    for (let i = 0; i < minGuests; i++) {
+      initialGuests.push({
+        id: (i + 1).toString(),
+        firstName: "",
+        lastName: "",
+        age: 25,
+        type: "ADULT",
+      });
+    }
+
+    setGuests(initialGuests);
 
     // Clear any errors displayed from the previous booking flow
     setBookingErrors([]);
-  }, [product.productCode]);
+  }, [product.productCode, product.quantityRequiredMin]);
 
   // Initialize form data from cart item if provided
   useEffect(() => {
@@ -355,7 +368,7 @@ export function EnhancedBookingExperience({
     }
 
     if (preSelectedParticipants) {
-      // Create guest list based on participant counts
+      // Create guest list based on participant counts, respecting product requirements
       const newGuests: GuestInfo[] = [];
       let guestId = 1;
 
@@ -397,6 +410,19 @@ export function EnhancedBookingExperience({
           });
           guestId++;
         }
+      }
+
+      // Ensure we meet minimum guest requirements
+      const minGuests = product.quantityRequiredMin || 1;
+      while (newGuests.length < minGuests) {
+        newGuests.push({
+          id: guestId.toString(),
+          firstName: "",
+          lastName: "",
+          age: 25,
+          type: "ADULT",
+        });
+        guestId++;
       }
 
       if (newGuests.length > 0) {
@@ -796,7 +822,20 @@ export function EnhancedBookingExperience({
 
       if (matchingSession) {
         console.log("Auto-selecting session from URL:", matchingSession);
-        handleSessionSelect(matchingSession, true);
+        // Inline the session selection logic to avoid dependency on handleSessionSelect
+        const sid = normalizeSessionId(matchingSession);
+        setSelectedSession({ ...matchingSession });
+        setSelectedBookingOption(null);
+        setSelectedPickupLocation(null);
+
+        // Auto-select first pickup location if available (for non-FIT tours)
+        if (
+          !hasFitTourOptions &&
+          matchingSession.pickupLocations &&
+          matchingSession.pickupLocations.length > 0
+        ) {
+          setSelectedPickupLocation(matchingSession.pickupLocations[0]);
+        }
       }
     }
   }, [
@@ -804,31 +843,34 @@ export function EnhancedBookingExperience({
     allSessions,
     selectedDate,
     selectedSession,
-    handleSessionSelect,
+    hasFitTourOptions,
   ]);
 
   // Auto-select session when there's only one available session for the selected date
   useEffect(() => {
-    if (
-      selectedDate &&
-      availableSessions.length === 1 &&
-      !selectedSession &&
-      !preSelectedSessionId // Don't auto-select if we're waiting for a specific session ID
-    ) {
+    if (selectedDate && availableSessions.length === 1 && !selectedSession) {
       console.log(
         "Auto-selecting single available session:",
         availableSessions[0]
       );
-      handleSessionSelect(availableSessions[0], true);
+      // Inline the session selection logic to avoid dependency on handleSessionSelect
+      const session = availableSessions[0];
+      const sid = normalizeSessionId(session);
+      setSelectedSession({ ...session });
+      setSelectedBookingOption(null);
+      setSelectedPickupLocation(null);
       setWasSessionAutoSelected(true);
+
+      // Auto-select first pickup location if available (for non-FIT tours)
+      if (
+        !hasFitTourOptions &&
+        session.pickupLocations &&
+        session.pickupLocations.length > 0
+      ) {
+        setSelectedPickupLocation(session.pickupLocations[0]);
+      }
     }
-  }, [
-    selectedDate,
-    availableSessions,
-    selectedSession,
-    preSelectedSessionId,
-    handleSessionSelect,
-  ]);
+  }, [selectedDate, availableSessions, selectedSession, hasFitTourOptions]);
 
   // Auto-select pickup location for regular tours based on preSelectedLocation
   useEffect(() => {
@@ -1395,12 +1437,6 @@ export function EnhancedBookingExperience({
                                             Demo
                                           </div>
                                         ) : null}
-                                        {isSelected &&
-                                          wasSessionAutoSelected && (
-                                            <div className="inline-flex items-center px-2 py-1 text-xs bg-green-100 text-green-800 rounded-full">
-                                              Auto-selected
-                                            </div>
-                                          )}
                                       </div>
                                     </div>
                                   </div>
@@ -1491,6 +1527,7 @@ export function EnhancedBookingExperience({
                   maxGuests={product.quantityRequiredMax || 10}
                   minGuests={product.quantityRequiredMin || 1}
                   requireAdult={true}
+                  autoManageGuests={true}
                 />
               </CardContent>
             </Card>

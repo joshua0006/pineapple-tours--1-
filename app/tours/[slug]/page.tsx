@@ -53,12 +53,6 @@ export default function TourDetailPage({
 }: {
   params: Promise<{ slug: string }>;
 }) {
-  const [selectedProduct, setSelectedProduct] = useState<RezdyProduct | null>(
-    null
-  );
-  const [dateRange, setDateRange] = useState(30); // days to look ahead
-  const [groupSize, setGroupSize] = useState(2); // number of adults
-
   // Unwrap params Promise using React.use()
   const resolvedParams = use(params);
 
@@ -74,6 +68,12 @@ export default function TourDetailPage({
     loading: productsLoading,
     error: productsError,
   } = useAllProducts();
+
+  const [selectedProduct, setSelectedProduct] = useState<RezdyProduct | null>(
+    null
+  );
+  const [dateRange, setDateRange] = useState(30); // days to look ahead
+  const [groupSize, setGroupSize] = useState(2); // number of adults
 
   // Set up availability checking based on user preferences
   const startDate = new Date().toISOString().split("T")[0];
@@ -174,6 +174,7 @@ export default function TourDetailPage({
     }
   }, [products, productCode]);
 
+  // Early returns AFTER all hooks have been called
   if (productsLoading) {
     return (
       <div className="flex-1">
@@ -311,12 +312,14 @@ export default function TourDetailPage({
     // Get parameters from search form
     const participants = searchParams.get("participants");
     const tourDate = searchParams.get("tourDate");
-    const location = searchParams.get("location");
+    const pickupLocation = searchParams.get("pickupLocation");
+    const location = searchParams.get("location"); // Fallback for legacy URLs
 
     // Add parameters if they exist
     if (participants) params.append("adults", participants);
     if (tourDate) params.append("date", tourDate);
-    if (location) params.append("location", location);
+    if (pickupLocation) params.append("pickupLocation", pickupLocation);
+    else if (location) params.append("pickupLocation", location); // Legacy fallback
 
     const queryString = params.toString();
     return `/booking/${selectedProduct.productCode}${
@@ -590,7 +593,7 @@ export default function TourDetailPage({
                                 product={selectedProduct}
                                 session={getSelectedSession()}
                                 variant="outline"
-                                className="border-brand-accent/30 text-brand-accent hover:bg-brand-accent/10"
+                                className="bg-white border-gray-300 text-gray-900 hover:bg-gray-50"
                               >
                                 Add to Cart
                               </AddToCartButton>
@@ -855,7 +858,7 @@ export default function TourDetailPage({
                       <AddToCartButton
                         product={selectedProduct}
                         session={getSelectedSession()}
-                        className="w-full mb-2"
+                        className="w-full mb-2 bg-white border-gray-300 text-gray-900 hover:bg-gray-50"
                         variant="outline"
                       >
                         Add to Cart
@@ -1014,7 +1017,7 @@ export default function TourDetailPage({
                         session={getSelectedSession()}
                         size="sm"
                         variant="outline"
-                        className="border-coral-200 text-coral-700 hover:bg-coral-50"
+                        className="bg-white border-gray-300 text-gray-900 hover:bg-gray-50"
                         showIcon={false}
                       >
                         Add to Cart

@@ -17,6 +17,8 @@ import {
   Globe,
   Award,
   Clock,
+  Users,
+  CalendarDays,
 } from "lucide-react";
 import { addDays, format } from "date-fns";
 
@@ -33,6 +35,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { DatePicker } from "@/components/ui/date-picker";
+import { Label } from "@/components/ui/label";
 
 import { PageHeader } from "@/components/page-header";
 import { DynamicTourCard } from "@/components/dynamic-tour-card";
@@ -55,6 +58,9 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 
+// Static pickup locations (matching search form)
+const STATIC_PICKUP_LOCATIONS = ["Brisbane", "Gold Coast", "Mount Tamborine"];
+
 interface Filters {
   query: string;
   category: string;
@@ -68,6 +74,7 @@ interface Filters {
   limit: string;
   offset: string;
   tourDate: string;
+  pickupLocation: string;
 }
 
 export default function ToursPage() {
@@ -94,6 +101,10 @@ export default function ToursPage() {
     limit: searchParams.get("limit") || "100",
     offset: searchParams.get("offset") || "0",
     tourDate: searchParams.get("tourDate") || "",
+    pickupLocation:
+      searchParams.get("pickupLocation") ||
+      searchParams.get("location") ||
+      "all",
   });
 
   const [localQuery, setLocalQuery] = useState(filters.query);
@@ -179,7 +190,74 @@ export default function ToursPage() {
       }
     }
 
-    // City/location filter
+    // Pickup Location filter - Enhanced to look for "from" keyword and location patterns
+    if (filters.pickupLocation !== "all") {
+      filtered = filtered.filter((product) => {
+        const searchText = `${product.name || ""} ${
+          product.shortDescription || ""
+        } ${product.description || ""}`.toLowerCase();
+        const filterLocation = filters.pickupLocation.toLowerCase();
+
+        // Check for "from [location]" pattern in product text
+        const fromPattern = new RegExp(
+          `from\\s+${filterLocation.replace(/\s+/g, "\\s+")}`,
+          "i"
+        );
+        if (fromPattern.test(searchText)) {
+          return true;
+        }
+
+        // Handle specific location variations
+        if (
+          filterLocation === "mount tamborine" ||
+          filterLocation === "tamborine"
+        ) {
+          const tambourinePattern =
+            /from\s+(?:mount\s+)?tamborine(?:\s+mountain)?/i;
+          if (tambourinePattern.test(searchText)) {
+            return true;
+          }
+        }
+
+        if (filterLocation === "gold coast") {
+          const goldCoastPattern = /from\s+(?:the\s+)?gold\s+coast/i;
+          if (goldCoastPattern.test(searchText)) {
+            return true;
+          }
+        }
+
+        if (filterLocation === "brisbane") {
+          const brisbanePattern = /from\s+brisbane/i;
+          if (brisbanePattern.test(searchText)) {
+            return true;
+          }
+        }
+
+        // Fallback to original location address logic
+        if (product.locationAddress) {
+          let productLocation = "";
+          if (typeof product.locationAddress === "string") {
+            productLocation = product.locationAddress;
+          } else if (product.locationAddress.city) {
+            productLocation = product.locationAddress.city;
+          }
+
+          // Handle Tamborine variations in location address
+          if (
+            filters.pickupLocation === "Mount Tamborine" &&
+            productLocation.toLowerCase().includes("tamborine")
+          ) {
+            return true;
+          }
+
+          return productLocation.toLowerCase().includes(filterLocation);
+        }
+
+        return false;
+      });
+    }
+
+    // City/location filter (fallback for legacy URL params)
     if (filters.city || filters.location) {
       const locationFilter = filters.city || filters.location;
       filtered = filtered.filter((product) => {
@@ -201,6 +279,21 @@ export default function ToursPage() {
         }
         return false;
       });
+    }
+
+    // Tour Date filter - check if product has availability on selected date
+    // Note: This is a basic filter. For real availability, you'd need to call Rezdy API
+    if (filters.tourDate) {
+      // For now, we'll include all products if a date is selected
+      // In a real implementation, you'd filter based on actual availability
+      // This could be enhanced with availability checking logic
+    }
+
+    // Participants filter - check if product supports the number of participants
+    // Note: This is basic validation. Real implementation would check capacity
+    if (filters.participants && parseInt(filters.participants) > 0) {
+      // Most tours can accommodate the typical participant counts
+      // You could add specific capacity checks here if available in product data
     }
 
     // Sorting
@@ -263,6 +356,10 @@ export default function ToursPage() {
       limit: searchParams.get("limit") || "100",
       offset: searchParams.get("offset") || "0",
       tourDate: searchParams.get("tourDate") || "",
+      pickupLocation:
+        searchParams.get("pickupLocation") ||
+        searchParams.get("location") ||
+        "all",
     };
 
     setFilters(urlFilters);
@@ -313,6 +410,7 @@ export default function ToursPage() {
       limit: "100",
       offset: "0",
       tourDate: "",
+      pickupLocation: "all",
     };
     updateFilter(key, defaultValues[key]);
   };
@@ -331,6 +429,7 @@ export default function ToursPage() {
       limit: "100",
       offset: "0",
       tourDate: "",
+      pickupLocation: "all",
     });
     setLocalQuery("");
   };
@@ -352,7 +451,9 @@ export default function ToursPage() {
     filters.checkIn !== "" ||
     filters.checkOut !== "" ||
     filters.city !== "" ||
-    filters.location !== "";
+    filters.location !== "" ||
+    filters.tourDate !== "" ||
+    filters.pickupLocation !== "all";
 
   const hasResults = filteredProducts.length > 0;
 
@@ -440,7 +541,7 @@ export default function ToursPage() {
               <Heart className="h-5 w-5 text-yellow-600" />
               <span className="font-medium">Great choice!</span>
               <span>We've found tours matching your preferences.</span>
-              {filters.checkIn && filters.checkOut && (
+              {(filters.tourDate || filters.checkIn) && (
                 <Badge
                   variant="secondary"
                   className="bg-yellow-200 text-yellow-800"
@@ -492,17 +593,27 @@ export default function ToursPage() {
                     {hasActiveFilters && (
                       <Badge variant="secondary" className="ml-2">
                         {
-                          Object.entries(filters).filter(
-                            ([key, value]) =>
+                          Object.entries(filters).filter(([key, value]) => {
+                            // Skip internal pagination and default values
+                            if (
+                              key === "limit" ||
+                              key === "offset" ||
+                              key === "sortBy"
+                            )
+                              return false;
+                            if (key === "checkIn" || key === "checkOut")
+                              return false; // Legacy params
+                            if (key === "city" || key === "location")
+                              return false; // Legacy params
+
+                            // Count active filters
+                            return (
                               value &&
                               value !== "" &&
                               value !== "all" &&
-                              value !== "any" &&
-                              value !== "2" &&
-                              value !== "relevance" &&
-                              value !== "100" &&
-                              value !== "0"
-                          ).length
+                              value !== "2"
+                            ); // Default participants
+                          }).length
                         }
                       </Badge>
                     )}
@@ -539,20 +650,51 @@ export default function ToursPage() {
                         </button>
                       </Badge>
                     )}
-                    {(filters.city || filters.location) && (
+                    {filters.pickupLocation !== "all" && (
                       <Badge
                         variant="secondary"
                         className="flex items-center gap-1 px-3 py-1 rounded-full"
                       >
                         <span className="flex items-center gap-1">
                           <MapPin className="h-3 w-3" />
-                          {filters.city || filters.location}
+                          {filters.pickupLocation}
                         </span>
                         <button
-                          onClick={() => {
-                            clearFilter("city");
-                            clearFilter("location");
-                          }}
+                          onClick={() => clearFilter("pickupLocation")}
+                          className="ml-1 hover:text-destructive"
+                        >
+                          <X className="h-3 w-3" />
+                        </button>
+                      </Badge>
+                    )}
+                    {filters.participants !== "2" && (
+                      <Badge
+                        variant="secondary"
+                        className="flex items-center gap-1 px-3 py-1 rounded-full"
+                      >
+                        <span className="flex items-center gap-1">
+                          <Users className="h-3 w-3" />
+                          {filters.participants} participants
+                        </span>
+                        <button
+                          onClick={() => clearFilter("participants")}
+                          className="ml-1 hover:text-destructive"
+                        >
+                          <X className="h-3 w-3" />
+                        </button>
+                      </Badge>
+                    )}
+                    {filters.tourDate && (
+                      <Badge
+                        variant="secondary"
+                        className="flex items-center gap-1 px-3 py-1 rounded-full bg-orange-100 text-orange-800 border-orange-200"
+                      >
+                        <span className="flex items-center gap-1">
+                          <CalendarDays className="h-3 w-3" />
+                          {format(new Date(filters.tourDate), "MMM dd, yyyy")}
+                        </span>
+                        <button
+                          onClick={() => clearFilter("tourDate")}
                           className="ml-1 hover:text-destructive"
                         >
                           <X className="h-3 w-3" />
@@ -594,163 +736,103 @@ export default function ToursPage() {
                         </button>
                       </Badge>
                     )}
-                    {filters.checkIn && (
-                      <Badge
-                        variant="secondary"
-                        className="flex items-center gap-1 px-3 py-1 rounded-full bg-orange-100 text-orange-800 border-orange-200"
-                      >
-                        <span className="flex items-center gap-1">
-                          <Calendar className="h-3 w-3" />
-                          Check-in: {filters.checkIn}
-                        </span>
-                        <button
-                          onClick={() => clearFilter("checkIn")}
-                          className="ml-1 hover:text-destructive"
-                        >
-                          <X className="h-3 w-3" />
-                        </button>
-                      </Badge>
-                    )}
-                    {filters.checkOut && (
-                      <Badge
-                        variant="secondary"
-                        className="flex items-center gap-1 px-3 py-1 rounded-full bg-orange-100 text-orange-800 border-orange-200"
-                      >
-                        <span className="flex items-center gap-1">
-                          <Calendar className="h-3 w-3" />
-                          Check-out: {filters.checkOut}
-                        </span>
-                        <button
-                          onClick={() => clearFilter("checkOut")}
-                          className="ml-1 hover:text-destructive"
-                        >
-                          <X className="h-3 w-3" />
-                        </button>
-                      </Badge>
-                    )}
                   </div>
                 )}
 
-                {/* Filter Stack */}
+                {/* Filter Stack - Updated to match search form */}
                 <div className="space-y-4">
-                  {/* Tour Location Filter */}
+                  {/* Participants Filter */}
                   <div className="space-y-2">
-                    <label className="text-sm font-medium text-muted-foreground">
-                      Tour Location
-                    </label>
+                    <Label className="text-sm font-medium text-muted-foreground">
+                      Participants
+                    </Label>
                     <Select
-                      value={filters.city || filters.location || "all"}
-                      onValueChange={(value) => {
-                        if (value === "all") {
-                          clearFilter("city");
-                          clearFilter("location");
-                        } else {
-                          updateFilter("city", value);
-                          clearFilter("location");
-                        }
-                      }}
-                      disabled={citiesLoading}
+                      value={filters.participants}
+                      onValueChange={(value) =>
+                        updateFilter("participants", value)
+                      }
                     >
                       <SelectTrigger className="w-full h-10">
                         <div className="flex items-center gap-2">
-                          <MapPin className="h-4 w-4 text-muted-foreground" />
-                          <SelectValue
-                            placeholder={
-                              citiesLoading ? "Loading..." : "All Locations"
-                            }
-                          />
+                          <Users className="h-4 w-4 text-muted-foreground" />
+                          <SelectValue placeholder="Select participants" />
                         </div>
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="all">All Locations</SelectItem>
-                        {cities.map((city) => (
-                          <SelectItem key={city} value={city}>
-                            {city}
-                          </SelectItem>
-                        ))}
+                        {Array.from({ length: 10 }, (_, i) => i + 1).map(
+                          (num) => (
+                            <SelectItem key={num} value={num.toString()}>
+                              {num} {num === 1 ? "Participant" : "Participants"}
+                            </SelectItem>
+                          )
+                        )}
                       </SelectContent>
                     </Select>
                   </div>
 
-                  {/* Check-in Date Filter */}
+                  {/* Tour Date Filter */}
                   <div className="space-y-2">
-                    <label className="text-sm font-medium text-muted-foreground">
-                      Check-in Date
-                    </label>
+                    <Label className="text-sm font-medium text-muted-foreground">
+                      Tour Date
+                    </Label>
                     <div className="relative">
                       <DatePicker
                         date={
-                          filters.checkIn
-                            ? new Date(filters.checkIn)
-                            : undefined
-                        }
-                        onDateChange={(date) => {
-                          if (date) {
-                            updateFilter("checkIn", format(date, "yyyy-MM-dd"));
-                            if (filters.checkOut) {
-                              const checkOutDate = new Date(filters.checkOut);
-                              if (checkOutDate <= date) {
-                                updateFilter(
-                                  "checkOut",
-                                  format(addDays(date, 1), "yyyy-MM-dd")
-                                );
-                              }
-                            }
-                          } else {
-                            clearFilter("checkIn");
-                          }
-                        }}
-                        placeholder="Select date"
-                        minDate={new Date()}
-                        maxDate={
-                          filters.checkOut
-                            ? addDays(new Date(filters.checkOut), -1)
-                            : addDays(new Date(), 365)
-                        }
-                        className="w-full h-10"
-                      />
-                    </div>
-                  </div>
-
-                  {/* Check-out Date Filter */}
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium text-muted-foreground">
-                      Check-out Date
-                    </label>
-                    <div className="relative">
-                      <DatePicker
-                        date={
-                          filters.checkOut
-                            ? new Date(filters.checkOut)
+                          filters.tourDate
+                            ? new Date(filters.tourDate)
                             : undefined
                         }
                         onDateChange={(date) => {
                           if (date) {
                             updateFilter(
-                              "checkOut",
+                              "tourDate",
                               format(date, "yyyy-MM-dd")
                             );
                           } else {
-                            clearFilter("checkOut");
+                            clearFilter("tourDate");
                           }
                         }}
-                        placeholder="Select date"
-                        minDate={
-                          filters.checkIn
-                            ? addDays(new Date(filters.checkIn), 1)
-                            : addDays(new Date(), 1)
-                        }
+                        placeholder="Select tour date"
+                        minDate={new Date()}
                         maxDate={addDays(new Date(), 365)}
                         className="w-full h-10"
                       />
                     </div>
                   </div>
 
+                  {/* Pick up Location Filter */}
+                  <div className="space-y-2">
+                    <Label className="text-sm font-medium text-muted-foreground">
+                      Pick up Location
+                    </Label>
+                    <Select
+                      value={filters.pickupLocation}
+                      onValueChange={(value) =>
+                        updateFilter("pickupLocation", value)
+                      }
+                    >
+                      <SelectTrigger className="w-full h-10">
+                        <div className="flex items-center gap-2">
+                          <MapPin className="h-4 w-4 text-muted-foreground" />
+                          <SelectValue placeholder="Select pickup location" />
+                        </div>
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All Locations</SelectItem>
+                        {STATIC_PICKUP_LOCATIONS.map((location) => (
+                          <SelectItem key={location} value={location}>
+                            {location}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
                   {/* Category Filter */}
                   <div className="space-y-2">
-                    <label className="text-sm font-medium text-muted-foreground">
+                    <Label className="text-sm font-medium text-muted-foreground">
                       Category
-                    </label>
+                    </Label>
                     <Select
                       value={filters.category}
                       onValueChange={(value) => updateFilter("category", value)}
@@ -774,9 +856,9 @@ export default function ToursPage() {
 
                   {/* Price Range Filter */}
                   <div className="space-y-2">
-                    <label className="text-sm font-medium text-muted-foreground">
+                    <Label className="text-sm font-medium text-muted-foreground">
                       Price Range
-                    </label>
+                    </Label>
                     <Select
                       value={filters.priceRange}
                       onValueChange={(value) =>
@@ -801,9 +883,9 @@ export default function ToursPage() {
 
                   {/* Sort By Filter */}
                   <div className="space-y-2">
-                    <label className="text-sm font-medium text-muted-foreground">
+                    <Label className="text-sm font-medium text-muted-foreground">
                       Sort By
-                    </label>
+                    </Label>
                     <Select
                       value={filters.sortBy}
                       onValueChange={(value) => updateFilter("sortBy", value)}
@@ -840,7 +922,7 @@ export default function ToursPage() {
                     {loading ? (
                       <span className="flex items-center gap-2">
                         <RefreshCw className="h-4 w-4 animate-spin" />
-                        {filters.checkIn && filters.checkOut
+                        {filters.tourDate
                           ? "Checking availability..."
                           : "Loading tours..."}
                       </span>
@@ -886,7 +968,7 @@ export default function ToursPage() {
                             product={product}
                             selectedDate={filters.tourDate}
                             participants={filters.participants}
-                            selectedLocation={filters.location}
+                            selectedLocation={filters.pickupLocation}
                           />
                         ))}
                       </div>

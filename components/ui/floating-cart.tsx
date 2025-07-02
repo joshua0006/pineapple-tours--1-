@@ -22,7 +22,7 @@ import {
 import { formatPrice, getPrimaryImageUrl } from "@/lib/utils/product-utils";
 import { generateBookingUrl } from "@/lib/utils/booking-utils";
 import { useResponsive } from "@/hooks/use-responsive";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 
 export function FloatingCart() {
@@ -34,64 +34,27 @@ export function FloatingCart() {
     getCartTotal,
   } = useCart();
   const [isOpen, setIsOpen] = useState(false);
-  const [isVisible, setIsVisible] = useState(false);
-  const [hasInteracted, setHasInteracted] = useState(false);
-  const [justAdded, setJustAdded] = useState(false);
-  const [showNotification, setShowNotification] = useState(false);
   const { isMobile } = useResponsive();
   const itemCount = getCartItemCount();
   const total = getCartTotal();
   const router = useRouter();
-  const prevItemCount = useRef(itemCount);
-
-  // Show cart when items are added or after user interaction
-  useEffect(() => {
-    if (itemCount > 0) {
-      setIsVisible(true);
-      // Trigger bounce animation when item count increases (not decreases)
-      if (itemCount > prevItemCount.current) {
-        setJustAdded(true);
-        setShowNotification(true);
-        const bounceTimer = setTimeout(() => setJustAdded(false), 600);
-        const notificationTimer = setTimeout(
-          () => setShowNotification(false),
-          3000
-        );
-
-        return () => {
-          clearTimeout(bounceTimer);
-          clearTimeout(notificationTimer);
-        };
-      }
-    } else if (!hasInteracted) {
-      setIsVisible(false);
-    }
-
-    // Always update the previous count
-    prevItemCount.current = itemCount;
-  }, [itemCount, hasInteracted]);
+  const pathname = usePathname();
 
   // Register cart opener function
   useEffect(() => {
     registerCartOpener(() => {
-      setIsVisible(true);
       setIsOpen(true);
     });
     return () => unregisterCartOpener();
   }, []);
 
-  // Handle scroll to show/hide cart icon
-  useEffect(() => {
-    const handleScroll = () => {
-      const scrolled = window.scrollY > 100;
-      if (itemCount > 0 || hasInteracted) {
-        setIsVisible(scrolled || itemCount > 0);
-      }
-    };
+  // Hide floating cart on booking pages - check AFTER all hooks
+  const isBookingPage = pathname.startsWith("/booking");
 
-    window.addEventListener("scroll", handleScroll, { passive: true });
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, [itemCount, hasInteracted]);
+  // Don't render the floating cart on booking pages
+  if (isBookingPage) {
+    return null;
+  }
 
   const updateQuantity = (itemId: string, newAdults: number) => {
     if (newAdults < 1) return;
@@ -132,11 +95,8 @@ export function FloatingCart() {
   };
 
   const handleCartClick = () => {
-    setHasInteracted(true);
     setIsOpen(true);
   };
-
-  if (!isVisible) return null;
 
   return (
     <>
@@ -144,9 +104,7 @@ export function FloatingCart() {
       <div
         className={cn(
           "fixed bottom-4 right-4 sm:bottom-6 sm:right-6 z-40 transition-all duration-300 ease-out",
-          "transform hover:scale-110 active:scale-95",
-          isVisible ? "translate-y-0 opacity-100" : "translate-y-16 opacity-0",
-          itemCount > 0 && !hasInteracted && "animate-pulse"
+          "transform hover:scale-110 active:scale-95 translate-y-0 opacity-100"
         )}
       >
         <Button
@@ -155,8 +113,7 @@ export function FloatingCart() {
           className={cn(
             "relative h-12 w-12 sm:h-14 sm:w-14 rounded-full shadow-lg hover:shadow-xl",
             "bg-primary/90 hover:bg-primary backdrop-blur-sm transition-all duration-200",
-            "border-2 border-white/20",
-            justAdded && "animate-bounce"
+            "border-2 border-white/20"
           )}
           aria-label={`Shopping cart with ${itemCount} items`}
         >
@@ -165,28 +122,13 @@ export function FloatingCart() {
             <Badge
               className={cn(
                 "absolute -top-2 -right-2 h-5 w-5 sm:h-6 sm:w-6 flex items-center justify-center p-0 text-xs",
-                "bg-red-500 text-white border-2 border-white animate-pulse"
+                "bg-red-500 text-white border-2 border-white"
               )}
             >
               {itemCount > 99 ? "99+" : itemCount}
             </Badge>
           )}
         </Button>
-
-        {/* Notification Toast */}
-        {showNotification && itemCount > 0 && (
-          <div
-            className={cn(
-              "absolute bottom-full right-0 mb-2 px-3 py-1.5 rounded-lg",
-              "bg-green-500 text-white text-sm font-medium whitespace-nowrap",
-              "shadow-lg animate-in slide-in-from-bottom-2 duration-300",
-              "after:absolute after:top-full after:right-3 after:border-4",
-              "after:border-transparent after:border-t-green-500"
-            )}
-          >
-            Added to cart!
-          </div>
-        )}
       </div>
 
       {/* Sidebar Sheet */}

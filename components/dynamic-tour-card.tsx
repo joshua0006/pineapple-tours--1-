@@ -1,18 +1,33 @@
+"use client";
+
 import Image from "next/image";
 import Link from "next/link";
-import { MapPin, Calendar, Star, Users } from "lucide-react";
+import { MapPin, ChevronLeft, ChevronRight } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { HtmlContent } from "@/components/ui/html-content";
 import { RezdyProduct } from "@/lib/types/rezdy";
 import {
   getPrimaryImageUrl,
   getLocationString,
   generateProductSlug,
-  getValidImages,
+  getCityFromLocation,
+  areProductsLocationRelated,
 } from "@/lib/utils/product-utils";
+import {
+  Dialog,
+  DialogTrigger,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { Checkbox } from "@/components/ui/checkbox";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { useRezdyProducts } from "@/hooks/use-rezdy";
+import { useState, useMemo } from "react";
 
 interface DynamicTourCardProps {
   product: RezdyProduct;
@@ -50,21 +65,120 @@ export function DynamicTourCard({
   const location = getLocationString(product.locationAddress);
   const slug = generateProductSlug(product);
 
-  // Build booking URL with date, participants, and location if available
-  const buildBookingUrl = () => {
+  // NEW: related tours modal state and data
+  const { data: allProducts, loading: productsLoading } =
+    useRezdyProducts(1000);
+  const currentCity = getCityFromLocation(product.locationAddress);
+
+  const relatedTours = useMemo(() => {
+    if (productsLoading || !allProducts) {
+      console.log("[RelatedTours] Products still loading or unavailable.");
+      return [] as RezdyProduct[];
+    }
+
+    const baseCityRaw = getCityFromLocation(product.locationAddress);
+    const baseCity =
+      baseCityRaw
+        ?.toLowerCase()
+        .replace(/mount tamborine|tamborine mountain/, "tamborine") || null;
+
+    console.log(
+      "[RelatedTours] Base city:",
+      baseCityRaw,
+      "->",
+      baseCity,
+      "| Total products:",
+      allProducts.length
+    );
+
+    const results: RezdyProduct[] = [];
+
+    (allProducts as RezdyProduct[]).forEach((p) => {
+      if (p.productCode === product.productCode) return;
+
+      const candidateCityRaw = getCityFromLocation(p.locationAddress);
+      const candidateCity =
+        candidateCityRaw
+          ?.toLowerCase()
+          .replace(/mount tamborine|tamborine mountain/, "tamborine") || null;
+
+      // Flags for debugging
+      const reasons: string[] = [];
+
+      // City matching logic
+      let cityMatches = false;
+      if (baseCity && candidateCity) {
+        cityMatches = baseCity === candidateCity;
+      } else {
+        cityMatches = areProductsLocationRelated(product, p);
+      }
+      if (!cityMatches) reasons.push("city-mismatch");
+
+      // Exclusion checks
+      if (
+        p.name.toLowerCase().includes("gift card") ||
+        p.name.toLowerCase().includes("voucher") ||
+        p.name.toLowerCase().includes("credit") ||
+        p.productType === "GIFT_VOUCHER"
+      ) {
+        reasons.push("giftcard/voucher");
+      }
+      if (p.status !== "ACTIVE") reasons.push("inactive");
+      if (p.advertisedPrice == null || p.advertisedPrice <= 0)
+        reasons.push("no-price");
+
+      if (reasons.length === 0) {
+        results.push(p);
+      } else {
+        console.debug(
+          "[RelatedTours] Exclude",
+          p.productCode,
+          "| Reasons:",
+          reasons.join(",")
+        );
+      }
+    });
+
+    console.log("[RelatedTours] Final count:", results.length);
+    return results;
+  }, [allProducts, productsLoading, product]);
+
+  // If still loading show a loading message
+  const relatedToursDisplay = productsLoading ? [] : relatedTours;
+
+  const [selectedCodes, setSelectedCodes] = useState<string[]>([]);
+  const [scrollRef, setScrollRef] = useState<HTMLDivElement | null>(null);
+
+  const selectedTours = useMemo(
+    () =>
+      relatedToursDisplay.filter((t) => selectedCodes.includes(t.productCode)),
+    [relatedToursDisplay, selectedCodes]
+  );
+
+  const totalPrice = useMemo(() => {
+    const base = product.advertisedPrice ?? 0;
+    const extras = selectedTours.reduce(
+      (sum, t) => sum + (t.advertisedPrice ?? 0),
+      0
+    );
+    return base + extras;
+  }, [product.advertisedPrice, selectedTours]);
+
+  const buildCombinedBookingUrl = () => {
     const baseUrl = `/booking/${product.productCode}`;
     const params = new URLSearchParams();
 
     if (selectedDate) {
       params.append("date", selectedDate);
     }
-
     if (participants) {
       params.append("adults", participants);
     }
-
     if (selectedLocation && selectedLocation !== "all") {
-      params.append("location", selectedLocation);
+      params.append("pickupLocation", selectedLocation);
+    }
+    if (selectedCodes.length > 0) {
+      params.append("extras", selectedCodes.join(","));
     }
 
     return params.toString() ? `${baseUrl}?${params.toString()}` : baseUrl;
@@ -84,7 +198,7 @@ export function DynamicTourCard({
     }
 
     if (selectedLocation && selectedLocation !== "all") {
-      params.append("location", selectedLocation);
+      params.append("pickupLocation", selectedLocation);
     }
 
     return params.toString() ? `${baseUrl}?${params.toString()}` : baseUrl;
@@ -166,14 +280,185 @@ export function DynamicTourCard({
               View Details
             </Button>
           </Link>
-          <Link href={buildBookingUrl()} className="flex-1">
-            <Button
-              className="w-full bg-brand-accent text-brand-secondary hover:bg-brand-accent/90 hover:shadow-lg transform hover:-translate-y-0.5 transition-all duration-200 py-3 font-semibold"
-              aria-label={`Book ${product.name} tour now`}
-            >
-              Book Now
-            </Button>
-          </Link>
+          <Dialog>
+            <DialogTrigger asChild>
+              <Button
+                className="w-full bg-brand-accent text-brand-secondary hover:bg-brand-accent/90 hover:shadow-lg transform hover:-translate-y-0.5 transition-all duration-200 py-3 font-semibold"
+                aria-label={`Book ${product.name} tour now`}
+              >
+                Book Now
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-5xl max-h-[80vh] overflow-hidden flex flex-col">
+              <DialogHeader>
+                <DialogTitle>Select Related Tours</DialogTitle>
+                <DialogDescription>
+                  Choose extra tours in the same location to avoid schedule
+                  conflicts. Prices are per person.
+                </DialogDescription>
+              </DialogHeader>
+
+              <div className="relative mt-4 flex-1 min-h-0">
+                {/* Scroll buttons */}
+                {relatedToursDisplay.length > 0 && (
+                  <>
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      className="absolute left-0 top-1/2 -translate-y-1/2 z-10 h-8 w-8 rounded-full bg-white shadow-lg border-gray-300"
+                      onClick={() => {
+                        if (scrollRef) {
+                          scrollRef.scrollBy({
+                            left: -300,
+                            behavior: "smooth",
+                          });
+                        }
+                      }}
+                    >
+                      <ChevronLeft className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      className="absolute right-0 top-1/2 -translate-y-1/2 z-10 h-8 w-8 rounded-full bg-white shadow-lg border-gray-300"
+                      onClick={() => {
+                        if (scrollRef) {
+                          scrollRef.scrollBy({ left: 300, behavior: "smooth" });
+                        }
+                      }}
+                    >
+                      <ChevronRight className="h-4 w-4" />
+                    </Button>
+                  </>
+                )}
+
+                <ScrollArea className="h-80 w-full">
+                  <div className="h-80 w-full overflow-hidden">
+                    <div className="px-10 h-full">
+                      {relatedToursDisplay.length === 0 && (
+                        <p className="text-sm text-muted-foreground text-center py-8">
+                          No other tours available in this location.
+                        </p>
+                      )}
+                      <div
+                        ref={setScrollRef}
+                        className="flex gap-4 pb-4 overflow-x-auto scrollbar-hide h-full"
+                        style={{
+                          scrollbarWidth: "none",
+                          msOverflowStyle: "none",
+                        }}
+                      >
+                        {relatedToursDisplay.map((t) => {
+                          const checked = selectedCodes.includes(t.productCode);
+                          const tourImage = getPrimaryImageUrl(t);
+                          return (
+                            <div
+                              key={t.productCode}
+                              className={`min-w-[300px] rounded-lg border p-4 cursor-pointer transition-all ${
+                                checked
+                                  ? "border-brand-accent bg-brand-accent/5 shadow-md"
+                                  : "border-gray-200 hover:border-gray-300"
+                              }`}
+                              onClick={() => {
+                                if (checked) {
+                                  setSelectedCodes((prev) =>
+                                    prev.filter((c) => c !== t.productCode)
+                                  );
+                                } else {
+                                  setSelectedCodes((prev) => [
+                                    ...prev,
+                                    t.productCode,
+                                  ]);
+                                }
+                              }}
+                            >
+                              {/* Image */}
+                              <div className="relative h-40 w-full mb-3 rounded-md overflow-hidden">
+                                {tourImage ? (
+                                  <Image
+                                    src={tourImage}
+                                    alt={t.name}
+                                    fill
+                                    className="object-cover"
+                                    sizes="300px"
+                                  />
+                                ) : (
+                                  <div className="w-full h-full bg-gray-200 flex items-center justify-center">
+                                    <span className="text-gray-400 text-xs">
+                                      No image
+                                    </span>
+                                  </div>
+                                )}
+                                {/* Checkbox overlay */}
+                                <div className="absolute top-2 right-2">
+                                  <Checkbox
+                                    checked={checked}
+                                    onCheckedChange={(value) => {
+                                      if (value) {
+                                        setSelectedCodes((prev) => [
+                                          ...prev,
+                                          t.productCode,
+                                        ]);
+                                      } else {
+                                        setSelectedCodes((prev) =>
+                                          prev.filter(
+                                            (c) => c !== t.productCode
+                                          )
+                                        );
+                                      }
+                                    }}
+                                    className="bg-white/90 border-white"
+                                  />
+                                </div>
+                              </div>
+
+                              {/* Content */}
+                              <div className="space-y-3">
+                                <h4 className="font-medium text-sm line-clamp-2 leading-tight min-h-[2.5rem]">
+                                  {t.name}
+                                </h4>
+
+                                <div className="flex items-center text-xs text-gray-500">
+                                  <MapPin className="h-3 w-3 mr-1 flex-shrink-0" />
+                                  <span className="truncate">
+                                    {getLocationString(t.locationAddress)}
+                                  </span>
+                                </div>
+
+                                {t.advertisedPrice && (
+                                  <div className="flex items-center justify-between">
+                                    <span className="text-xs text-gray-500">
+                                      per person
+                                    </span>
+                                    <span className="font-bold text-brand-accent text-lg">
+                                      ${t.advertisedPrice.toFixed(0)}
+                                    </span>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  </div>
+                </ScrollArea>
+              </div>
+
+              <div className="mt-4 flex items-center justify-between font-semibold text-base border-t pt-4">
+                <span>Total Price:</span>
+                <span>${totalPrice.toFixed(0)}</span>
+              </div>
+
+              <DialogFooter className="mt-4">
+                <Link href={buildCombinedBookingUrl()} className="w-full">
+                  <Button className="w-full bg-brand-accent text-brand-secondary">
+                    Proceed to Booking
+                  </Button>
+                </Link>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
         </div>
       </CardFooter>
     </Card>

@@ -321,7 +321,6 @@ export function SearchForm({
                 <Select
                   value={selectedLocation}
                   onValueChange={handleLocationChange}
-                  disabled={citiesLoading || rezdyLoading}
                 >
                   <SelectTrigger
                     id="pickup-location"

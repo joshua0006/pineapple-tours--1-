@@ -28,7 +28,7 @@ import {
 import { VisuallyHidden } from "@/components/ui/visually-hidden";
 import { MobileNavigation } from "@/components/mobile-navigation";
 import { TourCategoriesDropdown } from "@/components/tour-categories-dropdown";
-import { CartIcon } from "@/components/ui/cart-icon";
+
 import { PhoneNumber } from "@/components/ui/phone-number";
 import { useResponsive } from "@/hooks/use-responsive";
 import {
@@ -293,7 +293,6 @@ export function SiteHeader() {
           )}
         >
           <PhoneNumber phoneNumber="0466 331 232" variant="desktop" />
-          <CartIcon />
           <Link href="/tours">
             <Button
               size="sm"
@@ -317,11 +316,6 @@ export function SiteHeader() {
             "flex lg:hidden items-center gap-2 sm:gap-3 flex-shrink-0"
           )}
         >
-          {/* Cart icon - visible on all devices */}
-          <div>
-            <CartIcon />
-          </div>
-
           {/* Mobile Menu Button */}
           <Sheet open={isOpen} onOpenChange={setIsOpen}>
             <SheetTrigger asChild>

@@ -10,8 +10,8 @@ import { SiteFooter } from "@/components/site-footer";
 import { PreloadResources } from "@/components/preload-resources";
 import { Prefetcher } from "@/components/prefetcher";
 import { DataPreloader } from "@/components/data-preloader";
-import { PreloadMonitor } from "@/components/preload-monitor";
 import { OrganizationSchema } from "@/components/schema-markup";
+import { FloatingCart } from "@/components/ui/floating-cart";
 
 const barlow = Barlow({
   subsets: ["latin"],
@@ -160,7 +160,7 @@ export default function RootLayout({
               enableWarmup={true}
               debug={process.env.NODE_ENV === "development"}
             />
-            <PreloadMonitor compact={true} />
+            <FloatingCart />
             <OrganizationSchema />
           </CartProvider>
         </ThemeProvider>

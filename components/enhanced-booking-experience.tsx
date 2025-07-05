@@ -762,11 +762,23 @@ export function EnhancedBookingExperience({
     const hasValidBookingOption =
       !needsBookingOption || (selectedBookingOption && selectedPickupLocation);
 
+    // Check if contact info is valid
+    const hasValidContactInfo = 
+      contactInfo.email.trim() && 
+      emailRegex.test(contactInfo.email) &&
+      contactInfo.phone.trim() &&
+      contactInfo.phone.replace(/\D/g, "").length >= 6;
+
+    // Check if terms are agreed to
+    const hasAgreedToTerms = agreeToTerms;
+
     return (
       hasValidGuests &&
       hasValidSession &&
       hasValidPickupLocation &&
-      hasValidBookingOption
+      hasValidBookingOption &&
+      hasValidContactInfo &&
+      hasAgreedToTerms
     );
   };
 
@@ -1527,7 +1539,7 @@ export function EnhancedBookingExperience({
                   maxGuests={product.quantityRequiredMax || 10}
                   minGuests={product.quantityRequiredMin || 1}
                   requireAdult={true}
-                  autoManageGuests={true}
+                  autoManageGuests={false}
                 />
               </CardContent>
             </Card>
@@ -1678,9 +1690,15 @@ export function EnhancedBookingExperience({
                         target="_blank"
                       >
                         privacy policy
-                      </a>
+                      </a>{" "}
+                      <span className="text-destructive">*</span>
                     </Label>
                   </div>
+                  {!agreeToTerms && (
+                    <p className="text-xs text-destructive ml-6">
+                      You must agree to the terms and conditions to proceed.
+                    </p>
+                  )}
                 </div>
 
                 <Alert>

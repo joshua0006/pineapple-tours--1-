@@ -183,25 +183,7 @@ export function PricingDisplay({
           </>
         )}
 
-        {/* Discounts */}
-        {discountInfo.hasDiscounts && (
-          <div className="bg-green-50 border border-green-200 rounded-lg p-3">
-            <div className="flex items-center gap-2">
-              <TrendingDown className="h-4 w-4 text-green-600" />
-              <span className="text-sm font-medium text-green-800">
-                Savings Applied
-              </span>
-            </div>
-            <p className="text-sm text-green-700 mt-1">
-              {discountInfo.discountText}
-            </p>
-            {breakdown.savings && (
-              <p className="text-sm font-medium text-green-800 mt-1">
-                You save {formatCurrency(breakdown.savings)}!
-              </p>
-            )}
-          </div>
-        )}
+       
 
         <div className="flex justify-between font-medium">
           <span>Tour Subtotal</span>

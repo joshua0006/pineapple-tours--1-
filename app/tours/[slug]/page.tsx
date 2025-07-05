@@ -858,7 +858,7 @@ export default function TourDetailPage({
                       <AddToCartButton
                         product={selectedProduct}
                         session={getSelectedSession()}
-                        className="w-full mb-2 bg-white border-gray-300 text-gray-900 hover:bg-gray-50"
+                        className="w-full mb-2 border-brand-accent text-brand-accent  hover:text-brand-accent bg-transparent hover:bg-brand-accent/10 transition-all duration-200"
                         variant="outline"
                       >
                         Add to Cart

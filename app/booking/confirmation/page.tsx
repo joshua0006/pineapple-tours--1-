@@ -12,11 +12,18 @@ import {
   Phone,
   Download,
   Share2,
+  Star,
+  Heart,
+  Gift,
+  AlertCircle,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
+import { useAllProducts } from "@/hooks/use-all-products";
+import { DynamicTourCard } from "@/components/dynamic-tour-card";
+import { RezdyProduct } from "@/lib/types/rezdy";
 
 interface BookingDetails {
   orderNumber: string;
@@ -41,6 +48,55 @@ export default function BookingConfirmationPage() {
   );
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  // Fetch all products for related tours
+  const { products: allProducts, loading: productsLoading } = useAllProducts();
+
+  // Get related tours based on the booked tour
+  const getRelatedTours = (bookedTourName: string): RezdyProduct[] => {
+    if (!allProducts || allProducts.length === 0) return [];
+
+    // Simple algorithm to find related tours
+    // In a real implementation, this could be more sophisticated
+    const relatedTours = allProducts
+      .filter((product) => {
+        // Exclude the booked tour itself
+        if (product.name === bookedTourName) return false;
+        
+        // Filter for active tours only
+        if (product.status !== "ACTIVE") return false;
+
+        // Simple keyword matching for related tours
+        const bookedTourWords = bookedTourName.toLowerCase().split(" ");
+        const productWords = product.name.toLowerCase().split(" ");
+        
+        // Check if they share common words (excluding common words like "tour", "the", "and")
+        const commonWords = ["tour", "tours", "the", "and", "of", "in", "at", "to", "from", "with"];
+        const relevantBookedWords = bookedTourWords.filter(word => !commonWords.includes(word));
+        const relevantProductWords = productWords.filter(word => !commonWords.includes(word));
+        
+        const hasCommonWords = relevantBookedWords.some(word => 
+          relevantProductWords.some(productWord => 
+            productWord.includes(word) || word.includes(productWord)
+          )
+        );
+
+        return hasCommonWords;
+      })
+      .slice(0, 4); // Limit to 4 related tours
+
+    // If no related tours found, return random popular tours
+    if (relatedTours.length === 0) {
+      return allProducts
+        .filter((product) => product.status === "ACTIVE" && product.name !== bookedTourName)
+        .sort(() => Math.random() - 0.5)
+        .slice(0, 4);
+    }
+
+    return relatedTours;
+  };
+
+  const relatedTours = bookingDetails ? getRelatedTours(bookingDetails.productName) : [];
 
   useEffect(() => {
     if (orderNumber && transactionId) {
@@ -121,7 +177,7 @@ export default function BookingConfirmationPage() {
 
   return (
     <div className="min-h-screen bg-gray-50 py-8">
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Success Header */}
         <div className="text-center mb-8">
           <div className="inline-flex items-center justify-center w-16 h-16 bg-green-100 rounded-full mb-4">
@@ -135,246 +191,22 @@ export default function BookingConfirmationPage() {
           </p>
         </div>
 
-        {/* Confirmation Alert */}
-        <Alert className="mb-6 border-green-200 bg-green-50">
-          <CheckCircle className="h-4 w-4 text-green-600" />
-          <AlertTitle className="text-green-800">
-            Confirmation Email Sent
-          </AlertTitle>
-          <AlertDescription className="text-green-700">
-            A detailed confirmation email has been sent to{" "}
-            {bookingDetails.customerEmail}. Please check your inbox and spam
-            folder.
-          </AlertDescription>
-        </Alert>
-
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Main Booking Details */}
-          <div className="lg:col-span-2 space-y-6">
-            {/* Booking Information */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Calendar className="h-5 w-5" />
-                  Booking Details
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="text-sm font-medium text-gray-500">
-                      Tour
-                    </label>
-                    <p className="font-semibold">
-                      {bookingDetails.productName}
-                    </p>
-                  </div>
-                  <div>
-                    <label className="text-sm font-medium text-gray-500">
-                      Status
-                    </label>
-                    <div>
-                      <Badge
-                        variant="success"
-                        className="bg-green-100 text-green-800"
-                      >
-                        {bookingDetails.status}
-                      </Badge>
-                    </div>
-                  </div>
-                  <div>
-                    <label className="text-sm font-medium text-gray-500">
-                      Date
-                    </label>
-                    <p className="font-semibold">
-                      {new Date(bookingDetails.date).toLocaleDateString(
-                        "en-US",
-                        {
-                          weekday: "long",
-                          year: "numeric",
-                          month: "long",
-                          day: "numeric",
-                        }
-                      )}
-                    </p>
-                  </div>
-                  <div>
-                    <label className="text-sm font-medium text-gray-500">
-                      Time
-                    </label>
-                    <p className="font-semibold">{bookingDetails.time}</p>
-                  </div>
-                  <div>
-                    <label className="text-sm font-medium text-gray-500">
-                      Guests
-                    </label>
-                    <p className="font-semibold">
-                      {bookingDetails.guests} people
-                    </p>
-                  </div>
-                  {bookingDetails.pickupLocation && (
-                    <div>
-                      <label className="text-sm font-medium text-gray-500">
-                        Pickup Location
-                      </label>
-                      <p className="font-semibold">
-                        {bookingDetails.pickupLocation}
-                      </p>
-                    </div>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Important Information */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Important Information</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3 text-sm">
-                  <div className="flex items-start gap-2">
-                    <Clock className="h-4 w-4 text-coral-500 mt-0.5 flex-shrink-0" />
-                    <div>
-                      <p className="font-medium">Arrival Time</p>
-                      <p className="text-gray-600">
-                        Please arrive 15 minutes before your tour start time
-                      </p>
-                    </div>
-                  </div>
-                  {bookingDetails.pickupLocation && (
-                    <div className="flex items-start gap-2">
-                      <MapPin className="h-4 w-4 text-coral-500 mt-0.5 flex-shrink-0" />
-                      <div>
-                        <p className="font-medium">Pickup Details</p>
-                        <p className="text-gray-600">
-                          Pickup time and exact location details are in your
-                          confirmation email
-                        </p>
-                      </div>
-                    </div>
-                  )}
-                  <div className="flex items-start gap-2">
-                    <Users className="h-4 w-4 text-coral-500 mt-0.5 flex-shrink-0" />
-                    <div>
-                      <p className="font-medium">What to Bring</p>
-                      <p className="text-gray-600">
-                        Valid photo ID, comfortable walking shoes, and
-                        weather-appropriate clothing
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex items-start gap-2">
-                    <Mail className="h-4 w-4 text-coral-500 mt-0.5 flex-shrink-0" />
-                    <div>
-                      <p className="font-medium">Contact Information</p>
-                      <p className="text-gray-600">
-                        Check your email for emergency contact numbers and
-                        detailed instructions
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Actions */}
-            <div className="flex flex-col sm:flex-row gap-3">
-              <Button
-                onClick={handleDownloadConfirmation}
-                variant="outline"
-                className="flex items-center gap-2"
-              >
-                <Download className="h-4 w-4" />
-                Download Confirmation
-              </Button>
-              <Button
-                onClick={handleShareBooking}
-                variant="outline"
-                className="flex items-center gap-2"
-              >
-                <Share2 className="h-4 w-4" />
-                Share Booking
-              </Button>
-              <Button
-                onClick={() => (window.location.href = "/")}
-                className="flex-1"
-              >
-                Book Another Tour
-              </Button>
+        {/* Related Tours Section */}
+        {relatedTours.length > 0 && (
+          <div className="mt-16">
+            <div className="flex items-center justify-center gap-2 mb-6">
+              <Star className="h-5 w-5 text-brand-accent" />
+              <h3 className="text-lg font-semibold text-brand-primary">
+                You Might Also Love These Tours
+              </h3>
+            </div>
+            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+              {relatedTours.map((tour) => (
+                <DynamicTourCard key={tour.productCode} product={tour} />
+              ))}
             </div>
           </div>
-
-          {/* Sidebar */}
-          <div className="space-y-6">
-            {/* Confirmation Numbers */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">Confirmation Details</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <div>
-                  <label className="text-sm font-medium text-gray-500">
-                    Rezdy Order Number
-                  </label>
-                  <p className="font-mono font-bold text-lg">
-                    {bookingDetails.orderNumber}
-                  </p>
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-gray-500">
-                    Transaction ID
-                  </label>
-                  <p className="font-mono text-sm">
-                    {bookingDetails.transactionId}
-                  </p>
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-gray-500">
-                    Total Paid
-                  </label>
-                  <p className="font-bold text-xl">
-                    AUD ${bookingDetails.totalAmount.toFixed(2)}
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Support */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">Need Help?</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <div className="flex items-center gap-2 text-sm">
-                  <Phone className="h-4 w-4 text-coral-500" />
-                  <span>+61 2 9999 0000</span>
-                </div>
-                <div className="flex items-center gap-2 text-sm">
-                  <Mail className="h-4 w-4 text-coral-500" />
-                  <span>support@pineappletours.com</span>
-                </div>
-                <p className="text-xs text-gray-600">
-                  Our support team is available 24/7 to assist with your
-                  booking.
-                </p>
-              </CardContent>
-            </Card>
-
-            {/* Cancellation Policy */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">Cancellation Policy</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm text-gray-600">
-                  Free cancellation up to 24 hours before your tour. See your
-                  confirmation email for full terms and conditions.
-                </p>
-              </CardContent>
-            </Card>
-          </div>
-        </div>
+        )}
       </div>
     </div>
   );

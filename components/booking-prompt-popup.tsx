@@ -39,9 +39,9 @@ interface BookingPromptPopupProps {
   className?: string;
 }
 
-const INACTIVITY_TIMEOUT = 1000; // 30 seconds
+const INACTIVITY_TIMEOUT = 30000; // 30 seconds
 const SESSION_STORAGE_KEY = "pineapple_tours_popup_shown";
-const INITIAL_POPUP_DELAY = 1000; // 30 seconds delay on page load
+const INITIAL_POPUP_DELAY = 30000; // 30 seconds delay on page load
 
 // Session management utilities
 const sessionManager = {

@@ -100,7 +100,7 @@ export default function ToursPage() {
     location: searchParams.get("location") || "",
     limit: searchParams.get("limit") || "100",
     offset: searchParams.get("offset") || "0",
-    tourDate: searchParams.get("tourDate") || "",
+    tourDate: searchParams.get("tourDate") || searchParams.get("checkIn") || "",
     pickupLocation:
       searchParams.get("pickupLocation") ||
       searchParams.get("location") ||
@@ -355,7 +355,7 @@ export default function ToursPage() {
       location: searchParams.get("location") || "",
       limit: searchParams.get("limit") || "100",
       offset: searchParams.get("offset") || "0",
-      tourDate: searchParams.get("tourDate") || "",
+      tourDate: searchParams.get("tourDate") || searchParams.get("checkIn") || "",
       pickupLocation:
         searchParams.get("pickupLocation") ||
         searchParams.get("location") ||

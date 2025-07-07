@@ -112,17 +112,18 @@ export function FloatingCart() {
           onClick={handleCartClick}
           className={cn(
             "relative h-12 w-12 sm:h-14 sm:w-14 rounded-full shadow-lg hover:shadow-xl",
-            "bg-primary/90 hover:bg-primary backdrop-blur-sm transition-all duration-200",
+            "bg-accent/90 hover:bg-accent backdrop-blur-sm transition-all duration-200",
             "border-2 border-white/20"
           )}
           aria-label={`Shopping cart with ${itemCount} items`}
         >
-          <ShoppingCart className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
+          <ShoppingCart className="h-5 w-5 sm:h-6 sm:w-6 text-white transition-transform duration-200 hover:scale-110" />
           {itemCount > 0 && (
             <Badge
               className={cn(
                 "absolute -top-2 -right-2 h-5 w-5 sm:h-6 sm:w-6 flex items-center justify-center p-0 text-xs",
-                "bg-red-500 text-white border-2 border-white"
+                "bg-red-500 text-white border-2 border-white",
+                "animate-pulse"
               )}
             >
               {itemCount > 99 ? "99+" : itemCount}

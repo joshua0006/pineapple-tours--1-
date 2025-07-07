@@ -312,12 +312,14 @@ export default function TourDetailPage({
     // Get parameters from search form
     const participants = searchParams.get("participants");
     const tourDate = searchParams.get("tourDate");
+    const checkIn = searchParams.get("checkIn");
     const pickupLocation = searchParams.get("pickupLocation");
     const location = searchParams.get("location"); // Fallback for legacy URLs
 
     // Add parameters if they exist
     if (participants) params.append("adults", participants);
     if (tourDate) params.append("date", tourDate);
+    else if (checkIn) params.append("date", checkIn); // Use checkIn if tourDate not available
     if (pickupLocation) params.append("pickupLocation", pickupLocation);
     else if (location) params.append("pickupLocation", location); // Legacy fallback
 

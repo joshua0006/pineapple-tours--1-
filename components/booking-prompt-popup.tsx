@@ -39,9 +39,9 @@ interface BookingPromptPopupProps {
   className?: string;
 }
 
-const INACTIVITY_TIMEOUT = 30000; // 30 seconds
+const INACTIVITY_TIMEOUT = 1000; // 30 seconds
 const SESSION_STORAGE_KEY = "pineapple_tours_popup_shown";
-const INITIAL_POPUP_DELAY = 30000; // 30 seconds delay on page load
+const INITIAL_POPUP_DELAY = 1000; // 30 seconds delay on page load
 
 // Session management utilities
 const sessionManager = {
@@ -454,14 +454,7 @@ export function BookingPromptPopup({
               </div>
             </div>
 
-            {/* Subtle animation indicator */}
-            <div className="flex items-center gap-2 text-xs text-muted-foreground">
-              <Clock className="h-3 w-3" />
-              <span>Quick booking setup</span>
-              <Badge variant="secondary" className="text-xs">
-                2 min
-              </Badge>
-            </div>
+           
           </CardHeader>
 
           <CardContent className="space-y-6 pb-6">
@@ -535,17 +528,7 @@ export function BookingPromptPopup({
               </Button>
             </div>
 
-            {/* Trust indicators */}
-            <div className="flex items-center justify-center gap-4 pt-2 text-xs text-muted-foreground">
-              <span className="flex items-center gap-1">
-                <div className="h-2 w-2 rounded-full bg-brand-green-accent" />
-                Secure booking
-              </span>
-              <span className="flex items-center gap-1">
-                <div className="h-2 w-2 rounded-full bg-brand-accent" />
-                Free cancellation
-              </span>
-            </div>
+           
           </CardContent>
         </Card>
       </div>

@@ -97,13 +97,13 @@ export const metadata = {
   },
   icons: {
     icon: [
-      { url: "/pineapple-tour-logo.png", sizes: "16x16", type: "image/png" },
-      { url: "/pineapple-tour-logo.png", sizes: "32x32", type: "image/png" },
-      { url: "/pineapple-tour-logo.png", sizes: "any" },
+      { url: "/cropped-114x114-1-32x32.png", sizes: "16x16", type: "image/png" },
+      { url: "/cropped-114x114-1-32x32.png", sizes: "32x32", type: "image/png" },
+      { url: "/cropped-114x114-1-32x32.png", sizes: "any" },
     ],
     apple: [
       {
-        url: "/pineapple-tour-logo.png",
+        url: "/cropped-114x114-1-32x32.png",
         sizes: "180x180",
         type: "image/png",
       },
@@ -111,13 +111,13 @@ export const metadata = {
     other: [
       {
         rel: "android-chrome",
-        url: "/pineapple-tour-logo.png",
+        url: "/cropped-114x114-1-32x32.png",
         sizes: "192x192",
         type: "image/png",
       },
       {
         rel: "android-chrome",
-        url: "/pineapple-tour-logo.png",
+        url: "/cropped-114x114-1-32x32.png",
         sizes: "512x512",
         type: "image/png",
       },

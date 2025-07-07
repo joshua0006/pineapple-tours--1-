@@ -13,6 +13,8 @@ interface BookingPageProps {
     infants?: string;
     extras?: string;
     date?: string;
+    checkIn?: string;
+    checkOut?: string;
     location?: string;
     pickupLocation?: string;
   }>;
@@ -156,7 +158,7 @@ export default async function BookingPage({
         preSelectedParticipants={preSelectedParticipants}
         preSelectedExtras={preSelectedExtras}
         preSelectedSession={preSelectedSession}
-        preSelectedDate={searchParamsData.date}
+        preSelectedDate={searchParamsData.date || searchParamsData.checkIn}
         preSelectedSessionId={searchParamsData.sessionId}
         preSelectedLocation={
           searchParamsData.pickupLocation || searchParamsData.location

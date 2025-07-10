@@ -175,24 +175,74 @@ export default function CategoryPage({
       ? filterProductsByCategory(allProducts, categoryConfig)
       : [];
 
-  // Apply search filter
-  const searchFilteredProducts = categoryFilteredProducts.filter((product) => {
-    if (!searchQuery.trim()) return true;
+  // Apply search filter with relevance scoring
+  const searchFilteredProducts = categoryFilteredProducts
+    .filter((product) => {
+      if (!searchQuery.trim()) return true;
 
-    const searchText = `${product.name} ${product.shortDescription || ""} ${
-      product.description || ""
-    } ${product.locationAddress || ""}`.toLowerCase();
-    const queryTerms = searchQuery
-      .toLowerCase()
-      .split(" ")
-      .filter((term) => term.length > 0);
+      const searchText = `${product.name} ${product.shortDescription || ""} ${
+        product.description || ""
+      } ${product.locationAddress || ""}`.toLowerCase();
+      const queryTerms = searchQuery
+        .toLowerCase()
+        .split(" ")
+        .filter((term) => term.length > 0);
 
-    // Check if all query terms are found in the search text
-    return queryTerms.every((term) => searchText.includes(term));
-  });
+      // Check if all query terms are found in the search text
+      return queryTerms.every((term) => searchText.includes(term));
+    })
+    .map((product) => {
+      // Calculate relevance score for sorting
+      let relevanceScore = 0;
+      
+      if (searchQuery.trim()) {
+        const productName = product.name.toLowerCase();
+        const queryTerms = searchQuery
+          .toLowerCase()
+          .split(" ")
+          .filter((term) => term.length > 0);
 
-  // Sort products
+        // Check for exact name match (highest priority)
+        if (queryTerms.every((term) => productName.includes(term))) {
+          relevanceScore += 1000;
+          
+          // Bonus for exact phrase match
+          if (productName.includes(searchQuery.toLowerCase())) {
+            relevanceScore += 500;
+          }
+        }
+
+        // Check for partial name matches
+        queryTerms.forEach((term) => {
+          if (productName.includes(term)) {
+            relevanceScore += 100;
+          }
+        });
+
+        // Lower score for description/location matches
+        const descriptionText = `${product.shortDescription || ""} ${
+          product.description || ""
+        } ${product.locationAddress || ""}`.toLowerCase();
+        
+        queryTerms.forEach((term) => {
+          if (descriptionText.includes(term) && !productName.includes(term)) {
+            relevanceScore += 10;
+          }
+        });
+      }
+
+      return { ...product, relevanceScore };
+    });
+
+  // Sort products with relevance prioritization
   const sortedProducts = [...searchFilteredProducts].sort((a, b) => {
+    // If there's a search query, prioritize by relevance first
+    if (searchQuery.trim()) {
+      const relevanceDiff = b.relevanceScore - a.relevanceScore;
+      if (relevanceDiff !== 0) return relevanceDiff;
+    }
+
+    // Apply secondary sorting based on user selection
     switch (sortBy) {
       case "price-low":
         return (a.advertisedPrice || 0) - (b.advertisedPrice || 0);

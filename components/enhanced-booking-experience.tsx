@@ -1372,19 +1372,6 @@ export function EnhancedBookingExperience({
               </CardContent>
             </Card>
 
-            {/* Optional Extras */}
-            {product.extras && product.extras.length > 0 && (
-              <ExtrasSelector
-                extras={product.extras}
-                selectedExtras={selectedExtras}
-                onExtrasChange={setSelectedExtras}
-                guestCount={
-                  guestCounts.adults +
-                  guestCounts.children +
-                  guestCounts.infants
-                }
-              />
-            )}
 
             {/* Guest Details Validation */}
             {guests.length > 0 &&
@@ -1601,6 +1588,20 @@ export function EnhancedBookingExperience({
                   breakdown={pricingBreakdown}
                   product={product}
                   showDetails={true}
+                />
+              )}
+
+              {/* Optional Extras */}
+              {product.extras && product.extras.length > 0 && (
+                <ExtrasSelector
+                  extras={product.extras}
+                  selectedExtras={selectedExtras}
+                  onExtrasChange={setSelectedExtras}
+                  guestCount={
+                    guestCounts.adults +
+                    guestCounts.children +
+                    guestCounts.infants
+                  }
                 />
               )}
 

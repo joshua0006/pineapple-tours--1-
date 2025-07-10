@@ -380,30 +380,13 @@ export function ExtrasSelector({
           <Badge variant="secondary" className="text-xs">
             {localSelectedExtras.length} selected
           </Badge>
-          {localSelectedExtras.length > 0 && (
-            <Badge
-              variant="outline"
-              className="text-xs bg-green-50 text-green-700 border-green-200"
-            >
-              +
-              {formatCurrency(
-                localSelectedExtras.reduce(
-                  (total, { extra, quantity }) =>
-                    total + calculateExtraPrice(extra, quantity),
-                  0
-                )
-              )}
-            </Badge>
-          )}
+          
         </CardTitle>
         <p className="text-sm text-muted-foreground">
-          Enhance your experience with these optional add-ons. Click the info
-          button for detailed information.
-          {localSelectedExtras.length > 0 &&
-            " Your selected extras will be added to the total booking cost."}
+          Enhance your experience with these optional add-ons. Click the info button for detailed information.
         </p>
       </CardHeader>
-      <CardContent className="space-y-4">
+      <CardContent className="space-y-3">
         <Fragment>
           {availableExtras.map((extra, index) => {
             const selectedQuantity = getSelectedQuantity(extra);
@@ -412,156 +395,141 @@ export function ExtrasSelector({
             const minQuantity = extra.minQuantity || 0;
 
             return (
-              <Card
-                key={`extra-card-${
-                  extra.id && extra.id !== "undefined" ? extra.id : "noid"
-                }-${index}`}
-                className={cn(
-                  "transition-all duration-200",
-                  selectedQuantity > 0
-                    ? "ring-2 ring-brand-accent bg-brand-accent/5 border-brand-accent/20"
-                    : "hover:bg-gray-50 hover:shadow-sm"
-                )}
-              >
-                <CardContent className="p-4">
-                  <div className="flex items-start gap-4">
-                    {/* Optional Extra Image */}
-                    {extra.image && (
-                      <div className="relative w-16 h-16 rounded-lg overflow-hidden bg-gray-100 flex-shrink-0">
-                        <Image
-                          src={
-                            extra.image.thumbnailUrl ||
-                            extra.image.itemUrl ||
-                            "/placeholder.svg"
-                          }
-                          alt={extra.image.caption || extra.name}
-                          fill
-                          className="object-cover"
-                          sizes="64px"
-                        />
-                      </div>
-                    )}
+              <div key={`extra-card-${extra.id && extra.id !== "undefined" ? extra.id : "noid"}-${index}`}>
+                <Card
+                  className={cn(
+                    "transition-all duration-200 hover:shadow-md",
+                    selectedQuantity > 0
+                      ? "ring-2 ring-brand-accent bg-brand-accent/5 border-brand-accent/20"
+                      : "hover:bg-gray-50 border-gray-200"
+                  )}
+                >
+                  <CardContent className="p-3">
+                    <div className="flex items-center gap-3">
+                      {/* Optional Extra Image */}
+                      {extra.image ? (
+                        <div className="relative w-12 h-12 rounded-lg overflow-hidden bg-gray-100 flex-shrink-0">
+                          <Image
+                            src={
+                              extra.image.thumbnailUrl ||
+                              extra.image.itemUrl ||
+                              "/placeholder.svg"
+                            }
+                            alt={extra.image.caption || extra.name}
+                            fill
+                            className="object-cover"
+                            sizes="48px"
+                          />
+                        </div>
+                      ) : (
+                        <div className="w-12 h-12 rounded-lg bg-gray-100 flex items-center justify-center flex-shrink-0">
+                          <ShoppingBag className="h-5 w-5 text-gray-400" />
+                        </div>
+                      )}
 
-                    {/* Extra Details */}
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-start justify-between mb-2">
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2 mb-1">
-                            <h4 className="font-medium text-gray-900 flex items-center gap-2">
+                      {/* Extra Details */}
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-start justify-between">
+                          <div className="flex-1 min-w-0">
+                            <h4 className="font-medium text-sm truncate flex items-center gap-1">
                               {extra.name}
                               {extra.isRequired && (
-                                <Badge
-                                  variant="destructive"
-                                  className="text-xs"
-                                >
+                                <Badge variant="destructive" className="text-xs px-1 py-0">
                                   Required
                                 </Badge>
                               )}
                             </h4>
-                          </div>
-
-                          {extra.category && (
-                            <Badge variant="outline" className="text-xs mb-2">
-                              {extra.category}
-                            </Badge>
-                          )}
-
-                          {extra.description && (
-                            <p className="text-sm text-gray-600 mt-1 line-clamp-2">
-                              {extra.description}
-                            </p>
-                          )}
-                        </div>
-                        <div className="text-right ml-4">
-                          <div className="font-medium text-gray-900">
-                            {getPriceDisplayText(extra)}
-                          </div>
-                          {selectedQuantity > 0 && (
-                            <div className="text-sm text-green-600 font-medium">
-                              Total: {formatCurrency(totalPrice)}
+                            <div className="flex items-center gap-2 mt-1">
+                              <span className="text-sm font-medium text-brand-accent">
+                                {getPriceDisplayText(extra)}
+                              </span>
+                              {selectedQuantity > 0 && (
+                                <Badge variant="outline" className="text-xs px-1 py-0">
+                                  {selectedQuantity}x
+                                </Badge>
+                              )}
                             </div>
-                          )}
-                        </div>
-                      </div>
-
-                      {/* Quantity Controls */}
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={(e) => {
-                              e.preventDefault();
-                              e.stopPropagation();
-                              handleQuantityChange(extra, selectedQuantity - 1);
-                            }}
-                            disabled={selectedQuantity <= minQuantity}
-                            className="h-8 w-8 p-0"
-                          >
-                            <Minus className="h-4 w-4" />
-                          </Button>
-
-                          <span className="font-medium min-w-[2rem] text-center">
-                            {selectedQuantity}
-                          </span>
-
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={(e) => {
-                              e.preventDefault();
-                              e.stopPropagation();
-                              handleQuantityChange(extra, selectedQuantity + 1);
-                            }}
-                            disabled={selectedQuantity >= maxQuantity}
-                            className="h-8 w-8 p-0"
-                          >
-                            <Plus className="h-4 w-4" />
-                          </Button>
-                        </div>
-
-                        <div className="flex items-center gap-2">
-                          {(extra.maxQuantity || extra.minQuantity) && (
-                            <div className="text-xs text-gray-500">
-                              {extra.minQuantity && extra.maxQuantity
-                                ? `${extra.minQuantity}-${extra.maxQuantity} allowed`
-                                : extra.maxQuantity
-                                ? `Max ${extra.maxQuantity}`
-                                : `Min ${extra.minQuantity}`}
-                            </div>
-                          )}
-
-                          <Dialog>
-                            <DialogTrigger asChild>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                className="text-xs text-brand-accent hover:text-brand-accent/80 hover:bg-brand-accent/10"
-                              >
-                                <Eye className="h-3 w-3 mr-1" />
+                          </div>
+                          <div className="text-right ml-2">
+                            {selectedQuantity > 0 ? (
+                              <div>
+                               
+                              </div>
+                            ) : (
+                              <div className="flex items-center gap-1 text-xs text-gray-500">
+                                <Info className="h-3 w-3" />
                                 View Details
-                              </Button>
-                            </DialogTrigger>
-                            <ExtraDetailModal
-                              extra={extra}
-                              guestCount={guestCount}
-                              selectedQuantity={selectedQuantity}
-                              onQuantityChange={(quantity) =>
-                                handleQuantityChange(extra, quantity)
-                              }
-                              calculatePrice={calculateExtraPrice}
-                              getPriceDisplayText={getPriceDisplayText}
-                            />
-                          </Dialog>
+                              </div>
+                            )}
+                          </div>
                         </div>
                       </div>
                     </div>
-                  </div>
-                </CardContent>
-              </Card>
-            );
-          })}
-        </Fragment>
+
+                    {/* Quantity Controls */}
+                    <div className="flex items-center justify-between mt-3 pt-2 border-t border-gray-100">
+                      <div className="flex items-center gap-3">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            handleQuantityChange(extra, selectedQuantity - 1);
+                          }}
+                          disabled={selectedQuantity <= minQuantity}
+                          className="h-8 w-8 p-0"
+                        >
+                          <Minus className="h-4 w-4" />
+                        </Button>
+
+                        <span className="text-sm font-medium min-w-[2rem] text-center">
+                          {selectedQuantity}
+                        </span>
+
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            handleQuantityChange(extra, selectedQuantity + 1);
+                          }}
+                          disabled={selectedQuantity >= maxQuantity}
+                          className="h-8 w-8 p-0"
+                        >
+                          <Plus className="h-4 w-4" />
+                        </Button>
+                      </div>
+                      <Dialog>
+                        <DialogTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="text-xs text-brand-accent hover:text-brand-accent/80 hover:bg-brand-accent/10 px-2 py-1"
+                          >
+                          
+                            Click for more details
+                          </Button>
+                        </DialogTrigger>
+                        <ExtraDetailModal
+                          extra={extra}
+                          guestCount={guestCount}
+                          selectedQuantity={selectedQuantity}
+                          onQuantityChange={(quantity) =>
+                            handleQuantityChange(extra, quantity)
+                          }
+                          calculatePrice={calculateExtraPrice}
+                          getPriceDisplayText={getPriceDisplayText}
+                        />
+                      </Dialog>
+                    </div>
+                                      </CardContent>
+                  </Card>
+                </div>
+              );
+            })}
+          </Fragment>
       </CardContent>
     </Card>
   );

@@ -1431,26 +1431,7 @@ export function EnhancedBookingExperience({
                                         </div>
                                       </div>
                                     </div>
-                                    <div className="text-right space-y-1">
-                                      <div className="text-2xl font-bold text-brand-accent">
-                                        {formatCurrency(
-                                          session.totalPrice ||
-                                            product.advertisedPrice ||
-                                            0
-                                        )}
-                                      </div>
-                                      <div className="text-sm text-muted-foreground">
-                                        per adult
-                                      </div>
-                                      <div className="flex flex-col gap-1">
-                                        {typeof session.id === "string" &&
-                                        session.id.startsWith("mock-") ? (
-                                          <div className="inline-flex items-center px-2 py-1 text-xs bg-brand-accent/10 text-brand-accent rounded-full">
-                                            Demo
-                                          </div>
-                                        ) : null}
-                                      </div>
-                                    </div>
+                                   
                                   </div>
                                 </CardContent>
                               </Card>
@@ -1791,6 +1772,7 @@ export function EnhancedBookingExperience({
               {selectedSession && (
                 <PricingDisplay
                   breakdown={pricingBreakdown}
+                  product={product}
                   showDetails={true}
                 />
               )}

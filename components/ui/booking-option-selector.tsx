@@ -410,11 +410,6 @@ export function BookingOptionSelector({
                             )?.name
                           }
                         </span>
-                        {dropdownState.option && showPricing && (
-                          <div className="text-sm text-coral-600 font-medium">
-                            {formatPrice(dropdownState.option.price)} per person
-                          </div>
-                        )}
                       </div>
                       <CheckCircle2 className="w-4 h-4 text-green-600" />
                     </>
@@ -473,11 +468,6 @@ export function BookingOptionSelector({
                               : ""}{" "}
                             available
                           </div>
-                          {showPricing && region.options[0] && (
-                            <div className="text-sm text-coral-600 font-medium mt-1">
-                              {formatPrice(region.options[0].price)} per person
-                            </div>
-                          )}
                         </div>
                       </div>
                     </button>

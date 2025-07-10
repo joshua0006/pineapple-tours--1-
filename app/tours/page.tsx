@@ -44,29 +44,14 @@ import { ErrorState } from "@/components/error-state";
 import { useAllProducts } from "@/hooks/use-all-products";
 import { useCityProducts } from "@/hooks/use-city-products";
 import { useBookingPrompt } from "@/hooks/use-booking-prompt";
-import {
-  getSearchCategories,
-  getCategoryDisplayName,
-  doesProductMatchCategory,
-} from "@/lib/constants/categories";
 import { RezdyProduct } from "@/lib/types/rezdy";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
 
 // Static pickup locations (matching search form)
 const STATIC_PICKUP_LOCATIONS = ["Brisbane", "Gold Coast", "Mount Tamborine"];
 
 interface Filters {
   query: string;
-  category: string;
-  priceRange: string;
   participants: string;
-  sortBy: string;
   checkIn: string;
   checkOut: string;
   city: string;
@@ -81,19 +66,12 @@ export default function ToursPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  // Get city data for the dropdown
-  const { cities, loading: citiesLoading } = useCityProducts();
 
-  // Get search categories for the dropdown
-  const searchCategories = getSearchCategories();
 
   // Local filter state
   const [filters, setFilters] = useState<Filters>({
     query: searchParams.get("query") || "",
-    category: searchParams.get("category") || "all",
-    priceRange: searchParams.get("priceRange") || "all",
     participants: searchParams.get("participants") || "2",
-    sortBy: searchParams.get("sortBy") || "relevance",
     checkIn: searchParams.get("checkIn") || "",
     checkOut: searchParams.get("checkOut") || "",
     city: searchParams.get("city") || "",
@@ -108,7 +86,6 @@ export default function ToursPage() {
   });
 
   const [localQuery, setLocalQuery] = useState(filters.query);
-  const [isFilterOpen, setIsFilterOpen] = useState(false);
 
   // Get booking prompt data
   const { promptData, hasPromptData } = useBookingPrompt();
@@ -121,8 +98,7 @@ export default function ToursPage() {
       (searchParams.get("checkIn") && promptData?.bookingDate));
 
   // Fetch the entire catalogue (cached) once; we will paginate client-side
-  const { products, loading, error, refreshProducts, totalCount, isCached } =
-    useAllProducts();
+  const { products, loading, error, refreshProducts } = useAllProducts();
 
   // Client-side filtering and sorting (applied to current page of server-side paginated data)
   const {
@@ -155,40 +131,6 @@ export default function ToursPage() {
       );
     }
 
-    // Category filter
-    if (filters.category !== "all") {
-      filtered = filtered.filter((product) =>
-        doesProductMatchCategory(product, filters.category)
-      );
-    }
-
-    // Price range filter
-    if (filters.priceRange !== "all") {
-      switch (filters.priceRange) {
-        case "under-99":
-          filtered = filtered.filter(
-            (product) => (product.advertisedPrice || 0) < 99
-          );
-          break;
-        case "99-159":
-          filtered = filtered.filter((product) => {
-            const price = product.advertisedPrice || 0;
-            return price >= 99 && price <= 159;
-          });
-          break;
-        case "159-299":
-          filtered = filtered.filter((product) => {
-            const price = product.advertisedPrice || 0;
-            return price >= 159 && price <= 299;
-          });
-          break;
-        case "over-299":
-          filtered = filtered.filter(
-            (product) => (product.advertisedPrice || 0) > 299
-          );
-          break;
-      }
-    }
 
     // Pickup Location filter - Enhanced to look for "from" keyword and location patterns
     if (filters.pickupLocation !== "all") {
@@ -296,29 +238,6 @@ export default function ToursPage() {
       // You could add specific capacity checks here if available in product data
     }
 
-    // Sorting
-    switch (filters.sortBy) {
-      case "name":
-        filtered.sort((a, b) => a.name.localeCompare(b.name));
-        break;
-      case "price-low":
-        filtered.sort(
-          (a, b) => (a.advertisedPrice || 0) - (b.advertisedPrice || 0)
-        );
-        break;
-      case "price-high":
-        filtered.sort(
-          (a, b) => (b.advertisedPrice || 0) - (a.advertisedPrice || 0)
-        );
-        break;
-      case "newest":
-        // Sort by productCode as a proxy for newest (if no dateCreated)
-        filtered.sort((a, b) => b.productCode.localeCompare(a.productCode));
-        break;
-      default:
-        // Relevance - keep original order
-        break;
-    }
 
     // --- Client-side pagination ---
     const limit = parseInt(filters.limit) || 100;
@@ -345,10 +264,7 @@ export default function ToursPage() {
   useEffect(() => {
     const urlFilters: Filters = {
       query: searchParams.get("query") || "",
-      category: searchParams.get("category") || "all",
-      priceRange: searchParams.get("priceRange") || "all",
       participants: searchParams.get("participants") || "2",
-      sortBy: searchParams.get("sortBy") || "relevance",
       checkIn: searchParams.get("checkIn") || "",
       checkOut: searchParams.get("checkOut") || "",
       city: searchParams.get("city") || "",
@@ -399,10 +315,7 @@ export default function ToursPage() {
   const clearFilter = (key: keyof Filters) => {
     const defaultValues: Record<keyof Filters, string> = {
       query: "",
-      category: "all",
-      priceRange: "all",
       participants: "2",
-      sortBy: "relevance",
       checkIn: "",
       checkOut: "",
       city: "",
@@ -418,10 +331,7 @@ export default function ToursPage() {
   const clearSearch = () => {
     setFilters({
       query: "",
-      category: "all",
-      priceRange: "all",
       participants: "2",
-      sortBy: "relevance",
       checkIn: "",
       checkOut: "",
       city: "",
@@ -446,8 +356,6 @@ export default function ToursPage() {
   // Computed values
   const hasActiveFilters =
     filters.query !== "" ||
-    filters.category !== "all" ||
-    filters.priceRange !== "all" ||
     filters.checkIn !== "" ||
     filters.checkOut !== "" ||
     filters.city !== "" ||
@@ -457,21 +365,6 @@ export default function ToursPage() {
 
   const hasResults = filteredProducts.length > 0;
 
-  const getFilterDisplayName = (key: string, value: string) => {
-    const displayNames: Record<string, Record<string, string>> = {
-      category: Object.fromEntries(
-        searchCategories.map((cat) => [cat.id, cat.title])
-      ),
-      priceRange: {
-        "under-99": "Under $99",
-        "99-159": "$99 - $159",
-        "159-299": "$159 - $299",
-        "over-299": "Over $299",
-      },
-    };
-
-    return displayNames[key]?.[value] || value;
-  };
 
   // Keep the URL in sync with the current filters so the page is shareable / bookmarkable
   useEffect(() => {
@@ -597,8 +490,7 @@ export default function ToursPage() {
                             // Skip internal pagination and default values
                             if (
                               key === "limit" ||
-                              key === "offset" ||
-                              key === "sortBy"
+                              key === "offset"
                             )
                               return false;
                             if (key === "checkIn" || key === "checkOut")
@@ -701,41 +593,6 @@ export default function ToursPage() {
                         </button>
                       </Badge>
                     )}
-                    {filters.category !== "all" && (
-                      <Badge
-                        variant="secondary"
-                        className="flex items-center gap-1 px-3 py-1 rounded-full"
-                      >
-                        <span>
-                          {getFilterDisplayName("category", filters.category)}
-                        </span>
-                        <button
-                          onClick={() => clearFilter("category")}
-                          className="ml-1 hover:text-destructive"
-                        >
-                          <X className="h-3 w-3" />
-                        </button>
-                      </Badge>
-                    )}
-                    {filters.priceRange !== "all" && (
-                      <Badge
-                        variant="secondary"
-                        className="flex items-center gap-1 px-3 py-1 rounded-full"
-                      >
-                        <span>
-                          {getFilterDisplayName(
-                            "priceRange",
-                            filters.priceRange
-                          )}
-                        </span>
-                        <button
-                          onClick={() => clearFilter("priceRange")}
-                          className="ml-1 hover:text-destructive"
-                        >
-                          <X className="h-3 w-3" />
-                        </button>
-                      </Badge>
-                    )}
                   </div>
                 )}
 
@@ -828,87 +685,6 @@ export default function ToursPage() {
                     </Select>
                   </div>
 
-                  {/* Category Filter */}
-                  <div className="space-y-2">
-                    <Label className="text-sm font-medium text-muted-foreground">
-                      Category
-                    </Label>
-                    <Select
-                      value={filters.category}
-                      onValueChange={(value) => updateFilter("category", value)}
-                    >
-                      <SelectTrigger className="w-full h-10">
-                        <div className="flex items-center gap-2">
-                          <Filter className="h-4 w-4 text-muted-foreground" />
-                          <SelectValue placeholder="All Categories" />
-                        </div>
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="all">All Categories</SelectItem>
-                        {searchCategories.map((category) => (
-                          <SelectItem key={category.id} value={category.id}>
-                            {category.title}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  {/* Price Range Filter */}
-                  <div className="space-y-2">
-                    <Label className="text-sm font-medium text-muted-foreground">
-                      Price Range
-                    </Label>
-                    <Select
-                      value={filters.priceRange}
-                      onValueChange={(value) =>
-                        updateFilter("priceRange", value)
-                      }
-                    >
-                      <SelectTrigger className="w-full h-10">
-                        <div className="flex items-center gap-2">
-                          <span className="text-muted-foreground">$</span>
-                          <SelectValue placeholder="All Prices" />
-                        </div>
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="all">All Prices</SelectItem>
-                        <SelectItem value="under-99">Under $99</SelectItem>
-                        <SelectItem value="99-159">$99 - $159</SelectItem>
-                        <SelectItem value="159-299">$159 - $299</SelectItem>
-                        <SelectItem value="over-299">Over $299</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  {/* Sort By Filter */}
-                  <div className="space-y-2">
-                    <Label className="text-sm font-medium text-muted-foreground">
-                      Sort By
-                    </Label>
-                    <Select
-                      value={filters.sortBy}
-                      onValueChange={(value) => updateFilter("sortBy", value)}
-                    >
-                      <SelectTrigger className="w-full h-10">
-                        <div className="flex items-center gap-2">
-                          <ArrowLeft className="h-4 w-4 text-muted-foreground rotate-90" />
-                          <SelectValue placeholder="Relevance" />
-                        </div>
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="relevance">Relevance</SelectItem>
-                        <SelectItem value="name">Name A-Z</SelectItem>
-                        <SelectItem value="price-low">
-                          Price: Low to High
-                        </SelectItem>
-                        <SelectItem value="price-high">
-                          Price: High to Low
-                        </SelectItem>
-                        <SelectItem value="newest">Newest First</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
                 </div>
               </div>
             </div>

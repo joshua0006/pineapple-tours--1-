@@ -10,6 +10,17 @@ export interface RezdyAddress {
   longitude?: number;
 }
 
+export interface RezdyTax {
+  supplierId: number;
+  label: string;
+  taxFeeType: "TAX" | "FEE";
+  taxType: "PERCENT" | "FIXED";
+  taxPercent?: number;
+  taxAmount?: number;
+  priceInclusive: boolean;
+  compound: boolean;
+}
+
 export interface RezdyExtra {
   id: string;
   name: string;
@@ -40,6 +51,7 @@ export interface RezdyProduct {
   status?: string;
   categories?: string[];
   extras?: RezdyExtra[];
+  taxes?: RezdyTax[];
 }
 
 export interface RezdyImage {

@@ -5,6 +5,17 @@ const REZDY_BASE_URL = 'https://api.rezdy.com/v1';
 const API_KEY = process.env.REZDY_API_KEY;
 const RATE_LIMIT_DELAY = 600; // 600ms delay between requests (100 calls per minute limit)
 
+interface RezdyTax {
+  supplierId: number;
+  label: string;
+  taxFeeType: "TAX" | "FEE";
+  taxType: "PERCENT" | "FIXED";
+  taxPercent?: number;
+  taxAmount?: number;
+  priceInclusive: boolean;
+  compound: boolean;
+}
+
 interface RezdyProduct {
   productCode: string;
   name: string;
@@ -37,6 +48,7 @@ interface RezdyProduct {
   dateUpdated?: string;
   tags?: string[];
   categories?: string[];
+  taxes?: RezdyTax[];
 }
 
 interface RezdyApiResponse {
@@ -197,6 +209,7 @@ export async function GET(request: NextRequest) {
       status: 'ACTIVE',
       categories: product.categories || [],
       extras: [],
+      taxes: product.taxes || [],
     }));
 
     // Cache the results with a longer TTL for all products (24 hours)

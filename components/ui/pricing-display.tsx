@@ -17,9 +17,11 @@ import {
   getFeeBreakdown,
   getDiscountInfo,
 } from "@/lib/utils/pricing-utils";
+import { RezdyProduct } from "@/lib/types/rezdy";
 
 interface PricingDisplayProps {
   breakdown: PricingBreakdown;
+  product?: RezdyProduct;
   showDetails?: boolean;
   compact?: boolean;
   className?: string;
@@ -27,12 +29,13 @@ interface PricingDisplayProps {
 
 export function PricingDisplay({
   breakdown,
+  product,
   showDetails = false,
   compact = false,
   className = "",
 }: PricingDisplayProps) {
   const discountInfo = getDiscountInfo(breakdown);
-  const taxBreakdown = getTaxBreakdown(breakdown.subtotal);
+  const taxBreakdown = getTaxBreakdown(breakdown.subtotal, product);
   const feeBreakdown = getFeeBreakdown(breakdown.subtotal);
 
   if (compact) {
@@ -186,81 +189,29 @@ export function PricingDisplay({
        
 
         <div className="flex justify-between font-medium">
-          <span>Tour Subtotal</span>
+          <span>Subtotal</span>
           <span>{formatCurrency(breakdown.subtotal)}</span>
         </div>
 
         {breakdown.extrasSubtotal > 0 && (
-          <div className="flex justify-between font-medium">
+          <div className="flex justify-between font-medium text-sm">
             <span>Extras Subtotal</span>
             <span>{formatCurrency(breakdown.extrasSubtotal)}</span>
           </div>
         )}
 
         <div className="flex justify-between text-muted-foreground">
-          <div className="flex items-center gap-1">
-            <span>Taxes</span>
-            {showDetails && (
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button variant="ghost" size="sm" className="h-4 w-4 p-0">
-                    <Calculator className="h-3 w-3" />
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-64">
-                  <div className="space-y-2">
-                    <h4 className="font-medium">Tax Details</h4>
-                    {taxBreakdown.map((tax, idx) => (
-                      <div key={`${tax.name}-${idx}`} className="space-y-1">
-                        <div className="flex justify-between text-sm">
-                          <span>{tax.name}</span>
-                          <span>{formatCurrency(tax.amount)}</span>
-                        </div>
-                        {tax.description && (
-                          <p className="text-xs text-muted-foreground">
-                            {tax.description}
-                          </p>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                </PopoverContent>
-              </Popover>
-            )}
+          <div className="flex items-center gap-1 text-sm">
+            <span>Inclusive of taxes & fees</span>
+         
           </div>
           <span>{formatCurrency(breakdown.taxes)}</span>
         </div>
 
         <div className="flex justify-between text-muted-foreground">
-          <div className="flex items-center gap-1">
-            <span>Service fees</span>
-            {showDetails && (
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button variant="ghost" size="sm" className="h-4 w-4 p-0">
-                    <Calculator className="h-3 w-3" />
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-64">
-                  <div className="space-y-2">
-                    <h4 className="font-medium">Fee Details</h4>
-                    {feeBreakdown.map((fee, idx) => (
-                      <div key={`${fee.name}-${idx}`} className="space-y-1">
-                        <div className="flex justify-between text-sm">
-                          <span>{fee.name}</span>
-                          <span>{formatCurrency(fee.amount)}</span>
-                        </div>
-                        {fee.description && (
-                          <p className="text-xs text-muted-foreground">
-                            {fee.description}
-                          </p>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                </PopoverContent>
-              </Popover>
-            )}
+          <div className="flex items-center gap-1 text-sm">
+            <span>Credit Card Surcharge 1.9%</span>
+          
           </div>
           <span>{formatCurrency(breakdown.serviceFees)}</span>
         </div>

@@ -37,7 +37,7 @@ interface BookingPromptPopupProps {
   onStartBooking?: (data: BookingPromptData) => void;
   onDismiss?: () => void;
   className?: string;
-}
+} 
 
 const INACTIVITY_TIMEOUT = 30000; // 30 seconds
 const SESSION_STORAGE_KEY = "pineapple_tours_popup_shown";
@@ -427,8 +427,8 @@ export function BookingPromptPopup({
             <X className="h-4 w-4" />
           </Button>
 
-          <CardHeader className="pb-4 pt-6">
-            <div className="flex items-center gap-3 mb-2">
+          <CardHeader className="pt-6">
+            <div className="flex items-center gap-3 ">
               <div className="flex items-center justify-center rounded-full">
                 <Image
                   src="/pineapple-tour-logo.png"
@@ -443,14 +443,9 @@ export function BookingPromptPopup({
                   id="booking-prompt-title"
                   className="text-lg font-semibold"
                 >
-                  Ready to explore paradise?
+                  Welcome to Pineapple Tours
                 </CardTitle>
-                <p
-                  id="booking-prompt-description"
-                  className="text-sm text-muted-foreground mt-1"
-                >
-                  Let's plan your perfect tropical getaway
-                </p>
+             
               </div>
             </div>
 
@@ -458,15 +453,19 @@ export function BookingPromptPopup({
           </CardHeader>
 
           <CardContent className="space-y-6 pb-6">
-            {/* Group Size Selection */}
-            <div className="space-y-3">
-              <Label
-                htmlFor="group-size"
-                className="text-sm font-medium flex items-center gap-2"
-              >
-                <Users className="h-4 w-4" />
-                How many participants?
-              </Label>
+            {/* Find a Tour Section */}
+            <div className="space-y-4">
+              <h3 className="text-red-600 font-semibold text-3xl">Find a Tour</h3>
+              
+              {/* Group Size Selection */}
+              <div className="space-y-3">
+                <Label
+                  htmlFor="group-size"
+                  className="text-sm font-medium flex items-center gap-2"
+                >
+                  <Users className="h-4 w-4" />
+                  How many participants?
+                </Label>
               <Select
                 value={groupSize.toString()}
                 onValueChange={(value) => setGroupSize(Number(value))}
@@ -482,14 +481,18 @@ export function BookingPromptPopup({
                   ))}
                 </SelectContent>
               </Select>
+              </div>
             </div>
 
-            {/* Date Selection */}
-            <div className="space-y-3">
-              <Label className="text-sm font-medium flex items-center gap-2">
-                <CalendarIcon className="h-4 w-4" />
-                When would you like to travel?
-              </Label>
+            {/* Choose a Preferred Date Section */}
+            <div className="space-y-4">
+             
+              {/* Date Selection */}
+              <div className="space-y-3">
+                <Label className="text-sm font-medium flex items-center gap-2">
+                  <CalendarIcon className="h-4 w-4" />
+                  Choose a Preferred Date
+                </Label>
               <DatePicker
                 date={bookingDate}
                 onDateChange={setBookingDate}
@@ -504,6 +507,7 @@ export function BookingPromptPopup({
                   Don't worry, you can change this later
                 </p>
               )}
+              </div>
             </div>
 
             {/* Action Buttons */}

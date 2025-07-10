@@ -1,4 +1,4 @@
-import { RezdyProduct, RezdySession, RezdyExtra } from "@/lib/types/rezdy";
+import { RezdyProduct, RezdySession, RezdyExtra, RezdyTax } from "@/lib/types/rezdy";
 
 export interface SelectedExtra {
   extra: RezdyExtra;
@@ -52,11 +52,55 @@ export interface FeeInfo {
 }
 
 const DEFAULT_PRICING_CONFIG = {
-  taxRate: 0.08, // 8% tax
-  serviceFeesRate: 0.04, // 4% service fee
+  taxRate: 0.08, // 8% tax (fallback if no Rezdy tax data)
+  serviceFeesRate: 0.019, // 1.9% service fee
   childDiscountRate: 0.25, // 25% discount for children
   infantDiscountRate: 1.0, // 100% discount for infants (free)
 };
+
+/**
+ * Extract tax rate from Rezdy product tax data
+ */
+export function getTaxRateFromProduct(product: RezdyProduct): number {
+  if (!product.taxes || product.taxes.length === 0) {
+    return DEFAULT_PRICING_CONFIG.taxRate;
+  }
+
+  // Find the primary tax (usually GST for Australian products)
+  const primaryTax = product.taxes.find(tax => 
+    tax.taxFeeType === "TAX" && tax.taxType === "PERCENT"
+  ) || product.taxes[0];
+
+  if (primaryTax && primaryTax.taxPercent) {
+    return primaryTax.taxPercent / 100; // Convert percentage to decimal
+  }
+
+  return DEFAULT_PRICING_CONFIG.taxRate;
+}
+
+/**
+ * Get tax information from Rezdy product
+ */
+export function getTaxInfoFromProduct(product: RezdyProduct): TaxInfo | null {
+  if (!product.taxes || product.taxes.length === 0) {
+    return null;
+  }
+
+  const primaryTax = product.taxes.find(tax => 
+    tax.taxFeeType === "TAX" && tax.taxType === "PERCENT"
+  ) || product.taxes[0];
+
+  if (primaryTax && primaryTax.taxPercent) {
+    return {
+      name: primaryTax.label,
+      rate: primaryTax.taxPercent / 100,
+      amount: 0, // Will be calculated later
+      description: `${primaryTax.label} (${primaryTax.priceInclusive ? 'inclusive' : 'exclusive'})`,
+    };
+  }
+
+  return null;
+}
 
 /**
  * Calculate comprehensive pricing breakdown for a tour booking
@@ -66,7 +110,9 @@ export function calculatePricing(
   session: RezdySession | null,
   options: PricingOptions
 ): PricingBreakdown {
-  const config = { ...DEFAULT_PRICING_CONFIG, ...options };
+  // Use Rezdy tax rate if available, otherwise fall back to provided option or default
+  const taxRate = options.taxRate || getTaxRateFromProduct(product);
+  const config = { ...DEFAULT_PRICING_CONFIG, taxRate, ...options };
 
   // Base price calculation
   const basePrice = product.advertisedPrice || 0;
@@ -117,7 +163,7 @@ export function calculatePricing(
   const totalSubtotal = subtotal + extrasSubtotal;
 
   // Calculate taxes and fees on total subtotal
-  const taxes = Math.round(totalSubtotal * config.taxRate);
+  const taxes = Math.round(totalSubtotal * taxRate);
   const serviceFees = Math.round(totalSubtotal * config.serviceFeesRate);
 
   // Calculate total
@@ -151,21 +197,38 @@ export function calculatePricing(
  */
 export function getTaxBreakdown(
   subtotal: number,
-  taxRate: number = DEFAULT_PRICING_CONFIG.taxRate
+  product?: RezdyProduct,
+  taxRate?: number
 ): TaxInfo[] {
-  const stateTax = Math.round(subtotal * (taxRate * 0.6)); // 60% state tax
-  const localTax = Math.round(subtotal * (taxRate * 0.4)); // 40% local tax
+  // If we have product tax info, use that
+  const taxInfo = product ? getTaxInfoFromProduct(product) : null;
+  
+  if (taxInfo) {
+    return [
+      {
+        name: taxInfo.name,
+        rate: taxInfo.rate,
+        amount: Math.round(subtotal * taxInfo.rate),
+        description: taxInfo.description,
+      },
+    ];
+  }
+
+  // Fall back to default tax breakdown
+  const finalTaxRate = taxRate || DEFAULT_PRICING_CONFIG.taxRate;
+  const stateTax = Math.round(subtotal * (finalTaxRate * 0.6)); // 60% state tax
+  const localTax = Math.round(subtotal * (finalTaxRate * 0.4)); // 40% local tax
 
   return [
     {
       name: "State Tax",
-      rate: taxRate * 0.6,
+      rate: finalTaxRate * 0.6,
       amount: stateTax,
       description: "State tourism tax",
     },
     {
       name: "Local Tax",
-      rate: taxRate * 0.4,
+      rate: finalTaxRate * 0.4,
       amount: localTax,
       description: "Local municipality tax",
     },

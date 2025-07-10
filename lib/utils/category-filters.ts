@@ -104,6 +104,20 @@ export const CATEGORY_DEFINITIONS: Record<string, CategoryDefinition> = {
     ],
     productTypes: ["DAYTOUR", "PRIVATE_TOUR", "GIFT_CARD"],
   },
+  "hens-party": {
+    id: "hens-party",
+    title: "Hens Party",
+    keywords: [
+      "hens party",
+      "hen party",
+      "bachelorette",
+      "bridal party",
+      "girls night",
+      "ladies night",
+      "celebration",
+    ],
+    productTypes: ["DAYTOUR", "PRIVATE_TOUR", "CUSTOM"],
+  },
   activities: {
     id: "activities",
     title: "Activities",
@@ -402,6 +416,7 @@ export function getMainCategories(): CategoryDefinition[] {
     "day-tours",
     "corporate-tours",
     "barefoot-luxury",
+    "hens-party",
     "activities",
     "private-tours",
     "multiday-tours",

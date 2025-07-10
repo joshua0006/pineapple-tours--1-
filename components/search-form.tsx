@@ -46,6 +46,7 @@ import { DatePicker } from "@/components/ui/date-picker";
 import { useBookingPrompt } from "@/hooks/use-booking-prompt";
 import { useCityProducts } from "@/hooks/use-city-products";
 import { useRezdyDataManager } from "@/hooks/use-rezdy-data-manager";
+import { PickupLocationService } from "@/lib/services/pickup-location-service";
 
 // Static pickup locations (fallback)
 const STATIC_PICKUP_LOCATIONS = ["Brisbane", "Gold Coast", "Mount Tamborine"];
@@ -128,29 +129,10 @@ export function SearchForm({
       return rezdyData.products;
     }
 
-    return rezdyData.products.filter((product) => {
-      if (product.locationAddress) {
-        let productLocation = "";
-        if (typeof product.locationAddress === "string") {
-          productLocation = product.locationAddress;
-        } else if (product.locationAddress.city) {
-          productLocation = product.locationAddress.city;
-        }
-
-        // Handle Tamborine variations
-        if (
-          selectedLocation === "Mount Tamborine" &&
-          productLocation.toLowerCase().includes("tamborine")
-        ) {
-          return true;
-        }
-
-        return productLocation
-          .toLowerCase()
-          .includes(selectedLocation.toLowerCase());
-      }
-      return false;
-    });
+    return PickupLocationService.filterProductsByPickupLocation(
+      rezdyData.products,
+      selectedLocation
+    );
   }, [selectedLocation, rezdyData.products]);
 
   // Notify parent component when location changes

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getCityFromLocation } from '@/lib/utils/product-utils';
 import { doesProductMatchCategory } from '@/lib/constants/categories';
+import { ProductFilterService } from '@/lib/services/product-filter-service';
 
 const REZDY_BASE_URL = 'https://api.rezdy.com/v1';
 const API_KEY = process.env.REZDY_API_KEY;
@@ -121,12 +122,12 @@ export async function GET(request: NextRequest) {
     const data = await response.json();
     let products = data.products || data.data || [];
 
+    // Apply comprehensive product filtering first
+    products = ProductFilterService.filterProducts(products);
+    console.log(`Applied comprehensive filtering: ${products.length} products remaining`);
+
     // Filter products based on search criteria
     let filteredProducts = products.filter((product: any) => {
-      // Exclude GIFT_CARD products
-      if (product.productType === "GIFT_CARD") {
-        return false;
-      }
 
       // City filter - check both city and location parameters
       if ((filters.city && filters.city !== 'all') || (filters.location && filters.location !== '')) {

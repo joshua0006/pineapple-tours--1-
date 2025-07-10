@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { simpleCacheManager } from "@/lib/utils/simple-cache-manager";
 import { RezdyProduct } from "@/lib/types/rezdy";
+import { ProductFilterService } from "@/lib/services/product-filter-service";
 
 const REZDY_BASE_URL = "https://api.rezdy.com/v1";
 const API_KEY = process.env.REZDY_API_KEY;
@@ -90,36 +91,11 @@ async function fetchAllProducts(): Promise<RezdyProduct[]> {
   return allProducts;
 }
 
+// This function is now replaced by ProductFilterService.filterProducts()
+// Keeping it for backward compatibility reference
 function filterOutVouchers(products: RezdyProduct[]): RezdyProduct[] {
-  return products.filter((product) => {
-    // Filter out gift cards and vouchers
-    const isGiftCard = product.productType === "GIFT_CARD";
-    const nameContainsGift = product.name?.toLowerCase().includes("gift");
-    const nameContainsVoucher = product.name?.toLowerCase().includes("voucher");
-    const nameContainsCard = product.name?.toLowerCase().includes("card");
-    const nameContainsCertificate = product.name
-      ?.toLowerCase()
-      .includes("certificate");
-
-    // Also check description for voucher/gift indicators
-    const descContainsGift =
-      product.description?.toLowerCase().includes("gift") ||
-      product.shortDescription?.toLowerCase().includes("gift");
-    const descContainsVoucher =
-      product.description?.toLowerCase().includes("voucher") ||
-      product.shortDescription?.toLowerCase().includes("voucher");
-
-    // Exclude if any of these conditions are true
-    const isVoucherOrGift =
-      isGiftCard ||
-      nameContainsGift ||
-      nameContainsVoucher ||
-      (nameContainsCard && (nameContainsGift || nameContainsVoucher)) ||
-      nameContainsCertificate ||
-      (descContainsGift && descContainsVoucher);
-
-    return !isVoucherOrGift;
-  });
+  // Use the comprehensive ProductFilterService instead
+  return ProductFilterService.filterProducts(products);
 }
 
 export async function GET(request: NextRequest) {
@@ -183,15 +159,22 @@ export async function GET(request: NextRequest) {
     // Fetch all products
     const allProducts = await fetchAllProducts();
 
-    // Filter out vouchers and gift cards
-    const toursOnlyProducts = filterOutVouchers(allProducts);
+    // Log filtering statistics
+    console.log('📊 Product filtering statistics:');
+    const filterStats = ProductFilterService.getFilterStatistics(allProducts);
+    console.log(`   Total products: ${filterStats.total}`);
+    console.log(`   Products to filter: ${filterStats.filtered}`);
+    console.log(`   Filtered by reason:`, filterStats.byReason);
+
+    // Apply comprehensive product filtering
+    const toursOnlyProducts = ProductFilterService.filterProducts(allProducts);
 
     console.log(
       `🎯 Filtered ${allProducts.length} total products to ${
         toursOnlyProducts.length
       } tours (excluded ${
         allProducts.length - toursOnlyProducts.length
-      } vouchers/gift cards)`
+      } products)`
     );
 
     // Cache the filtered results

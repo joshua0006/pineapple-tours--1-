@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { simpleCacheManager } from '@/lib/utils/simple-cache-manager';
+import { PickupLocationService } from '@/lib/services/pickup-location-service';
+import { ProductFilterService } from '@/lib/services/product-filter-service';
 
 const REZDY_BASE_URL = 'https://api.rezdy.com/v1';
 const API_KEY = process.env.REZDY_API_KEY;
@@ -185,37 +187,61 @@ export async function GET(request: NextRequest) {
     // Fetch all products using pagination
     const allProducts = await fetchAllProducts();
     
+    // Log filtering statistics before filtering
+    console.log('📊 Product filtering statistics:');
+    const filterStats = ProductFilterService.getFilterStatistics(allProducts);
+    console.log(`   Total products: ${filterStats.total}`);
+    console.log(`   Products to filter: ${filterStats.filtered}`);
+    console.log(`   Filtered by reason:`, filterStats.byReason);
+    
+    // Apply comprehensive product filtering
+    const filteredProducts = ProductFilterService.filterProducts(allProducts);
+    console.log(`✅ Products after filtering: ${filteredProducts.length}`);
+    
     // Transform products to ensure consistent structure
-    const transformedProducts = allProducts.map((product, index) => ({
-      productCode: product.productCode,
-      name: product.name,
-      shortDescription: product.shortDescription || '',
-      description: product.description || '',
-      advertisedPrice: product.advertisedPrice || 0,
-      images: product.images?.map((img, imgIndex) => ({
-        id: imgIndex + 1, // Generate ID since API doesn't provide it
-        itemUrl: img.itemUrl,
-        thumbnailUrl: img.thumbnailUrl || img.itemUrl,
-        mediumSizeUrl: img.mediumSizeUrl || img.itemUrl,
-        largeSizeUrl: img.largeSizeUrl || img.itemUrl,
-        caption: '',
-        isPrimary: imgIndex === 0,
-      })) || [],
-      quantityRequiredMin: product.quantityRequiredMin || 1,
-      quantityRequiredMax: product.quantityRequiredMax || 50,
-      productType: product.productType || 'ACTIVITY',
-      locationAddress: product.locationAddress || undefined,
-      customFields: {},
-      status: 'ACTIVE',
-      categories: product.categories || [],
-      extras: [],
-      taxes: product.taxes || [],
-    }));
+    const transformedProducts = filteredProducts.map((product, index) => {
+      // Extract pickup locations for this product
+      const pickupLocations = PickupLocationService.extractPickupLocations(product);
+      const primaryPickupLocation = PickupLocationService.getPrimaryPickupLocation(product);
+      
+      return {
+        productCode: product.productCode,
+        name: product.name,
+        shortDescription: product.shortDescription || '',
+        description: product.description || '',
+        advertisedPrice: product.advertisedPrice || 0,
+        images: product.images?.map((img, imgIndex) => ({
+          id: imgIndex + 1, // Generate ID since API doesn't provide it
+          itemUrl: img.itemUrl,
+          thumbnailUrl: img.thumbnailUrl || img.itemUrl,
+          mediumSizeUrl: img.mediumSizeUrl || img.itemUrl,
+          largeSizeUrl: img.largeSizeUrl || img.itemUrl,
+          caption: '',
+          isPrimary: imgIndex === 0,
+        })) || [],
+        quantityRequiredMin: product.quantityRequiredMin || 1,
+        quantityRequiredMax: product.quantityRequiredMax || 50,
+        productType: product.productType || 'ACTIVITY',
+        locationAddress: product.locationAddress || undefined,
+        customFields: {},
+        status: 'ACTIVE',
+        categories: product.categories || [],
+        extras: [],
+        taxes: product.taxes || [],
+        // Add pickup location data
+        pickupLocations,
+        departsFrom: pickupLocations, // Same as pickupLocations for now
+        primaryPickupLocation,
+      };
+    });
 
     // Cache the results with a longer TTL for all products (24 hours)
     await simpleCacheManager.cacheProducts(transformedProducts, cacheKey);
     
+    // Log pickup location statistics
+    const pickupStats = PickupLocationService.getPickupLocationStats(transformedProducts);
     console.log(`✅ Cached ${transformedProducts.length} products with key: ${cacheKey}`);
+    console.log(`📍 Pickup location stats:`, pickupStats);
 
     return NextResponse.json(
       {

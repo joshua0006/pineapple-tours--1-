@@ -52,6 +52,9 @@ export interface RezdyProduct {
   categories?: string[];
   extras?: RezdyExtra[];
   taxes?: RezdyTax[];
+  pickupLocations?: string[];
+  departsFrom?: string[];
+  primaryPickupLocation?: string;
 }
 
 export interface RezdyImage {

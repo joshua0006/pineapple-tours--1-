@@ -36,6 +36,8 @@ import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { DatePicker } from "@/components/ui/date-picker";
 import { Label } from "@/components/ui/label";
+import { matchesPickupLocationFilter } from "@/lib/utils/pickup-location-utils";
+import { ProductFilterService } from "@/lib/services/product-filter-service";
 
 import { PageHeader } from "@/components/page-header";
 import { DynamicTourCard } from "@/components/dynamic-tour-card";
@@ -110,15 +112,8 @@ export default function ToursPage() {
   } = useMemo(() => {
     let filtered = [...products];
 
-    // Exclude gift cards from tours page
-    filtered = filtered.filter(
-      (product) =>
-        product.productType !== "GIFT_CARD" &&
-        !product.name.toLowerCase().includes("gift card") &&
-        !product.name.toLowerCase().includes("gift voucher") &&
-        product.name !==
-          "3hr Koala and Kangaroo Wildlife Experience - From Brisbane"
-    );
+    // Apply comprehensive product filtering using the ProductFilterService
+    filtered = ProductFilterService.filterProducts(filtered);
 
     // Text search
     if (filters.query) {
@@ -132,71 +127,11 @@ export default function ToursPage() {
     }
 
 
-    // Pickup Location filter - Enhanced to look for "from" keyword and location patterns
+    // Pickup Location filter - Using structured pickup data
     if (filters.pickupLocation !== "all") {
-      filtered = filtered.filter((product) => {
-        const searchText = `${product.name || ""} ${
-          product.shortDescription || ""
-        } ${product.description || ""}`.toLowerCase();
-        const filterLocation = filters.pickupLocation.toLowerCase();
-
-        // Check for "from [location]" pattern in product text
-        const fromPattern = new RegExp(
-          `from\\s+${filterLocation.replace(/\s+/g, "\\s+")}`,
-          "i"
-        );
-        if (fromPattern.test(searchText)) {
-          return true;
-        }
-
-        // Handle specific location variations
-        if (
-          filterLocation === "mount tamborine" ||
-          filterLocation === "tamborine"
-        ) {
-          const tambourinePattern =
-            /from\s+(?:mount\s+)?tamborine(?:\s+mountain)?/i;
-          if (tambourinePattern.test(searchText)) {
-            return true;
-          }
-        }
-
-        if (filterLocation === "gold coast") {
-          const goldCoastPattern = /from\s+(?:the\s+)?gold\s+coast/i;
-          if (goldCoastPattern.test(searchText)) {
-            return true;
-          }
-        }
-
-        if (filterLocation === "brisbane") {
-          const brisbanePattern = /from\s+brisbane/i;
-          if (brisbanePattern.test(searchText)) {
-            return true;
-          }
-        }
-
-        // Fallback to original location address logic
-        if (product.locationAddress) {
-          let productLocation = "";
-          if (typeof product.locationAddress === "string") {
-            productLocation = product.locationAddress;
-          } else if (product.locationAddress.city) {
-            productLocation = product.locationAddress.city;
-          }
-
-          // Handle Tamborine variations in location address
-          if (
-            filters.pickupLocation === "Mount Tamborine" &&
-            productLocation.toLowerCase().includes("tamborine")
-          ) {
-            return true;
-          }
-
-          return productLocation.toLowerCase().includes(filterLocation);
-        }
-
-        return false;
-      });
+      filtered = filtered.filter((product) => 
+        matchesPickupLocationFilter(product, filters.pickupLocation)
+      );
     }
 
     // City/location filter (fallback for legacy URL params)

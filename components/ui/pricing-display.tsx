@@ -223,9 +223,7 @@ export function PricingDisplay({
           <span>{formatCurrency(breakdown.total)}</span>
         </div>
 
-        <div className="text-center text-xs text-muted-foreground">
-          All prices are in USD and include applicable taxes and fees
-        </div>
+       
       </CardContent>
     </Card>
   );

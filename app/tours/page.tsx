@@ -639,18 +639,7 @@ export default function ToursPage() {
                       </span>
                     ) : (
                       <>
-                        {totalFilteredCount > 1
-                          ? `${totalFilteredCount} tours on this page`
-                          : `${totalFilteredCount} tour on this page`}
-                        {totalPages > 1 && (
-                          <span className="text-muted-foreground">
-                            {` • Page ${currentPage}${
-                              hasMore
-                                ? ` of ${totalPages}+`
-                                : ` of ${totalPages}`
-                            }`}
-                          </span>
-                        )}
+                       
                       </>
                     )}
                   </div>

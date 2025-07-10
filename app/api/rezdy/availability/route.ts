@@ -43,7 +43,6 @@ export async function GET(request: NextRequest) {
       url += `&participants=${encodeURIComponent(participants)}`;
     }
     
-    console.log(`Fetching Rezdy availability: ${url.replace(API_KEY, '[API_KEY]')}`);
     
     const response = await fetch(url, {
       method: 'GET',
@@ -54,22 +53,11 @@ export async function GET(request: NextRequest) {
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error('Rezdy API error response:', {
-        status: response.status,
-        statusText: response.statusText,
-        body: errorText
-      });
       throw new Error(`Rezdy API error: ${response.status} ${response.statusText} - ${errorText}`);
     }
 
     const data = await response.json();
 
-    // Log successful response for debugging
-    console.log(`Rezdy API Response for product ${productCode}:`, {
-      sessionsCount: data.sessions ? data.sessions.length : 0,
-      dateRange: `${formattedStartTime} to ${formattedEndTime}`,
-      participants: participants || 'none specified'
-    });
 
     // Ensure the response has the expected structure
     const responseData = {
@@ -81,7 +69,6 @@ export async function GET(request: NextRequest) {
     if (data.sessions && data.sessions.length > 0) {
           const { simpleCacheManager } = await import('@/lib/utils/simple-cache-manager');
     await simpleCacheManager.cacheAvailability(data.sessions, productCode);
-      console.log(`✅ Cached availability for product: ${productCode}`);
     }
 
     return NextResponse.json(responseData, {
@@ -91,7 +78,6 @@ export async function GET(request: NextRequest) {
       },
     });
   } catch (error) {
-    console.error('Error fetching Rezdy availability:', error);
     return NextResponse.json(
       { 
         error: error instanceof Error ? error.message : 'Failed to fetch availability from Rezdy',

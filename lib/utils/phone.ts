@@ -14,7 +14,7 @@ export function formatPhoneNumber(phoneNumber: string): string {
 
   // Handle Australian landline numbers (with area code)
   if (digits.length === 10 && digits.startsWith("0")) {
-    return `(${digits.slice(0, 2)}) ${digits.slice(2, 6)} ${digits.slice(6)}`;
+    return `${digits.slice(0, 2)} ${digits.slice(2, 6)} ${digits.slice(6)}`;
   }
 
   // Return original if no formatting rules match

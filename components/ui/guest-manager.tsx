@@ -348,14 +348,7 @@ export function GuestManager({
             </div>
           </div>
 
-          {/* Age-based pricing info */}
-          <div className="mt-3 pt-3 border-t border-blue-300">
-            <div className="text-xs text-blue-700 space-y-1">
-              <div>• Adults (18+): Full price</div>
-              <div>• Children (3-17): 25% discount</div>
-              <div>• Infants (0-2): Free</div>
-            </div>
-          </div>
+        
         </CardContent>
       </Card>
     </div>

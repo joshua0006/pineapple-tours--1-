@@ -29,13 +29,6 @@ import { format, addDays, isSameDay } from "date-fns";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -119,7 +112,6 @@ interface ContactInfo {
   lastName: string;
   email: string;
   phone: string;
-  country: string;
   dietaryRequirements: string;
   accessibilityNeeds: string;
   specialRequests: string;
@@ -145,24 +137,6 @@ const BOOKING_STEPS = [
   },
 ];
 
-const COUNTRIES = [
-  "United States",
-  "Canada",
-  "United Kingdom",
-  "Australia",
-  "Germany",
-  "France",
-  "Italy",
-  "Spain",
-  "Japan",
-  "South Korea",
-  "China",
-  "India",
-  "Brazil",
-  "Mexico",
-  "Argentina",
-  "Other",
-];
 
 // Helper function to map search form locations to booking regions
 const mapLocationToRegion = (location: string): string | undefined => {
@@ -230,7 +204,6 @@ export function EnhancedBookingExperience({
     lastName: "",
     email: "",
     phone: "",
-    country: "",
     dietaryRequirements: "",
     accessibilityNeeds: "",
     specialRequests: "",
@@ -248,8 +221,8 @@ export function EnhancedBookingExperience({
     const cleaned = value.replace(/\D/g, "").slice(0, 10); // keep max 10 digits
     const len = cleaned.length;
     if (len < 4) return cleaned;
-    if (len < 7) return `(${cleaned.slice(0, 3)}) ${cleaned.slice(3)}`;
-    return `(${cleaned.slice(0, 3)}) ${cleaned.slice(3, 6)}-${cleaned.slice(
+    if (len < 7) return `${cleaned.slice(0, 3)} ${cleaned.slice(3)}`;
+    return `${cleaned.slice(0, 3)} ${cleaned.slice(3, 6)} ${cleaned.slice(
       6
     )}`;
   };
@@ -283,8 +256,6 @@ export function EnhancedBookingExperience({
   const [paymentIntentId, setPaymentIntentId] = useState<string>("");
   const [orderNumber, setOrderNumber] = useState<string>("");
 
-  // Debug flag – set to true to see detailed console logs for calendar highlight logic
-  const DEBUG_CALENDAR = true;
 
   // Helper function to ensure consistent date formatting across storage and retrieval
   const getConsistentDateString = (input: Date | string): string => {
@@ -471,46 +442,8 @@ export function EnhancedBookingExperience({
     `ADULT:${guestCounts.adults},CHILD:${guestCounts.children},INFANT:${guestCounts.infants}`
   );
 
-  // Fallback mock data for when API is not working
-  const mockAvailabilityData: RezdyAvailability[] = useMemo(() => {
-    const sessions = [];
-    const today = new Date();
 
-    // Generate mock sessions for the next 30 days
-    for (let i = 1; i <= 30; i++) {
-      const sessionDate = new Date(today.getTime() + i * 24 * 60 * 60 * 1000);
-      const dateString = sessionDate.toISOString().split("T")[0];
-
-      // Skip weekends for some variety
-      if (sessionDate.getDay() === 0 || sessionDate.getDay() === 6) continue;
-
-      // Morning session
-      sessions.push({
-        id: `mock-session-${i}-morning`,
-        startTimeLocal: `${dateString}T09:00:00`,
-        endTimeLocal: `${dateString}T17:00:00`,
-        seatsAvailable: Math.floor(Math.random() * 15) + 5, // 5-20 seats
-        totalPrice: product.advertisedPrice || 89,
-        pickupLocations: [],
-      });
-
-      // Afternoon session (some days)
-      if (Math.random() > 0.3) {
-        sessions.push({
-          id: `mock-session-${i}-afternoon`,
-          startTimeLocal: `${dateString}T14:00:00`,
-          endTimeLocal: `${dateString}T22:00:00`,
-          seatsAvailable: Math.floor(Math.random() * 12) + 3, // 3-15 seats
-          totalPrice: product.advertisedPrice || 89,
-          pickupLocations: [],
-        });
-      }
-    }
-
-    return [{ productCode: product.productCode, sessions }] as any;
-  }, [product.productCode, product.advertisedPrice]);
-
-  // Use mock data if API fails or returns no data
+  // Use only real availability data from Rezdy API
   const effectiveAvailabilityData = useMemo(() => {
     // If we have real data with sessions, use it
     if (
@@ -521,27 +454,17 @@ export function EnhancedBookingExperience({
       return availabilityData;
     }
 
-    // If API is still loading, don't use mock data yet
+    // If API is still loading, return null
     if (availabilityLoading) {
       return null;
     }
 
-    // If API failed or returned no sessions, use mock data
-    if (
-      availabilityError ||
-      !availabilityData ||
-      !availabilityData[0]?.sessions ||
-      availabilityData[0].sessions.length === 0
-    ) {
-      return mockAvailabilityData;
-    }
-
-    return availabilityData;
+    // If API failed or returned no sessions, return null (no mock data)
+    return null;
   }, [
     availabilityData,
     availabilityLoading,
     availabilityError,
-    mockAvailabilityData,
   ]);
 
   // Helper: flatten all sessions across availability entries
@@ -553,20 +476,6 @@ export function EnhancedBookingExperience({
     ) as RezdySession[];
   }, [effectiveAvailabilityData]);
 
-  // Debug: log the flattened sessions whenever they change (placed after allSessions is defined)
-  useEffect(() => {
-    if (!DEBUG_CALENDAR) return;
-    console.groupCollapsed("[CalendarDebug] allSessions updated");
-    console.table(
-      allSessions.map((s: RezdySession) => ({
-        date: s.startTimeLocal?.split("T")[0],
-        start: s.startTimeLocal,
-        seatsAvailable: (s as any).seatsAvailable,
-        seatsRemaining: (s as any).seatsRemaining,
-      }))
-    );
-    console.groupEnd();
-  }, [allSessions]);
 
   // Extract available dates with seat availability
   const availableDates = useMemo(() => {
@@ -584,33 +493,13 @@ export function EnhancedBookingExperience({
         hasSeats = isNaN(numeric) ? true : numeric > 0;
       }
 
-      if (DEBUG_CALENDAR) {
-        console.log(`[CalendarDebug] Processing session:`, {
-          date: session.startTimeLocal?.split("T")[0],
-          rawSeats,
-          hasSeats,
-          startTime: session.startTimeLocal,
-        });
-      }
 
       if (hasSeats && session.startTimeLocal) {
         const sessionDate = getConsistentDateString(session.startTimeLocal);
         dates.add(sessionDate);
-        if (DEBUG_CALENDAR) {
-          console.log(
-            `[CalendarDebug] Added date to availableDates:`,
-            sessionDate
-          );
-        }
       }
     });
 
-    if (DEBUG_CALENDAR) {
-      console.log(
-        `[CalendarDebug] Final availableDates Set:`,
-        Array.from(dates)
-      );
-    }
 
     return dates;
   }, [allSessions]);
@@ -793,7 +682,7 @@ export function EnhancedBookingExperience({
   const handleSessionSelect = useCallback(
     (session: RezdySession, isAutoSelection = false) => {
       // ensure id exists before storing
-      const sid = normalizeSessionId(session);
+      normalizeSessionId(session);
 
       setSelectedSession({ ...session });
       // Reset booking option selection when session changes
@@ -833,9 +722,8 @@ export function EnhancedBookingExperience({
       );
 
       if (matchingSession) {
-        console.log("Auto-selecting session from URL:", matchingSession);
         // Inline the session selection logic to avoid dependency on handleSessionSelect
-        const sid = normalizeSessionId(matchingSession);
+        normalizeSessionId(matchingSession);
         setSelectedSession({ ...matchingSession });
         setSelectedBookingOption(null);
         setSelectedPickupLocation(null);
@@ -861,13 +749,9 @@ export function EnhancedBookingExperience({
   // Auto-select session when there's only one available session for the selected date
   useEffect(() => {
     if (selectedDate && availableSessions.length === 1 && !selectedSession) {
-      console.log(
-        "Auto-selecting single available session:",
-        availableSessions[0]
-      );
       // Inline the session selection logic to avoid dependency on handleSessionSelect
       const session = availableSessions[0];
-      const sid = normalizeSessionId(session);
+      normalizeSessionId(session);
       setSelectedSession({ ...session });
       setSelectedBookingOption(null);
       setSelectedPickupLocation(null);
@@ -908,10 +792,6 @@ export function EnhancedBookingExperience({
       );
 
       if (matchingLocation) {
-        console.log(
-          "Auto-selecting pickup location based on search form:",
-          matchingLocation.name
-        );
         setSelectedPickupLocation(matchingLocation);
       }
     }
@@ -931,7 +811,7 @@ export function EnhancedBookingExperience({
   };
 
   // Stripe payment handlers
-  const handlePaymentSuccess = async (stripePaymentIntentId: string) => {
+  const _handlePaymentSuccess = async (stripePaymentIntentId: string) => {
     setIsProcessingPayment(true);
     setBookingErrors([]);
 
@@ -957,22 +837,19 @@ export function EnhancedBookingExperience({
         // Redirect to confirmation page
         window.location.href = `/booking/confirmation?orderNumber=${confirmResult.orderNumber}&transactionId=${confirmResult.transactionId}`;
       } else {
-        console.error("Booking confirmation failed:", confirmResult.error);
         setBookingErrors([
           confirmResult.error ||
             "Booking confirmation failed. Please contact support.",
         ]);
       }
     } catch (error) {
-      console.error("Payment confirmation error:", error);
       setBookingErrors(["Failed to confirm payment. Please contact support."]);
     } finally {
       setIsProcessingPayment(false);
     }
   };
 
-  const handlePaymentError = (error: string) => {
-    console.error("Payment error:", error);
+  const _handlePaymentError = (error: string) => {
     setBookingErrors([error]);
     setIsProcessingPayment(false);
   };
@@ -997,7 +874,10 @@ export function EnhancedBookingExperience({
           bookingOption: selectedBookingOption,
         },
         guests: guests.filter((g) => g.firstName.trim() && g.lastName.trim()),
-        contact: contactInfo,
+        contact: {
+          ...contactInfo,
+          country: "Australia"
+        },
         pricing: {
           basePrice: pricingBreakdown.basePrice,
           sessionPrice: pricingBreakdown.adultPrice, // Use adult price as session price
@@ -1005,12 +885,9 @@ export function EnhancedBookingExperience({
           taxAndFees: pricingBreakdown.taxes + pricingBreakdown.serviceFees,
           total: pricingBreakdown.total,
         },
-        extras: selectedExtras.map((selectedExtra, index) => {
+        extras: selectedExtras.map((selectedExtra) => {
           // Get the calculated price from the pricing breakdown which already handles PER_PERSON, PER_BOOKING, etc.
           const extrasFromBreakdown = pricingBreakdown.selectedExtras || [];
-          const matchingExtra = extrasFromBreakdown.find(
-            (e) => e.extra.id === selectedExtra.extra.id
-          );
 
           // Calculate total price based on price type
           let totalPrice = selectedExtra.extra.price * selectedExtra.quantity;
@@ -1078,7 +955,6 @@ export function EnhancedBookingExperience({
       // Note: no further code will execute after redirect, but keep for safety
       return;
     } catch (error) {
-      console.error("Checkout session creation error:", error);
       setBookingErrors([
         "Failed to create checkout session. Please try again.",
       ]);
@@ -1090,23 +966,8 @@ export function EnhancedBookingExperience({
     try {
       const dateString = getConsistentDateString(date);
       const available = availableDates.has(dateString);
-      if (DEBUG_CALENDAR) {
-        console.log(`[CalendarDebug] isDateAvailable(${dateString}) ->`, {
-          available,
-          availableDatesSize: availableDates.size,
-          availableDatesArray: Array.from(availableDates),
-          allSessionsCount: allSessions.length,
-          // Show both formats for debugging timezone issues
-          localFormat: format(date, "yyyy-MM-dd"),
-          utcFormat: dateString,
-          formatMismatch: format(date, "yyyy-MM-dd") !== dateString,
-        });
-      }
       return available;
     } catch (err) {
-      if (DEBUG_CALENDAR) {
-        console.warn("[CalendarDebug] isDateAvailable error", err);
-      }
       return false;
     }
   };
@@ -1126,17 +987,9 @@ export function EnhancedBookingExperience({
       const hasSeatsOnDate = (getDateSeatAvailability.get(dateString) || 0) > 0;
       const disabled = hasSessionsOnDate && !hasSeatsOnDate;
 
-      if (DEBUG_CALENDAR) {
-        console.log(
-          `[CalendarDebug] isDateDisabled(${dateString}) ->`,
-          disabled
-        );
-      }
 
       return disabled;
     } catch (err) {
-      if (DEBUG_CALENDAR)
-        console.warn("[CalendarDebug] isDateDisabled error", err);
       return true;
     }
   };
@@ -1153,14 +1006,9 @@ export function EnhancedBookingExperience({
 
       const soldOut = hasSessionsOnDate && !hasSeatsOnDate;
 
-      if (DEBUG_CALENDAR) {
-        console.log(`[CalendarDebug] isDateSoldOut(${dateString}) ->`, soldOut);
-      }
 
       return soldOut;
     } catch (err) {
-      if (DEBUG_CALENDAR)
-        console.warn("[CalendarDebug] isDateSoldOut error", err);
       return false;
     }
   };
@@ -1233,17 +1081,15 @@ export function EnhancedBookingExperience({
           </Alert>
         )}
 
-        {/* Demo Data Alert */}
+        {/* No Availability Alert */}
         {!availabilityLoading &&
           (availabilityError ||
             !availabilityData ||
             !availabilityData[0]?.sessions?.length) && (
-            <Alert>
-              <Info className="h-4 w-4" />
+            <Alert variant="destructive">
+              <AlertCircle className="h-4 w-4" />
               <AlertDescription>
-                Demo availability data is being displayed. In a live
-                environment, this would show real-time tour availability from
-                the booking system.
+                No availability found for this tour. Please try different dates or contact support.
               </AlertDescription>
             </Alert>
           )}
@@ -1334,11 +1180,6 @@ export function EnhancedBookingExperience({
                                 {effectiveAvailabilityData[0]?.sessions
                                   ?.length || 0}{" "}
                                 sessions found
-                                {availabilityError ||
-                                !availabilityData ||
-                                !availabilityData[0]?.sessions?.length
-                                  ? " (using demo data)"
-                                  : ""}
                               </div>
                             )}
                         </div>
@@ -1378,12 +1219,6 @@ export function EnhancedBookingExperience({
                                   selectedSession as RezdySession
                                 );
 
-                            // Debug logs – remove once issue resolved
-                            console.debug("[Booking] Render session card", {
-                              sessionId: session.id,
-                              selectedSessionId: selectedSession?.id,
-                              isSelected,
-                            });
 
                             return (
                               <Card
@@ -1479,12 +1314,24 @@ export function EnhancedBookingExperience({
                 )}
 
                 {/* Date Selection Validation */}
-                {!selectedSession && (
+                {!selectedSession && selectedDate && !availabilityLoading && (
                   <Alert>
                     <Info className="h-4 w-4" />
                     <AlertDescription>
                       Please select a date and time session before adding guest
                       details.
+                    </AlertDescription>
+                  </Alert>
+                )}
+                
+                {/* No Availability Warning */}
+                {!availabilityLoading && 
+                 effectiveAvailabilityData === null && 
+                 selectedDate && (
+                  <Alert variant="destructive">
+                    <AlertCircle className="h-4 w-4" />
+                    <AlertDescription>
+                      No availability found for the selected date range. This tour may not be available for booking at this time.
                     </AlertDescription>
                   </Alert>
                 )}
@@ -1599,7 +1446,7 @@ export function EnhancedBookingExperience({
                         }));
                       }}
                       onBlur={validateContactFields}
-                      placeholder="(123) 456-7890"
+                      placeholder="0412 345 678"
                       required
                     />
                     {contactFieldErrors.phone && (
@@ -1610,26 +1457,6 @@ export function EnhancedBookingExperience({
                   </div>
                 </div>
 
-                <div>
-                  <Label htmlFor="contact-country">Country</Label>
-                  <Select
-                    value={contactInfo.country}
-                    onValueChange={(value) =>
-                      setContactInfo((prev) => ({ ...prev, country: value }))
-                    }
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select your country" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {COUNTRIES.map((country) => (
-                        <SelectItem key={country} value={country}>
-                          {country}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
               </CardContent>
             </Card>
 
@@ -1777,23 +1604,7 @@ export function EnhancedBookingExperience({
                 />
               )}
 
-              {/* Trust Indicators */}
-              <Card>
-                <CardContent className="pt-6 space-y-3">
-                  <div className="flex items-center gap-2 text-sm">
-                    <Shield className="h-4 w-4 text-brand-accent" />
-                    <span>Secure SSL Payment</span>
-                  </div>
-                  <div className="flex items-center gap-2 text-sm">
-                    <CheckCircle className="h-4 w-4 text-brand-accent" />
-                    <span>Free Cancellation 24h</span>
-                  </div>
-                  <div className="flex items-center gap-2 text-sm">
-                    <Star className="h-4 w-4 text-brand-accent" />
-                    <span>4.9/5 Customer Rating</span>
-                  </div>
-                </CardContent>
-              </Card>
+            
             </div>
           </div>
         </div>

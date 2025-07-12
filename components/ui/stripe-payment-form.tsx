@@ -127,14 +127,14 @@ export function StripePaymentForm({
         fullName,
         email: bookingData?.contact?.email,
         billingAddress,
-        returnUrl: `${window.location.origin}/booking/confirmation?orderNumber=${orderNumber}`
+        returnUrl: `${window.location.origin}/booking/guest-details?orderNumber=${orderNumber}`
       });
 
       // Confirm the payment with Stripe
       const { error, paymentIntent } = await stripe.confirmPayment({
         elements,
         confirmParams: {
-          return_url: `${window.location.origin}/booking/confirmation?orderNumber=${orderNumber}`,
+          return_url: `${window.location.origin}/booking/guest-details?orderNumber=${orderNumber}`,
           payment_method_data: {
             billing_details: {
               name: fullName,

@@ -813,6 +813,9 @@ export function EnhancedBookingExperience({
       // Store booking data in session storage for payment page
       sessionStorage.setItem(`booking_${generatedOrderNumber}`, JSON.stringify(formData));
 
+      // Also store in server-side store as backup (will be done by payment intent API)
+      // The payment intent creation API will handle server-side storage
+
       // Redirect to custom payment page
       const paymentUrl = `/booking/payment?orderNumber=${generatedOrderNumber}&amount=${pricingBreakdown.total}&productName=${encodeURIComponent(product.name)}`;
       window.location.href = paymentUrl;

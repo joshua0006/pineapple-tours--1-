@@ -106,7 +106,27 @@ export default function GuestDetailsPage() {
 
     const loadBookingData = async () => {
       try {
-        const data = await bookingDataStore.retrieve(orderNumber);
+        // First try to get booking data from session storage (client-side)
+        let data: BookingFormData | null = null;
+        
+        if (typeof window !== 'undefined') {
+          const sessionData = sessionStorage.getItem(`booking_${orderNumber}`);
+          if (sessionData) {
+            try {
+              data = JSON.parse(sessionData);
+              console.log("✅ Retrieved booking data from session storage");
+            } catch (parseError) {
+              console.warn("Failed to parse session storage data:", parseError);
+            }
+          }
+        }
+        
+        // If session storage failed, try the server-side booking data store
+        if (!data) {
+          data = await bookingDataStore.retrieve(orderNumber);
+          console.log("✅ Retrieved booking data from server store");
+        }
+        
         if (!data) {
           setError("Booking data not found. Please contact support.");
           setLoading(false);
@@ -237,9 +257,14 @@ export default function GuestDetailsPage() {
       const result = await response.json();
 
       if (result.success) {
-        // Clear the stored booking data
+        // Clear the stored booking data from both server and session storage
         if (orderNumber) {
           await bookingDataStore.remove(orderNumber);
+          
+          // Also clear session storage
+          if (typeof window !== 'undefined') {
+            sessionStorage.removeItem(`booking_${orderNumber}`);
+          }
         }
         
         // Redirect to confirmation page

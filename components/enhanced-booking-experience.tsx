@@ -23,6 +23,8 @@ import {
   ArrowRight,
   Home,
   ShoppingCart,
+  Plus,
+  Minus,
 } from "lucide-react";
 import { format, addDays, isSameDay } from "date-fns";
 
@@ -623,6 +625,54 @@ export function EnhancedBookingExperience({
     setSelectedPickupLocation(location);
   };
 
+  // Guest count management functions
+  const updateGuestCount = (type: 'adults' | 'children' | 'infants', delta: number) => {
+    setGuestCounts(prev => {
+      const newCounts = { ...prev };
+      const newValue = prev[type] + delta;
+      
+      // Apply constraints
+      if (type === 'adults') {
+        // Adults minimum is 1, maximum from product or 50
+        newCounts.adults = Math.max(1, Math.min(newValue, product.quantityRequiredMax || 50));
+      } else {
+        // Children and infants minimum is 0
+        newCounts[type] = Math.max(0, Math.min(newValue, (product.quantityRequiredMax || 50) - newCounts.adults));
+      }
+      
+      // Ensure total doesn't exceed maximum
+      const total = newCounts.adults + newCounts.children + newCounts.infants;
+      if (product.quantityRequiredMax && total > product.quantityRequiredMax) {
+        return prev; // Don't update if it would exceed maximum
+      }
+      
+      return newCounts;
+    });
+  };
+
+  const incrementGuests = (type: 'adults' | 'children' | 'infants') => {
+    updateGuestCount(type, 1);
+  };
+
+  const decrementGuests = (type: 'adults' | 'children' | 'infants') => {
+    updateGuestCount(type, -1);
+  };
+
+  // Check if we can add more guests of a specific type
+  const canIncrement = (type: 'adults' | 'children' | 'infants'): boolean => {
+    const total = guestCounts.adults + guestCounts.children + guestCounts.infants;
+    const maxAllowed = product.quantityRequiredMax || 50;
+    return total < maxAllowed;
+  };
+
+  // Check if we can remove guests of a specific type
+  const canDecrement = (type: 'adults' | 'children' | 'infants'): boolean => {
+    if (type === 'adults') {
+      return guestCounts.adults > 1; // Must have at least 1 adult
+    }
+    return guestCounts[type] > 0;
+  };
+
   const handleProceedToPayment = async () => {
     setIsProcessingPayment(true);
     setBookingErrors([]);
@@ -1098,31 +1148,116 @@ export function EnhancedBookingExperience({
               </CardContent>
             </Card>
 
-            {/* Guest Count Display */}
+            {/* Guest Count Selector */}
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Users className="h-5 w-5" />
-                  Guest Count
+                  Select Guests
                 </CardTitle>
                 <p className="text-muted-foreground">
-                  You will provide guest details after payment
+                  Choose the number of guests for your booking
                 </p>
               </CardHeader>
-              <CardContent>
-                <div className="bg-muted/30 p-4 rounded-lg">
+              <CardContent className="space-y-4">
+                {/* Adults */}
+                <div className="flex items-center justify-between p-4 bg-muted/30 rounded-lg">
+                  <div className="flex-1">
+                    <div className="font-medium">Adults</div>
+                    <div className="text-sm text-muted-foreground">Ages 18+</div>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => decrementGuests('adults')}
+                      disabled={!canDecrement('adults')}
+                      className="h-8 w-8 p-0"
+                    >
+                      <Minus className="h-4 w-4" />
+                    </Button>
+                    <span className="w-8 text-center font-medium">{guestCounts.adults}</span>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => incrementGuests('adults')}
+                      disabled={!canIncrement('adults')}
+                      className="h-8 w-8 p-0"
+                    >
+                      <Plus className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+
+                {/* Children */}
+                <div className="flex items-center justify-between p-4 bg-muted/30 rounded-lg">
+                  <div className="flex-1">
+                    <div className="font-medium">Children</div>
+                    <div className="text-sm text-muted-foreground">Ages 3-17</div>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => decrementGuests('children')}
+                      disabled={!canDecrement('children')}
+                      className="h-8 w-8 p-0"
+                    >
+                      <Minus className="h-4 w-4" />
+                    </Button>
+                    <span className="w-8 text-center font-medium">{guestCounts.children}</span>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => incrementGuests('children')}
+                      disabled={!canIncrement('children')}
+                      className="h-8 w-8 p-0"
+                    >
+                      <Plus className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+
+                {/* Infants */}
+                <div className="flex items-center justify-between p-4 bg-muted/30 rounded-lg">
+                  <div className="flex-1">
+                    <div className="font-medium">Infants</div>
+                    <div className="text-sm text-muted-foreground">Ages 0-2</div>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => decrementGuests('infants')}
+                      disabled={!canDecrement('infants')}
+                      className="h-8 w-8 p-0"
+                    >
+                      <Minus className="h-4 w-4" />
+                    </Button>
+                    <span className="w-8 text-center font-medium">{guestCounts.infants}</span>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => incrementGuests('infants')}
+                      disabled={!canIncrement('infants')}
+                      className="h-8 w-8 p-0"
+                    >
+                      <Plus className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+
+                {/* Summary and constraints */}
+                <div className="space-y-2">
                   <div className="flex items-center gap-2 text-lg font-medium">
                     <Users className="h-5 w-5 text-brand-accent" />
                     <span>
-                      {guestCounts.adults + guestCounts.children + guestCounts.infants} guests
+                      Total: {guestCounts.adults + guestCounts.children + guestCounts.infants} guests
                     </span>
                   </div>
-                  <div className="mt-2 text-sm text-muted-foreground">
-                    {guestCounts.adults > 0 && `${guestCounts.adults} adults`}
-                    {guestCounts.children > 0 && `, ${guestCounts.children} children`}
-                    {guestCounts.infants > 0 && `, ${guestCounts.infants} infants`}
-                  </div>
-                  <div className="mt-3 text-sm text-muted-foreground">
+                  
+                
+                  <div className="text-sm text-muted-foreground">
                     <Info className="h-4 w-4 inline mr-1" />
                     Guest details will be collected after payment confirmation
                   </div>

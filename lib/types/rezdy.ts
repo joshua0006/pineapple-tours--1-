@@ -21,6 +21,14 @@ export interface RezdyTax {
   compound: boolean;
 }
 
+export interface RezdyPriceOption {
+  price: number;
+  label: string;
+  id: number;
+  seatsUsed: number;
+  productCode?: string;
+}
+
 export interface RezdyExtra {
   id: string;
   name: string;
@@ -42,6 +50,7 @@ export interface RezdyProduct {
   shortDescription?: string;
   description?: string;
   advertisedPrice?: number;
+  priceOptions?: RezdyPriceOption[];
   images?: RezdyImage[];
   quantityRequiredMin?: number;
   quantityRequiredMax?: number;

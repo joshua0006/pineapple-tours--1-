@@ -210,6 +210,7 @@ export async function GET(request: NextRequest) {
         shortDescription: product.shortDescription || '',
         description: product.description || '',
         advertisedPrice: product.advertisedPrice || 0,
+        priceOptions: product.priceOptions || [],
         images: product.images?.map((img, imgIndex) => ({
           id: imgIndex + 1, // Generate ID since API doesn't provide it
           itemUrl: img.itemUrl,

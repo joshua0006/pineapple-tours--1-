@@ -1,4 +1,4 @@
-import { RezdyProduct, RezdySession, RezdyExtra, RezdyTax } from "@/lib/types/rezdy";
+import { RezdyProduct, RezdySession, RezdyExtra, RezdyTax, RezdyPriceOption } from "@/lib/types/rezdy";
 
 export interface SelectedExtra {
   extra: RezdyExtra;
@@ -57,6 +57,62 @@ const DEFAULT_PRICING_CONFIG = {
   childDiscountRate: 0.25, // 25% discount for children
   infantDiscountRate: 1.0, // 100% discount for infants (free)
 };
+
+/**
+ * Extract prices by guest type from Rezdy priceOptions
+ */
+export function getPricesFromPriceOptions(product: RezdyProduct): {
+  adult: number;
+  child: number;
+  infant: number;
+  senior: number;
+} | null {
+  if (!product.priceOptions || product.priceOptions.length === 0) {
+    return null;
+  }
+
+  // Default prices to fall back if not found
+  let adultPrice = 0;
+  let childPrice = 0;
+  let infantPrice = 0;
+  let seniorPrice = 0;
+
+  // Extract prices from priceOptions
+  product.priceOptions.forEach((option: RezdyPriceOption) => {
+    const label = option.label.toLowerCase();
+    
+    if (label.includes('adult')) {
+      adultPrice = option.price;
+    } else if (label.includes('child')) {
+      childPrice = option.price;
+    } else if (label.includes('infant') || label.includes('baby')) {
+      infantPrice = option.price;
+    } else if (label.includes('senior')) {
+      seniorPrice = option.price;
+    }
+  });
+
+  return {
+    adult: adultPrice,
+    child: childPrice,
+    infant: infantPrice,
+    senior: seniorPrice,
+  };
+}
+
+/**
+ * Get priceOption by guest type
+ */
+export function getPriceOptionByGuestType(product: RezdyProduct, guestType: 'adult' | 'child' | 'infant' | 'senior'): RezdyPriceOption | null {
+  if (!product.priceOptions || product.priceOptions.length === 0) {
+    return null;
+  }
+
+  return product.priceOptions.find((option: RezdyPriceOption) => {
+    const label = option.label.toLowerCase();
+    return label.includes(guestType);
+  }) || null;
+}
 
 /**
  * Extract tax rate from Rezdy product tax data
@@ -118,12 +174,24 @@ export function calculatePricing(
   const basePrice = product.advertisedPrice || 0;
   const sessionPrice = session?.totalPrice || basePrice;
 
-  // Calculate individual prices
-  const adultPrice = sessionPrice;
-  const childPrice = Math.round(sessionPrice * (1 - config.childDiscountRate));
-  const infantPrice = Math.round(
-    sessionPrice * (1 - config.infantDiscountRate)
-  );
+  // Try to get prices from priceOptions first, then fall back to calculated prices
+  const priceOptionsData = getPricesFromPriceOptions(product);
+  
+  let adultPrice: number;
+  let childPrice: number;
+  let infantPrice: number;
+
+  if (priceOptionsData) {
+    // Use actual Rezdy priceOptions data
+    adultPrice = priceOptionsData.adult;
+    childPrice = priceOptionsData.child;
+    infantPrice = priceOptionsData.infant;
+  } else {
+    // Fall back to calculated prices based on sessionPrice/basePrice with discounts
+    adultPrice = sessionPrice;
+    childPrice = Math.round(sessionPrice * (1 - config.childDiscountRate));
+    infantPrice = Math.round(sessionPrice * (1 - config.infantDiscountRate));
+  }
 
   // Calculate subtotal for main tour
   const subtotal =

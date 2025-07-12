@@ -238,7 +238,7 @@ export default function GuestDetailsPage() {
 
       if (result.success) {
         // Clear the stored booking data
-        await bookingDataStore.clear(orderNumber);
+        await bookingDataStore.remove(orderNumber);
         
         // Redirect to confirmation page
         router.push(
@@ -382,6 +382,25 @@ export default function GuestDetailsPage() {
                     </span>
                   </div>
                 )}
+                {bookingData.selectedPriceOptions && bookingData.guestCounts && (
+                  <div className="space-y-1 pt-2">
+                    {bookingData.guestCounts.adults > 0 && bookingData.selectedPriceOptions.adult && (
+                      <div className="text-sm text-muted-foreground">
+                        {bookingData.guestCounts.adults} × {bookingData.selectedPriceOptions.adult.label} (${bookingData.selectedPriceOptions.adult.price})
+                      </div>
+                    )}
+                    {bookingData.guestCounts.children > 0 && bookingData.selectedPriceOptions.child && (
+                      <div className="text-sm text-muted-foreground">
+                        {bookingData.guestCounts.children} × {bookingData.selectedPriceOptions.child.label} (${bookingData.selectedPriceOptions.child.price})
+                      </div>
+                    )}
+                    {bookingData.guestCounts.infants > 0 && bookingData.selectedPriceOptions.infant && (
+                      <div className="text-sm text-muted-foreground">
+                        {bookingData.guestCounts.infants} × {bookingData.selectedPriceOptions.infant.label} (${bookingData.selectedPriceOptions.infant.price})
+                      </div>
+                    )}
+                  </div>
+                )}
                 {bookingData.session.pickupLocation && (
                   <div className="flex items-start gap-2">
                     <MapPin className="h-4 w-4 mt-0.5 text-muted-foreground" />
@@ -432,7 +451,6 @@ export default function GuestDetailsPage() {
               minGuests={guests.length}
               requireAdult={true}
               autoManageGuests={false}
-              allowAddRemove={false}
             />
           </CardContent>
         </Card>

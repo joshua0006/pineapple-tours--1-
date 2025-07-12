@@ -35,6 +35,12 @@ export interface PricingBreakdown {
   bookingOptionPrice?: number;
   bookingOptionTotal?: number;
   bookingOptionName?: string;
+  // Selected priceOptions from Rezdy
+  selectedPriceOptions?: {
+    adult?: RezdyPriceOption;
+    child?: RezdyPriceOption;
+    infant?: RezdyPriceOption;
+  };
 }
 
 export interface TaxInfo {
@@ -180,12 +186,22 @@ export function calculatePricing(
   let adultPrice: number;
   let childPrice: number;
   let infantPrice: number;
+  let selectedPriceOptions: PricingBreakdown['selectedPriceOptions'] = {};
 
   if (priceOptionsData) {
     // Use actual Rezdy priceOptions data
     adultPrice = priceOptionsData.adult;
     childPrice = priceOptionsData.child;
     infantPrice = priceOptionsData.infant;
+
+    // Get the actual priceOption objects
+    const adultOption = getPriceOptionByGuestType(product, 'adult');
+    const childOption = getPriceOptionByGuestType(product, 'child');
+    const infantOption = getPriceOptionByGuestType(product, 'infant');
+
+    if (adultOption) selectedPriceOptions.adult = adultOption;
+    if (childOption) selectedPriceOptions.child = childOption;
+    if (infantOption) selectedPriceOptions.infant = infantOption;
   } else {
     // Fall back to calculated prices based on sessionPrice/basePrice with discounts
     adultPrice = sessionPrice;
@@ -257,6 +273,7 @@ export function calculatePricing(
     total,
     savings: savings > 0 ? savings : undefined,
     selectedExtras,
+    selectedPriceOptions: Object.keys(selectedPriceOptions).length > 0 ? selectedPriceOptions : undefined,
   };
 }
 

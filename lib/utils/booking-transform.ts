@@ -63,13 +63,20 @@ export interface BookingFormData {
     children: number;
     infants: number;
   };
+  // Track selected priceOptions from Rezdy
+  selectedPriceOptions?: {
+    adult?: { id: number; label: string; price: number };
+    child?: { id: number; label: string; price: number };
+    infant?: { id: number; label: string; price: number };
+  };
 }
 
 /**
  * Aggregates individual guest details into participant counts by type
  */
 export function aggregateParticipants(
-  guests: BookingFormData["guests"]
+  guests: BookingFormData["guests"],
+  selectedPriceOptions?: BookingFormData["selectedPriceOptions"]
 ): RezdyParticipant[] {
   const participantCounts = guests.reduce((acc, guest) => {
     const type = guest.type;
@@ -77,10 +84,25 @@ export function aggregateParticipants(
     return acc;
   }, {} as Record<string, number>);
 
-  return Object.entries(participantCounts).map(([type, number]) => ({
-    type,
-    number,
-  }));
+  return Object.entries(participantCounts).map(([type, number]) => {
+    const participant: RezdyParticipant = {
+      type,
+      number,
+    };
+
+    // Add priceOptionId if available
+    if (selectedPriceOptions) {
+      if (type === "ADULT" && selectedPriceOptions.adult) {
+        participant.priceOptionId = selectedPriceOptions.adult.id;
+      } else if (type === "CHILD" && selectedPriceOptions.child) {
+        participant.priceOptionId = selectedPriceOptions.child.id;
+      } else if (type === "INFANT" && selectedPriceOptions.infant) {
+        participant.priceOptionId = selectedPriceOptions.infant.id;
+      }
+    }
+
+    return participant;
+  });
 }
 
 /**
@@ -165,8 +187,8 @@ export function transformBookingDataToRezdy(
   bookingData: BookingFormData,
   orderNumber?: string
 ): RezdyBooking {
-  // Aggregate participants
-  const participants = aggregateParticipants(bookingData.guests);
+  // Aggregate participants with priceOption IDs
+  const participants = aggregateParticipants(bookingData.guests, bookingData.selectedPriceOptions);
 
   // Transform extras
   const extras = transformExtrasToRezdy(bookingData.extras);

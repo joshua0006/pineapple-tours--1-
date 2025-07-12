@@ -181,6 +181,48 @@ export function EnhancedBookingExperience({
   // Payment processing state
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
 
+  // Contact information state
+  const [contactInfo, setContactInfo] = useState({
+    email: "",
+    phone: "",
+  });
+
+  // Contact field validation errors
+  const [contactFieldErrors, setContactFieldErrors] = useState<{
+    email?: string;
+    phone?: string;
+  }>({});
+
+  // Validation helpers
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+  const formatPhoneNumber = (value: string) => {
+    const cleaned = value.replace(/\D/g, "").slice(0, 10);
+    const len = cleaned.length;
+    if (len < 4) return cleaned;
+    if (len < 7) return `${cleaned.slice(0, 3)} ${cleaned.slice(3)}`;
+    return `${cleaned.slice(0, 3)} ${cleaned.slice(3, 6)} ${cleaned.slice(6)}`;
+  };
+
+  const validateContactFields = () => {
+    const errors: { email?: string; phone?: string } = {};
+    if (!contactInfo.email) {
+      errors.email = "Email is required";
+    } else if (!emailRegex.test(contactInfo.email)) {
+      errors.email = "Please enter a valid email address";
+    }
+
+    const phoneDigits = contactInfo.phone.replace(/\D/g, "");
+    if (!contactInfo.phone) {
+      errors.phone = "Phone number is required";
+    } else if (phoneDigits.length < 6) {
+      errors.phone = "Please enter a valid phone number";
+    }
+
+    setContactFieldErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+
   // Helper function to ensure consistent date formatting across storage and retrieval
   const getConsistentDateString = (input: Date | string): string => {
     // For Date objects – easy path
@@ -478,11 +520,19 @@ export function EnhancedBookingExperience({
     // Check if terms are agreed to
     const hasAgreedToTerms = agreeToTerms;
 
+    // Check if contact info is valid
+    const hasValidContactInfo = 
+      contactInfo.email && 
+      contactInfo.phone && 
+      emailRegex.test(contactInfo.email) && 
+      contactInfo.phone.replace(/\D/g, "").length >= 6;
+
     return (
       hasValidSession &&
       hasValidPickupLocation &&
       hasValidBookingOption &&
-      hasAgreedToTerms
+      hasAgreedToTerms &&
+      hasValidContactInfo
     );
   };
 
@@ -697,8 +747,8 @@ export function EnhancedBookingExperience({
         contact: {
           firstName: "",
           lastName: "",
-          email: "",
-          phone: "",
+          email: contactInfo.email,
+          phone: contactInfo.phone,
           country: "Australia",
           dietaryRequirements: "",
           accessibilityNeeds: "",
@@ -733,6 +783,24 @@ export function EnhancedBookingExperience({
         },
         // Store guest counts for later use
         guestCounts,
+        // Store selected priceOptions from Rezdy
+        selectedPriceOptions: pricingBreakdown.selectedPriceOptions ? {
+          adult: pricingBreakdown.selectedPriceOptions.adult ? {
+            id: pricingBreakdown.selectedPriceOptions.adult.id,
+            label: pricingBreakdown.selectedPriceOptions.adult.label,
+            price: pricingBreakdown.selectedPriceOptions.adult.price,
+          } : undefined,
+          child: pricingBreakdown.selectedPriceOptions.child ? {
+            id: pricingBreakdown.selectedPriceOptions.child.id,
+            label: pricingBreakdown.selectedPriceOptions.child.label,
+            price: pricingBreakdown.selectedPriceOptions.child.price,
+          } : undefined,
+          infant: pricingBreakdown.selectedPriceOptions.infant ? {
+            id: pricingBreakdown.selectedPriceOptions.infant.id,
+            label: pricingBreakdown.selectedPriceOptions.infant.label,
+            price: pricingBreakdown.selectedPriceOptions.infant.price,
+          } : undefined,
+        } : undefined,
       };
 
       // Generate unique order number
@@ -1260,6 +1328,95 @@ export function EnhancedBookingExperience({
                   <div className="text-sm text-muted-foreground">
                     <Info className="h-4 w-4 inline mr-1" />
                     Guest details will be collected after payment confirmation
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Contact Information */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Mail className="h-5 w-5" />
+                  Contact Information
+                </CardTitle>
+                <p className="text-muted-foreground">
+                  We'll need your contact details to send booking confirmation
+                </p>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="email">
+                      Email Address <span className="text-destructive">*</span>
+                    </Label>
+                    <Input
+                      id="email"
+                      type="email"
+                      placeholder="your.email@example.com"
+                      value={contactInfo.email}
+                      onChange={(e) => {
+                        setContactInfo(prev => ({ ...prev, email: e.target.value }));
+                        // Clear error when user starts typing
+                        if (contactFieldErrors.email) {
+                          setContactFieldErrors(prev => ({ ...prev, email: undefined }));
+                        }
+                      }}
+                      onBlur={() => {
+                        if (contactInfo.email && !emailRegex.test(contactInfo.email)) {
+                          setContactFieldErrors(prev => ({ 
+                            ...prev, 
+                            email: "Please enter a valid email address" 
+                          }));
+                        }
+                      }}
+                      className={cn(
+                        "h-12",
+                        contactFieldErrors.email && "border-destructive"
+                      )}
+                    />
+                    {contactFieldErrors.email && (
+                      <p className="text-sm text-destructive">{contactFieldErrors.email}</p>
+                    )}
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="phone">
+                      Phone Number <span className="text-destructive">*</span>
+                    </Label>
+                    <div className="relative">
+                      <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                      <Input
+                        id="phone"
+                        type="tel"
+                        placeholder="04XX XXX XXX"
+                        value={contactInfo.phone}
+                        onChange={(e) => {
+                          const formatted = formatPhoneNumber(e.target.value);
+                          setContactInfo(prev => ({ ...prev, phone: formatted }));
+                          // Clear error when user starts typing
+                          if (contactFieldErrors.phone) {
+                            setContactFieldErrors(prev => ({ ...prev, phone: undefined }));
+                          }
+                        }}
+                        onBlur={() => {
+                          const phoneDigits = contactInfo.phone.replace(/\D/g, "");
+                          if (contactInfo.phone && phoneDigits.length < 6) {
+                            setContactFieldErrors(prev => ({ 
+                              ...prev, 
+                              phone: "Please enter a valid phone number" 
+                            }));
+                          }
+                        }}
+                        className={cn(
+                          "h-12 pl-10",
+                          contactFieldErrors.phone && "border-destructive"
+                        )}
+                      />
+                    </div>
+                    {contactFieldErrors.phone && (
+                      <p className="text-sm text-destructive">{contactFieldErrors.phone}</p>
+                    )}
                   </div>
                 </div>
               </CardContent>

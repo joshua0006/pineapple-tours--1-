@@ -160,6 +160,7 @@ export interface RezdyBookingExtra {
 export interface RezdyParticipant {
   type: string;
   number: number;
+  priceOptionId?: number;
 }
 
 export interface RezdyApiResponse<T> {

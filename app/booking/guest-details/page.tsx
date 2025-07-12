@@ -20,25 +20,14 @@ import {
 import { format } from "date-fns";
 
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { GuestManager, type GuestInfo } from "@/components/ui/guest-manager";
 import { bookingDataStore } from "@/lib/services/booking-data-store";
 import { BookingFormData } from "@/lib/utils/booking-transform";
-import { cn } from "@/lib/utils";
 
-interface ContactInfo {
-  firstName: string;
-  lastName: string;
-  email: string;
-  phone: string;
-  dietaryRequirements: string;
-  accessibilityNeeds: string;
-  specialRequests: string;
-}
+
 
 export default function GuestDetailsPage() {
   const router = useRouter();
@@ -52,49 +41,9 @@ export default function GuestDetailsPage() {
   const [submitting, setSubmitting] = useState(false);
   const [submitErrors, setSubmitErrors] = useState<string[]>([]);
 
-  // Guest and contact state
+  // Guest state
   const [guests, setGuests] = useState<GuestInfo[]>([]);
-  const [contactInfo, setContactInfo] = useState<ContactInfo>({
-    firstName: "",
-    lastName: "",
-    email: "",
-    phone: "",
-    dietaryRequirements: "",
-    accessibilityNeeds: "",
-    specialRequests: "",
-  });
 
-  // Contact field validation
-  const [contactFieldErrors, setContactFieldErrors] = useState<{
-    email?: string;
-    phone?: string;
-  }>({});
-
-  // Basic helpers
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
-  const formatPhoneNumber = (value: string) => {
-    const cleaned = value.replace(/\D/g, "").slice(0, 10);
-    const len = cleaned.length;
-    if (len < 4) return cleaned;
-    if (len < 7) return `${cleaned.slice(0, 3)} ${cleaned.slice(3)}`;
-    return `${cleaned.slice(0, 3)} ${cleaned.slice(3, 6)} ${cleaned.slice(6)}`;
-  };
-
-  const validateContactFields = () => {
-    const errors: { email?: string; phone?: string } = {};
-    if (!emailRegex.test(contactInfo.email)) {
-      errors.email = "Please enter a valid email address.";
-    }
-
-    const phoneDigits = contactInfo.phone.replace(/\D/g, "");
-    if (phoneDigits.length < 6) {
-      errors.phone = "Please enter a valid phone number.";
-    }
-
-    setContactFieldErrors(errors);
-    return Object.keys(errors).length === 0;
-  };
 
   // Load booking data on mount
   useEffect(() => {
@@ -190,31 +139,14 @@ export default function GuestDetailsPage() {
     loadBookingData();
   }, [orderNumber]);
 
-  // Auto-populate contact info from first guest
-  useEffect(() => {
-    if (guests.length > 0 && guests[0].firstName && guests[0].lastName) {
-      setContactInfo((prev) => ({
-        ...prev,
-        firstName: guests[0].firstName,
-        lastName: guests[0].lastName,
-      }));
-    }
-  }, [guests]);
 
-  // Validation
+  // Validation - only check guest information
   const canSubmit = () => {
     const hasValidGuests = guests.every(
       (g) => g.firstName.trim() && g.lastName.trim()
     );
-    const hasValidContactInfo =
-      contactInfo.firstName.trim() &&
-      contactInfo.lastName.trim() &&
-      contactInfo.email.trim() &&
-      emailRegex.test(contactInfo.email) &&
-      contactInfo.phone.trim() &&
-      contactInfo.phone.replace(/\D/g, "").length >= 6;
 
-    return hasValidGuests && hasValidContactInfo;
+    return hasValidGuests;
   };
 
   const handleSubmit = async () => {
@@ -224,20 +156,14 @@ export default function GuestDetailsPage() {
     setSubmitErrors([]);
 
     try {
-      // Validate contact fields
-      if (!validateContactFields()) {
-        setSubmitting(false);
-        return;
-      }
-
-      // Update booking data with guest and contact information
+      // Update booking data with guest information and additional details
       const updatedBookingData: BookingFormData = {
         ...bookingData,
         guests: guests.filter((g) => g.firstName.trim() && g.lastName.trim()),
         contact: {
           ...bookingData.contact,
-          ...contactInfo,
-          country: "Australia",
+          // Preserve original contact information from pre-payment
+          country: bookingData.contact.country || "Australia",
         },
       };
 
@@ -482,155 +408,7 @@ export default function GuestDetailsPage() {
           </CardContent>
         </Card>
 
-        {/* Contact Information */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Mail className="h-5 w-5" />
-              Contact Information
-            </CardTitle>
-            <p className="text-muted-foreground">
-              Primary contact details for this booking
-            </p>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="contact-first-name">First Name *</Label>
-                <Input
-                  id="contact-first-name"
-                  value={contactInfo.firstName}
-                  onChange={(e) =>
-                    setContactInfo((prev) => ({
-                      ...prev,
-                      firstName: e.target.value,
-                    }))
-                  }
-                  placeholder="Enter first name"
-                  required
-                />
-              </div>
-              <div>
-                <Label htmlFor="contact-last-name">Last Name *</Label>
-                <Input
-                  id="contact-last-name"
-                  value={contactInfo.lastName}
-                  onChange={(e) =>
-                    setContactInfo((prev) => ({
-                      ...prev,
-                      lastName: e.target.value,
-                    }))
-                  }
-                  placeholder="Enter last name"
-                  required
-                />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="contact-email">Email Address *</Label>
-                <Input
-                  id="contact-email"
-                  type="email"
-                  value={contactInfo.email}
-                  onChange={(e) =>
-                    setContactInfo((prev) => ({
-                      ...prev,
-                      email: e.target.value,
-                    }))
-                  }
-                  onBlur={validateContactFields}
-                  placeholder="Enter email address"
-                  required
-                />
-                {contactFieldErrors.email && (
-                  <p className="mt-1 text-xs text-destructive">
-                    {contactFieldErrors.email}
-                  </p>
-                )}
-              </div>
-              <div>
-                <Label htmlFor="contact-phone">Phone Number *</Label>
-                <Input
-                  id="contact-phone"
-                  type="tel"
-                  value={contactInfo.phone}
-                  onChange={(e) => {
-                    const formatted = formatPhoneNumber(e.target.value);
-                    setContactInfo((prev) => ({
-                      ...prev,
-                      phone: formatted,
-                    }));
-                  }}
-                  onBlur={validateContactFields}
-                  placeholder="0412 345 678"
-                  required
-                />
-                {contactFieldErrors.phone && (
-                  <p className="mt-1 text-xs text-destructive">
-                    {contactFieldErrors.phone}
-                  </p>
-                )}
-              </div>
-            </div>
-
-            <div>
-              <Label htmlFor="dietary-requirements">
-                Dietary Requirements (Optional)
-              </Label>
-              <Textarea
-                id="dietary-requirements"
-                value={contactInfo.dietaryRequirements}
-                onChange={(e) =>
-                  setContactInfo((prev) => ({
-                    ...prev,
-                    dietaryRequirements: e.target.value,
-                  }))
-                }
-                placeholder="Please specify any dietary requirements or allergies"
-                rows={2}
-              />
-            </div>
-
-            <div>
-              <Label htmlFor="accessibility-needs">
-                Accessibility Needs (Optional)
-              </Label>
-              <Textarea
-                id="accessibility-needs"
-                value={contactInfo.accessibilityNeeds}
-                onChange={(e) =>
-                  setContactInfo((prev) => ({
-                    ...prev,
-                    accessibilityNeeds: e.target.value,
-                  }))
-                }
-                placeholder="Please specify any accessibility requirements"
-                rows={2}
-              />
-            </div>
-
-            <div>
-              <Label htmlFor="special-requests">
-                Special Requests (Optional)
-              </Label>
-              <Textarea
-                id="special-requests"
-                value={contactInfo.specialRequests}
-                onChange={(e) =>
-                  setContactInfo((prev) => ({
-                    ...prev,
-                    specialRequests: e.target.value,
-                  }))
-                }
-                placeholder="Any special requests or additional information"
-                rows={2}
-              />
-            </div>
-          </CardContent>
-        </Card>
-
+      
         {/* Submit Button */}
         <div className="flex justify-center pt-6">
           <Button

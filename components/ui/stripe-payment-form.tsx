@@ -5,14 +5,14 @@ import {
   useStripe,
   useElements,
   PaymentElement,
-  AddressElement,
 } from "@stripe/react-stripe-js";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Separator } from "@/components/ui/separator";
-import { Shield, CreditCard, AlertCircle, CheckCircle } from "lucide-react";
+import { Shield, CreditCard, AlertCircle, CheckCircle, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { logStripeError } from "@/lib/stripe-error-monitor";
 
 interface StripePaymentFormProps {
   clientSecret: string;
@@ -23,6 +23,7 @@ interface StripePaymentFormProps {
   onPaymentError: (error: string) => void;
   loading?: boolean;
   className?: string;
+  bookingData?: any;
 }
 
 export function StripePaymentForm({
@@ -34,6 +35,7 @@ export function StripePaymentForm({
   onPaymentError,
   loading: externalLoading = false,
   className,
+  bookingData,
 }: StripePaymentFormProps) {
   const stripe = useStripe();
   const elements = useElements();
@@ -47,18 +49,66 @@ export function StripePaymentForm({
     setErrorMessage("");
   }, [clientSecret]);
 
+  // Enhanced logging and debugging
+  useEffect(() => {
+    console.log("StripePaymentForm initialized:", {
+      hasStripe: !!stripe,
+      hasElements: !!elements,
+      hasClientSecret: !!clientSecret,
+      clientSecretLength: clientSecret?.length,
+      orderNumber,
+      amount,
+      currency,
+      timestamp: new Date().toISOString()
+    });
+
+    if (stripe) {
+      console.log("✅ Stripe loaded successfully");
+    } else {
+      console.warn("⚠️ Stripe not yet loaded");
+    }
+
+    if (elements) {
+      console.log("✅ Elements loaded successfully");
+    } else {
+      console.warn("⚠️ Elements not yet loaded");
+    }
+  }, [stripe, elements, clientSecret, orderNumber, amount, currency]);
+
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
 
+    console.log("💳 Payment submission started:", {
+      hasStripe: !!stripe,
+      hasElements: !!elements,
+      hasClientSecret: !!clientSecret,
+      orderNumber,
+      amount,
+      currency,
+      isComplete,
+      timestamp: new Date().toISOString()
+    });
+
     if (!stripe || !elements) {
-      setErrorMessage("Stripe has not loaded yet. Please try again.");
+      const error = "Stripe has not loaded yet. Please try again.";
+      console.error("❌ Stripe/Elements not loaded:", { stripe: !!stripe, elements: !!elements });
+      logStripeError.elementLoading(error, { 
+        hasStripe: !!stripe, 
+        hasElements: !!elements,
+        orderNumber,
+        amount 
+      });
+      setErrorMessage(error);
       return;
     }
 
     if (!clientSecret) {
-      setErrorMessage(
-        "Payment information is missing. Please refresh and try again."
-      );
+      const error = "Payment information is missing. Please refresh and try again.";
+      console.error("❌ Missing client secret");
+      logStripeError.paymentConfirmation(error, 'missing_client_secret', orderNumber, {
+        clientSecretLength: clientSecret?.length || 0
+      });
+      setErrorMessage(error);
       return;
     }
 
@@ -66,29 +116,110 @@ export function StripePaymentForm({
     setErrorMessage("");
 
     try {
+      // Get the full name from booking data
+      const fullName = bookingData?.contact 
+        ? `${bookingData.contact.firstName} ${bookingData.contact.lastName}`.trim()
+        : "";
+
+      const billingAddress = bookingData?.contact?.address || {};
+
+      console.log("🔄 Confirming payment with Stripe:", {
+        fullName,
+        email: bookingData?.contact?.email,
+        billingAddress,
+        returnUrl: `${window.location.origin}/booking/confirmation?orderNumber=${orderNumber}`
+      });
+
       // Confirm the payment with Stripe
       const { error, paymentIntent } = await stripe.confirmPayment({
         elements,
         confirmParams: {
           return_url: `${window.location.origin}/booking/confirmation?orderNumber=${orderNumber}`,
+          payment_method_data: {
+            billing_details: {
+              name: fullName,
+              email: bookingData?.contact?.email || undefined,
+              phone: bookingData?.contact?.phone || undefined,
+              address: {
+                country: billingAddress.country || "AU",
+                state: billingAddress.state || undefined,
+                city: billingAddress.city || undefined,
+                postal_code: billingAddress.postalCode || undefined,
+                line1: billingAddress.line1 || undefined,
+                line2: billingAddress.line2 || undefined,
+              },
+            },
+          },
         },
         redirect: "if_required", // Only redirect if required by payment method
       });
 
+      console.log("🔍 Payment confirmation result:", {
+        hasError: !!error,
+        errorType: error?.type,
+        errorCode: error?.code,
+        errorMessage: error?.message,
+        paymentIntentStatus: paymentIntent?.status,
+        paymentIntentId: paymentIntent?.id
+      });
+
       if (error) {
-        console.error("Payment confirmation error:", error);
+        console.error("❌ Payment confirmation error:", {
+          type: error.type,
+          code: error.code,
+          message: error.message,
+          declineCode: error.decline_code,
+          paymentMethod: typeof error.payment_method === "string" ? error.payment_method : (error.payment_method as any)?.type
+        });
+        logStripeError.paymentConfirmation(
+          error.message || "Payment confirmation failed",
+          error.code,
+          orderNumber,
+          {
+            errorType: error.type,
+            declineCode: error.decline_code,
+            paymentMethodType: typeof error.payment_method === "string" ? error.payment_method : (error.payment_method as any)?.type,
+            amount,
+            currency
+          }
+        );
         setErrorMessage(error.message || "An unexpected error occurred.");
         onPaymentError(error.message || "Payment failed");
       } else if (paymentIntent && paymentIntent.status === "succeeded") {
-        console.log("Payment succeeded:", paymentIntent.id);
+        console.log("✅ Payment succeeded:", {
+          paymentIntentId: paymentIntent.id,
+          amount: paymentIntent.amount,
+          currency: paymentIntent.currency,
+          paymentMethod: typeof paymentIntent.payment_method === "string" ? paymentIntent.payment_method : (paymentIntent.payment_method as any)?.type
+        });
         onPaymentSuccess(paymentIntent.id);
       } else {
-        console.error("Payment not completed:", paymentIntent?.status);
+        console.error("⚠️ Payment not completed:", {
+          status: paymentIntent?.status,
+          paymentIntentId: paymentIntent?.id,
+          requiresAction: paymentIntent?.status === "requires_action"
+        });
         setErrorMessage("Payment was not completed. Please try again.");
         onPaymentError("Payment not completed");
       }
-    } catch (error) {
-      console.error("Payment processing error:", error);
+    } catch (error: any) {
+      console.error("💥 Payment processing exception:", {
+        name: error?.name,
+        message: error?.message,
+        stack: error?.stack?.substring(0, 500),
+        stringified: String(error)
+      });
+      logStripeError.paymentConfirmation(
+        `Payment processing exception: ${error?.message}`,
+        'processing_exception',
+        orderNumber,
+        {
+          errorName: error?.name,
+          stackTrace: error?.stack?.substring(0, 500),
+          amount,
+          currency
+        }
+      );
       setErrorMessage("An unexpected error occurred. Please try again.");
       onPaymentError("Payment processing failed");
     } finally {
@@ -104,54 +235,58 @@ export function StripePaymentForm({
   };
 
   return (
-    <Card className={cn("w-full max-w-lg mx-auto", className)}>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
+    <Card className={cn("w-full", className)}>
+      <CardHeader className="pb-4">
+        <CardTitle className="flex items-center gap-2 text-xl">
           <CreditCard className="h-5 w-5" />
-          Secure Payment
+          Payment Details
         </CardTitle>
-        <div className="text-sm text-muted-foreground">
-          Complete your booking payment securely with Stripe
-        </div>
       </CardHeader>
       <CardContent className="space-y-6">
-        {/* Payment Amount Display */}
-        <div className="bg-muted/30 p-4 rounded-lg">
-          <div className="flex justify-between items-center">
-            <span className="font-medium">Total Amount:</span>
-            <span className="text-lg font-bold">
-              {formatAmount(amount, currency)}
-            </span>
-          </div>
-          <div className="text-xs text-muted-foreground mt-1">
-            Order: {orderNumber}
-          </div>
-        </div>
-
         {/* Error Display */}
         {errorMessage && (
-          <Alert variant="destructive">
-            <AlertCircle className="h-4 w-4" />
-            <AlertDescription>{errorMessage}</AlertDescription>
+          <Alert variant="destructive" role="alert">
+            <AlertCircle className="h-4 w-4" aria-hidden="true" />
+            <AlertDescription>
+              <strong>Payment Error:</strong> {errorMessage}
+            </AlertDescription>
           </Alert>
         )}
 
         {/* Payment Form */}
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Payment Element */}
-          <div className="space-y-2">
-            <label className="text-sm font-medium">Payment Details</label>
-            <div className="border rounded-md p-3">
+          <div className="space-y-3">
+            <label 
+              htmlFor="payment-element" 
+              className="text-sm font-semibold text-slate-900"
+            >
+              Card Information
+            </label>
+            <div 
+              className="border border-slate-200 rounded-lg p-4 bg-white"
+              role="group"
+              aria-labelledby="payment-element-label"
+            >
               <PaymentElement
                 options={{
                   layout: "tabs",
                   paymentMethodOrder: ["card", "apple_pay", "google_pay"],
                   fields: {
                     billingDetails: {
+                      /*
+                       * Let Stripe collect most billing details automatically and
+                       * only skip the fields we explicitly gather elsewhere. Using
+                       * `if_required` for the address makes the Payment Element
+                       * request the minimum set of address fields needed by the
+                       * chosen payment method. This avoids the IntegrationError
+                       * thrown when `address: \"never\"` is used without also
+                       * providing the full address in `confirmPayment`.
+                       */
                       name: "auto",
                       email: "auto",
                       phone: "auto",
-                      address: "never", // We'll use AddressElement separately
+                      address: "auto",
                     },
                   },
                 }}
@@ -170,79 +305,59 @@ export function StripePaymentForm({
             </div>
           </div>
 
-          <Separator />
-
-          {/* Billing Address */}
-          <div className="space-y-2">
-            <label className="text-sm font-medium">Billing Address</label>
-            <div className="border rounded-md p-3">
-              <AddressElement
-                options={{
-                  mode: "billing",
-                  allowedCountries: ["AU", "US", "CA", "GB", "NZ"],
-                  fields: {
-                    phone: "always",
-                  },
-                  validation: {
-                    phone: {
-                      required: "never",
-                    },
-                  },
-                }}
-              />
-            </div>
-          </div>
-
-          <Separator />
-
-          {/* Security Notice */}
-          <div className="flex items-start gap-2 text-sm text-muted-foreground bg-muted/30 p-3 rounded-lg">
-            <Shield className="h-4 w-4 mt-0.5 text-brand-accent" />
-            <div>
-              <div className="font-medium text-foreground">Secure Payment</div>
-              <div>
-                Your payment information is encrypted and secure. We use
-                Stripe's industry-leading security to protect your data.
-              </div>
-            </div>
-          </div>
 
           {/* Submit Button */}
-          <Button
-            type="submit"
-            className="w-full bg-brand-accent hover:bg-brand-accent/90 text-white"
-            size="lg"
-            disabled={
-              !stripe ||
-              !elements ||
-              isLoading ||
-              externalLoading ||
-              !isComplete ||
-              !clientSecret
-            }
-          >
-            {isLoading || externalLoading ? (
-              <>
-                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                Processing Payment...
-              </>
-            ) : (
-              <>
-                <Shield className="h-4 w-4 mr-2" />
-                Pay {formatAmount(amount, currency)}
-              </>
-            )}
-          </Button>
+          <div className="pt-4">
+            <Button
+              type="submit"
+              className="w-full bg-brand-accent hover:bg-brand-accent/90 text-white font-semibold py-3 px-6 text-lg"
+              size="lg"
+              disabled={
+                !stripe ||
+                !elements ||
+                isLoading ||
+                externalLoading ||
+                !isComplete ||
+                !clientSecret
+              }
+              aria-describedby="payment-button-description"
+            >
+              {isLoading || externalLoading ? (
+                <>
+                  <Loader2 className="h-5 w-5 mr-2 animate-spin" />
+                  Processing Payment...
+                </>
+              ) : (
+                <>
+                  <Shield className="h-5 w-5 mr-2" />
+                  Pay {formatAmount(amount, currency)}
+                </>
+              )}
+            </Button>
+          </div>
 
-          {/* Payment Methods Accepted */}
-          <div className="text-center text-xs text-muted-foreground">
-            <div className="flex items-center justify-center gap-2 mb-2">
-              <CheckCircle className="h-3 w-3" />
-              <span>Visa, Mastercard, American Express accepted</span>
+          {/* Payment Methods Info */}
+          <div className="text-center pt-2">
+            <div 
+              id="payment-button-description"
+              className="flex items-center justify-center gap-2 text-sm text-slate-600 mb-2"
+            >
+              <CheckCircle className="h-4 w-4 text-green-600" aria-hidden="true" />
+              <span>Secure payment with 256-bit SSL encryption</span>
             </div>
-            <div className="flex items-center justify-center gap-2">
-              <CheckCircle className="h-3 w-3" />
-              <span>Apple Pay and Google Pay supported</span>
+            <div 
+              className="flex items-center justify-center gap-4 text-xs text-slate-500"
+              aria-label="Accepted payment methods"
+            >
+              <span>Visa</span>
+              <span aria-hidden="true">•</span>
+              <span>Mastercard</span>
+              <span aria-hidden="true">•</span>
+              <span>American Express</span>
+              <span aria-hidden="true">•</span>
+              <span>Apple Pay</span>
+              <span aria-hidden="true">•</span>
+              <span>Google Pay</span>
             </div>
           </div>
         </form>

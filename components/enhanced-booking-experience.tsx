@@ -26,12 +26,11 @@ import {
   Plus,
   Minus,
 } from "lucide-react";
-import { format, addDays, isSameDay } from "date-fns";
+import { format, addDays } from "date-fns";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Separator } from "@/components/ui/separator";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
@@ -40,11 +39,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { Badge } from "@/components/ui/badge";
-import { Textarea } from "@/components/ui/textarea";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Progress } from "@/components/ui/progress";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { PricingDisplay } from "@/components/ui/pricing-display";
 import { ExtrasSelector } from "@/components/ui/extras-selector";
 import { PickupLocationSelector } from "@/components/ui/pickup-location-selector";
@@ -82,14 +77,6 @@ import {
   type BookingFormData,
 } from "@/lib/utils/booking-transform";
 import { cn } from "@/lib/utils";
-import {
-  registerBookingWithPayment,
-  PaymentConfirmation,
-  BookingService,
-} from "@/lib/services/booking-service";
-import { loadStripe } from "@stripe/stripe-js";
-import { Elements } from "@stripe/react-stripe-js";
-import { StripePaymentForm } from "@/components/ui/stripe-payment-form";
 
 interface EnhancedBookingExperienceProps {
   product: RezdyProduct;
@@ -183,12 +170,16 @@ export function EnhancedBookingExperience({
 
   // Contact information state
   const [contactInfo, setContactInfo] = useState({
+    firstName: "",
+    lastName: "",
     email: "",
     phone: "",
   });
 
   // Contact field validation errors
   const [contactFieldErrors, setContactFieldErrors] = useState<{
+    firstName?: string;
+    lastName?: string;
     email?: string;
     phone?: string;
   }>({});
@@ -205,7 +196,16 @@ export function EnhancedBookingExperience({
   };
 
   const validateContactFields = () => {
-    const errors: { email?: string; phone?: string } = {};
+    const errors: { firstName?: string; lastName?: string; email?: string; phone?: string } = {};
+    
+    if (!contactInfo.firstName.trim()) {
+      errors.firstName = "First name is required";
+    }
+    
+    if (!contactInfo.lastName.trim()) {
+      errors.lastName = "Last name is required";
+    }
+    
     if (!contactInfo.email) {
       errors.email = "Email is required";
     } else if (!emailRegex.test(contactInfo.email)) {
@@ -522,6 +522,8 @@ export function EnhancedBookingExperience({
 
     // Check if contact info is valid
     const hasValidContactInfo = 
+      contactInfo.firstName.trim() &&
+      contactInfo.lastName.trim() &&
       contactInfo.email && 
       contactInfo.phone && 
       emailRegex.test(contactInfo.email) && 
@@ -745,8 +747,8 @@ export function EnhancedBookingExperience({
         // We'll collect guest details after payment
         guests: [],
         contact: {
-          firstName: "",
-          lastName: "",
+          firstName: contactInfo.firstName,
+          lastName: contactInfo.lastName,
           email: contactInfo.email,
           phone: contactInfo.phone,
           country: "Australia",
@@ -808,34 +810,12 @@ export function EnhancedBookingExperience({
         Math.random() * 1000
       )}`;
 
-      // Create Stripe Checkout session
-      const checkoutResponse = await fetch(
-        "/api/payments/stripe/create-checkout-session",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            bookingData: formData,
-            orderNumber: generatedOrderNumber,
-          }),
-        }
-      );
+      // Store booking data in session storage for payment page
+      sessionStorage.setItem(`booking_${generatedOrderNumber}`, JSON.stringify(formData));
 
-      const checkoutResult = await checkoutResponse.json();
-
-      if (!checkoutResult.success || !checkoutResult.url) {
-        setBookingErrors([
-          checkoutResult.error || "Failed to create checkout session",
-        ]);
-        setIsProcessingPayment(false);
-        return;
-      }
-
-      // Redirect user to Stripe-hosted Checkout page
-      window.location.href = checkoutResult.url as string;
-      // Note: no further code will execute after redirect, but keep for safety
+      // Redirect to custom payment page
+      const paymentUrl = `/booking/payment?orderNumber=${generatedOrderNumber}&amount=${pricingBreakdown.total}&productName=${encodeURIComponent(product.name)}`;
+      window.location.href = paymentUrl;
       return;
     } catch (error) {
       setBookingErrors([
@@ -1346,6 +1326,74 @@ export function EnhancedBookingExperience({
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="firstName">
+                      First Name <span className="text-destructive">*</span>
+                    </Label>
+                    <Input
+                      id="firstName"
+                      type="text"
+                      placeholder="Enter your first name"
+                      value={contactInfo.firstName}
+                      onChange={(e) => {
+                        setContactInfo(prev => ({ ...prev, firstName: e.target.value }));
+                        // Clear error when user starts typing
+                        if (contactFieldErrors.firstName) {
+                          setContactFieldErrors(prev => ({ ...prev, firstName: undefined }));
+                        }
+                      }}
+                      onBlur={() => {
+                        if (!contactInfo.firstName.trim()) {
+                          setContactFieldErrors(prev => ({ 
+                            ...prev, 
+                            firstName: "First name is required" 
+                          }));
+                        }
+                      }}
+                      className={cn(
+                        "h-12",
+                        contactFieldErrors.firstName && "border-destructive"
+                      )}
+                    />
+                    {contactFieldErrors.firstName && (
+                      <p className="text-sm text-destructive">{contactFieldErrors.firstName}</p>
+                    )}
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="lastName">
+                      Last Name <span className="text-destructive">*</span>
+                    </Label>
+                    <Input
+                      id="lastName"
+                      type="text"
+                      placeholder="Enter your last name"
+                      value={contactInfo.lastName}
+                      onChange={(e) => {
+                        setContactInfo(prev => ({ ...prev, lastName: e.target.value }));
+                        // Clear error when user starts typing
+                        if (contactFieldErrors.lastName) {
+                          setContactFieldErrors(prev => ({ ...prev, lastName: undefined }));
+                        }
+                      }}
+                      onBlur={() => {
+                        if (!contactInfo.lastName.trim()) {
+                          setContactFieldErrors(prev => ({ 
+                            ...prev, 
+                            lastName: "Last name is required" 
+                          }));
+                        }
+                      }}
+                      className={cn(
+                        "h-12",
+                        contactFieldErrors.lastName && "border-destructive"
+                      )}
+                    />
+                    {contactFieldErrors.lastName && (
+                      <p className="text-sm text-destructive">{contactFieldErrors.lastName}</p>
+                    )}
+                  </div>
+
                   <div className="space-y-2">
                     <Label htmlFor="email">
                       Email Address <span className="text-destructive">*</span>

@@ -238,7 +238,9 @@ export default function GuestDetailsPage() {
 
       if (result.success) {
         // Clear the stored booking data
-        await bookingDataStore.remove(orderNumber);
+        if (orderNumber) {
+          await bookingDataStore.remove(orderNumber);
+        }
         
         // Redirect to confirmation page
         router.push(

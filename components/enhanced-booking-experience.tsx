@@ -44,7 +44,6 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { PricingDisplay } from "@/components/ui/pricing-display";
-import { GuestManager, type GuestInfo } from "@/components/ui/guest-manager";
 import { ExtrasSelector } from "@/components/ui/extras-selector";
 import { PickupLocationSelector } from "@/components/ui/pickup-location-selector";
 import { BookingOptionSelector } from "@/components/ui/booking-option-selector";
@@ -107,37 +106,6 @@ interface EnhancedBookingExperienceProps {
   preSelectedLocation?: string; // Pickup location from search form
 }
 
-interface ContactInfo {
-  firstName: string;
-  lastName: string;
-  email: string;
-  phone: string;
-  dietaryRequirements: string;
-  accessibilityNeeds: string;
-  specialRequests: string;
-}
-
-// Payment info is no longer collected in the form - handled by Westpac hosted page
-
-const BOOKING_STEPS = [
-  {
-    id: 1,
-    title: "Date & Guest Details",
-    description: "Choose your tour date and add guest information",
-  },
-  {
-    id: 2,
-    title: "Contact Info",
-    description: "Provide contact and special requirements",
-  },
-  {
-    id: 3,
-    title: "Review Booking",
-    description: "Review your booking details",
-  },
-];
-
-
 // Helper function to map search form locations to booking regions
 const mapLocationToRegion = (location: string): string | undefined => {
   const locationLower = location.toLowerCase();
@@ -193,69 +161,23 @@ export function EnhancedBookingExperience({
   const [selectedBookingOption, setSelectedBookingOption] =
     useState<RezdyBookingOption | null>(null);
   const [wasSessionAutoSelected, setWasSessionAutoSelected] = useState(false);
-  const [guests, setGuests] = useState<GuestInfo[]>([
-    { id: "1", firstName: "", lastName: "", age: 25, type: "ADULT" },
-  ]);
+  
+  // Simplified guest count - default to minimum required
+  const [guestCounts, setGuestCounts] = useState({
+    adults: preSelectedParticipants?.adults || Math.max(1, product.quantityRequiredMin || 1),
+    children: preSelectedParticipants?.children || 0,
+    infants: preSelectedParticipants?.infants || 0,
+  });
+  
   const [selectedExtras, setSelectedExtras] = useState<SelectedExtra[]>(
     preSelectedExtras || []
   );
-  const [contactInfo, setContactInfo] = useState<ContactInfo>({
-    firstName: "",
-    lastName: "",
-    email: "",
-    phone: "",
-    dietaryRequirements: "",
-    accessibilityNeeds: "",
-    specialRequests: "",
-  });
-  // Inline field errors for contact inputs
-  const [contactFieldErrors, setContactFieldErrors] = useState<{
-    email?: string;
-    phone?: string;
-  }>({});
-
-  // Basic helpers
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
-  const formatPhoneNumber = (value: string) => {
-    const cleaned = value.replace(/\D/g, "").slice(0, 10); // keep max 10 digits
-    const len = cleaned.length;
-    if (len < 4) return cleaned;
-    if (len < 7) return `${cleaned.slice(0, 3)} ${cleaned.slice(3)}`;
-    return `${cleaned.slice(0, 3)} ${cleaned.slice(3, 6)} ${cleaned.slice(
-      6
-    )}`;
-  };
-
-  const validateContactFields = () => {
-    const errors: { email?: string; phone?: string } = {};
-    if (!emailRegex.test(contactInfo.email)) {
-      errors.email = "Please enter a valid email address.";
-    }
-
-    const phoneDigits = contactInfo.phone.replace(/\D/g, "");
-    if (phoneDigits.length < 6) {
-      errors.phone = "Please enter a valid phone number.";
-    }
-
-    setContactFieldErrors(errors);
-    return Object.keys(errors).length === 0;
-  };
-
-  // Payment info is handled by Westpac hosted page - no longer stored in component state
+  
+  // Terms agreement
   const [agreeToTerms, setAgreeToTerms] = useState(false);
 
   // Payment processing state
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
-
-  // Stripe state
-  const [stripePromise] = useState(() =>
-    loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!)
-  );
-  const [clientSecret, setClientSecret] = useState<string>("");
-  const [paymentIntentId, setPaymentIntentId] = useState<string>("");
-  const [orderNumber, setOrderNumber] = useState<string>("");
-
 
   // Helper function to ensure consistent date formatting across storage and retrieval
   const getConsistentDateString = (input: Date | string): string => {
@@ -294,25 +216,9 @@ export function EnhancedBookingExperience({
     // Clear extras
     setSelectedExtras([]);
 
-    // Set initial guest count based on product requirements
-    const minGuests = product.quantityRequiredMin || 1;
-    const initialGuests: GuestInfo[] = [];
-
-    for (let i = 0; i < minGuests; i++) {
-      initialGuests.push({
-        id: (i + 1).toString(),
-        firstName: "",
-        lastName: "",
-        age: 25,
-        type: "ADULT",
-      });
-    }
-
-    setGuests(initialGuests);
-
     // Clear any errors displayed from the previous booking flow
     setBookingErrors([]);
-  }, [product.productCode, product.quantityRequiredMin]);
+  }, [product.productCode]);
 
   // Initialize form data from cart item if provided
   useEffect(() => {
@@ -339,96 +245,19 @@ export function EnhancedBookingExperience({
     }
 
     if (preSelectedParticipants) {
-      // Create guest list based on participant counts, respecting product requirements
-      const newGuests: GuestInfo[] = [];
-      let guestId = 1;
-
-      // Add adults
-      for (let i = 0; i < preSelectedParticipants.adults; i++) {
-        newGuests.push({
-          id: guestId.toString(),
-          firstName: "",
-          lastName: "",
-          age: 25,
-          type: "ADULT",
-        });
-        guestId++;
-      }
-
-      // Add children
-      if (preSelectedParticipants.children) {
-        for (let i = 0; i < preSelectedParticipants.children; i++) {
-          newGuests.push({
-            id: guestId.toString(),
-            firstName: "",
-            lastName: "",
-            age: 12,
-            type: "CHILD",
-          });
-          guestId++;
-        }
-      }
-
-      // Add infants
-      if (preSelectedParticipants.infants) {
-        for (let i = 0; i < preSelectedParticipants.infants; i++) {
-          newGuests.push({
-            id: guestId.toString(),
-            firstName: "",
-            lastName: "",
-            age: 1,
-            type: "INFANT",
-          });
-          guestId++;
-        }
-      }
-
-      // Ensure we meet minimum guest requirements
-      const minGuests = product.quantityRequiredMin || 1;
-      while (newGuests.length < minGuests) {
-        newGuests.push({
-          id: guestId.toString(),
-          firstName: "",
-          lastName: "",
-          age: 25,
-          type: "ADULT",
-        });
-        guestId++;
-      }
-
-      if (newGuests.length > 0) {
-        setGuests(newGuests);
-      }
+      setGuestCounts({
+        adults: preSelectedParticipants.adults,
+        children: preSelectedParticipants.children || 0,
+        infants: preSelectedParticipants.infants || 0,
+      });
     }
   }, [preSelectedSession, preSelectedParticipants, preSelectedDate]);
-
-  // Auto-populate contact info from first guest
-  useEffect(() => {
-    if (guests.length > 0) {
-      setContactInfo((prev) => ({
-        ...prev,
-        firstName: guests[0].firstName || "",
-        lastName: guests[0].lastName || "",
-      }));
-    }
-  }, [guests]);
 
   // Date range for availability
   const today = new Date();
   const endDate = addDays(today, 90); // 3 months ahead
   const startDateRange = today.toISOString().split("T")[0];
   const endDateRange = endDate.toISOString().split("T")[0];
-
-  // Calculate guest counts
-  const guestCounts = useMemo(() => {
-    const counts = { adults: 0, children: 0, infants: 0 };
-    guests.forEach((guest) => {
-      if (guest.type === "ADULT") counts.adults++;
-      else if (guest.type === "CHILD") counts.children++;
-      else if (guest.type === "INFANT") counts.infants++;
-    });
-    return counts;
-  }, [guests]);
 
   // Fetch availability
   const {
@@ -441,7 +270,6 @@ export function EnhancedBookingExperience({
     endDateRange,
     `ADULT:${guestCounts.adults},CHILD:${guestCounts.children},INFANT:${guestCounts.infants}`
   );
-
 
   // Use only real availability data from Rezdy API
   const effectiveAvailabilityData = useMemo(() => {
@@ -476,7 +304,6 @@ export function EnhancedBookingExperience({
     ) as RezdySession[];
   }, [effectiveAvailabilityData]);
 
-
   // Extract available dates with seat availability
   const availableDates = useMemo(() => {
     if (allSessions.length === 0) return new Set<string>();
@@ -493,13 +320,11 @@ export function EnhancedBookingExperience({
         hasSeats = isNaN(numeric) ? true : numeric > 0;
       }
 
-
       if (hasSeats && session.startTimeLocal) {
         const sessionDate = getConsistentDateString(session.startTimeLocal);
         dates.add(sessionDate);
       }
     });
-
 
     return dates;
   }, [allSessions]);
@@ -632,10 +457,7 @@ export function EnhancedBookingExperience({
   }, [guestCounts, selectedExtras, product]);
 
   // Step validation
-  const canProceedToNextStep = () => {
-    const hasValidGuests = guests.every(
-      (g) => g.firstName.trim() && g.lastName.trim()
-    );
+  const canProceedToPayment = () => {
     const hasValidSession = selectedSession && validationErrors.length === 0;
 
     // Check if pickup location is required and selected
@@ -651,22 +473,13 @@ export function EnhancedBookingExperience({
     const hasValidBookingOption =
       !needsBookingOption || (selectedBookingOption && selectedPickupLocation);
 
-    // Check if contact info is valid
-    const hasValidContactInfo = 
-      contactInfo.email.trim() && 
-      emailRegex.test(contactInfo.email) &&
-      contactInfo.phone.trim() &&
-      contactInfo.phone.replace(/\D/g, "").length >= 6;
-
     // Check if terms are agreed to
     const hasAgreedToTerms = agreeToTerms;
 
     return (
-      hasValidGuests &&
       hasValidSession &&
       hasValidPickupLocation &&
       hasValidBookingOption &&
-      hasValidContactInfo &&
       hasAgreedToTerms
     );
   };
@@ -810,56 +623,12 @@ export function EnhancedBookingExperience({
     setSelectedPickupLocation(location);
   };
 
-  // Stripe payment handlers
-  const _handlePaymentSuccess = async (stripePaymentIntentId: string) => {
-    setIsProcessingPayment(true);
-    setBookingErrors([]);
-
-    try {
-      // Confirm payment with our backend
-      const confirmResponse = await fetch(
-        "/api/payments/stripe/confirm-payment",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            paymentIntentId: stripePaymentIntentId,
-            orderNumber,
-          }),
-        }
-      );
-
-      const confirmResult = await confirmResponse.json();
-
-      if (confirmResult.success) {
-        // Redirect to confirmation page
-        window.location.href = `/booking/confirmation?orderNumber=${confirmResult.orderNumber}&transactionId=${confirmResult.transactionId}`;
-      } else {
-        setBookingErrors([
-          confirmResult.error ||
-            "Booking confirmation failed. Please contact support.",
-        ]);
-      }
-    } catch (error) {
-      setBookingErrors(["Failed to confirm payment. Please contact support."]);
-    } finally {
-      setIsProcessingPayment(false);
-    }
-  };
-
-  const _handlePaymentError = (error: string) => {
-    setBookingErrors([error]);
-    setIsProcessingPayment(false);
-  };
-
   const handleProceedToPayment = async () => {
     setIsProcessingPayment(true);
     setBookingErrors([]);
 
     try {
-      // Prepare booking data in the format our transformation utilities expect
+      // Prepare minimal booking data for payment processing
       const formData: BookingFormData = {
         product: {
           code: product.productCode,
@@ -873,29 +642,32 @@ export function EnhancedBookingExperience({
           pickupLocation: selectedPickupLocation,
           bookingOption: selectedBookingOption,
         },
-        guests: guests.filter((g) => g.firstName.trim() && g.lastName.trim()),
+        // We'll collect guest details after payment
+        guests: [],
         contact: {
-          ...contactInfo,
-          country: "Australia"
+          firstName: "",
+          lastName: "",
+          email: "",
+          phone: "",
+          country: "Australia",
+          dietaryRequirements: "",
+          accessibilityNeeds: "",
+          specialRequests: "",
         },
         pricing: {
           basePrice: pricingBreakdown.basePrice,
-          sessionPrice: pricingBreakdown.adultPrice, // Use adult price as session price
+          sessionPrice: pricingBreakdown.adultPrice,
           subtotal: pricingBreakdown.subtotal,
           taxAndFees: pricingBreakdown.taxes + pricingBreakdown.serviceFees,
           total: pricingBreakdown.total,
         },
         extras: selectedExtras.map((selectedExtra) => {
-          // Get the calculated price from the pricing breakdown which already handles PER_PERSON, PER_BOOKING, etc.
-          const extrasFromBreakdown = pricingBreakdown.selectedExtras || [];
-
-          // Calculate total price based on price type
           let totalPrice = selectedExtra.extra.price * selectedExtra.quantity;
           if (selectedExtra.extra.priceType === "PER_PERSON") {
             totalPrice =
               selectedExtra.extra.price *
               selectedExtra.quantity *
-              getTotalParticipantCount(guests);
+              (guestCounts.adults + guestCounts.children + guestCounts.infants);
           }
 
           return {
@@ -909,21 +681,14 @@ export function EnhancedBookingExperience({
         payment: {
           method: "credit_card",
         },
+        // Store guest counts for later use
+        guestCounts,
       };
-
-      // Validate booking data for Rezdy submission
-      const validation = validateBookingDataForRezdy(formData);
-      if (!validation.isValid) {
-        setBookingErrors(validation.errors);
-        setIsProcessingPayment(false);
-        return;
-      }
 
       // Generate unique order number
       const generatedOrderNumber = `ORD-${Date.now()}-${Math.floor(
         Math.random() * 1000
       )}`;
-      setOrderNumber(generatedOrderNumber);
 
       // Create Stripe Checkout session
       const checkoutResponse = await fetch(
@@ -987,7 +752,6 @@ export function EnhancedBookingExperience({
       const hasSeatsOnDate = (getDateSeatAvailability.get(dateString) || 0) > 0;
       const disabled = hasSessionsOnDate && !hasSeatsOnDate;
 
-
       return disabled;
     } catch (err) {
       return true;
@@ -1005,7 +769,6 @@ export function EnhancedBookingExperience({
       const hasSeatsOnDate = (getDateSeatAvailability.get(dateString) || 0) > 0;
 
       const soldOut = hasSessionsOnDate && !hasSeatsOnDate;
-
 
       return soldOut;
     } catch (err) {
@@ -1105,7 +868,7 @@ export function EnhancedBookingExperience({
                   Select Date & Time
                 </CardTitle>
                 <p className="text-muted-foreground">
-                  Choose your preferred tour date and session first
+                  Choose your preferred tour date and session
                 </p>
               </CardHeader>
               <CardContent className="space-y-6">
@@ -1219,7 +982,6 @@ export function EnhancedBookingExperience({
                                   selectedSession as RezdySession
                                 );
 
-
                             return (
                               <Card
                                 key={`${session.id}-${session.startTimeLocal}`}
@@ -1266,7 +1028,6 @@ export function EnhancedBookingExperience({
                                         </div>
                                       </div>
                                     </div>
-                                   
                                   </div>
                                 </CardContent>
                               </Card>
@@ -1318,8 +1079,7 @@ export function EnhancedBookingExperience({
                   <Alert>
                     <Info className="h-4 w-4" />
                     <AlertDescription>
-                      Please select a date and time session before adding guest
-                      details.
+                      Please select a date and time session to proceed.
                     </AlertDescription>
                   </Alert>
                 )}
@@ -1338,112 +1098,35 @@ export function EnhancedBookingExperience({
               </CardContent>
             </Card>
 
-            {/* Guest Details Section */}
+            {/* Guest Count Display */}
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Users className="h-5 w-5" />
-                  {BOOKING_STEPS[0].title}
+                  Guest Count
                 </CardTitle>
                 <p className="text-muted-foreground">
-                  Add guest information for your selected session
+                  You will provide guest details after payment
                 </p>
-                {guests.length > 0 && (
-                  <div className="flex items-center gap-2 text-sm">
-                    <CheckCircle className="h-4 w-4 text-brand-accent" />
-                    <span className="text-brand-accent">
-                      {guestCounts.adults +
-                        guestCounts.children +
-                        guestCounts.infants}{" "}
-                      guests added
-                    </span>
-                  </div>
-                )}
               </CardHeader>
               <CardContent>
-                <GuestManager
-                  guests={guests}
-                  onGuestsChange={setGuests}
-                  maxGuests={product.quantityRequiredMax || 10}
-                  minGuests={product.quantityRequiredMin || 1}
-                  requireAdult={true}
-                  autoManageGuests={false}
-                />
-              </CardContent>
-            </Card>
-
-
-            {/* Guest Details Validation */}
-            {guests.length > 0 &&
-              !guests.every((g) => g.firstName.trim() && g.lastName.trim()) && (
-                <Alert>
-                  <Info className="h-4 w-4" />
-                  <AlertDescription>
-                    Please complete all guest names to proceed to the next step.
-                  </AlertDescription>
-                </Alert>
-              )}
-
-            {/* Contact Information */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Mail className="h-5 w-5" />
-                  {BOOKING_STEPS[1].title}
-                </CardTitle>
-                <p className="text-muted-foreground">
-                  {BOOKING_STEPS[1].description}
-                </p>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="contact-email">Email Address *</Label>
-                    <Input
-                      id="contact-email"
-                      type="email"
-                      value={contactInfo.email}
-                      onChange={(e) =>
-                        setContactInfo((prev) => ({
-                          ...prev,
-                          email: e.target.value,
-                        }))
-                      }
-                      onBlur={validateContactFields}
-                      placeholder="Enter email address"
-                      required
-                    />
-                    {contactFieldErrors.email && (
-                      <p className="mt-1 text-xs text-destructive">
-                        {contactFieldErrors.email}
-                      </p>
-                    )}
+                <div className="bg-muted/30 p-4 rounded-lg">
+                  <div className="flex items-center gap-2 text-lg font-medium">
+                    <Users className="h-5 w-5 text-brand-accent" />
+                    <span>
+                      {guestCounts.adults + guestCounts.children + guestCounts.infants} guests
+                    </span>
                   </div>
-                  <div>
-                    <Label htmlFor="contact-phone">Phone Number *</Label>
-                    <Input
-                      id="contact-phone"
-                      type="tel"
-                      value={contactInfo.phone}
-                      onChange={(e) => {
-                        const formatted = formatPhoneNumber(e.target.value);
-                        setContactInfo((prev) => ({
-                          ...prev,
-                          phone: formatted,
-                        }));
-                      }}
-                      onBlur={validateContactFields}
-                      placeholder="0412 345 678"
-                      required
-                    />
-                    {contactFieldErrors.phone && (
-                      <p className="mt-1 text-xs text-destructive">
-                        {contactFieldErrors.phone}
-                      </p>
-                    )}
+                  <div className="mt-2 text-sm text-muted-foreground">
+                    {guestCounts.adults > 0 && `${guestCounts.adults} adults`}
+                    {guestCounts.children > 0 && `, ${guestCounts.children} children`}
+                    {guestCounts.infants > 0 && `, ${guestCounts.infants} infants`}
+                  </div>
+                  <div className="mt-3 text-sm text-muted-foreground">
+                    <Info className="h-4 w-4 inline mr-1" />
+                    Guest details will be collected after payment confirmation
                   </div>
                 </div>
-
               </CardContent>
             </Card>
 
@@ -1499,9 +1182,7 @@ export function EnhancedBookingExperience({
                 <Alert>
                   <Shield className="h-4 w-4" />
                   <AlertDescription>
-                    You will proceed to our secure payment page powered by
-                    Stripe. Your booking will be confirmed automatically after
-                    successful payment.
+                    You will proceed to our secure payment page. After payment, you'll provide guest details to complete your booking.
                   </AlertDescription>
                 </Alert>
               </CardContent>
@@ -1551,17 +1232,15 @@ export function EnhancedBookingExperience({
                             </span>
                           </div>
                         )}
-                      {guests.length > 0 && (
-                        <div className="flex items-center gap-2">
-                          <Users className="h-4 w-4 text-muted-foreground" />
-                          <span>
-                            {guestCounts.adults +
-                              guestCounts.children +
-                              guestCounts.infants}{" "}
-                            guests
-                          </span>
-                        </div>
-                      )}
+                      <div className="flex items-center gap-2">
+                        <Users className="h-4 w-4 text-muted-foreground" />
+                        <span>
+                          {guestCounts.adults +
+                            guestCounts.children +
+                            guestCounts.infants}{" "}
+                          guests
+                        </span>
+                      </div>
                       {selectedPickupLocation && (
                         <div className="flex items-start gap-2">
                           <MapPin className="h-4 w-4 mt-0.5 text-muted-foreground" />
@@ -1604,8 +1283,6 @@ export function EnhancedBookingExperience({
                   }
                 />
               )}
-
-            
             </div>
           </div>
         </div>
@@ -1614,7 +1291,7 @@ export function EnhancedBookingExperience({
         <div className="flex justify-center pt-6 border-t">
           <Button
             onClick={handleProceedToPayment}
-            disabled={!canProceedToNextStep() || isProcessingPayment}
+            disabled={!canProceedToPayment() || isProcessingPayment}
             className="flex items-center gap-2 bg-brand-accent hover:bg-brand-accent/90 text-white"
             size="lg"
           >

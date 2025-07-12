@@ -38,7 +38,7 @@ export async function POST(request: NextRequest) {
 
     // Determine success & cancel URLs
     const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000";
-    const successUrl = `${baseUrl}/booking/confirmation?orderNumber=${orderNumber}&session_id={CHECKOUT_SESSION_ID}`;
+    const successUrl = `${baseUrl}/booking/guest-details?orderNumber=${orderNumber}&session_id={CHECKOUT_SESSION_ID}`;
     const cancelUrl = `${baseUrl}/booking/payment-failed?orderNumber=${orderNumber}`;
 
     // Create the Stripe Checkout Session

@@ -1,80 +1,71 @@
 import { NextRequest, NextResponse } from "next/server";
-import {
-  registerBookingWithPayment,
-  PaymentConfirmation,
-} from "@/lib/services/booking-service";
-import { BookingFormData } from "@/lib/utils/booking-transform";
-import { SessionService } from "@/lib/services/session-service";
+import { transformBookingDataToRezdy, validateBookingDataForRezdy, BookingFormData } from "@/lib/utils/booking-transform";
+import { BookingService, PaymentConfirmation } from "@/lib/services/booking-service";
 
-// Manual booking registration endpoint
-// Use this for testing or when webhook processing fails
 export async function POST(request: NextRequest) {
   try {
-    // Validate session
-    const sessionCookie = request.cookies.get("sessionId");
-    if (!sessionCookie?.value) {
-      return NextResponse.json(
-        { error: "User session not found. Please login again." },
-        { status: 401 }
-      );
-    }
-
-    const validSession = await SessionService.getSession(sessionCookie.value);
-    if (!validSession) {
-      return NextResponse.json(
-        { error: "Invalid or expired session. Please login." },
-        { status: 401 }
-      );
-    }
-
-    // Refresh sliding expiration
-    await SessionService.refreshSession(sessionCookie.value);
-
     const body = await request.json();
+    const { bookingData, orderNumber, sessionId } = body;
 
-    // Validate required fields
-    if (!body.bookingData || !body.paymentConfirmation) {
+    if (!bookingData || !orderNumber) {
       return NextResponse.json(
-        {
-          error: "Missing required fields: bookingData and paymentConfirmation",
-        },
+        { error: "Missing required fields: bookingData and orderNumber" },
         { status: 400 }
       );
     }
 
-    const bookingData: BookingFormData = body.bookingData;
-    const paymentConfirmation: PaymentConfirmation = body.paymentConfirmation;
+    const formData: BookingFormData = bookingData;
 
-    // Register booking with Rezdy
-    const result = await registerBookingWithPayment(
-      bookingData,
-      paymentConfirmation
-    );
-
-    if (result.success) {
+    // Validate booking data for Rezdy submission
+    const validation = validateBookingDataForRezdy(formData);
+    if (!validation.isValid) {
       return NextResponse.json(
-        {
-          success: true,
-          orderNumber: result.orderNumber,
-          rezdyBooking: result.rezdyBooking,
-          message: "Booking successfully registered with Rezdy",
-        },
-        { status: 201 }
-      );
-    } else {
-      return NextResponse.json(
-        {
-          success: false,
-          error: result.error,
-          paymentConfirmation: result.paymentConfirmation,
-        },
+        { error: "Invalid booking data", details: validation.errors },
         { status: 400 }
+      );
+    }
+
+    try {
+      // Create a payment confirmation object (payment already processed by Stripe)
+      const paymentConfirmation: PaymentConfirmation = {
+        transactionId: sessionId || orderNumber,
+        amount: formData.pricing.total,
+        currency: "AUD",
+        status: "success",
+        paymentMethod: "credit_card",
+        timestamp: new Date().toISOString(),
+        orderReference: orderNumber,
+      };
+
+      // Use the existing BookingService to register the booking
+      const bookingService = new BookingService();
+      const bookingRequest = BookingService.createBookingRequest(formData, paymentConfirmation);
+      const bookingResult = await bookingService.registerBooking(bookingRequest);
+
+      if (bookingResult.success) {
+        return NextResponse.json({
+          success: true,
+          bookingId: bookingResult.orderNumber,
+          transactionId: sessionId || orderNumber,
+          message: "Booking completed successfully",
+        });
+      } else {
+        return NextResponse.json(
+          { error: bookingResult.error || "Failed to create booking" },
+          { status: 500 }
+        );
+      }
+    } catch (rezdyError) {
+      console.error("Rezdy booking creation failed:", rezdyError);
+      return NextResponse.json(
+        { error: "Failed to process booking with tour provider" },
+        { status: 500 }
       );
     }
   } catch (error) {
-    console.error("Manual booking registration error:", error);
+    console.error("Booking registration error:", error);
     return NextResponse.json(
-      { error: "Failed to register booking" },
+      { error: "Internal server error" },
       { status: 500 }
     );
   }

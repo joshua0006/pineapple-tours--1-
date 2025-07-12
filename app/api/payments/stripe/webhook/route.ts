@@ -73,8 +73,14 @@ async function handlePaymentSucceeded(event: any) {
     orderNumber: paymentIntent.metadata?.orderNumber,
   });
 
-  // Additional processing can be added here
-  // For example, sending confirmation emails, updating database, etc.
+  // Note: In the new flow, we don't automatically complete the booking here
+  // The booking will be completed after the customer provides guest details
+  // This webhook just confirms that payment was successful
+  
+  // You could add additional processing here if needed:
+  // - Send payment confirmation email
+  // - Update payment status in database
+  // - Log payment success for analytics
 }
 
 async function handlePaymentFailed(event: any) {

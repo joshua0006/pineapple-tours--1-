@@ -57,6 +57,12 @@ export interface BookingFormData {
     cardNumber?: string;
     [key: string]: any;
   };
+  // Optional guest counts for simplified booking flow
+  guestCounts?: {
+    adults: number;
+    children: number;
+    infants: number;
+  };
 }
 
 /**

@@ -100,23 +100,59 @@ export default function BookingConfirmationPage() {
 
   useEffect(() => {
     if (orderNumber && transactionId) {
-      // In a real implementation, fetch booking details from API
-      // For now, we'll simulate the data
-      setTimeout(() => {
-        setBookingDetails({
-          orderNumber,
-          transactionId,
-          productName: "Sydney Harbour Bridge Climb",
-          date: "2024-01-15",
-          time: "09:00 AM - 12:00 PM",
-          guests: 2,
-          pickupLocation: "Circular Quay",
-          totalAmount: 330,
-          customerEmail: "customer@example.com",
-          status: "CONFIRMED",
-        });
+      // Fetch booking details from API
+      const fetchBookingDetails = async () => {
+        try {
+          const response = await fetch(`/api/bookings/${orderNumber}`);
+          if (response.ok) {
+            const bookingData = await response.json();
+            setBookingDetails({
+              orderNumber,
+              transactionId,
+              productName: bookingData.productName || "Tour Booking",
+              date: bookingData.date || new Date().toISOString().split('T')[0],
+              time: bookingData.time || "TBD",
+              guests: bookingData.guestCount || 1,
+              pickupLocation: bookingData.pickupLocation || "TBD",
+              totalAmount: bookingData.totalAmount || 0,
+              customerEmail: bookingData.customerEmail || "",
+              status: "CONFIRMED",
+            });
+          } else {
+            // Fallback to mock data if API call fails
+            setBookingDetails({
+              orderNumber,
+              transactionId,
+              productName: "Tour Booking",
+              date: new Date().toISOString().split('T')[0],
+              time: "TBD",
+              guests: 1,
+              pickupLocation: "TBD",
+              totalAmount: 0,
+              customerEmail: "",
+              status: "CONFIRMED",
+            });
+          }
+        } catch (error) {
+          console.error("Error fetching booking details:", error);
+          // Fallback to mock data
+          setBookingDetails({
+            orderNumber,
+            transactionId,
+            productName: "Tour Booking",
+            date: new Date().toISOString().split('T')[0],
+            time: "TBD",
+            guests: 1,
+            pickupLocation: "TBD",
+            totalAmount: 0,
+            customerEmail: "",
+            status: "CONFIRMED",
+          });
+        }
         setLoading(false);
-      }, 1000);
+      };
+
+      fetchBookingDetails();
     } else {
       setError("Missing booking information");
       setLoading(false);

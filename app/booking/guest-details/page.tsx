@@ -91,10 +91,12 @@ export default function GuestDetailsPage() {
 
           // Add adults
           for (let i = 0; i < data.guestCounts.adults; i++) {
+            // For the first guest, use contact information from pre-payment
+            const isFirstGuest = i === 0;
             initialGuests.push({
               id: guestId.toString(),
-              firstName: "",
-              lastName: "",
+              firstName: isFirstGuest ? data.contact.firstName : "",
+              lastName: isFirstGuest ? data.contact.lastName : "",
               age: 25,
               type: "ADULT",
             });

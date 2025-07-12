@@ -328,7 +328,18 @@ export function filterProductsByCategory(
       (type) => productTypeUpper === type
     );
 
-    return keywordMatch || productTypeMatch;
+    // For generic product types (CUSTOM, DAYTOUR), require keyword match
+    // For specific product types (CHARTER, TICKET, etc.), type match alone is sufficient
+    const genericTypes = ["CUSTOM", "DAYTOUR", "GIFT_CARD", "PRIVATE_TOUR"];
+    const isGenericType = genericTypes.includes(productTypeUpper);
+    
+    if (isGenericType) {
+      // For generic types, require keyword match
+      return keywordMatch;
+    } else {
+      // For specific types, either keyword or type match is sufficient
+      return keywordMatch || productTypeMatch;
+    }
   });
 }
 
@@ -387,7 +398,18 @@ export function doesProductMatchCategory(
     (type) => productTypeUpper === type
   );
 
-  return keywordMatch || productTypeMatch;
+  // For generic product types (CUSTOM, DAYTOUR), require keyword match
+  // For specific product types (CHARTER, TICKET, etc.), type match alone is sufficient
+  const genericTypes = ["CUSTOM", "DAYTOUR", "GIFT_CARD", "PRIVATE_TOUR"];
+  const isGenericType = genericTypes.includes(productTypeUpper);
+  
+  if (isGenericType) {
+    // For generic types, require keyword match
+    return keywordMatch;
+  } else {
+    // For specific types, either keyword or type match is sufficient
+    return keywordMatch || productTypeMatch;
+  }
 }
 
 // Get main tour categories (excluding support categories like gift cards, merchandise)

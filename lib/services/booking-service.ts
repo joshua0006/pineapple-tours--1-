@@ -69,6 +69,11 @@ export class BookingService {
       // Step 4: Set payment status and method based on Westpac confirmation
       rezdyBookingData.paymentOption = this.mapPaymentMethodToRezdy(request.paymentConfirmation.paymentMethod)
       rezdyBookingData.status = 'CONFIRMED' // Mark as confirmed since payment is successful
+      
+      // Step 4.1: Add payment reference information to support Rezdy requirements
+      if (request.paymentConfirmation.transactionId) {
+        rezdyBookingData.orderNumber = rezdyBookingData.orderNumber || request.paymentConfirmation.transactionId;
+      }
 
       // Step 5: Verify amounts match
       if (Math.abs(rezdyBookingData.totalAmount - request.paymentConfirmation.amount) > 0.01) {
@@ -79,7 +84,17 @@ export class BookingService {
         }
       }
 
-      // Step 6: Submit to Rezdy API (or simulate in development)
+      // Step 6: Final validation before Rezdy submission
+      const preSubmissionValidation = this.validateRezdyBookingData(rezdyBookingData);
+      if (!preSubmissionValidation.isValid) {
+        return {
+          success: false,
+          error: `Pre-submission validation failed: ${preSubmissionValidation.errors.join(', ')}`,
+          paymentConfirmation: request.paymentConfirmation
+        }
+      }
+
+      // Step 7: Submit to Rezdy API (or simulate in development)
       const rezdyResult = await this.submitToRezdyApi(rezdyBookingData)
       
       if (rezdyResult.success && rezdyResult.orderNumber) {
@@ -163,8 +178,32 @@ export class BookingService {
         console.error('Rezdy API error response:', {
           status: response.status,
           statusText: response.statusText,
-          body: errorText
+          body: errorText,
+          requestPayload: rezdyBooking
         })
+
+        // Parse Rezdy error response for specific error codes
+        let parsedError;
+        try {
+          parsedError = JSON.parse(errorText);
+        } catch {
+          parsedError = null;
+        }
+
+        // Handle specific Rezdy error code 10 (Quantities/Credit card required)
+        if (parsedError?.requestStatus?.error?.errorCode === "10") {
+          const errorMessage = parsedError.requestStatus.error.errorMessage;
+          console.error('Rezdy Error Code 10 - Missing required data:', {
+            errorMessage,
+            participants: rezdyBooking.items[0]?.participants,
+            paymentOption: rezdyBooking.paymentOption,
+            totalAmount: rezdyBooking.totalAmount,
+            status: rezdyBooking.status
+          });
+          
+          throw new Error(`Rezdy booking failed - ${errorMessage}. Please ensure payment and guest information are complete.`);
+        }
+
         throw new Error(`Rezdy API error: ${response.status} ${response.statusText} - ${errorText}`)
       }
 
@@ -243,6 +282,7 @@ export class BookingService {
       'visa': 'CREDITCARD',
       'mastercard': 'CREDITCARD',
       'amex': 'CREDITCARD',
+      'card': 'CREDITCARD', // Stripe payment method type
       'paypal': 'PAYPAL',
       'bank_transfer': 'BANKTRANSFER',
       'cash': 'CASH',
@@ -250,7 +290,11 @@ export class BookingService {
     }
 
     const lowerMethod = paymentMethod.toLowerCase()
-    return methodMap[lowerMethod] || 'CREDITCARD' // Default to CREDITCARD
+    const mapped = methodMap[lowerMethod] || 'CREDITCARD' // Default to CREDITCARD
+    
+    console.log(`🔄 Mapping payment method: ${paymentMethod} -> ${mapped}`);
+    
+    return mapped;
   }
 
   /**
@@ -263,6 +307,84 @@ export class BookingService {
     return {
       bookingData,
       paymentConfirmation
+    }
+  }
+
+  /**
+   * Validate Rezdy booking data specifically for API requirements
+   */
+  private validateRezdyBookingData(rezdyBooking: RezdyBooking): {
+    isValid: boolean
+    errors: string[]
+  } {
+    const errors: string[] = []
+
+    // Validate required Rezdy fields
+    if (!rezdyBooking.customer || !rezdyBooking.customer.firstName || !rezdyBooking.customer.lastName || !rezdyBooking.customer.email) {
+      errors.push('Customer information is incomplete (firstName, lastName, email required)')
+    }
+
+    if (!rezdyBooking.items || rezdyBooking.items.length === 0) {
+      errors.push('At least one booking item is required')
+    } else {
+      const item = rezdyBooking.items[0]
+      
+      if (!item.productCode) {
+        errors.push('Product code is required')
+      }
+      
+      if (!item.startTimeLocal) {
+        errors.push('Start time is required')
+      }
+      
+      if (!item.participants || item.participants.length === 0) {
+        errors.push('Participants are required - ensure guest counts or individual guests are provided')
+      } else {
+        // Validate participant quantities specifically for Rezdy
+        let totalParticipants = 0;
+        for (const participant of item.participants) {
+          if (!participant.type) {
+            errors.push('Participant type is required')
+          }
+          if (!participant.number || participant.number <= 0) {
+            errors.push(`Invalid participant quantity for ${participant.type}: ${participant.number}`)
+          } else {
+            totalParticipants += participant.number;
+          }
+        }
+        
+        if (totalParticipants === 0) {
+          errors.push('Total participant count must be greater than 0')
+        }
+      }
+      
+      if (!item.amount || item.amount <= 0) {
+        errors.push('Item amount must be greater than 0')
+      }
+    }
+
+    if (!rezdyBooking.totalAmount || rezdyBooking.totalAmount <= 0) {
+      errors.push('Total amount must be greater than 0')
+    }
+
+    if (!rezdyBooking.paymentOption) {
+      errors.push('Payment option is required')
+    }
+
+    // Additional validation for payment status
+    if (rezdyBooking.status === 'CONFIRMED' && rezdyBooking.paymentOption === 'CREDITCARD') {
+      // For confirmed bookings with credit card, ensure we have proper payment confirmation
+      console.log('✅ Rezdy booking validation passed for confirmed credit card payment:', {
+        totalAmount: rezdyBooking.totalAmount,
+        paymentOption: rezdyBooking.paymentOption,
+        status: rezdyBooking.status,
+        participantCount: rezdyBooking.items[0]?.participants?.reduce((sum, p) => sum + p.number, 0) || 0
+      });
+    }
+
+    return {
+      isValid: errors.length === 0,
+      errors
     }
   }
 

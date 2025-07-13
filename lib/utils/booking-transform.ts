@@ -73,36 +73,98 @@ export interface BookingFormData {
 
 /**
  * Aggregates individual guest details into participant counts by type
+ * Falls back to guestCounts if individual guest details aren't available
  */
 export function aggregateParticipants(
   guests: BookingFormData["guests"],
-  selectedPriceOptions?: BookingFormData["selectedPriceOptions"]
+  selectedPriceOptions?: BookingFormData["selectedPriceOptions"],
+  guestCounts?: BookingFormData["guestCounts"]
 ): RezdyParticipant[] {
-  const participantCounts = guests.reduce((acc, guest) => {
-    const type = guest.type;
-    acc[type] = (acc[type] || 0) + 1;
-    return acc;
-  }, {} as Record<string, number>);
+  console.log("🔄 Aggregating participants:", {
+    guestCount: guests?.length || 0,
+    hasGuestCounts: !!guestCounts,
+    guestCounts: guestCounts,
+    hasSelectedPriceOptions: !!selectedPriceOptions
+  });
 
-  return Object.entries(participantCounts).map(([type, number]) => {
-    const participant: RezdyParticipant = {
-      type,
-      number,
-    };
+  // If we have individual guest details, use them
+  if (guests && guests.length > 0) {
+    console.log("📝 Using individual guest details");
+    const participantCounts = guests.reduce((acc, guest) => {
+      const type = guest.type;
+      acc[type] = (acc[type] || 0) + 1;
+      return acc;
+    }, {} as Record<string, number>);
 
-    // Add priceOptionId if available
-    if (selectedPriceOptions) {
-      if (type === "ADULT" && selectedPriceOptions.adult) {
-        participant.priceOptionId = selectedPriceOptions.adult.id;
-      } else if (type === "CHILD" && selectedPriceOptions.child) {
-        participant.priceOptionId = selectedPriceOptions.child.id;
-      } else if (type === "INFANT" && selectedPriceOptions.infant) {
-        participant.priceOptionId = selectedPriceOptions.infant.id;
+    const participants = Object.entries(participantCounts).map(([type, number]) => {
+      const participant: RezdyParticipant = {
+        type,
+        number,
+      };
+
+      // Add priceOptionId if available
+      if (selectedPriceOptions) {
+        if (type === "ADULT" && selectedPriceOptions.adult) {
+          participant.priceOptionId = selectedPriceOptions.adult.id;
+        } else if (type === "CHILD" && selectedPriceOptions.child) {
+          participant.priceOptionId = selectedPriceOptions.child.id;
+        } else if (type === "INFANT" && selectedPriceOptions.infant) {
+          participant.priceOptionId = selectedPriceOptions.infant.id;
+        }
       }
+
+      return participant;
+    });
+
+    console.log("✅ Participants from guest details:", participants);
+    return participants;
+  }
+
+  // Fallback: Use guestCounts if individual guest details aren't available
+  if (guestCounts) {
+    console.log("📊 Using guest counts fallback");
+    const participants: RezdyParticipant[] = [];
+
+    if (guestCounts.adults > 0) {
+      const participant: RezdyParticipant = {
+        type: "ADULT",
+        number: guestCounts.adults,
+      };
+      if (selectedPriceOptions?.adult) {
+        participant.priceOptionId = selectedPriceOptions.adult.id;
+      }
+      participants.push(participant);
     }
 
-    return participant;
-  });
+    if (guestCounts.children > 0) {
+      const participant: RezdyParticipant = {
+        type: "CHILD",
+        number: guestCounts.children,
+      };
+      if (selectedPriceOptions?.child) {
+        participant.priceOptionId = selectedPriceOptions.child.id;
+      }
+      participants.push(participant);
+    }
+
+    if (guestCounts.infants > 0) {
+      const participant: RezdyParticipant = {
+        type: "INFANT",
+        number: guestCounts.infants,
+      };
+      if (selectedPriceOptions?.infant) {
+        participant.priceOptionId = selectedPriceOptions.infant.id;
+      }
+      participants.push(participant);
+    }
+
+    console.log("✅ Participants from guest counts:", participants);
+    return participants;
+  }
+
+  // If neither guests nor guestCounts are available, return empty array
+  console.log("❌ No guests or guest counts available - returning empty participants");
+  return [];
 }
 
 /**
@@ -187,8 +249,18 @@ export function transformBookingDataToRezdy(
   bookingData: BookingFormData,
   orderNumber?: string
 ): RezdyBooking {
+  console.log("🔄 Transforming booking data to Rezdy format:", {
+    productCode: bookingData.product.code,
+    guestCount: bookingData.guests?.length || 0,
+    guestCounts: bookingData.guestCounts,
+    hasSelectedPriceOptions: !!bookingData.selectedPriceOptions,
+    totalAmount: bookingData.pricing.total
+  });
+
   // Aggregate participants with priceOption IDs
-  const participants = aggregateParticipants(bookingData.guests, bookingData.selectedPriceOptions);
+  const participants = aggregateParticipants(bookingData.guests, bookingData.selectedPriceOptions, bookingData.guestCounts);
+  
+  console.log("👥 Aggregated participants:", participants);
 
   // Transform extras
   const extras = transformExtrasToRezdy(bookingData.extras);
@@ -215,9 +287,18 @@ export function transformBookingDataToRezdy(
     customer,
     items: [bookingItem],
     totalAmount: bookingData.pricing.total,
-    paymentOption: bookingData.payment?.method,
+    paymentOption: bookingData.payment?.method || "CREDITCARD",
     status: "PENDING",
   };
+
+  console.log("📋 Generated Rezdy booking:", {
+    orderNumber: rezdyBooking.orderNumber,
+    participantCount: participants.length,
+    totalParticipants: participants.reduce((sum, p) => sum + p.number, 0),
+    totalAmount: rezdyBooking.totalAmount,
+    paymentOption: rezdyBooking.paymentOption,
+    status: rezdyBooking.status
+  });
 
   return rezdyBooking;
 }
@@ -230,6 +311,16 @@ export function validateBookingDataForRezdy(bookingData: BookingFormData): {
   errors: string[];
 } {
   const errors: string[] = [];
+
+  console.log("🔍 Validating booking data for Rezdy:", {
+    productCode: bookingData.product.code,
+    sessionId: bookingData.session.id,
+    sessionStartTime: bookingData.session.startTime,
+    guestCount: bookingData.guests?.length || 0,
+    guestCounts: bookingData.guestCounts,
+    contactEmail: bookingData.contact.email,
+    totalAmount: bookingData.pricing.total
+  });
 
   // Validate product
   if (!bookingData.product.code) {
@@ -244,9 +335,29 @@ export function validateBookingDataForRezdy(bookingData: BookingFormData): {
     errors.push("Session start time is required");
   }
 
-  // Validate guests
-  if (!bookingData.guests || bookingData.guests.length === 0) {
-    errors.push("At least one guest is required");
+  // Validate guests/participants - check both individual guests and guest counts
+  const hasIndividualGuests = bookingData.guests && bookingData.guests.length > 0;
+  const hasGuestCounts = bookingData.guestCounts && 
+    (bookingData.guestCounts.adults > 0 || bookingData.guestCounts.children > 0 || bookingData.guestCounts.infants > 0);
+
+  if (!hasIndividualGuests && !hasGuestCounts) {
+    errors.push("At least one guest or guest counts are required");
+  } else {
+    // Ensure participants have valid quantities
+    const participants = aggregateParticipants(bookingData.guests, bookingData.selectedPriceOptions, bookingData.guestCounts);
+    if (!participants || participants.length === 0) {
+      errors.push("Participant aggregation failed - no valid participants");
+    } else {
+      // Validate each participant has a number > 0
+      for (const participant of participants) {
+        if (!participant.number || participant.number <= 0) {
+          errors.push(`Invalid participant count for ${participant.type}: ${participant.number}`);
+        }
+        if (!participant.type) {
+          errors.push("Participant type is required");
+        }
+      }
+    }
   }
 
   // Validate contact
@@ -265,8 +376,16 @@ export function validateBookingDataForRezdy(bookingData: BookingFormData): {
     errors.push("Total amount must be greater than 0");
   }
 
+  const isValid = errors.length === 0;
+  
+  console.log("✅ Booking data validation result:", {
+    isValid,
+    errorCount: errors.length,
+    errors: errors.length > 0 ? errors : undefined
+  });
+
   return {
-    isValid: errors.length === 0,
+    isValid,
     errors,
   };
 }

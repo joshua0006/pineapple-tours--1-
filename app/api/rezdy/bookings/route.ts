@@ -34,6 +34,42 @@ export async function POST(request: NextRequest) {
 
     if (!response.ok) {
       const errorData = await response.text();
+      console.error('Rezdy API error response:', {
+        status: response.status,
+        statusText: response.statusText,
+        body: errorData,
+        requestPayload: body
+      });
+
+      // Parse Rezdy error response for specific error codes
+      let parsedError;
+      try {
+        parsedError = JSON.parse(errorData);
+      } catch {
+        parsedError = null;
+      }
+
+      // Handle specific Rezdy error code 10 (Quantities/Credit card required)
+      if (parsedError?.requestStatus?.error?.errorCode === "10") {
+        const errorMessage = parsedError.requestStatus.error.errorMessage;
+        console.error('Rezdy Error Code 10 - Missing required data:', {
+          errorMessage,
+          participants: body.items?.[0]?.participants,
+          paymentOption: body.paymentOption,
+          totalAmount: body.totalAmount,
+          status: body.status
+        });
+        
+        return NextResponse.json(
+          { 
+            error: `Rezdy booking failed - ${errorMessage}. Please ensure payment and guest information are complete.`,
+            rezdyErrorCode: "10",
+            details: errorMessage
+          },
+          { status: 400 }
+        );
+      }
+
       throw new Error(`Rezdy API error: ${response.status} ${response.statusText} - ${errorData}`);
     }
 

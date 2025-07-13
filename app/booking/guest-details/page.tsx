@@ -366,17 +366,17 @@ export default function GuestDetailsPage() {
                   <div className="space-y-1 pt-2">
                     {bookingData.guestCounts.adults > 0 && bookingData.selectedPriceOptions.adult && (
                       <div className="text-sm text-muted-foreground">
-                        {bookingData.guestCounts.adults} × {bookingData.selectedPriceOptions.adult.label} (${bookingData.selectedPriceOptions.adult.price})
+                        {bookingData.guestCounts.adults} × {bookingData.selectedPriceOptions.adult.label}
                       </div>
                     )}
                     {bookingData.guestCounts.children > 0 && bookingData.selectedPriceOptions.child && (
                       <div className="text-sm text-muted-foreground">
-                        {bookingData.guestCounts.children} × {bookingData.selectedPriceOptions.child.label} (${bookingData.selectedPriceOptions.child.price})
+                        {bookingData.guestCounts.children} × {bookingData.selectedPriceOptions.child.label}
                       </div>
                     )}
                     {bookingData.guestCounts.infants > 0 && bookingData.selectedPriceOptions.infant && (
                       <div className="text-sm text-muted-foreground">
-                        {bookingData.guestCounts.infants} × {bookingData.selectedPriceOptions.infant.label} (${bookingData.selectedPriceOptions.infant.price})
+                        {bookingData.guestCounts.infants} × {bookingData.selectedPriceOptions.infant.label}
                       </div>
                     )}
                   </div>

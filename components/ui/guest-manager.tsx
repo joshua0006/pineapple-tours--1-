@@ -5,22 +5,11 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Badge } from "@/components/ui/badge";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import {
   Plus,
   Minus,
-  User,
-  Baby,
   UserCheck,
   AlertCircle,
-  Info,
 } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
@@ -43,53 +32,6 @@ interface GuestManagerProps {
   className?: string;
 }
 
-const GUEST_TYPES = {
-  ADULT: {
-    label: "Adult",
-    minAge: 18,
-    icon: User,
-    color: "bg-blue-100 text-blue-800",
-  },
-  CHILD: {
-    label: "Child",
-    minAge: 3,
-    maxAge: 17,
-    icon: User,
-    color: "bg-green-100 text-green-800",
-  },
-  INFANT: {
-    label: "Infant",
-    maxAge: 2,
-    icon: Baby,
-    color: "bg-purple-100 text-purple-800",
-  },
-};
-
-const AGE_RANGES = [
-  { value: "1", label: "Infants (0-2)", type: "INFANT" },
-  { value: "10", label: "Children (3-17)", type: "CHILD" },
-  { value: "25", label: "Adults (18+)", type: "ADULT" },
-];
-
-function getGuestType(age: number): "ADULT" | "CHILD" | "INFANT" {
-  if (age <= GUEST_TYPES.INFANT.maxAge!) return "INFANT";
-  if (age <= GUEST_TYPES.CHILD.maxAge!) return "CHILD";
-  return "ADULT";
-}
-
-// Helper function to get representative age for each category
-function getRepresentativeAge(type: "ADULT" | "CHILD" | "INFANT"): number {
-  switch (type) {
-    case "INFANT":
-      return 1;
-    case "CHILD":
-      return 10;
-    case "ADULT":
-      return 25;
-    default:
-      return 25;
-  }
-}
 
 export function GuestManager({
   guests,
@@ -165,10 +107,6 @@ export function GuestManager({
       if (guest.id === id) {
         const updatedGuest = { ...guest, ...updates };
 
-        // Auto-update type based on age if age is being updated
-        if ("age" in updates && typeof updates.age === "number") {
-          updatedGuest.type = getGuestType(updates.age);
-        }
 
         return updatedGuest;
       }
@@ -179,13 +117,6 @@ export function GuestManager({
     setErrors(validateGuests(updatedGuests));
   };
 
-  const guestCounts = guests.reduce(
-    (counts, guest) => {
-      counts[guest.type.toLowerCase() as keyof typeof counts]++;
-      return counts;
-    },
-    { adult: 0, child: 0, infant: 0 }
-  );
 
   return (
     <div className={`space-y-4 ${className}`}>
@@ -228,12 +159,6 @@ export function GuestManager({
               <div className="flex items-center gap-2">
                 <UserCheck className="h-4 w-4 text-coral-500" />
                 <span className="font-medium">Guest {index + 1}</span>
-                <Badge
-                  variant="outline"
-                  className={`text-xs ${GUEST_TYPES[guest.type].color}`}
-                >
-                  {GUEST_TYPES[guest.type].label}
-                </Badge>
               </div>
               {!autoManageGuests && guests.length > minGuests && (
                 <Button
@@ -248,7 +173,7 @@ export function GuestManager({
               )}
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <Label htmlFor={`firstName-${guest.id}`}>First Name *</Label>
                 <Input
@@ -275,37 +200,6 @@ export function GuestManager({
                   className={!guest.lastName.trim() ? "border-red-300" : ""}
                 />
               </div>
-              <div>
-                <Label htmlFor={`age-${guest.id}`}>Age Category *</Label>
-                <Select
-                  value={guest.age.toString()}
-                  onValueChange={(value) => {
-                    const selectedRange = AGE_RANGES.find(
-                      (range) => range.value === value
-                    );
-                    if (selectedRange) {
-                      updateGuest(guest.id, {
-                        age: parseInt(value),
-                        type: selectedRange.type as
-                          | "ADULT"
-                          | "CHILD"
-                          | "INFANT",
-                      });
-                    }
-                  }}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select age category" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {AGE_RANGES.map((range) => (
-                      <SelectItem key={range.value} value={range.value}>
-                        {range.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
             </div>
           </Card>
         ))}
@@ -314,41 +208,11 @@ export function GuestManager({
       {/* Guest Summary */}
       <Card className="bg-blue-50 border-blue-200">
         <CardContent className="p-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              {guestCounts.adult > 0 && (
-                <div className="flex items-center gap-1">
-                  <User className="h-4 w-4" />
-                  <span className="text-sm">
-                    {guestCounts.adult} Adult{guestCounts.adult > 1 ? "s" : ""}
-                  </span>
-                </div>
-              )}
-              {guestCounts.child > 0 && (
-                <div className="flex items-center gap-1">
-                  <User className="h-4 w-4" />
-                  <span className="text-sm">
-                    {guestCounts.child} Child
-                    {guestCounts.child > 1 ? "ren" : ""}
-                  </span>
-                </div>
-              )}
-              {guestCounts.infant > 0 && (
-                <div className="flex items-center gap-1">
-                  <Baby className="h-4 w-4" />
-                  <span className="text-sm">
-                    {guestCounts.infant} Infant
-                    {guestCounts.infant > 1 ? "s" : ""}
-                  </span>
-                </div>
-              )}
-            </div>
+          <div className="flex items-center justify-center">
             <div className="text-sm font-medium">
               Total: {guests.length} {guests.length === 1 ? "guest" : "guests"}
             </div>
           </div>
-
-        
         </CardContent>
       </Card>
     </div>

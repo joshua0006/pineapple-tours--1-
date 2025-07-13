@@ -450,18 +450,7 @@ export function ExtrasSelector({
                               )}
                             </div>
                           </div>
-                          <div className="text-right ml-2">
-                            {selectedQuantity > 0 ? (
-                              <div>
-                               
-                              </div>
-                            ) : (
-                              <div className="flex items-center gap-1 text-xs text-gray-500">
-                                <Info className="h-3 w-3" />
-                                View Details
-                              </div>
-                            )}
-                          </div>
+                        
                         </div>
                       </div>
                     </div>

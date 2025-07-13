@@ -1210,14 +1210,14 @@ export function EnhancedBookingExperience({
                   Choose the number of guests for your booking
                 </p>
               </CardHeader>
-              <CardContent className="space-y-4">
+              <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 {/* Adults */}
-                <div className="flex items-center justify-between p-4 bg-muted/30 rounded-lg">
-                  <div className="flex-1">
+                <div className="flex flex-col p-4 bg-muted/30 rounded-lg">
+                  <div className="text-center mb-3">
                     <div className="font-medium">Adults</div>
                     <div className="text-sm text-muted-foreground">Ages 18+</div>
                   </div>
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center justify-center gap-3">
                     <Button
                       variant="outline"
                       size="sm"
@@ -1241,12 +1241,12 @@ export function EnhancedBookingExperience({
                 </div>
 
                 {/* Children */}
-                <div className="flex items-center justify-between p-4 bg-muted/30 rounded-lg">
-                  <div className="flex-1">
+                <div className="flex flex-col p-4 bg-muted/30 rounded-lg">
+                  <div className="text-center mb-3">
                     <div className="font-medium">Children</div>
                     <div className="text-sm text-muted-foreground">Ages 3-17</div>
                   </div>
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center justify-center gap-3">
                     <Button
                       variant="outline"
                       size="sm"
@@ -1270,12 +1270,12 @@ export function EnhancedBookingExperience({
                 </div>
 
                 {/* Infants */}
-                <div className="flex items-center justify-between p-4 bg-muted/30 rounded-lg">
-                  <div className="flex-1">
+                <div className="flex flex-col p-4 bg-muted/30 rounded-lg">
+                  <div className="text-center mb-3">
                     <div className="font-medium">Infants</div>
                     <div className="text-sm text-muted-foreground">Ages 0-2</div>
                   </div>
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center justify-center gap-3">
                     <Button
                       variant="outline"
                       size="sm"
@@ -1299,7 +1299,7 @@ export function EnhancedBookingExperience({
                 </div>
 
                 {/* Summary and constraints */}
-                <div className="space-y-2">
+                <div className="md:col-span-3 space-y-2">
                   <div className="flex items-center gap-2 text-lg font-medium">
                     <Users className="h-5 w-5 text-brand-accent" />
                     <span>

@@ -384,6 +384,7 @@ function PaymentPageContent() {
                 stripe={stripePromise}
                 options={{
                   clientSecret,
+                  loader: 'auto',
                   appearance: {
                     theme: "stripe",
                     variables: {

@@ -1299,7 +1299,7 @@ export function EnhancedBookingExperience({
                 </div>
 
                 {/* Summary and constraints */}
-                <div className="md:col-span-3 space-y-2">
+                <div className="space-y-2">
                   <div className="flex items-center gap-2 text-lg font-medium">
                     <Users className="h-5 w-5 text-brand-accent" />
                     <span>
@@ -1308,7 +1308,7 @@ export function EnhancedBookingExperience({
                   </div>
                   
                 
-                  <div className="text-sm text-muted-foreground">
+                  <div className="text-sm text-muted-foreground w-full">
                     <Info className="h-4 w-4 inline mr-1" />
                     Guest details will be collected after payment confirmation
                   </div>

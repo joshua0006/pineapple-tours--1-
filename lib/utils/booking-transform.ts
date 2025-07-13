@@ -397,8 +397,8 @@ export function transformBookingDataToRezdy(
 
   console.log("📋 Generated Rezdy booking:", {
     orderNumber: rezdyBooking.orderNumber,
-    participantCount: participants.length,
-    totalParticipants: participants.reduce((sum, p) => sum + p.number, 0),
+    quantityCount: quantities.length,
+    totalQuantity: quantities.reduce((sum, q) => sum + q.value, 0),
     totalAmount: rezdyBooking.totalAmount,
     paymentOption: rezdyBooking.paymentOption,
     status: rezdyBooking.status

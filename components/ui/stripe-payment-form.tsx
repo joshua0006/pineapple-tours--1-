@@ -288,7 +288,7 @@ export function StripePaymentForm({
                        * providing the full address in `confirmPayment`.
                        */
                       name: "auto",
-                      email: "auto",
+                      email: "never",
                       phone: "auto",
                       address: "auto",
                     },

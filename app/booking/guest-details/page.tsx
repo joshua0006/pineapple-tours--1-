@@ -291,8 +291,33 @@ export default function GuestDetailsPage() {
           </Alert>
         )}
 
-        {/* Booking Summary */}
+       
+
+        {/* Guest Details */}
         <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Users className="h-5 w-5" />
+              Guest Details
+            </CardTitle>
+            <p className="text-muted-foreground">
+              Please provide the names and ages of all guests
+            </p>
+          </CardHeader>
+          <CardContent>
+            <GuestManager
+              guests={guests}
+              onGuestsChange={setGuests}
+              maxGuests={guests.length}
+              minGuests={guests.length}
+              requireAdult={true}
+              autoManageGuests={false}
+            />
+          </CardContent>
+        </Card>
+
+         {/* Booking Summary */}
+         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Shield className="h-5 w-5" />
@@ -386,30 +411,6 @@ export default function GuestDetailsPage() {
             </div>
           </CardContent>
         </Card>
-
-        {/* Guest Details */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Users className="h-5 w-5" />
-              Guest Details
-            </CardTitle>
-            <p className="text-muted-foreground">
-              Please provide the names and ages of all guests
-            </p>
-          </CardHeader>
-          <CardContent>
-            <GuestManager
-              guests={guests}
-              onGuestsChange={setGuests}
-              maxGuests={guests.length}
-              minGuests={guests.length}
-              requireAdult={true}
-              autoManageGuests={false}
-            />
-          </CardContent>
-        </Card>
-
       
         {/* Submit Button */}
         <div className="flex justify-center pt-6">

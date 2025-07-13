@@ -7,6 +7,14 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const { bookingData, orderNumber, sessionId } = body;
 
+    // Initial debug log
+    console.log("📥 /api/bookings/register invoked", {
+      orderNumber,
+      hasBookingData: Boolean(bookingData),
+      sessionId,
+      timestamp: new Date().toISOString(),
+    });
+
     if (!bookingData || !orderNumber) {
       return NextResponse.json(
         { error: "Missing required fields: bookingData and orderNumber" },
@@ -16,8 +24,27 @@ export async function POST(request: NextRequest) {
 
     const formData: BookingFormData = bookingData;
 
+    console.log("📝 Parsed bookingData summary", {
+      productCode: formData.product.code,
+      sessionId: formData.session.id,
+      participantCount:
+        (formData.guests?.length || 0) ||
+        (formData.guestCounts
+          ? formData.guestCounts.adults +
+            formData.guestCounts.children +
+            formData.guestCounts.infants
+          : 0),
+      totalAmount: formData.pricing.total,
+    });
+
     // Validate booking data for Rezdy submission
     const validation = validateBookingDataForRezdy(formData);
+
+    console.log("✅ Validation result", {
+      isValid: validation.isValid,
+      errors: validation.errors,
+    });
+
     if (!validation.isValid) {
       return NextResponse.json(
         { error: "Invalid booking data", details: validation.errors },
@@ -34,7 +61,52 @@ export async function POST(request: NextRequest) {
         const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
         
         try {
-          const paymentIntent = await stripe.paymentIntents.retrieve(sessionId);
+          // First check if sessionId looks like a payment intent ID (starts with pi_)
+          let paymentIntent;
+          
+          if (sessionId.startsWith('pi_')) {
+            // It's already a payment intent ID, retrieve it directly
+            console.log("📝 SessionId is a payment intent ID, retrieving directly");
+            paymentIntent = await stripe.paymentIntents.retrieve(sessionId);
+          } else if (sessionId.startsWith('cs_')) {
+            // It's a checkout session ID, retrieve the session first
+            console.log("📝 SessionId is a checkout session ID, retrieving session first");
+            const checkoutSession = await stripe.checkout.sessions.retrieve(sessionId);
+            
+            if (!checkoutSession.payment_intent) {
+              console.error("❌ Checkout session has no payment intent:", {
+                sessionId,
+                sessionStatus: checkoutSession.status,
+                paymentStatus: checkoutSession.payment_status
+              });
+              return NextResponse.json(
+                { error: "Payment information not found. Please contact support." },
+                { status: 400 }
+              );
+            }
+            
+            // Now retrieve the payment intent from the session
+            paymentIntent = await stripe.paymentIntents.retrieve(
+              checkoutSession.payment_intent as string
+            );
+          } else {
+            // Unknown format, log error
+            console.error("❌ Unknown sessionId format:", {
+              sessionId,
+              prefix: sessionId.substring(0, 3)
+            });
+            return NextResponse.json(
+              { error: "Invalid payment session. Please contact support." },
+              { status: 400 }
+            );
+          }
+          
+          console.log("🔍 Retrieved payment intent:", {
+            id: paymentIntent.id,
+            status: paymentIntent.status,
+            amount: paymentIntent.amount,
+            paymentMethod: paymentIntent.payment_method
+          });
           
           if (paymentIntent.status !== 'succeeded') {
             return NextResponse.json(
@@ -43,13 +115,25 @@ export async function POST(request: NextRequest) {
             );
           }
           
+          // Get payment method details if available
+          let paymentMethodType = "card";
+          if (typeof paymentIntent.payment_method === 'string' && paymentIntent.payment_method) {
+            try {
+              const paymentMethod = await stripe.paymentMethods.retrieve(paymentIntent.payment_method);
+              paymentMethodType = paymentMethod.type;
+              console.log("📝 Payment method type:", paymentMethodType);
+            } catch (pmError) {
+              console.warn("⚠️ Could not retrieve payment method details:", pmError);
+            }
+          }
+          
           // Create proper payment confirmation from Stripe data
           paymentConfirmation = {
             transactionId: paymentIntent.id,
             amount: paymentIntent.amount / 100, // Convert from cents to dollars
             currency: paymentIntent.currency.toUpperCase(),
             status: "success",
-            paymentMethod: paymentIntent.payment_method?.type || "card",
+            paymentMethod: paymentMethodType,
             timestamp: new Date(paymentIntent.created * 1000).toISOString(),
             orderReference: orderNumber,
           };
@@ -58,6 +142,7 @@ export async function POST(request: NextRequest) {
             transactionId: paymentConfirmation.transactionId,
             amount: paymentConfirmation.amount,
             status: paymentIntent.status,
+            paymentMethod: paymentConfirmation.paymentMethod,
             orderNumber
           });
           
@@ -93,13 +178,37 @@ export async function POST(request: NextRequest) {
         selectedPriceOptions: formData.selectedPriceOptions,
         totalAmount: formData.pricing.total,
         paymentAmount: paymentConfirmation.amount,
-        paymentMethod: paymentConfirmation.paymentMethod
+        paymentMethod: paymentConfirmation.paymentMethod,
+        contact: {
+          name: `${formData.contact.firstName} ${formData.contact.lastName}`,
+          email: formData.contact.email,
+          hasPhone: !!formData.contact.phone
+        }
       });
+      
+      // Additional validation before creating booking request
+      if (!formData.guests || formData.guests.length === 0) {
+        if (!formData.guestCounts || (formData.guestCounts.adults + formData.guestCounts.children + formData.guestCounts.infants) === 0) {
+          console.error("❌ No guests or guest counts provided:", {
+            guests: formData.guests,
+            guestCounts: formData.guestCounts
+          });
+          return NextResponse.json(
+            { error: "Guest information is missing. Please provide guest details." },
+            { status: 400 }
+          );
+        }
+      }
 
       // Use the existing BookingService to register the booking
       const bookingService = new BookingService();
       const bookingRequest = BookingService.createBookingRequest(formData, paymentConfirmation);
-      
+
+      console.log("📤 Creating booking request for Rezdy", {
+        paymentOption: bookingRequest.bookingData.payment?.method,
+        paymentConfirmationAmount: paymentConfirmation.amount,
+      });
+
       console.log("🚀 Submitting booking request to Rezdy...");
       const bookingResult = await bookingService.registerBooking(bookingRequest);
 

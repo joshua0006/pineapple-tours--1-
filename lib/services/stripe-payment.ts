@@ -2,7 +2,7 @@ import Stripe from "stripe";
 
 // Initialize Stripe with secret key
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: "2024-12-18.acacia",
+  apiVersion: "2025-02-24.acacia",
 });
 
 export interface StripePaymentRequest {
@@ -92,6 +92,7 @@ export class StripePaymentService {
         },
         automatic_payment_methods: {
           enabled: true,
+          allow_redirects: "never", // Disable redirect-based payment methods including Link
         },
         // Enable receipt emails
         receipt_email: paymentRequest.customerInfo.email,

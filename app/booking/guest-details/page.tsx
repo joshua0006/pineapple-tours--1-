@@ -169,6 +169,16 @@ export default function GuestDetailsPage() {
         },
       };
 
+      // Debug: Log the payload being sent to the booking registration API
+      console.log("🚀 Sending booking registration request:", {
+        orderNumber,
+        sessionId,
+        guestCount: updatedBookingData.guests.length,
+        guestCounts: updatedBookingData.guestCounts,
+        totalAmount: updatedBookingData.pricing.total,
+        firstGuest: updatedBookingData.guests[0],
+      });
+
       // Submit to Rezdy API
       const response = await fetch("/api/bookings/register", {
         method: "POST",

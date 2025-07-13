@@ -272,9 +272,10 @@ export function StripePaymentForm({
                 options={{
                   layout: "tabs",
                   paymentMethodOrder: ["card", "apple_pay", "google_pay"],
-                  disableLink: true,
-                  linkAuthenticationElement: {
-                    enabled: false
+                  // Disable Link functionality by excluding it from payment methods
+                  wallets: {
+                    applePay: "auto",
+                    googlePay: "auto"
                   },
                   fields: {
                     billingDetails: {

@@ -144,7 +144,7 @@ export interface RezdyCustomer {
 export interface RezdyBookingItem {
   productCode: string;
   startTimeLocal: string;
-  participants: RezdyParticipant[];
+  quantities: RezdyQuantity[];
   amount: number;
   pickupId?: string;
   extras?: RezdyBookingExtra[];
@@ -161,6 +161,11 @@ export interface RezdyParticipant {
   type: string;
   number: number;
   priceOptionId?: number;
+}
+
+export interface RezdyQuantity {
+  optionLabel: string;
+  value: number;
 }
 
 export interface RezdyApiResponse<T> {

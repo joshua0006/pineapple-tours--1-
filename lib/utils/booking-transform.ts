@@ -4,6 +4,7 @@ import {
   RezdyParticipant,
   RezdyBookingExtra,
   RezdyCustomer,
+  RezdyQuantity,
 } from "@/lib/types/rezdy";
 
 export interface BookingFormData {
@@ -72,8 +73,89 @@ export interface BookingFormData {
 }
 
 /**
+ * Creates Rezdy quantities array from guest data and selected price options
+ */
+export function createRezdyQuantities(
+  guests: BookingFormData["guests"],
+  selectedPriceOptions?: BookingFormData["selectedPriceOptions"],
+  guestCounts?: BookingFormData["guestCounts"]
+): RezdyQuantity[] {
+  console.log("🔄 Creating Rezdy quantities:", {
+    guestCount: guests?.length || 0,
+    hasGuestCounts: !!guestCounts,
+    guestCounts: guestCounts,
+    hasSelectedPriceOptions: !!selectedPriceOptions,
+    selectedPriceOptions
+  });
+
+  const quantities: RezdyQuantity[] = [];
+
+  // Use guest counts or individual guests to determine quantities
+  if (guestCounts || (guests && guests.length > 0)) {
+    // Calculate counts
+    const counts = {
+      adults: 0,
+      children: 0,
+      infants: 0
+    };
+
+    if (guestCounts) {
+      counts.adults = guestCounts.adults;
+      counts.children = guestCounts.children;
+      counts.infants = guestCounts.infants;
+    } else if (guests) {
+      guests.forEach(guest => {
+        if (guest.type === "ADULT") counts.adults++;
+        else if (guest.type === "CHILD") counts.children++;
+        else if (guest.type === "INFANT") counts.infants++;
+      });
+    }
+
+    // Create quantities using the exact price option labels
+    if (counts.adults > 0 && selectedPriceOptions?.adult) {
+      quantities.push({
+        optionLabel: selectedPriceOptions.adult.label,
+        value: counts.adults
+      });
+    }
+
+    if (counts.children > 0 && selectedPriceOptions?.child) {
+      quantities.push({
+        optionLabel: selectedPriceOptions.child.label,
+        value: counts.children
+      });
+    }
+
+    if (counts.infants > 0 && selectedPriceOptions?.infant) {
+      quantities.push({
+        optionLabel: selectedPriceOptions.infant.label,
+        value: counts.infants
+      });
+    }
+
+    // Fallback if no price options but we have counts
+    if (quantities.length === 0 && (counts.adults > 0 || counts.children > 0 || counts.infants > 0)) {
+      console.warn("⚠️ No price options selected, using default labels");
+      if (counts.adults > 0) {
+        quantities.push({ optionLabel: "Adult", value: counts.adults });
+      }
+      if (counts.children > 0) {
+        quantities.push({ optionLabel: "Child", value: counts.children });
+      }
+      if (counts.infants > 0) {
+        quantities.push({ optionLabel: "Infant", value: counts.infants });
+      }
+    }
+  }
+
+  console.log("✅ Created quantities:", quantities);
+  return quantities;
+}
+
+/**
  * Aggregates individual guest details into participant counts by type
  * Falls back to guestCounts if individual guest details aren't available
+ * @deprecated Use createRezdyQuantities instead
  */
 export function aggregateParticipants(
   guests: BookingFormData["guests"],
@@ -257,10 +339,10 @@ export function transformBookingDataToRezdy(
     totalAmount: bookingData.pricing.total
   });
 
-  // Aggregate participants with priceOption IDs
-  const participants = aggregateParticipants(bookingData.guests, bookingData.selectedPriceOptions, bookingData.guestCounts);
+  // Create quantities array using the new function
+  const quantities = createRezdyQuantities(bookingData.guests, bookingData.selectedPriceOptions, bookingData.guestCounts);
   
-  console.log("👥 Aggregated participants:", participants);
+  console.log("👥 Created quantities:", quantities);
 
   // Transform extras
   const extras = transformExtrasToRezdy(bookingData.extras);
@@ -268,15 +350,37 @@ export function transformBookingDataToRezdy(
   // Extract pickup ID if available
   const pickupId = bookingData.session.pickupLocation?.id || undefined;
 
-  // Create booking item
+  // Validate quantities
+  const totalQuantity = quantities.reduce((sum, q) => sum + q.value, 0);
+  
+  if (totalQuantity === 0) {
+    console.error("❌ Total quantity is 0!", {
+      quantities,
+      guestCounts: bookingData.guestCounts,
+      guests: bookingData.guests?.length
+    });
+    // Create a default quantity if needed
+    quantities.push({ optionLabel: "Adult", value: 1 });
+    console.log("⚠️ Added fallback quantity");
+  }
+
+  // Create booking item with quantities instead of participants
   const bookingItem: RezdyBookingItem = {
     productCode: bookingData.product.code,
     startTimeLocal: bookingData.session.startTime,
-    participants,
+    quantities,
     amount: bookingData.pricing.total,
     pickupId,
     extras: extras.length > 0 ? extras : undefined,
   };
+  
+  console.log("📋 Created booking item:", {
+    productCode: bookingItem.productCode,
+    quantityCount: quantities.length,
+    totalQuantity: quantities.reduce((sum, q) => sum + q.value, 0),
+    quantities: quantities,
+    amount: bookingItem.amount
+  });
 
   // Transform customer
   const customer = transformContactToCustomer(bookingData.contact);

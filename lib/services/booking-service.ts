@@ -75,6 +75,9 @@ export class BookingService {
         totalQuantity: rezdyBookingData.items[0]?.quantities?.reduce((sum, q) => sum + q.value, 0) || 0,
         customerName: `${rezdyBookingData.customer.firstName} ${rezdyBookingData.customer.lastName}`,
         hasPhone: !!rezdyBookingData.customer.phone,
+        paymentsCount: rezdyBookingData.payments?.length || 0,
+        paymentType: rezdyBookingData.payments?.[0]?.type,
+        originalFormPayment: request.bookingData.payment
       });
 
       // Step 4: Verify amounts match
@@ -281,8 +284,33 @@ export class BookingService {
 
       const url = `${this.rezdyApiUrl}/bookings?apiKey=${this.rezdyApiKey}`
       
-      console.log('Submitting booking to Rezdy API:', {
+      // FINAL VALIDATION: Ensure payment structure is correct before API call
+      if (!rezdyBooking.payments || rezdyBooking.payments.length === 0) {
+        console.error("❌ EMERGENCY: No payments array before Rezdy API call!");
+        throw new Error("No payment information available for booking");
+      }
+
+      for (let i = 0; i < rezdyBooking.payments.length; i++) {
+        const payment = rezdyBooking.payments[i];
+        if (!payment.type) {
+          console.error(`❌ EMERGENCY: Payment ${i} has no type before Rezdy API call!`, payment);
+          payment.type = "CREDIT_CARD"; // Emergency fix
+          console.log(`⚠️ EMERGENCY FIX: Set payment ${i} type to CREDIT_CARD`);
+        }
+        if (!payment.recipient) {
+          console.error(`❌ EMERGENCY: Payment ${i} has no recipient before Rezdy API call!`, payment);
+          payment.recipient = "SUPPLIER"; // Emergency fix
+          console.log(`⚠️ EMERGENCY FIX: Set payment ${i} recipient to SUPPLIER`);
+        }
+      }
+
+      console.log('🚀 Submitting booking to Rezdy API:', {
         url: url.replace(this.rezdyApiKey, '***'),
+        paymentStructure: {
+          paymentsCount: rezdyBooking.payments?.length || 0,
+          paymentTypes: rezdyBooking.payments?.map(p => p.type) || [],
+          fullPayments: rezdyBooking.payments
+        },
         bookingData: rezdyBooking
       })
       

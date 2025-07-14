@@ -57,6 +57,7 @@ export interface BookingFormData {
   }>;
   payment?: {
     method?: string;
+    type?: "CASH" | "CREDIT_CARD";
     cardNumber?: string;
     [key: string]: any;
   };
@@ -375,7 +376,8 @@ export function transformBookingDataToRezdy(
     guestCount: bookingData.guests?.length || 0,
     guestCounts: bookingData.guestCounts,
     hasSelectedPriceOptions: !!bookingData.selectedPriceOptions,
-    totalAmount: bookingData.pricing.total
+    totalAmount: bookingData.pricing.total,
+    inputPayment: bookingData.payment
   });
 
   // Create quantities array using the new function
@@ -432,22 +434,35 @@ export function transformBookingDataToRezdy(
   const customer = transformContactToCustomer(bookingData.contact);
 
   // Map payment method to Rezdy payment type
-  const mapPaymentMethodToRezdy = (paymentMethod?: string): "CASH" | "CREDIT_CARD" => {
-    if (!paymentMethod) return "CREDIT_CARD";
+  const mapPaymentMethodToRezdy = (paymentData?: BookingFormData["payment"]): "CASH" | "CREDIT_CARD" => {
+    // First check if type is already explicitly set
+    if (paymentData?.type) {
+      console.log("💳 Using explicit payment type:", paymentData.type);
+      return paymentData.type;
+    }
+    
+    // Fallback to method mapping
+    const paymentMethod = paymentData?.method;
+    if (!paymentMethod) {
+      console.log("💳 No payment method found, defaulting to CREDIT_CARD");
+      return "CREDIT_CARD";
+    }
     
     const lowerMethod = paymentMethod.toLowerCase();
     
     // Most payment methods map to CREDIT_CARD in Rezdy API
     if (lowerMethod === 'cash') {
+      console.log("💳 Mapped cash method to CASH type");
       return 'CASH';
     }
     
     // All other payment methods (credit cards, debit cards, digital wallets) map to CREDIT_CARD
+    console.log("💳 Mapped method to CREDIT_CARD type:", paymentMethod);
     return 'CREDIT_CARD';
   };
 
   // Create payment entry for Rezdy (required even though payment is processed externally)
-  const paymentType = mapPaymentMethodToRezdy(bookingData.payment?.method);
+  const paymentType = mapPaymentMethodToRezdy(bookingData.payment);
   const payment: RezdyPayment = {
     amount: bookingData.pricing.total,
     type: paymentType,
@@ -456,11 +471,21 @@ export function transformBookingDataToRezdy(
   };
 
   console.log("💳 Created payment entry:", {
+    originalPaymentData: bookingData.payment,
     originalMethod: bookingData.payment?.method,
+    originalType: bookingData.payment?.type,
     mappedType: paymentType,
     amount: payment.amount,
-    recipient: payment.recipient
+    recipient: payment.recipient,
+    finalPaymentObject: payment
   });
+
+  // CRITICAL VALIDATION: Ensure payment type is never empty
+  if (!payment.type) {
+    console.error("❌ CRITICAL ERROR: Payment type is empty after mapping!");
+    payment.type = "CREDIT_CARD"; // Emergency fallback
+    console.log("⚠️ Emergency fallback: Set payment type to CREDIT_CARD");
+  }
 
   // Create Rezdy booking - must match official API structure
   const rezdyBooking: RezdyBooking = {
@@ -509,6 +534,30 @@ export function transformBookingDataToRezdy(
     hasFields: rezdyBooking.fields && rezdyBooking.fields.length > 0,
     hasParticipants: bookingItem.participants && bookingItem.participants.length > 0
   });
+
+  // CRITICAL: Log the complete payment object structure being sent to Rezdy
+  console.log("💳 FINAL PAYMENT STRUCTURE:", {
+    paymentsArray: rezdyBooking.payments,
+    firstPaymentDetails: rezdyBooking.payments[0] ? {
+      amount: rezdyBooking.payments[0].amount,
+      type: rezdyBooking.payments[0].type,
+      recipient: rezdyBooking.payments[0].recipient,
+      label: rezdyBooking.payments[0].label,
+      typeExists: rezdyBooking.payments[0].type !== undefined,
+      typeValue: typeof rezdyBooking.payments[0].type,
+      typeString: String(rezdyBooking.payments[0].type)
+    } : "NO_PAYMENT_FOUND"
+  });
+
+  // Additional validation before returning
+  if (!rezdyBooking.payments || rezdyBooking.payments.length === 0) {
+    console.error("❌ CRITICAL: No payments in Rezdy booking!");
+  } else if (!rezdyBooking.payments[0].type) {
+    console.error("❌ CRITICAL: Payment type is undefined/empty in final booking!", {
+      payment: rezdyBooking.payments[0],
+      originalPaymentData: bookingData.payment
+    });
+  }
 
   return rezdyBooking;
 }

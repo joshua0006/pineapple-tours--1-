@@ -203,29 +203,53 @@ export function TourCategoriesDropdown({
       </button>
 
       {isOpen && (
-        <div className="absolute top-full left-0 mt-1 w-[400px] bg-popover border rounded-lg shadow-lg z-50 overflow-hidden animate-dropdown-in">
-          <div className="p-4">
-            <h3 className="text-sm font-semibold text-muted-foreground mb-3">
-              Browse Categories
-            </h3>
-            <div className="space-y-1">
+        <div className="absolute top-full left-0 mt-2 w-[420px] bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl shadow-xl z-50 overflow-hidden animate-dropdown-in">
+          <div className="p-2">
+            <div className="px-3 py-2 mb-1">
+              <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100">
+                Browse Categories
+              </h3>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                Explore our tour collections
+              </p>
+            </div>
+            <div className="grid grid-cols-2 gap-1">
               {tourCategories.map((category) => (
                 <button
                   key={category.id}
                   onClick={() => handleCategoryClick(category)}
-                  className="flex items-center gap-2 w-full px-3 py-2 text-sm rounded-md transition-colors text-left group hover:bg-coral-50 hover:text-coral-700 dark:hover:bg-coral-500/10 dark:hover:text-coral-300"
+                  className="flex items-center gap-3 px-3 py-2.5 text-sm rounded-lg transition-all duration-200 text-left group hover:bg-gradient-to-r hover:from-coral-50 hover:to-orange-50 dark:hover:from-coral-900/20 dark:hover:to-orange-900/20 hover:shadow-sm relative overflow-hidden"
                 >
-                  <span className="text-coral-500 group-hover:text-coral-600 dark:group-hover:text-coral-400 transition-colors">
-                    {category.icon}
-                  </span>
-                  <span className="flex-1">{category.name}</span>
-                  {category.featured && (
-                    <span className="px-1.5 py-0.5 text-xs bg-coral-500/20 text-coral-700 dark:text-coral-300 rounded">
-                      Popular
+                  <div className="relative z-10 p-2 bg-coral-100 dark:bg-coral-900/30 rounded-lg group-hover:bg-coral-200 dark:group-hover:bg-coral-800/40 transition-colors">
+                    <span className="text-coral-600 dark:text-coral-400">
+                      {category.icon}
                     </span>
-                  )}
+                  </div>
+                  <div className="flex-1 relative z-10">
+                    <span className="font-medium text-gray-700 dark:text-gray-200 group-hover:text-gray-900 dark:group-hover:text-white block">
+                      {category.name}
+                    </span>
+                    {category.featured && (
+                      <span className="text-xs text-coral-600 dark:text-coral-400 mt-0.5 inline-flex items-center gap-1">
+                        <Sparkles className="w-3 h-3" />
+                        Popular
+                      </span>
+                    )}
+                  </div>
+                  <div className="absolute inset-0 bg-gradient-to-r from-coral-100/0 via-coral-100/50 to-coral-100/0 dark:from-coral-500/0 dark:via-coral-500/10 dark:to-coral-500/0 translate-x-full group-hover:translate-x-0 transition-transform duration-500" />
                 </button>
               ))}
+            </div>
+            <div className="mt-2 pt-2 border-t border-gray-100 dark:border-gray-800 px-3 pb-1">
+              <button
+                onClick={() => {
+                  router.push("/tours");
+                  setIsOpen(false);
+                }}
+                className="w-full text-center py-2 text-sm font-medium text-coral-600 hover:text-coral-700 dark:text-coral-400 dark:hover:text-coral-300 hover:bg-coral-50 dark:hover:bg-coral-900/20 rounded-lg transition-colors"
+              >
+                View All Tours →
+              </button>
             </div>
           </div>
         </div>

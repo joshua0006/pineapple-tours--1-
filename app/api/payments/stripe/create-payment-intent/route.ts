@@ -67,16 +67,19 @@ export async function POST(request: NextRequest) {
     });
 
     if (paymentResult.success) {
+      // Always include payment data in response
+      const paymentData = {
+        method: "stripe",
+        type: "CREDITCARD" as const
+      };
+      
       return NextResponse.json({
         success: true,
         clientSecret: paymentResult.clientSecret,
         paymentIntentId: paymentResult.paymentIntent?.id,
         orderNumber,
-        // Include payment data for client to update sessionStorage
-        paymentData: {
-          method: "stripe",
-          type: "CREDITCARD" as const
-        },
+        // Always include payment data for client to update sessionStorage
+        paymentData: paymentData,
         shouldUpdateSessionStorage: true
       });
     } else {
@@ -116,14 +119,19 @@ async function storeBookingData(
     }
   };
   
-  await bookingDataStore.store(orderNumber, bookingDataWithPayment);
-
-  console.log(`Stored booking data for order ${orderNumber}:`, {
+  console.log(`💾 Storing booking data for payment intent creation:`, {
+    orderNumber: orderNumber,
     productCode: bookingData.product.code,
     sessionId: bookingData.session.id,
     guestCount: bookingData.guests.length,
     total: bookingData.pricing.total,
     contactEmail: bookingData.contact.email,
-    payment: bookingDataWithPayment.payment
+    payment: bookingDataWithPayment.payment,
+    hasOriginalPayment: !!bookingData.payment,
+    originalPaymentType: bookingData.payment?.type
   });
+  
+  await bookingDataStore.store(orderNumber, bookingDataWithPayment);
+  
+  console.log(`✅ Successfully stored booking data with payment info for order: ${orderNumber}`);
 }

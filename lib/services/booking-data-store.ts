@@ -30,28 +30,44 @@ class BookingDataStore {
     const now = Date.now();
     const expiresAt = now + this.TTL_MS;
 
+    // Ensure payment data exists before storing
+    if (!bookingData.payment || !bookingData.payment.type) {
+      console.warn("⚠️ Booking data missing payment info, adding default CREDITCARD payment");
+      bookingData = {
+        ...bookingData,
+        payment: {
+          method: bookingData.payment?.method || "credit_card",
+          type: "CREDITCARD" as const
+        }
+      };
+    }
+
     // Normalize the order number for consistent storage
     const normalizedOrderNumber = normalizeOrderNumber(orderNumber);
 
-    this.dataStore.set(normalizedOrderNumber, {
+    const storedData: StoredBookingData = {
       data: bookingData,
       timestamp: now,
       expiresAt,
-    });
+    };
+
+    this.dataStore.set(normalizedOrderNumber, storedData);
 
     console.log(
-      `📦 Stored booking data for order ${orderNumber} (normalized to ${normalizedOrderNumber}), expires at ${new Date(
-        expiresAt
-      ).toISOString()}`
+      `📦 Stored booking data for order ${orderNumber} (normalized to ${normalizedOrderNumber})`,
+      {
+        expiresAt: new Date(expiresAt).toISOString(),
+        hasPayment: !!bookingData.payment,
+        paymentType: bookingData.payment?.type,
+        paymentMethod: bookingData.payment?.method,
+        productCode: bookingData.product?.code,
+        totalAmount: bookingData.pricing?.total
+      }
     );
 
     // Also store under original order number if different from normalized
     if (orderNumber !== normalizedOrderNumber) {
-      this.dataStore.set(orderNumber, {
-        data: bookingData,
-        timestamp: now,
-        expiresAt,
-      });
+      this.dataStore.set(orderNumber, storedData);
       console.log(`📦 Also stored under original order number: ${orderNumber}`);
     }
   }
@@ -63,19 +79,42 @@ class BookingDataStore {
     console.log(`🔍 Looking for booking data for order: ${orderNumber}`);
     console.log(`📊 Current store stats:`, this.getStats());
     console.log(`🗂️ Available order numbers in store:`, Array.from(this.dataStore.keys()));
+    console.log(`🔍 Order number analysis:`, {
+      original: orderNumber,
+      normalized: normalizeOrderNumber(orderNumber),
+      hasPrefix: orderNumber.includes('ORD-'),
+      length: orderNumber.length,
+      allVariations: this.generateOrderNumberVariations(orderNumber)
+    });
 
     const stored = this.dataStore.get(orderNumber);
 
     if (!stored) {
       console.log(`❌ No booking data found for order ${orderNumber}`);
       
+      // Enhanced debugging: show exact keys and differences
+      const allKeys = Array.from(this.dataStore.keys());
+      console.log(`🗝️ All keys in store (${allKeys.length} total):`);
+      allKeys.forEach((key, index) => {
+        console.log(`  ${index + 1}. "${key}" (exact match: ${key === orderNumber})`);
+      });
+      
       // Try fuzzy matching for similar order numbers
-      const similarOrders = Array.from(this.dataStore.keys()).filter(key => 
-        key.includes(orderNumber.substring(0, 10)) || orderNumber.includes(key.substring(0, 10))
-      );
+      const similarOrders = allKeys.filter(key => {
+        const similarity = (
+          key.includes(orderNumber.substring(0, 10)) || 
+          orderNumber.includes(key.substring(0, 10)) ||
+          (key.includes('-') && orderNumber.includes('-') && 
+           key.split('-')[1] === orderNumber.split('-')[1])
+        );
+        return similarity;
+      });
       
       if (similarOrders.length > 0) {
-        console.log(`🔧 Found similar order numbers that might be related:`, similarOrders);
+        console.log(`🔧 Found ${similarOrders.length} similar order numbers:`);
+        similarOrders.forEach(similar => {
+          console.log(`  - "${similar}" (might be a match for "${orderNumber}")`);
+        });
       }
       
       return null;
@@ -94,6 +133,12 @@ class BookingDataStore {
 
     console.log(`✅ Retrieved booking data for order ${orderNumber}`);
     console.log(`⏱️ Time until expiry: ${timeUntilExpiry}ms (${Math.round(timeUntilExpiry / 1000 / 60)} minutes)`);
+    console.log(`💳 Payment data in retrieved booking:`, {
+      hasPayment: !!stored.data.payment,
+      paymentType: stored.data.payment?.type,
+      paymentMethod: stored.data.payment?.method,
+      productName: stored.data.product?.name
+    });
     return stored.data;
   }
 

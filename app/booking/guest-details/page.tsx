@@ -24,7 +24,6 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { GuestManager, type GuestInfo } from "@/components/ui/guest-manager";
-import { bookingDataStore } from "@/lib/services/booking-data-store";
 import { BookingFormData } from "@/lib/utils/booking-transform";
 
 
@@ -34,6 +33,13 @@ export default function GuestDetailsPage() {
   const searchParams = useSearchParams();
   const orderNumber = searchParams.get("orderNumber");
   const sessionId = searchParams.get("session_id");
+  
+  console.log("🎯 Guest Details Page Loaded:", {
+    orderNumber: orderNumber,
+    sessionId: sessionId,
+    sessionIdType: sessionId?.startsWith('cs_') ? 'checkout_session' : sessionId?.startsWith('pi_') ? 'payment_intent' : 'unknown',
+    timestamp: new Date().toISOString()
+  });
 
   const [bookingData, setBookingData] = useState<BookingFormData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -57,35 +63,85 @@ export default function GuestDetailsPage() {
       try {
         let data: BookingFormData | null = null;
         
-        // First try to get booking data from server-side store (has payment data)
-        try {
-          data = await bookingDataStore.retrieve(orderNumber);
-          if (data) {
-            console.log("✅ Retrieved booking data from server store with payment data:", {
-              hasPayment: !!data.payment,
-              paymentType: data.payment?.type,
-              paymentMethod: data.payment?.method
-            });
-          }
-        } catch (serverError) {
-          console.warn("Failed to retrieve from server store:", serverError);
-        }
+        // First, try to get booking data from sessionStorage (most reliable)
+        console.log("🔍 Attempting to retrieve booking data for order:", orderNumber);
+        console.log("📊 Current URL parameters:", { orderNumber, sessionId });
         
-        // Fall back to session storage only if server retrieval failed
-        if (!data && typeof window !== 'undefined') {
-          const sessionData = sessionStorage.getItem(`booking_${orderNumber}`);
-          if (sessionData) {
-            try {
-              data = JSON.parse(sessionData);
-              console.log("⚠️ Using fallback data from session storage (may lack payment info)");
-            } catch (parseError) {
-              console.warn("Failed to parse session storage data:", parseError);
+        // Check sessionStorage first as it's more reliable
+        if (orderNumber && typeof window !== "undefined") {
+          try {
+            const storageKey = `booking_${orderNumber}`;
+            console.log("🔑 Checking sessionStorage with key:", storageKey);
+            
+            const cached = sessionStorage.getItem(storageKey);
+            if (cached) {
+              data = JSON.parse(cached);
+              console.log("✅ Retrieved booking data from sessionStorage:", {
+                hasPayment: !!data?.payment,
+                paymentType: data?.payment?.type,
+                paymentMethod: data?.payment?.method,
+                productName: data?.product?.name,
+                orderNumber: orderNumber
+              });
+              
+              // Ensure payment data exists
+              if (!data.payment || !data.payment.type) {
+                console.warn("⚠️ Payment data missing in sessionStorage, adding default");
+                data.payment = {
+                  method: sessionId ? "stripe" : "credit_card",
+                  type: "CREDITCARD" as const
+                };
+              }
             }
+          } catch (storageErr) {
+            console.error("💥 Failed to parse booking data from sessionStorage:", storageErr);
           }
         }
         
+        // If not found in sessionStorage, try API as fallback
         if (!data) {
-          setError("Booking data not found. Please contact support.");
+          console.log("📡 SessionStorage empty, trying API endpoint...");
+          try {
+            const response = await fetch(`/api/bookings/${orderNumber}`);
+            const result = await response.json();
+            
+            if (response.ok && result.success && result.data) {
+              data = result.data;
+              console.log("✅ Retrieved booking data from API:", {
+                hasPayment: !!data?.payment,
+                paymentType: data?.payment?.type,
+                paymentMethod: data?.payment?.method,
+                orderNumber: orderNumber
+              });
+              
+              // Store in sessionStorage for consistency
+              if (orderNumber && typeof window !== "undefined") {
+                sessionStorage.setItem(`booking_${orderNumber}`, JSON.stringify(data));
+                console.log("💾 Cached API data to sessionStorage");
+              }
+            } else {
+              console.error("❌ No booking data found in API:", {
+                status: response.status,
+                result: result
+              });
+            }
+          } catch (apiError) {
+            console.error("💥 Failed to retrieve from API:", apiError);
+          }
+        }
+        
+
+        if (!data) {
+          console.error("❌ CRITICAL: No booking data found after all fallback attempts");
+          console.error("🔍 Debug info:", {
+            orderNumber: orderNumber,
+            sessionId: sessionId,
+            url: window.location.href,
+            sessionStorageKeys: Object.keys(sessionStorage),
+            bookingKeys: Object.keys(sessionStorage).filter(k => k.includes('booking'))
+          });
+          
+          setError("Booking data not found. This may occur if the booking session has expired or the order number is invalid. Please contact support with your order number: " + orderNumber);
           setLoading(false);
           return;
         }
@@ -230,14 +286,9 @@ export default function GuestDetailsPage() {
       const result = await response.json();
 
       if (result.success) {
-        // Clear the stored booking data from both server and session storage
-        if (orderNumber) {
-          await bookingDataStore.remove(orderNumber);
-          
-          // Also clear session storage
-          if (typeof window !== 'undefined') {
-            sessionStorage.removeItem(`booking_${orderNumber}`);
-          }
+        // Clear session storage
+        if (orderNumber && typeof window !== 'undefined') {
+          sessionStorage.removeItem(`booking_${orderNumber}`);
         }
         
         // Redirect to confirmation page

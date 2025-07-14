@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { validateBookingDataForRezdy, BookingFormData } from "@/lib/utils/booking-transform";
 import { BookingService, PaymentConfirmation } from "@/lib/services/booking-service";
+import { bookingDataStore } from "@/lib/services/booking-data-store";
 
 export async function POST(request: NextRequest) {
   try {
@@ -239,6 +240,10 @@ export async function POST(request: NextRequest) {
           transactionId: paymentConfirmation.transactionId
         });
         
+        // Clear booking data from server store after successful registration
+        await bookingDataStore.remove(orderNumber);
+        console.log("🧹 Cleared booking data from server store for order:", orderNumber);
+        
         return NextResponse.json({
           success: true,
           bookingId: bookingResult.orderNumber,
@@ -263,9 +268,17 @@ export async function POST(request: NextRequest) {
       }
     } catch (rezdyError) {
       console.error("💥 Rezdy booking creation failed:", rezdyError);
+      
+      // Check if it's a validation error (should be 400) or system error (500)
+      const errorMessage = rezdyError instanceof Error ? rezdyError.message : "Failed to process booking with tour provider";
+      const isValidationError = errorMessage.includes("validation failed") || 
+                               errorMessage.includes("cannot be empty") ||
+                               errorMessage.includes("is required") ||
+                               errorMessage.includes("Invalid");
+      
       return NextResponse.json(
-        { error: "Failed to process booking with tour provider" },
-        { status: 500 }
+        { error: errorMessage },
+        { status: isValidationError ? 400 : 500 }
       );
     }
   } catch (error) {

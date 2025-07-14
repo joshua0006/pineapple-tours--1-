@@ -474,18 +474,29 @@ export class BookingService {
           itemsCount: rezdyBooking.items.length,
           firstItem: {
             productCode: rezdyBooking.items[0]?.productCode,
+            startTime: rezdyBooking.items[0]?.startTimeLocal,
             quantities: rezdyBooking.items[0]?.quantities,
+            totalQuantity: rezdyBooking.items[0]?.quantities?.reduce((sum, q) => sum + q.value, 0) || 0,
             participantsCount: rezdyBooking.items[0]?.participants?.length || 0,
             extrasCount: rezdyBooking.items[0]?.extras?.length || 0
           },
           paymentsCount: rezdyBooking.payments?.length || 0,
-          payments: rezdyBooking.payments,
+          payments: rezdyBooking.payments?.map(p => ({
+            amount: p.amount,
+            type: p.type,
+            recipient: p.recipient,
+            label: p.label
+          })),
           fieldsCount: rezdyBooking.fields.length,
           hasPickupLocation: !!rezdyBooking.pickupLocation,
-          comments: rezdyBooking.comments
-        },
-        fullBookingData: rezdyBooking
+          commentsLength: rezdyBooking.comments?.length || 0
+        }
       })
+
+      // Log the complete booking payload for debugging (in development only)
+      if (process.env.NODE_ENV === 'development') {
+        console.log('📋 Complete Rezdy booking payload:', JSON.stringify(rezdyBooking, null, 2));
+      }
       
       const response = await fetch(url, {
         method: 'POST',
@@ -538,6 +549,7 @@ export class BookingService {
             errorMessage,
             bookingStructure: {
               hasStatus: !!rezdyBooking.status,
+              status: rezdyBooking.status,
               hasCustomer: !!rezdyBooking.customer,
               hasItems: !!rezdyBooking.items && rezdyBooking.items.length > 0,
               hasPayments: !!rezdyBooking.payments && rezdyBooking.payments.length > 0,
@@ -551,20 +563,48 @@ export class BookingService {
                 productCode: !!rezdyBooking.items[0].productCode,
                 startTime: !!rezdyBooking.items[0].startTimeLocal,
                 quantitiesCount: rezdyBooking.items[0].quantities?.length || 0,
-                totalQuantity: rezdyBooking.items[0].quantities?.reduce((sum, q) => sum + q.value, 0) || 0
+                totalQuantity: rezdyBooking.items[0].quantities?.reduce((sum, q) => sum + q.value, 0) || 0,
+                quantities: rezdyBooking.items[0].quantities,
+                participantsCount: rezdyBooking.items[0].participants?.length || 0
               } : null,
-              paymentsCount: rezdyBooking.payments?.length || 0
+              paymentsCount: rezdyBooking.payments?.length || 0,
+              paymentDetails: rezdyBooking.payments?.[0] ? {
+                hasAmount: !!rezdyBooking.payments[0].amount,
+                hasType: !!rezdyBooking.payments[0].type,
+                hasRecipient: !!rezdyBooking.payments[0].recipient,
+                type: rezdyBooking.payments[0].type,
+                recipient: rezdyBooking.payments[0].recipient
+              } : null,
+              fieldsCount: rezdyBooking.fields?.length || 0,
+              hasComments: !!rezdyBooking.comments
             },
             suggestions: [
-              'Verify booking status is set to CONFIRMED',
-              'Check all customer fields are present and valid',
+              'Verify booking status is set to CONFIRMED or PROCESSING',
+              'Check all customer fields are present and valid (firstName, lastName, phone, email)',
               'Ensure quantities array has valid optionLabel and value > 0',
-              'Confirm payments array is populated with correct structure',
-              'Validate startTimeLocal format (YYYY-MM-DD HH:mm:ss)'
+              'Confirm payments array is populated with type (CASH/CREDITCARD) and recipient (SUPPLIER)',
+              'Validate startTimeLocal format (YYYY-MM-DD HH:mm:ss)',
+              'Ensure participants array exists (can be empty)',
+              'Check fields array exists and comments is a string'
             ]
           });
           
-          throw new Error(`Booking validation failed: ${errorMessage}. Please check all required fields and try again.`);
+          // Create a more specific error message based on what's missing
+          let specificError = "Booking validation failed";
+          if (!rezdyBooking.status) {
+            specificError += " - Missing booking status";
+          }
+          if (!rezdyBooking.customer?.email) {
+            specificError += " - Missing customer email";
+          }
+          if (!rezdyBooking.payments?.[0]?.type) {
+            specificError += " - Missing payment type";
+          }
+          if (!rezdyBooking.items?.[0]?.quantities?.length) {
+            specificError += " - Missing quantities";
+          }
+          
+          throw new Error(`${specificError}: ${errorMessage}. Please check all required fields and try again.`);
         }
 
         // Handle other specific error codes
@@ -687,31 +727,52 @@ export class BookingService {
   } {
     const errors: string[] = []
 
-    // Validate required Rezdy fields
-    if (!rezdyBooking.customer || !rezdyBooking.customer.firstName || !rezdyBooking.customer.lastName || !rezdyBooking.customer.phone) {
-      errors.push('Customer information is incomplete (firstName, lastName, phone required)')
+    // Validate required booking status
+    if (!rezdyBooking.status) {
+      errors.push('Booking status is required')
+    } else if (rezdyBooking.status !== "CONFIRMED" && rezdyBooking.status !== "PROCESSING") {
+      errors.push(`Invalid booking status: ${rezdyBooking.status}`)
     }
 
+    // Validate required customer fields
+    if (!rezdyBooking.customer) {
+      errors.push('Customer information is required')
+    } else {
+      if (!rezdyBooking.customer.firstName || rezdyBooking.customer.firstName.trim() === '') {
+        errors.push('Customer first name is required')
+      }
+      if (!rezdyBooking.customer.lastName || rezdyBooking.customer.lastName.trim() === '') {
+        errors.push('Customer last name is required')
+      }
+      if (!rezdyBooking.customer.phone || rezdyBooking.customer.phone.trim() === '') {
+        errors.push('Customer phone is required')
+      }
+      if (!rezdyBooking.customer.email || rezdyBooking.customer.email.trim() === '') {
+        errors.push('Customer email is required')
+      }
+    }
+
+    // Validate booking items
     if (!rezdyBooking.items || rezdyBooking.items.length === 0) {
       errors.push('At least one booking item is required')
     } else {
       const item = rezdyBooking.items[0]
       
-      if (!item.productCode) {
+      if (!item.productCode || item.productCode.trim() === '') {
         errors.push('Product code is required')
       }
       
-      if (!item.startTimeLocal) {
+      if (!item.startTimeLocal || item.startTimeLocal.trim() === '') {
         errors.push('Start time is required')
       }
       
+      // Validate quantities array (critical for Rezdy API)
       if (!item.quantities || item.quantities.length === 0) {
         errors.push('Quantities are required - ensure guest counts or individual guests are provided')
       } else {
-        // Validate quantities specifically for Rezdy
         let totalQuantity = 0;
         for (const quantity of item.quantities) {
-          if (!quantity.optionLabel) {
+          if (!quantity.optionLabel || quantity.optionLabel.trim() === '') {
             errors.push('Option label is required for each quantity')
           }
           if (!quantity.value || quantity.value <= 0) {
@@ -725,31 +786,61 @@ export class BookingService {
           errors.push('Total quantity must be greater than 0')
         }
       }
+
+      // Validate participants array exists
+      if (!item.participants) {
+        errors.push('Participants array is required (can be empty)')
+      } else if (Array.isArray(item.participants)) {
+        // Validate participant structure if not empty
+        for (let i = 0; i < item.participants.length; i++) {
+          const participant = item.participants[i];
+          if (!participant.fields || !Array.isArray(participant.fields)) {
+            errors.push(`Participant ${i}: fields array is required`)
+          }
+        }
+      }
     }
 
-    // Validate payments array (required in new structure)
+    // Validate payments array (critical for Rezdy API)
     if (!rezdyBooking.payments || rezdyBooking.payments.length === 0) {
       errors.push('At least one payment entry is required')
     } else {
-      for (const payment of rezdyBooking.payments) {
+      for (let i = 0; i < rezdyBooking.payments.length; i++) {
+        const payment = rezdyBooking.payments[i];
+        
         if (!payment.amount || payment.amount <= 0) {
-          errors.push('Payment amount must be greater than 0')
+          errors.push(`Payment ${i}: amount must be greater than 0`)
         }
+        
         if (!payment.type) {
-          errors.push('Payment type cannot be empty. Please check all required fields and try again.')
+          errors.push(`Payment ${i}: type cannot be empty. Please check all required fields and try again.`)
         } else {
           // Validate payment type is one of the accepted values
           const validPaymentTypes: Array<"CASH" | "CREDITCARD"> = ["CASH", "CREDITCARD"];
           if (!validPaymentTypes.includes(payment.type)) {
-            errors.push(`Invalid payment type "${payment.type}". Must be CASH or CREDITCARD`)
+            errors.push(`Payment ${i}: invalid payment type "${payment.type}". Must be CASH or CREDITCARD`)
           }
         }
+        
         if (!payment.recipient) {
-          errors.push('Payment recipient is required')
+          errors.push(`Payment ${i}: recipient is required`)
         } else if (payment.recipient !== "SUPPLIER") {
-          errors.push('Payment recipient must be "SUPPLIER"')
+          errors.push(`Payment ${i}: recipient must be "SUPPLIER", got "${payment.recipient}"`)
         }
       }
+    }
+
+    // Validate required fields and comments arrays exist
+    if (!rezdyBooking.fields) {
+      errors.push('Fields array is required (can be empty)')
+    } else if (!Array.isArray(rezdyBooking.fields)) {
+      errors.push('Fields must be an array')
+    }
+
+    if (!rezdyBooking.comments) {
+      errors.push('Comments field is required (can be empty string)')
+    } else if (typeof rezdyBooking.comments !== 'string') {
+      errors.push('Comments must be a string')
     }
 
     return {

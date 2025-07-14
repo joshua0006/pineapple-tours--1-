@@ -13,6 +13,9 @@ export async function POST(request: NextRequest) {
       hasBookingData: Boolean(bookingData),
       sessionId,
       timestamp: new Date().toISOString(),
+      paymentData: bookingData?.payment,
+      hasPaymentType: Boolean(bookingData?.payment?.type),
+      hasPaymentMethod: Boolean(bookingData?.payment?.method)
     });
 
     if (!bookingData || !orderNumber) {
@@ -217,10 +220,14 @@ export async function POST(request: NextRequest) {
       const bookingRequest = BookingService.createBookingRequest(formData, paymentConfirmation);
 
       console.log("📤 Creating booking request for Rezdy", {
+        bookingPayment: bookingRequest.bookingData.payment,
         paymentMethod: bookingRequest.bookingData.payment?.method,
         paymentType: bookingRequest.bookingData.payment?.type,
         paymentConfirmationAmount: paymentConfirmation.amount,
-        paymentConfirmationMethod: paymentConfirmation.paymentMethod
+        paymentConfirmationMethod: paymentConfirmation.paymentMethod,
+        paymentConfirmationType: typeof paymentConfirmation.paymentMethod,
+        willUseSafetyNet: !bookingRequest.bookingData.payment?.type,
+        orderNumber
       });
 
       console.log("🚀 Submitting booking request to Rezdy...");
@@ -245,9 +252,13 @@ export async function POST(request: NextRequest) {
           transactionId: paymentConfirmation.transactionId
         });
         
+        // Check if it's a payment validation error and return appropriate status
+        const isPaymentError = bookingResult.error?.includes("Payment validation failed") || 
+                              bookingResult.error?.includes("Payment type cannot be empty");
+        
         return NextResponse.json(
           { error: bookingResult.error || "Failed to create booking" },
-          { status: 500 }
+          { status: isPaymentError ? 400 : 500 }
         );
       }
     } catch (rezdyError) {

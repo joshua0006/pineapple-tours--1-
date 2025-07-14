@@ -794,7 +794,7 @@ export function EnhancedBookingExperience({
         }),
         payment: {
           method: "credit_card",
-          type: "CREDIT_CARD", // Explicitly set the type for Rezdy compatibility
+          type: "CREDITCARD", // Explicitly set the type for Rezdy compatibility
         },
         // Store guest counts for later use
         guestCounts,

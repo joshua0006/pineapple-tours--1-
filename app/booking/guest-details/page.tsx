@@ -55,25 +55,33 @@ export default function GuestDetailsPage() {
 
     const loadBookingData = async () => {
       try {
-        // First try to get booking data from session storage (client-side)
         let data: BookingFormData | null = null;
         
-        if (typeof window !== 'undefined') {
+        // First try to get booking data from server-side store (has payment data)
+        try {
+          data = await bookingDataStore.retrieve(orderNumber);
+          if (data) {
+            console.log("✅ Retrieved booking data from server store with payment data:", {
+              hasPayment: !!data.payment,
+              paymentType: data.payment?.type,
+              paymentMethod: data.payment?.method
+            });
+          }
+        } catch (serverError) {
+          console.warn("Failed to retrieve from server store:", serverError);
+        }
+        
+        // Fall back to session storage only if server retrieval failed
+        if (!data && typeof window !== 'undefined') {
           const sessionData = sessionStorage.getItem(`booking_${orderNumber}`);
           if (sessionData) {
             try {
               data = JSON.parse(sessionData);
-              console.log("✅ Retrieved booking data from session storage");
+              console.log("⚠️ Using fallback data from session storage (may lack payment info)");
             } catch (parseError) {
               console.warn("Failed to parse session storage data:", parseError);
             }
           }
-        }
-        
-        // If session storage failed, try the server-side booking data store
-        if (!data) {
-          data = await bookingDataStore.retrieve(orderNumber);
-          console.log("✅ Retrieved booking data from server store");
         }
         
         if (!data) {
@@ -158,7 +166,30 @@ export default function GuestDetailsPage() {
     setSubmitErrors([]);
 
     try {
-      // Update booking data with guest information and additional details
+      // Validate and ensure payment data exists
+      let paymentData = bookingData.payment;
+      
+      // If payment data is missing, determine it based on context
+      if (!paymentData || !paymentData.type) {
+        console.warn("⚠️ Payment data missing, determining from context:", {
+          hasSessionId: !!sessionId,
+          originalPayment: bookingData.payment
+        });
+        
+        // For Stripe payments (when sessionId exists), always use CREDITCARD
+        paymentData = {
+          method: sessionId ? "stripe" : "credit_card",
+          type: "CREDITCARD" as const
+        };
+      }
+      
+      // Validate payment type is valid
+      if (paymentData.type !== "CASH" && paymentData.type !== "CREDITCARD") {
+        console.error("❌ Invalid payment type detected:", paymentData.type);
+        paymentData.type = "CREDITCARD" as const;
+      }
+
+      // Update booking data with guest information and validated payment details
       const updatedBookingData: BookingFormData = {
         ...bookingData,
         guests: guests.filter((g) => g.firstName.trim() && g.lastName.trim()),
@@ -167,6 +198,8 @@ export default function GuestDetailsPage() {
           // Preserve original contact information from pre-payment
           country: bookingData.contact.country || "Australia",
         },
+        // Use validated payment data
+        payment: paymentData
       };
 
       // Debug: Log the payload being sent to the booking registration API
@@ -177,6 +210,8 @@ export default function GuestDetailsPage() {
         guestCounts: updatedBookingData.guestCounts,
         totalAmount: updatedBookingData.pricing.total,
         firstGuest: updatedBookingData.guests[0],
+        payment: updatedBookingData.payment,
+        originalPayment: bookingData.payment
       });
 
       // Submit to Rezdy API

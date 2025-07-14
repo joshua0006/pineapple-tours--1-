@@ -6,6 +6,7 @@ import {
   RezdyCustomer,
   RezdyQuantity,
   RezdyPayment,
+  RezdyBookingField,
 } from "@/lib/types/rezdy";
 import { getCorrectPriceOptionLabel } from "@/lib/utils/rezdy-product-cache";
 
@@ -28,6 +29,10 @@ export interface BookingFormData {
     lastName: string;
     age: number;
     type: "ADULT" | "CHILD" | "INFANT";
+    certificationLevel?: string;
+    certificationNumber?: string;
+    certificationAgency?: string;
+    barcode?: string;
   }>;
   contact: {
     firstName: string;
@@ -57,7 +62,7 @@ export interface BookingFormData {
   }>;
   payment?: {
     method?: string;
-    type?: "CASH" | "CREDIT_CARD";
+    type?: "CASH" | "CREDITCARD";
     cardNumber?: string;
     [key: string]: any;
   };
@@ -369,8 +374,21 @@ export function transformContactToCustomer(
  * Transforms booking form data to Rezdy booking format
  */
 export function transformBookingDataToRezdy(
-  bookingData: BookingFormData
+  bookingData: BookingFormData,
+  paymentConfirmationId?: string
 ): RezdyBooking {
+  // Safety: Ensure payment data exists before transformation
+  if (!bookingData.payment) {
+    console.warn("⚠️ SAFETY: No payment data in booking, adding default CREDITCARD payment");
+    bookingData = {
+      ...bookingData,
+      payment: {
+        method: "credit_card",
+        type: "CREDITCARD" as const
+      }
+    };
+  }
+  
   console.log("🔄 Transforming booking data to Rezdy format:", {
     productCode: bookingData.product.code,
     guestCount: bookingData.guests?.length || 0,
@@ -413,14 +431,33 @@ export function transformBookingDataToRezdy(
     productCode: bookingData.product.code,
     startTimeLocal: bookingData.session.startTime,
     quantities,
-    participants: [], // Empty participants array as per API spec
+    participants: [], // Will be populated below
   };
 
-  // Add pickup location if available
-  if (bookingData.session.pickupLocation) {
-    bookingItem.pickupLocation = {
-      locationName: bookingData.session.pickupLocation.name || bookingData.session.pickupLocation.locationName || ""
-    };
+  // Create participants array with detailed fields for each guest
+  // This matches the exact structure from the Rezdy API specification
+  if (bookingData.guests && bookingData.guests.length > 0) {
+    bookingItem.participants = bookingData.guests.map(guest => ({
+      fields: [
+        { label: "First Name", value: guest.firstName },
+        { label: "Last Name", value: guest.lastName },
+        { label: "Certification level", value: guest.certificationLevel || "" },
+        { label: "Certification number", value: guest.certificationNumber || "" },
+        { label: "Certification agency", value: guest.certificationAgency || "" },
+        { label: "Barcode", value: guest.barcode || "" }
+      ]
+    }));
+  } else {
+    // Ensure participants array exists even if empty to match API structure
+    bookingItem.participants = [];
+  }
+
+  // Add extras if available
+  if (bookingData.extras && bookingData.extras.length > 0) {
+    bookingItem.extras = bookingData.extras.map(extra => ({
+      name: extra.name,
+      quantity: extra.quantity
+    }));
   }
   
   console.log("📋 Created booking item:", {
@@ -433,50 +470,86 @@ export function transformBookingDataToRezdy(
   // Transform customer
   const customer = transformContactToCustomer(bookingData.contact);
 
-  // Map payment method to Rezdy payment type
-  const mapPaymentMethodToRezdy = (paymentData?: BookingFormData["payment"]): "CASH" | "CREDIT_CARD" => {
+  // Map payment method to Rezdy payment type with strict validation
+  const mapPaymentMethodToRezdy = (paymentData?: BookingFormData["payment"]): "CASH" | "CREDITCARD" => {
+    console.log("💳 Payment mapping input:", {
+      paymentData,
+      hasType: !!paymentData?.type,
+      hasMethod: !!paymentData?.method,
+      type: paymentData?.type,
+      method: paymentData?.method
+    });
+
     // First check if type is already explicitly set
     if (paymentData?.type) {
       console.log("💳 Using explicit payment type:", paymentData.type);
-      return paymentData.type;
+      // Ensure it's a valid Rezdy type
+      if (paymentData.type === "CASH" || paymentData.type === "CREDITCARD") {
+        return paymentData.type;
+      } else {
+        console.warn("⚠️ Invalid explicit payment type, falling back to method mapping:", paymentData.type);
+      }
     }
     
     // Fallback to method mapping
     const paymentMethod = paymentData?.method;
     if (!paymentMethod) {
-      console.log("💳 No payment method found, defaulting to CREDIT_CARD");
-      return "CREDIT_CARD";
+      console.warn("⚠️ No payment method found, defaulting to CREDITCARD for safety");
+      return "CREDITCARD";
     }
     
     const lowerMethod = paymentMethod.toLowerCase();
     
-    // Most payment methods map to CREDIT_CARD in Rezdy API
+    // Only cash payments should map to CASH
     if (lowerMethod === 'cash') {
       console.log("💳 Mapped cash method to CASH type");
       return 'CASH';
     }
     
-    // All other payment methods (credit cards, debit cards, digital wallets) map to CREDIT_CARD
-    console.log("💳 Mapped method to CREDIT_CARD type:", paymentMethod);
-    return 'CREDIT_CARD';
+    // All other payment methods including Stripe, cards, digital wallets map to CREDITCARD
+    console.log("💳 Mapped method to CREDITCARD type:", paymentMethod);
+    return 'CREDITCARD';
   };
 
   // Create payment entry for Rezdy (required even though payment is processed externally)
   const paymentType = mapPaymentMethodToRezdy(bookingData.payment);
-  // Build a descriptive label for the payment that will show up in Rezdy back-office. If a
-  // payment method string was provided (e.g. "stripe", "westpac", "paypal") we surface it;
-  // otherwise we fall back to a generic label based on the resolved payment type.
-  const paymentLabelBase = bookingData.payment?.method
-    ? `${bookingData.payment.method.charAt(0).toUpperCase()}${bookingData.payment.method.slice(1)} Payment`
-    : paymentType === "CASH"
-      ? "Cash Payment"
-      : "Credit Card Payment";
+  
+  // Build a more descriptive payment label
+  let paymentLabel = "";
+  if (bookingData.payment?.method) {
+    const method = bookingData.payment.method;
+    const methodCapitalized = method.charAt(0).toUpperCase() + method.slice(1);
+    
+    // Create descriptive labels based on payment method
+    switch(method.toLowerCase()) {
+      case 'stripe':
+        paymentLabel = `Paid via Stripe (${paymentType === 'CASH' ? 'Cash' : 'Card'})`;
+        break;
+      case 'westpac':
+        paymentLabel = `Paid via Westpac Gateway`;
+        break;
+      case 'paypal':
+        paymentLabel = `Paid via PayPal`;
+        break;
+      case 'cash':
+        paymentLabel = `Paid in cash`;
+        break;
+      case 'card':
+      case 'credit_card':
+        paymentLabel = `Paid by Credit Card`;
+        break;
+      default:
+        paymentLabel = `${methodCapitalized} Payment`;
+    }
+  } else {
+    paymentLabel = paymentType === "CASH" ? "Cash Payment" : "Credit Card Payment";
+  }
 
   const payment: RezdyPayment = {
     amount: bookingData.pricing.total,
     type: paymentType,
     recipient: "SUPPLIER",
-    label: paymentLabelBase,
+    label: paymentLabel,
   };
 
   console.log("💳 Created payment entry:", {
@@ -491,40 +564,106 @@ export function transformBookingDataToRezdy(
 
   // CRITICAL VALIDATION: Ensure payment type is never empty
   if (!payment.type) {
-    console.error("❌ CRITICAL ERROR: Payment type is empty after mapping!");
-    payment.type = "CREDIT_CARD"; // Emergency fallback
-    console.log("⚠️ Emergency fallback: Set payment type to CREDIT_CARD");
+    console.error("❌ CRITICAL ERROR: Payment type is empty after mapping!", {
+      originalPaymentData: bookingData.payment,
+      mappedType: paymentType,
+      paymentObject: payment
+    });
+    payment.type = "CREDITCARD"; // Emergency fallback
+    console.log("⚠️ Emergency fallback: Set payment type to CREDITCARD");
+  }
+  
+  // Additional validation: Ensure payment type is valid
+  if (payment.type !== "CASH" && payment.type !== "CREDITCARD") {
+    console.error("❌ CRITICAL ERROR: Invalid payment type after mapping!", {
+      paymentType: payment.type,
+      originalPaymentData: bookingData.payment
+    });
+    payment.type = "CREDITCARD"; // Emergency fallback
+    console.log("⚠️ Emergency fallback: Reset invalid payment type to CREDITCARD");
+  }
+  
+  // Double-check payment structure is complete
+  if (!payment.recipient) {
+    payment.recipient = "SUPPLIER";
+  }
+  if (!payment.label) {
+    payment.label = payment.type === "CASH" ? "Cash Payment" : "Credit Card Payment";
   }
 
-  // Create Rezdy booking - must match official API structure
+  // Add pickup location at top level if available (moved before booking creation)
+  const pickupLocation = bookingData.session.pickupLocation ? {
+    locationName: bookingData.session.pickupLocation.name || bookingData.session.pickupLocation.locationName || ""
+  } : undefined;
+
+  // Create Rezdy booking - must match official API structure exactly
   const rezdyBooking: RezdyBooking = {
-    status: "CONFIRMED",
     customer,
     items: [bookingItem],
     payments: [payment],
     comments: "",
-    fields: []
+    fields: [],
+    ...(pickupLocation && { pickupLocation })
   };
 
-  // Add special requirements field if provided
-  if (bookingData.contact.specialRequests || bookingData.contact.dietaryRequirements) {
-    const specialRequirements = [
-      bookingData.contact.specialRequests,
-      bookingData.contact.dietaryRequirements && `Dietary: ${bookingData.contact.dietaryRequirements}`
-    ].filter(Boolean).join(". ");
-    
-    if (specialRequirements) {
-      rezdyBooking.fields = [{
-        label: "Special Requirements",
-        value: specialRequirements
-      }];
-    }
+  // Add fields array with all special requirements and additional information
+  const fields: RezdyBookingField[] = [];
+  
+  // Special Requirements field combining all customer needs
+  const specialRequirements = [
+    bookingData.contact.specialRequests,
+    bookingData.contact.dietaryRequirements && `Dietary: ${bookingData.contact.dietaryRequirements}`,
+    bookingData.contact.accessibilityNeeds && `Accessibility: ${bookingData.contact.accessibilityNeeds}`
+  ].filter(Boolean).join(". ");
+  
+  if (specialRequirements) {
+    fields.push({
+      label: "Special Requirements",
+      value: specialRequirements
+    });
   }
-
-  // Ensure participants array is present (required by Rezdy API)
-  if (!bookingItem.participants) {
-    bookingItem.participants = [];
+  
+  // Add emergency contact if provided
+  if (bookingData.contact.emergencyContact && bookingData.contact.emergencyPhone) {
+    fields.push({
+      label: "Emergency Contact",
+      value: `${bookingData.contact.emergencyContact} - ${bookingData.contact.emergencyPhone}`
+    });
   }
+  
+  // Add country if provided
+  if (bookingData.contact.country) {
+    fields.push({
+      label: "Country",
+      value: bookingData.contact.country
+    });
+  }
+  
+  // Always assign fields array even if empty
+  rezdyBooking.fields = fields;
+  
+  // Add internal comments with booking metadata
+  const commentParts: string[] = [];
+  
+  // Add payment confirmation ID if provided
+  if (paymentConfirmationId) {
+    commentParts.push(`Payment Confirmation: ${paymentConfirmationId}`);
+  }
+  
+  // Add booking timestamp
+  commentParts.push(`Booked at: ${new Date().toISOString()}`);
+  
+  // Add total guest count
+  const totalGuests = quantities.reduce((sum, q) => sum + q.value, 0);
+  commentParts.push(`Total Guests: ${totalGuests}`);
+  
+  // Add payment method info
+  if (bookingData.payment?.method) {
+    commentParts.push(`Payment Method: ${bookingData.payment.method}`);
+  }
+  
+  // Join all comments - ensure comments is never empty to match API specification
+  rezdyBooking.comments = commentParts.length > 0 ? commentParts.join(" | ") : "Booking created via online platform";
 
   console.log("📋 Generated Rezdy booking:", {
     status: rezdyBooking.status,
@@ -540,8 +679,8 @@ export function transformBookingDataToRezdy(
     paymentAmount: rezdyBooking.payments[0]?.amount,
     paymentType: rezdyBooking.payments[0]?.type,
     hasPickupLocation: !!bookingItem.pickupLocation,
-    hasFields: rezdyBooking.fields && rezdyBooking.fields.length > 0,
-    hasParticipants: bookingItem.participants && bookingItem.participants.length > 0
+    hasFields: rezdyBooking.fields.length > 0,
+    hasParticipants: bookingItem.participants.length > 0
   });
 
   // CRITICAL: Log the complete payment object structure being sent to Rezdy

@@ -66,7 +66,8 @@ export class BookingService {
       // Step 3: Transform booking data to Rezdy format
       console.time("⏱️ transformBookingData");
       const rezdyBookingData = transformBookingDataToRezdy(
-        request.bookingData
+        request.bookingData,
+        request.paymentConfirmation.transactionId
       )
       console.timeEnd("⏱️ transformBookingData");
       console.log("📦 Transformed Rezdy booking data", {
@@ -77,38 +78,58 @@ export class BookingService {
         hasPhone: !!rezdyBookingData.customer.phone,
         paymentsCount: rezdyBookingData.payments?.length || 0,
         paymentType: rezdyBookingData.payments?.[0]?.type,
-        originalFormPayment: request.bookingData.payment
+        paymentAmount: rezdyBookingData.payments?.[0]?.amount,
+        paymentLabel: rezdyBookingData.payments?.[0]?.label,
+        participantsCount: rezdyBookingData.items[0]?.participants?.length || 0,
+        extrasCount: rezdyBookingData.items[0]?.extras?.length || 0,
+        fieldsCount: rezdyBookingData.fields.length,
+        hasPickupLocation: !!rezdyBookingData.pickupLocation,
+        comments: rezdyBookingData.comments
       });
 
       // ---
       // SAFETY NET: Guarantee each payment entry has a valid `type` before running further validations.
-      // In some edge-cases `transformBookingDataToRezdy` may return a payment object with an empty
-      // `type` (or none at all) – typically when the frontend didn’t include any payment info and the
-      // mapping logic couldn’t infer the method properly.  If that happens we fall back to the payment
-      // method reported by the `paymentConfirmation` (Stripe, Westpac, etc) – mapping it to Rezdy’s
-      // accepted enum values (CASH | CREDIT_CARD).
+      // Per Rezdy API documentation, payment type MUST be either "CASH" or "CREDITCARD"
+      // For Stripe payments (card, sepa_debit, etc.), we always use "CREDITCARD"
       if (!rezdyBookingData.payments || rezdyBookingData.payments.length === 0) {
+        const paymentType = this.mapPaymentMethodToRezdy(request.paymentConfirmation.paymentMethod);
+        console.log(`⚠️ SAFETY NET: Creating payment entry with type: ${paymentType}`);
+        
         rezdyBookingData.payments = [
           {
             amount: request.paymentConfirmation.amount,
-            type: this.mapPaymentMethodToRezdy(request.paymentConfirmation.paymentMethod),
+            type: paymentType,
             recipient: "SUPPLIER",
-            label: `${request.paymentConfirmation.paymentMethod.charAt(0).toUpperCase()}${request.paymentConfirmation.paymentMethod.slice(1)} Payment`,
+            label: paymentType === "CASH" ? "Cash Payment" : "Credit Card Payment",
           },
         ];
       } else {
-        rezdyBookingData.payments.forEach((p) => {
+        rezdyBookingData.payments.forEach((p, index) => {
           if (!p.type) {
-            p.type = this.mapPaymentMethodToRezdy(request.paymentConfirmation.paymentMethod);
+            const mappedType = this.mapPaymentMethodToRezdy(request.paymentConfirmation.paymentMethod);
+            console.log(`⚠️ SAFETY NET: Setting payment[${index}] type to: ${mappedType}`);
+            p.type = mappedType;
           }
           if (!p.recipient) {
             p.recipient = "SUPPLIER";
           }
           if (!p.label) {
-            p.label = `${request.paymentConfirmation.paymentMethod.charAt(0).toUpperCase()}${request.paymentConfirmation.paymentMethod.slice(1)} Payment`;
+            p.label = p.type === "CASH" ? "Cash Payment" : "Credit Card Payment";
           }
         });
       }
+      
+      // Log the payment structure after safety net
+      console.log("💳 Payment structure after safety net:", {
+        paymentsCount: rezdyBookingData.payments?.length || 0,
+        payments: rezdyBookingData.payments?.map(p => ({
+          type: p.type,
+          amount: p.amount,
+          recipient: p.recipient,
+          label: p.label
+        })),
+        paymentConfirmationUsed: !request.bookingData.payment?.type
+      });
 
       // Step 4: Verify amounts match
       const bookingTotal = request.bookingData.pricing.total;
@@ -312,36 +333,80 @@ export class BookingService {
         }
       }
 
+      // Fix: Use query parameter for Rezdy API authentication instead of Authorization header
       const url = `${this.rezdyApiUrl}/bookings?apiKey=${this.rezdyApiKey}`
       
-      // FINAL VALIDATION: Ensure payment structure is correct before API call
+      // MANDATORY VALIDATION: Ensure payment structure is correct before API call
       if (!rezdyBooking.payments || rezdyBooking.payments.length === 0) {
-        console.error("❌ EMERGENCY: No payments array before Rezdy API call!");
-        throw new Error("No payment information available for booking");
+        console.error("❌ CRITICAL: No payments array before Rezdy API call!");
+        throw new Error("Payment validation failed: Payment type cannot be empty. Please check all required fields and try again.");
       }
 
       for (let i = 0; i < rezdyBooking.payments.length; i++) {
         const payment = rezdyBooking.payments[i];
+        
+        // Validate payment type exists and is valid
         if (!payment.type) {
-          console.error(`❌ EMERGENCY: Payment ${i} has no type before Rezdy API call!`, payment);
-          payment.type = "CREDIT_CARD"; // Emergency fix
-          console.log(`⚠️ EMERGENCY FIX: Set payment ${i} type to CREDIT_CARD`);
+          console.error(`❌ CRITICAL: Payment ${i} has no type before Rezdy API call!`, payment);
+          throw new Error("Payment validation failed: Payment type cannot be empty. Please check all required fields and try again.");
         }
+        
+        if (payment.type !== "CASH" && payment.type !== "CREDITCARD") {
+          console.error(`❌ CRITICAL: Payment ${i} has invalid type before Rezdy API call!`, {
+            paymentType: payment.type,
+            payment
+          });
+          throw new Error(`Payment validation failed: Invalid payment type "${payment.type}". Must be CASH or CREDITCARD.`);
+        }
+        
+        // Validate other required fields
         if (!payment.recipient) {
-          console.error(`❌ EMERGENCY: Payment ${i} has no recipient before Rezdy API call!`, payment);
+          console.error(`❌ CRITICAL: Payment ${i} has no recipient before Rezdy API call!`, payment);
           payment.recipient = "SUPPLIER"; // Emergency fix
           console.log(`⚠️ EMERGENCY FIX: Set payment ${i} recipient to SUPPLIER`);
         }
+        
+        if (!payment.amount || payment.amount <= 0) {
+          console.error(`❌ CRITICAL: Payment ${i} has invalid amount before Rezdy API call!`, payment);
+          throw new Error("Payment validation failed: Payment amount must be greater than 0.");
+        }
       }
+      
+      // Log final payment validation result
+      console.log("✅ PAYMENT VALIDATION PASSED:", {
+        paymentCount: rezdyBooking.payments.length,
+        payments: rezdyBooking.payments.map((p, i) => ({
+          index: i,
+          type: p.type,
+          amount: p.amount,
+          recipient: p.recipient,
+          hasValidType: p.type === "CASH" || p.type === "CREDITCARD"
+        }))
+      });
 
       console.log('🚀 Submitting booking to Rezdy API:', {
-        url: url.replace(this.rezdyApiKey, '***'),
-        paymentStructure: {
+        url: url,
+        bookingStructure: {
+          status: rezdyBooking.status,
+          customer: {
+            name: `${rezdyBooking.customer.firstName} ${rezdyBooking.customer.lastName}`,
+            email: rezdyBooking.customer.email,
+            phone: rezdyBooking.customer.phone
+          },
+          itemsCount: rezdyBooking.items.length,
+          firstItem: {
+            productCode: rezdyBooking.items[0]?.productCode,
+            quantities: rezdyBooking.items[0]?.quantities,
+            participantsCount: rezdyBooking.items[0]?.participants?.length || 0,
+            extrasCount: rezdyBooking.items[0]?.extras?.length || 0
+          },
           paymentsCount: rezdyBooking.payments?.length || 0,
-          paymentTypes: rezdyBooking.payments?.map(p => p.type) || [],
-          fullPayments: rezdyBooking.payments
+          payments: rezdyBooking.payments,
+          fieldsCount: rezdyBooking.fields.length,
+          hasPickupLocation: !!rezdyBooking.pickupLocation,
+          comments: rezdyBooking.comments
         },
-        bookingData: rezdyBooking
+        fullBookingData: rezdyBooking
       })
       
       const response = await fetch(url, {
@@ -508,16 +573,18 @@ export class BookingService {
   /**
    * Map payment method to Rezdy payment type
    */
-  private mapPaymentMethodToRezdy(paymentMethod: string): "CASH" | "CREDIT_CARD" {
+  private mapPaymentMethodToRezdy(paymentMethod: string): "CASH" | "CREDITCARD" {
     const lowerMethod = paymentMethod.toLowerCase()
     
-    // Most payment methods map to CREDIT_CARD in the new Rezdy API structure
+    // Only cash payments should be mapped to CASH
     if (lowerMethod === 'cash') {
       return 'CASH';
     }
     
-    // All other payment methods (credit cards, debit cards, digital wallets) map to CREDIT_CARD
-    return 'CREDIT_CARD';
+    // ALL other payment methods map to CREDITCARD per Rezdy API requirements
+    // This includes: card, stripe, westpac, sepa_debit, ideal, bancontact, etc.
+    console.log(`💳 Mapping payment method "${paymentMethod}" to CREDITCARD`);
+    return 'CREDITCARD';
   }
 
   /**
@@ -594,9 +661,9 @@ export class BookingService {
           errors.push('Payment type cannot be empty. Please check all required fields and try again.')
         } else {
           // Validate payment type is one of the accepted values
-          const validPaymentTypes: Array<"CASH" | "CREDIT_CARD"> = ["CASH", "CREDIT_CARD"];
+          const validPaymentTypes: Array<"CASH" | "CREDITCARD"> = ["CASH", "CREDITCARD"];
           if (!validPaymentTypes.includes(payment.type)) {
-            errors.push(`Invalid payment type "${payment.type}". Must be CASH or CREDIT_CARD`)
+            errors.push(`Invalid payment type "${payment.type}". Must be CASH or CREDITCARD`)
           }
         }
         if (!payment.recipient) {

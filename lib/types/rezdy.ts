@@ -128,8 +128,11 @@ export interface RezdyBooking {
   customer: RezdyCustomer;
   items: RezdyBookingItem[];
   payments: RezdyPayment[];
-  comments?: string;
-  fields?: RezdyBookingField[];
+  comments: string;
+  fields: RezdyBookingField[];
+  pickupLocation?: {
+    locationName: string;
+  };
 }
 
 export interface RezdyCustomer {
@@ -143,9 +146,6 @@ export interface RezdyBookingItem {
   productCode: string;
   startTimeLocal: string;
   quantities: RezdyQuantity[];
-  pickupLocation?: {
-    locationName: string;
-  };
   /**
    * Optional pickup identifier returned from Rezdy availability endpoints. While not strictly
    * required in the create-booking payload, we often keep the id around for reference & logging.
@@ -158,7 +158,7 @@ export interface RezdyBookingItem {
    * data during the booking/validation phases.
    */
   extras?: RezdyBookingExtra[];
-  participants?: RezdyBookingParticipant[];
+  participants: RezdyBookingParticipant[];
 }
 
 export interface RezdyBookingExtra {
@@ -191,7 +191,7 @@ export interface RezdyBookingField {
 
 export interface RezdyPayment {
   amount: number;
-  type: "CASH" | "CREDIT_CARD";
+  type: "CASH" | "CREDITCARD";
   recipient: "SUPPLIER";
   label?: string;
 }

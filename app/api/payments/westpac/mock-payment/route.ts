@@ -18,7 +18,8 @@ export async function GET(request: NextRequest) {
     const { bookingDataStore } = await import(
       "@/lib/services/booking-data-store"
     );
-    bookingData = await bookingDataStore.retrieve(orderNumber);
+    // Use fallback retrieval to handle different order number formats
+    bookingData = await bookingDataStore.retrieveWithFallbacks(orderNumber);
   } catch (error) {
     console.log("Could not retrieve booking data for display:", error);
   }

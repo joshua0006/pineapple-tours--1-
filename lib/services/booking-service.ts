@@ -298,7 +298,7 @@ export class BookingService {
   }
 
   /**
-   * Submit booking to Rezdy API
+   * Submit booking to Rezdy API with retry logic
    */
   private async submitToRezdyApi(rezdyBooking: RezdyBooking): Promise<{
     success: boolean
@@ -306,36 +306,114 @@ export class BookingService {
     booking?: RezdyBooking
     error?: string
   }> {
-    try {
-      // If no API key is configured, simulate the booking in development
-      if (!this.rezdyApiKey) {
-        if (this.isDevelopment) {
-          console.warn('⚠️  Rezdy API key not configured - simulating booking registration for development')
-          
-          // Simulate successful booking with mock order number
-          const mockOrderNumber = `DEV-${Date.now()}-${Math.floor(Math.random() * 1000)}`
-          const mockBooking = {
-            ...rezdyBooking,
-            orderNumber: mockOrderNumber,
-            createdDate: new Date().toISOString()
+    const maxRetries = 3;
+    const retryDelays = [1000, 2000, 5000]; // 1s, 2s, 5s
+
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+      console.log(`🔄 Rezdy API submission attempt ${attempt}/${maxRetries}`);
+      
+      try {
+        const result = await this.attemptRezdySubmission(rezdyBooking);
+        
+        if (result.success) {
+          if (attempt > 1) {
+            console.log(`✅ Rezdy API succeeded on retry attempt ${attempt}`);
           }
-          
-          // Simulate API delay
-          await new Promise(resolve => setTimeout(resolve, 1000))
-          
+          return result;
+        }
+        
+        // If this is the last attempt, return the failure
+        if (attempt === maxRetries) {
+          console.error(`❌ Rezdy API failed after ${maxRetries} attempts`);
+          return result;
+        }
+        
+        // Log retry attempt
+        console.warn(`⚠️ Rezdy API attempt ${attempt} failed, retrying in ${retryDelays[attempt - 1]}ms...`);
+        console.warn(`📋 Failure reason:`, result.error);
+        
+        // Wait before retry
+        await new Promise(resolve => setTimeout(resolve, retryDelays[attempt - 1]));
+        
+      } catch (error) {
+        console.error(`❌ Rezdy API attempt ${attempt} threw error:`, error);
+        
+        // If this is the last attempt, return the error
+        if (attempt === maxRetries) {
           return {
-            success: true,
-            orderNumber: mockOrderNumber,
-            booking: mockBooking
-          }
-        } else {
-          throw new Error('Rezdy API key not configured. Please set REZDY_API_KEY environment variable.')
+            success: false,
+            error: error instanceof Error ? error.message : 'Failed to submit to Rezdy API after retries'
+          };
+        }
+        
+        // Wait before retry
+        await new Promise(resolve => setTimeout(resolve, retryDelays[attempt - 1]));
+      }
+    }
+    
+    return {
+      success: false,
+      error: 'Failed to submit to Rezdy API after maximum retries'
+    };
+  }
+
+  /**
+   * Single attempt to submit booking to Rezdy API
+   */
+  private async attemptRezdySubmission(rezdyBooking: RezdyBooking): Promise<{
+    success: boolean
+    orderNumber?: string
+    booking?: RezdyBooking
+    error?: string
+  }> {
+    // If no API key is configured, simulate the booking in development
+    if (!this.rezdyApiKey) {
+      if (this.isDevelopment) {
+        console.warn('⚠️  Rezdy API key not configured - simulating booking registration for development')
+        
+        // Simulate successful booking with mock order number
+        const mockOrderNumber = `DEV-${Date.now()}-${Math.floor(Math.random() * 1000)}`
+        const mockBooking = {
+          ...rezdyBooking,
+          orderNumber: mockOrderNumber,
+          createdDate: new Date().toISOString()
+        }
+        
+        // Simulate API delay
+        await new Promise(resolve => setTimeout(resolve, 1000))
+        
+        return {
+          success: true,
+          orderNumber: mockOrderNumber,
+          booking: mockBooking
+        }
+      } else {
+        return {
+          success: false,
+          error: 'Rezdy API key not configured. Please set REZDY_API_KEY environment variable.'
         }
       }
+    }
 
+    try {
       // Fix: Use query parameter for Rezdy API authentication instead of Authorization header
       const url = `${this.rezdyApiUrl}/bookings?apiKey=${this.rezdyApiKey}`
       
+      // Enhanced pre-submission validation
+      const validationResult = this.validateRezdyBookingData(rezdyBooking);
+      if (!validationResult.isValid) {
+        console.error("❌ CRITICAL: Booking validation failed before Rezdy API call!", {
+          errors: validationResult.errors,
+          booking: {
+            hasStatus: !!rezdyBooking.status,
+            hasCustomer: !!rezdyBooking.customer,
+            hasItems: !!rezdyBooking.items && rezdyBooking.items.length > 0,
+            hasPayments: !!rezdyBooking.payments && rezdyBooking.payments.length > 0
+          }
+        });
+        throw new Error(`Booking validation failed: ${validationResult.errors.join(', ')}`);
+      }
+
       // MANDATORY VALIDATION: Ensure payment structure is correct before API call
       if (!rezdyBooking.payments || rezdyBooking.payments.length === 0) {
         console.error("❌ CRITICAL: No payments array before Rezdy API call!");

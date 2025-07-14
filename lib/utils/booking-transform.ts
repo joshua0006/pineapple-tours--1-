@@ -463,11 +463,20 @@ export function transformBookingDataToRezdy(
 
   // Create payment entry for Rezdy (required even though payment is processed externally)
   const paymentType = mapPaymentMethodToRezdy(bookingData.payment);
+  // Build a descriptive label for the payment that will show up in Rezdy back-office. If a
+  // payment method string was provided (e.g. "stripe", "westpac", "paypal") we surface it;
+  // otherwise we fall back to a generic label based on the resolved payment type.
+  const paymentLabelBase = bookingData.payment?.method
+    ? `${bookingData.payment.method.charAt(0).toUpperCase()}${bookingData.payment.method.slice(1)} Payment`
+    : paymentType === "CASH"
+      ? "Cash Payment"
+      : "Credit Card Payment";
+
   const payment: RezdyPayment = {
     amount: bookingData.pricing.total,
     type: paymentType,
     recipient: "SUPPLIER",
-    label: paymentType === "CASH" ? "Cash Payment" : "Credit Card Payment"
+    label: paymentLabelBase,
   };
 
   console.log("💳 Created payment entry:", {

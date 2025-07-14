@@ -146,6 +146,18 @@ export interface RezdyBookingItem {
   pickupLocation?: {
     locationName: string;
   };
+  /**
+   * Optional pickup identifier returned from Rezdy availability endpoints. While not strictly
+   * required in the create-booking payload, we often keep the id around for reference & logging.
+   */
+  pickupId?: string;
+
+  /**
+   * Optional extras array. Extras are supported by Rezdy but are not always utilised in every
+   * product. Including the field here prevents TypeScript errors when we log or attach extras
+   * data during the booking/validation phases.
+   */
+  extras?: RezdyBookingExtra[];
   participants?: RezdyBookingParticipant[];
 }
 

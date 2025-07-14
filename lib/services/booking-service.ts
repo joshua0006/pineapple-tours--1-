@@ -80,6 +80,36 @@ export class BookingService {
         originalFormPayment: request.bookingData.payment
       });
 
+      // ---
+      // SAFETY NET: Guarantee each payment entry has a valid `type` before running further validations.
+      // In some edge-cases `transformBookingDataToRezdy` may return a payment object with an empty
+      // `type` (or none at all) – typically when the frontend didn’t include any payment info and the
+      // mapping logic couldn’t infer the method properly.  If that happens we fall back to the payment
+      // method reported by the `paymentConfirmation` (Stripe, Westpac, etc) – mapping it to Rezdy’s
+      // accepted enum values (CASH | CREDIT_CARD).
+      if (!rezdyBookingData.payments || rezdyBookingData.payments.length === 0) {
+        rezdyBookingData.payments = [
+          {
+            amount: request.paymentConfirmation.amount,
+            type: this.mapPaymentMethodToRezdy(request.paymentConfirmation.paymentMethod),
+            recipient: "SUPPLIER",
+            label: `${request.paymentConfirmation.paymentMethod.charAt(0).toUpperCase()}${request.paymentConfirmation.paymentMethod.slice(1)} Payment`,
+          },
+        ];
+      } else {
+        rezdyBookingData.payments.forEach((p) => {
+          if (!p.type) {
+            p.type = this.mapPaymentMethodToRezdy(request.paymentConfirmation.paymentMethod);
+          }
+          if (!p.recipient) {
+            p.recipient = "SUPPLIER";
+          }
+          if (!p.label) {
+            p.label = `${request.paymentConfirmation.paymentMethod.charAt(0).toUpperCase()}${request.paymentConfirmation.paymentMethod.slice(1)} Payment`;
+          }
+        });
+      }
+
       // Step 4: Verify amounts match
       const bookingTotal = request.bookingData.pricing.total;
       if (Math.abs(bookingTotal - request.paymentConfirmation.amount) > 0.01) {

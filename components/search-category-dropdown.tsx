@@ -33,4 +33,4 @@ export function SearchCategoryDropdown({ value, onValueChange, className }: Sear
       </Select>
     </div>
   )
-} 
+}

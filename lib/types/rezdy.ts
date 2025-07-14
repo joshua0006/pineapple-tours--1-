@@ -124,43 +124,81 @@ export interface RezdyPickupLocation {
 }
 
 export interface RezdyBooking {
-  orderNumber?: string;
+  status?: "PROCESSING" | "CONFIRMED";
   customer: RezdyCustomer;
   items: RezdyBookingItem[];
-  totalAmount: number;
-  paymentOption?: string;
-  status?: string;
-  createdDate?: string;
-  modifiedDate?: string;
+  payments: RezdyPayment[];
+  comments: string;
+  fields: RezdyBookingField[];
+  pickupLocation?: {
+    locationName: string;
+  };
 }
 
 export interface RezdyCustomer {
   firstName: string;
   lastName: string;
-  email: string;
-  phone?: string;
+  email?: string;
+  phone: string;
 }
 
 export interface RezdyBookingItem {
   productCode: string;
   startTimeLocal: string;
-  participants: RezdyParticipant[];
-  amount: number;
+  quantities: RezdyQuantity[];
+  /**
+   * Optional pickup identifier returned from Rezdy availability endpoints. While not strictly
+   * required in the create-booking payload, we often keep the id around for reference & logging.
+   */
   pickupId?: string;
+
+  /**
+   * Optional extras array. Extras are supported by Rezdy but are not always utilised in every
+   * product. Including the field here prevents TypeScript errors when we log or attach extras
+   * data during the booking/validation phases.
+   */
   extras?: RezdyBookingExtra[];
+  participants: RezdyBookingParticipant[];
 }
 
 export interface RezdyBookingExtra {
-  extraId: string;
+  extraId?: string;
+  name: string;
   quantity: number;
-  unitPrice: number;
-  totalPrice: number;
+  unitPrice?: number;
+  totalPrice?: number;
 }
 
 export interface RezdyParticipant {
   type: string;
   number: number;
   priceOptionId?: number;
+}
+
+export interface RezdyParticipantField {
+  label: string;
+  value: string;
+}
+
+export interface RezdyBookingParticipant {
+  fields: RezdyParticipantField[];
+}
+
+export interface RezdyBookingField {
+  label: string;
+  value: string;
+}
+
+export interface RezdyPayment {
+  amount: number;
+  type: "CASH" | "CREDITCARD";
+  recipient: "SUPPLIER";
+  label?: string;
+}
+
+export interface RezdyQuantity {
+  optionLabel: string;
+  value: number;
 }
 
 export interface RezdyApiResponse<T> {

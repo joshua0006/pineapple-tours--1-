@@ -34,7 +34,15 @@ export async function POST(request: NextRequest) {
     }
 
     // Store booking data temporarily (for webhook / confirmation step)
-    await bookingDataStore.store(orderNumber, bookingData);
+    // Ensure payment data includes Stripe payment type
+    const bookingDataWithPayment: BookingFormData = {
+      ...bookingData,
+      payment: {
+        method: "stripe",
+        type: "CREDITCARD" as const
+      }
+    };
+    await bookingDataStore.store(orderNumber, bookingDataWithPayment);
 
     // Determine success & cancel URLs
     const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000";

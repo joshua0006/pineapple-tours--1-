@@ -72,6 +72,12 @@ export async function POST(request: NextRequest) {
         clientSecret: paymentResult.clientSecret,
         paymentIntentId: paymentResult.paymentIntent?.id,
         orderNumber,
+        // Include payment data for client to update sessionStorage
+        paymentData: {
+          method: "stripe",
+          type: "CREDITCARD" as const
+        },
+        shouldUpdateSessionStorage: true
       });
     } else {
       // Clean up stored booking data if payment intent creation failed
@@ -101,7 +107,16 @@ async function storeBookingData(
   orderNumber: string,
   bookingData: BookingFormData
 ): Promise<void> {
-  await bookingDataStore.store(orderNumber, bookingData);
+  // Ensure payment data includes Stripe payment type
+  const bookingDataWithPayment: BookingFormData = {
+    ...bookingData,
+    payment: {
+      method: "stripe",
+      type: "CREDITCARD" as const
+    }
+  };
+  
+  await bookingDataStore.store(orderNumber, bookingDataWithPayment);
 
   console.log(`Stored booking data for order ${orderNumber}:`, {
     productCode: bookingData.product.code,
@@ -109,5 +124,6 @@ async function storeBookingData(
     guestCount: bookingData.guests.length,
     total: bookingData.pricing.total,
     contactEmail: bookingData.contact.email,
+    payment: bookingDataWithPayment.payment
   });
 }

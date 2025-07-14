@@ -185,11 +185,11 @@ function PaymentPageContent() {
   };
 
   const handlePaymentSuccess = async (paymentIntentId: string) => {
-    // Clear the booking data from session storage
-    sessionStorage.removeItem(`booking_${orderNumber}`);
+    // Don't clear booking data yet - needed for guest details page
+    // sessionStorage.removeItem(`booking_${orderNumber}`);
     
-    // Redirect to confirmation page
-    router.push(`/booking/confirmation?orderNumber=${orderNumber}&payment_intent=${paymentIntentId}`);
+    // Redirect to guest details page to collect guest information
+    router.push(`/booking/guest-details?orderNumber=${orderNumber}&session_id=${paymentIntentId}`);
   };
 
   const handlePaymentError = (error: string) => {
@@ -384,6 +384,7 @@ function PaymentPageContent() {
                 stripe={stripePromise}
                 options={{
                   clientSecret,
+                  loader: 'auto',
                   appearance: {
                     theme: "stripe",
                     variables: {

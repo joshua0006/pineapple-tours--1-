@@ -162,11 +162,25 @@ async function retrieveBookingData(
 ): Promise<BookingFormData | null> {
   console.log(`Attempting to retrieve booking data for order ${orderNumber}`);
 
-  const bookingData = await bookingDataStore.retrieve(orderNumber);
+  // Use fallback retrieval to handle different order number formats
+  const bookingData = await bookingDataStore.retrieveWithFallbacks(orderNumber);
 
   if (bookingData) {
     // Clean up the stored data after successful retrieval
+    // Try to remove all possible variations
     await bookingDataStore.remove(orderNumber);
+    
+    // Also try removing common variations to ensure cleanup
+    const variations = [
+      orderNumber.replace(/^ORD-/, ''),
+      orderNumber.startsWith('ORD-') ? orderNumber : `ORD-${orderNumber}`,
+    ];
+    
+    for (const variation of variations) {
+      if (variation !== orderNumber) {
+        await bookingDataStore.remove(variation);
+      }
+    }
   }
 
   return bookingData;

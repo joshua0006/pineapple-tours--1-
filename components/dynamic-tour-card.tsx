@@ -94,7 +94,7 @@ export function DynamicTourCard({
   };
 
   return (
-    <Card className="relative h-80 w-full overflow-hidden group hover:shadow-2xl transition-all duration-300 border-0 shadow-lg cursor-pointer">
+    <Card className="relative h-80 w-full overflow-hidden group hover:shadow-2xl transition-all duration-500 border-0 shadow-lg cursor-pointer transform hover:-translate-y-2 hover:scale-[1.02]">
       {/* Background Image */}
       <div className="absolute inset-0">
         {primaryImageUrl ? (
@@ -114,22 +114,22 @@ export function DynamicTourCard({
       </div>
 
       {/* Gradient Overlay */}
-      <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent group-hover:from-black/80 transition-all duration-300" />
+      <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent group-hover:from-black/80 transition-all duration-500" />
 
       {/* Content */}
-      <div className="absolute bottom-0 left-0 right-0 p-6 text-white">
-        <div className="space-y-4">
+      <div className="absolute bottom-0 left-0 right-0 p-4 sm:p-6 text-white">
+        <div className="space-y-3 sm:space-y-4">
           {/* Tour Name */}
-          <h3 className="text-2xl font-bold leading-tight line-clamp-2 drop-shadow-lg group-hover:text-white/95 transition-colors duration-200">
+          <h3 className="text-lg sm:text-2xl font-bold leading-tight line-clamp-2 drop-shadow-lg group-hover:text-white/95 transition-colors duration-300">
             {product.name}
           </h3>
 
           {/* Action Buttons */}
-          <div className="flex gap-3 w-full">
+          <div className="flex gap-2 sm:gap-3 w-full">
             <Link href={buildTourDetailsUrl()} className="flex-1">
               <Button
                 variant="outline"
-                className="w-full border-2 border-white/80 text-white bg-white/10 hover:bg-white hover:text-gray-900 backdrop-blur-sm transition-all duration-300 py-3 font-semibold text-base shadow-lg hover:shadow-xl transform hover:-translate-y-1"
+                className="w-full border-2 border-white/80 text-white bg-white/10 hover:bg-white hover:text-gray-900 backdrop-blur-sm transition-all duration-300 py-2 sm:py-3 text-sm sm:text-base font-semibold shadow-lg hover:shadow-xl transform hover:-translate-y-1 active:scale-95"
                 aria-label={`View details for ${product.name} tour`}
               >
                 View Details
@@ -137,7 +137,7 @@ export function DynamicTourCard({
             </Link>
             <Link href={buildDirectBookingUrl()} className="flex-1">
               <Button
-                className="w-full bg-brand-accent text-brand-secondary hover:bg-brand-accent/90 backdrop-blur-sm transition-all duration-300 py-3 font-semibold text-base shadow-lg hover:shadow-xl transform hover:-translate-y-1 border-2 border-brand-accent"
+                className="w-full bg-brand-accent text-brand-secondary hover:bg-brand-accent/90 backdrop-blur-sm transition-all duration-300 py-2 sm:py-3 text-sm sm:text-base font-semibold shadow-lg hover:shadow-xl transform hover:-translate-y-1 border-2 border-brand-accent active:scale-95"
                 aria-label={`Book ${product.name} tour now`}
               >
                 Book Now

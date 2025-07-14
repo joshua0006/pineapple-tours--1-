@@ -127,14 +127,14 @@ export function StripePaymentForm({
         fullName,
         email: bookingData?.contact?.email,
         billingAddress,
-        returnUrl: `${window.location.origin}/booking/confirmation?orderNumber=${orderNumber}`
+        returnUrl: `${window.location.origin}/booking/guest-details?orderNumber=${orderNumber}`
       });
 
       // Confirm the payment with Stripe
       const { error, paymentIntent } = await stripe.confirmPayment({
         elements,
         confirmParams: {
-          return_url: `${window.location.origin}/booking/confirmation?orderNumber=${orderNumber}`,
+          return_url: `${window.location.origin}/booking/guest-details?orderNumber=${orderNumber}`,
           payment_method_data: {
             billing_details: {
               name: fullName,
@@ -272,6 +272,11 @@ export function StripePaymentForm({
                 options={{
                   layout: "tabs",
                   paymentMethodOrder: ["card", "apple_pay", "google_pay"],
+                  // Disable Link functionality by excluding it from payment methods
+                  wallets: {
+                    applePay: "auto",
+                    googlePay: "auto"
+                  },
                   fields: {
                     billingDetails: {
                       /*
@@ -284,7 +289,7 @@ export function StripePaymentForm({
                        * providing the full address in `confirmPayment`.
                        */
                       name: "auto",
-                      email: "auto",
+                      email: "never",
                       phone: "auto",
                       address: "auto",
                     },

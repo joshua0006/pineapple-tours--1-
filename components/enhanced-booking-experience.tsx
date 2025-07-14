@@ -45,6 +45,7 @@ import { ExtrasSelector } from "@/components/ui/extras-selector";
 import { PickupLocationSelector } from "@/components/ui/pickup-location-selector";
 import { BookingOptionSelector } from "@/components/ui/booking-option-selector";
 import { useRezdyAvailability } from "@/hooks/use-rezdy";
+import { fetchAndCacheProduct } from "@/lib/utils/rezdy-product-cache";
 import {
   RezdyProduct,
   RezdySession,
@@ -122,6 +123,17 @@ export function EnhancedBookingExperience({
 }: EnhancedBookingExperienceProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [bookingErrors, setBookingErrors] = useState<string[]>([]);
+  
+  // Cache product data on mount
+  useEffect(() => {
+    if (product && product.productCode) {
+      fetchAndCacheProduct(product.productCode).then(cachedProduct => {
+        if (cachedProduct) {
+          console.log('✅ Product cached for booking:', product.productCode);
+        }
+      });
+    }
+  }, [product?.productCode]);
 
   // Map the preSelectedLocation to a region for FIT tours
   const preSelectedRegion = preSelectedLocation
@@ -782,6 +794,7 @@ export function EnhancedBookingExperience({
         }),
         payment: {
           method: "credit_card",
+          type: "CREDITCARD", // Explicitly set the type for Rezdy compatibility
         },
         // Store guest counts for later use
         guestCounts,
@@ -812,6 +825,9 @@ export function EnhancedBookingExperience({
 
       // Store booking data in session storage for payment page
       sessionStorage.setItem(`booking_${generatedOrderNumber}`, JSON.stringify(formData));
+
+      // Also store in server-side store as backup (will be done by payment intent API)
+      // The payment intent creation API will handle server-side storage
 
       // Redirect to custom payment page
       const paymentUrl = `/booking/payment?orderNumber=${generatedOrderNumber}&amount=${pricingBreakdown.total}&productName=${encodeURIComponent(product.name)}`;
@@ -1207,14 +1223,14 @@ export function EnhancedBookingExperience({
                   Choose the number of guests for your booking
                 </p>
               </CardHeader>
-              <CardContent className="space-y-4">
+              <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 {/* Adults */}
-                <div className="flex items-center justify-between p-4 bg-muted/30 rounded-lg">
-                  <div className="flex-1">
+                <div className="flex flex-col p-4 bg-muted/30 rounded-lg">
+                  <div className="text-center mb-3">
                     <div className="font-medium">Adults</div>
                     <div className="text-sm text-muted-foreground">Ages 18+</div>
                   </div>
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center justify-center gap-3">
                     <Button
                       variant="outline"
                       size="sm"
@@ -1238,12 +1254,12 @@ export function EnhancedBookingExperience({
                 </div>
 
                 {/* Children */}
-                <div className="flex items-center justify-between p-4 bg-muted/30 rounded-lg">
-                  <div className="flex-1">
+                <div className="flex flex-col p-4 bg-muted/30 rounded-lg">
+                  <div className="text-center mb-3">
                     <div className="font-medium">Children</div>
                     <div className="text-sm text-muted-foreground">Ages 3-17</div>
                   </div>
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center justify-center gap-3">
                     <Button
                       variant="outline"
                       size="sm"
@@ -1267,12 +1283,12 @@ export function EnhancedBookingExperience({
                 </div>
 
                 {/* Infants */}
-                <div className="flex items-center justify-between p-4 bg-muted/30 rounded-lg">
-                  <div className="flex-1">
+                <div className="flex flex-col p-4 bg-muted/30 rounded-lg">
+                  <div className="text-center mb-3">
                     <div className="font-medium">Infants</div>
                     <div className="text-sm text-muted-foreground">Ages 0-2</div>
                   </div>
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center justify-center gap-3">
                     <Button
                       variant="outline"
                       size="sm"
@@ -1305,7 +1321,7 @@ export function EnhancedBookingExperience({
                   </div>
                   
                 
-                  <div className="text-sm text-muted-foreground">
+                  <div className="text-sm text-muted-foreground w-full">
                     <Info className="h-4 w-4 inline mr-1" />
                     Guest details will be collected after payment confirmation
                   </div>

@@ -124,43 +124,64 @@ export interface RezdyPickupLocation {
 }
 
 export interface RezdyBooking {
-  orderNumber?: string;
+  status?: "PROCESSING" | "CONFIRMED";
   customer: RezdyCustomer;
   items: RezdyBookingItem[];
-  totalAmount: number;
-  paymentOption?: string;
-  status?: string;
-  createdDate?: string;
-  modifiedDate?: string;
+  payments: RezdyPayment[];
+  comments?: string;
+  fields?: RezdyBookingField[];
 }
 
 export interface RezdyCustomer {
   firstName: string;
   lastName: string;
-  email: string;
-  phone?: string;
+  email?: string;
+  phone: string;
 }
 
 export interface RezdyBookingItem {
   productCode: string;
   startTimeLocal: string;
   quantities: RezdyQuantity[];
-  amount: number;
-  pickupId?: string;
-  extras?: RezdyBookingExtra[];
+  pickupLocation?: {
+    locationName: string;
+  };
+  participants?: RezdyBookingParticipant[];
 }
 
 export interface RezdyBookingExtra {
-  extraId: string;
+  extraId?: string;
+  name: string;
   quantity: number;
-  unitPrice: number;
-  totalPrice: number;
+  unitPrice?: number;
+  totalPrice?: number;
 }
 
 export interface RezdyParticipant {
   type: string;
   number: number;
   priceOptionId?: number;
+}
+
+export interface RezdyParticipantField {
+  label: string;
+  value: string;
+}
+
+export interface RezdyBookingParticipant {
+  fields: RezdyParticipantField[];
+}
+
+export interface RezdyBookingField {
+  label: string;
+  value: string;
+}
+
+export interface RezdyPayment {
+  amount: number;
+  type: "CASH" | "CREDIT_CARD";
+  recipient: "SUPPLIER";
+  label?: string;
 }
 
 export interface RezdyQuantity {

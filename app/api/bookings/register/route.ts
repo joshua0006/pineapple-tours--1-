@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { transformBookingDataToRezdy, validateBookingDataForRezdy, BookingFormData } from "@/lib/utils/booking-transform";
+import { validateBookingDataForRezdy, BookingFormData } from "@/lib/utils/booking-transform";
 import { BookingService, PaymentConfirmation } from "@/lib/services/booking-service";
 
 export async function POST(request: NextRequest) {
@@ -58,6 +58,7 @@ export async function POST(request: NextRequest) {
       
       if (sessionId) {
         // This is a Stripe payment - retrieve the actual payment intent
+        // eslint-disable-next-line @typescript-eslint/no-require-imports
         const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
         
         try {
@@ -137,6 +138,13 @@ export async function POST(request: NextRequest) {
             timestamp: new Date(paymentIntent.created * 1000).toISOString(),
             orderReference: orderNumber,
           };
+
+          console.log("💳 Stripe payment confirmation created:", {
+            transactionId: paymentConfirmation.transactionId,
+            paymentMethod: paymentConfirmation.paymentMethod,
+            amount: paymentConfirmation.amount,
+            orderNumber
+          });
           
           console.log("✅ Retrieved Stripe payment confirmation:", {
             transactionId: paymentConfirmation.transactionId,
@@ -160,12 +168,16 @@ export async function POST(request: NextRequest) {
           amount: formData.pricing.total,
           currency: "AUD",
           status: "success",
-          paymentMethod: "credit_card",
+          paymentMethod: formData.payment?.method || "credit_card",
           timestamp: new Date().toISOString(),
           orderReference: orderNumber,
         };
         
-        console.log("⚠️  Using fallback payment confirmation for order:", orderNumber);
+        console.log("⚠️  Using fallback payment confirmation for order:", {
+          orderNumber,
+          paymentMethod: paymentConfirmation.paymentMethod,
+          amount: paymentConfirmation.amount
+        });
       }
 
       // Debug: Log the booking data structure before processing
@@ -205,8 +217,10 @@ export async function POST(request: NextRequest) {
       const bookingRequest = BookingService.createBookingRequest(formData, paymentConfirmation);
 
       console.log("📤 Creating booking request for Rezdy", {
-        paymentOption: bookingRequest.bookingData.payment?.method,
+        paymentMethod: bookingRequest.bookingData.payment?.method,
+        paymentType: bookingRequest.bookingData.payment?.type,
         paymentConfirmationAmount: paymentConfirmation.amount,
+        paymentConfirmationMethod: paymentConfirmation.paymentMethod
       });
 
       console.log("🚀 Submitting booking request to Rezdy...");
@@ -253,7 +267,7 @@ export async function POST(request: NextRequest) {
 }
 
 // Test endpoint to create sample booking registration
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
     // Sample booking data for testing
     const sampleBookingData: BookingFormData = {

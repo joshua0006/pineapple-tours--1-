@@ -1,5 +1,6 @@
-import { RezdyBooking, RezdyBookingItem, RezdyCustomer } from '@/lib/types/rezdy'
+import { RezdyBooking, RezdyBookingItem, RezdyCustomer, RezdyProduct } from '@/lib/types/rezdy'
 import { transformBookingDataToRezdy, validateBookingDataForRezdy, BookingFormData } from '@/lib/utils/booking-transform'
+import { fetchAndCacheProduct, rezdyProductCache } from '@/lib/utils/rezdy-product-cache'
 
 export interface PaymentConfirmation {
   transactionId: string
@@ -65,37 +66,28 @@ export class BookingService {
       // Step 3: Transform booking data to Rezdy format
       console.time("⏱️ transformBookingData");
       const rezdyBookingData = transformBookingDataToRezdy(
-        request.bookingData,
-        request.paymentConfirmation.orderReference
+        request.bookingData
       )
       console.timeEnd("⏱️ transformBookingData");
       console.log("📦 Transformed Rezdy booking data", {
         productCode: rezdyBookingData.items[0]?.productCode,
         quantities: rezdyBookingData.items[0]?.quantities,
         totalQuantity: rezdyBookingData.items[0]?.quantities?.reduce((sum, q) => sum + q.value, 0) || 0,
-        totalAmount: rezdyBookingData.totalAmount,
-        paymentOption: rezdyBookingData.paymentOption,
+        customerName: `${rezdyBookingData.customer.firstName} ${rezdyBookingData.customer.lastName}`,
+        hasPhone: !!rezdyBookingData.customer.phone,
       });
 
-      // Step 4: Set payment status and method based on Westpac confirmation
-      rezdyBookingData.paymentOption = this.mapPaymentMethodToRezdy(request.paymentConfirmation.paymentMethod)
-      rezdyBookingData.status = 'CONFIRMED' // Mark as confirmed since payment is successful
-      
-      // Step 4.1: Add payment reference information to support Rezdy requirements
-      if (request.paymentConfirmation.transactionId) {
-        rezdyBookingData.orderNumber = rezdyBookingData.orderNumber || request.paymentConfirmation.transactionId;
-      }
-
-      // Step 5: Verify amounts match
-      if (Math.abs(rezdyBookingData.totalAmount - request.paymentConfirmation.amount) > 0.01) {
+      // Step 4: Verify amounts match
+      const bookingTotal = request.bookingData.pricing.total;
+      if (Math.abs(bookingTotal - request.paymentConfirmation.amount) > 0.01) {
         console.error('❌ Amount mismatch detected:', {
-          bookingTotal: rezdyBookingData.totalAmount,
+          bookingTotal: bookingTotal,
           paymentAmount: request.paymentConfirmation.amount,
-          difference: Math.abs(rezdyBookingData.totalAmount - request.paymentConfirmation.amount)
+          difference: Math.abs(bookingTotal - request.paymentConfirmation.amount)
         });
         return {
           success: false,
-          error: `Amount mismatch: booking total ($${rezdyBookingData.totalAmount.toFixed(2)}) does not match payment amount ($${request.paymentConfirmation.amount.toFixed(2)})`,
+          error: `Amount mismatch: booking total ($${bookingTotal.toFixed(2)}) does not match payment amount ($${request.paymentConfirmation.amount.toFixed(2)})`,
           paymentConfirmation: request.paymentConfirmation
         }
       }
@@ -108,19 +100,24 @@ export class BookingService {
           bookingData: {
             customer: rezdyBookingData.customer,
             itemCount: rezdyBookingData.items.length,
-            totalAmount: rezdyBookingData.totalAmount,
-            paymentOption: rezdyBookingData.paymentOption,
-            status: rezdyBookingData.status
+            productCode: rezdyBookingData.items[0]?.productCode,
+            payments: rezdyBookingData.payments?.map(p => ({
+              amount: p.amount,
+              type: p.type,
+              recipient: p.recipient,
+              hasType: !!p.type,
+              typeValue: p.type
+            }))
           }
         });
         return {
           success: false,
-          error: `Pre-submission validation failed: ${preSubmissionValidation.errors.join(', ')}`,
+          error: `Booking validation failed: ${preSubmissionValidation.errors.join(', ')}`,
           paymentConfirmation: request.paymentConfirmation
         }
       }
       
-      // Step 6.1: Additional validation logging
+      // Step 5.1: Additional validation logging
       console.log('✅ Pre-submission validation passed:', {
         customer: {
           name: `${rezdyBookingData.customer.firstName} ${rezdyBookingData.customer.lastName}`,
@@ -128,24 +125,33 @@ export class BookingService {
           hasPhone: !!rezdyBookingData.customer.phone
         },
         booking: {
-          orderNumber: rezdyBookingData.orderNumber,
           itemCount: rezdyBookingData.items.length,
           totalQuantity: rezdyBookingData.items[0]?.quantities?.reduce((sum, q) => sum + q.value, 0) || 0,
-          totalAmount: rezdyBookingData.totalAmount,
-          paymentOption: rezdyBookingData.paymentOption,
-          status: rezdyBookingData.status
         },
         firstItem: rezdyBookingData.items[0] ? {
           productCode: rezdyBookingData.items[0].productCode,
           quantities: rezdyBookingData.items[0].quantities,
           totalQuantity: rezdyBookingData.items[0].quantities?.reduce((sum, q) => sum + q.value, 0) || 0,
-          amount: rezdyBookingData.items[0].amount,
           hasPickup: !!rezdyBookingData.items[0].pickupId,
           extrasCount: rezdyBookingData.items[0].extras?.length || 0
         } : null
       });
 
-      // Step 7: Submit to Rezdy API (or simulate in development)
+      // Step 7: Pre-submission validation
+      console.time("⏱️ preSubmissionValidation");
+      const preValidation = await this.preValidateBooking(rezdyBookingData);
+      console.timeEnd("⏱️ preSubmissionValidation");
+      
+      if (!preValidation.isValid) {
+        console.error("❌ Pre-submission validation failed:", preValidation.errors);
+        return {
+          success: false,
+          error: `Booking validation failed: ${preValidation.errors.join(', ')}`,
+          paymentConfirmation: request.paymentConfirmation
+        }
+      }
+
+      // Step 8: Submit to Rezdy API (or simulate in development)
       console.time("⏱️ submitToRezdyApi");
       const rezdyResult = await this.submitToRezdyApi(rezdyBookingData)
       console.timeEnd("⏱️ submitToRezdyApi");
@@ -176,6 +182,65 @@ export class BookingService {
     } finally {
       console.groupEnd();
     }
+  }
+
+  /**
+   * Pre-validate booking before submitting to Rezdy
+   */
+  private async preValidateBooking(rezdyBooking: RezdyBooking): Promise<{
+    isValid: boolean
+    errors: string[]
+  }> {
+    const errors: string[] = [];
+    
+    // Validate quantities
+    const item = rezdyBooking.items[0];
+    if (!item) {
+      errors.push('No booking items found');
+      return { isValid: false, errors };
+    }
+    
+    if (!item.quantities || item.quantities.length === 0) {
+      errors.push('No quantities specified');
+      return { isValid: false, errors };
+    }
+    
+    const totalQuantity = item.quantities.reduce((sum, q) => sum + q.value, 0);
+    if (totalQuantity === 0) {
+      errors.push('Total quantity must be greater than 0');
+    }
+    
+    // Fetch product to validate price option labels
+    const product = await fetchAndCacheProduct(item.productCode);
+    if (product && product.priceOptions) {
+      const availableLabels = product.priceOptions.map(opt => opt.label);
+      
+      for (const quantity of item.quantities) {
+        if (!availableLabels.includes(quantity.optionLabel)) {
+          errors.push(`Invalid price option label "${quantity.optionLabel}". Available options: ${availableLabels.join(', ')}`);
+        }
+        
+        if (quantity.value <= 0) {
+          errors.push(`Quantity for ${quantity.optionLabel} must be greater than 0`);
+        }
+      }
+    }
+    
+    // Validate customer data
+    if (!rezdyBooking.customer) {
+      errors.push('Customer information is required');
+    } else {
+      if (!rezdyBooking.customer.firstName) errors.push('Customer first name is required');
+      if (!rezdyBooking.customer.lastName) errors.push('Customer last name is required');
+      if (!rezdyBooking.customer.email) errors.push('Customer email is required');
+    }
+    
+    // Note: Amount validation has already been done against payment confirmation
+    
+    return {
+      isValid: errors.length === 0,
+      errors
+    };
   }
 
   /**
@@ -259,35 +324,46 @@ export class BookingService {
               productCode: item.productCode,
               quantities: item.quantities,
               totalQuantity: item.quantities?.reduce((sum, q) => sum + q.value, 0) || 0,
-              amount: item.amount,
               pickupId: item.pickupId
-            })),
-            totalAmount: rezdyBooking.totalAmount,
-            paymentOption: rezdyBooking.paymentOption,
-            status: rezdyBooking.status
+            }))
           }
         });
 
         // Handle specific Rezdy error codes
         if (parsedError?.requestStatus?.error?.errorCode === "10") {
           const errorMessage = parsedError.requestStatus.error.errorMessage;
+          
           console.error('❌ Rezdy Error Code 10 - Missing required data:', {
             errorMessage,
-            quantities: rezdyBooking.items[0]?.quantities,
-            totalQuantity: rezdyBooking.items[0]?.quantities?.reduce((sum, q) => sum + q.value, 0) || 0,
-            paymentOption: rezdyBooking.paymentOption,
-            totalAmount: rezdyBooking.totalAmount,
-            status: rezdyBooking.status,
+            bookingStructure: {
+              hasStatus: !!rezdyBooking.status,
+              hasCustomer: !!rezdyBooking.customer,
+              hasItems: !!rezdyBooking.items && rezdyBooking.items.length > 0,
+              hasPayments: !!rezdyBooking.payments && rezdyBooking.payments.length > 0,
+              customerFields: rezdyBooking.customer ? {
+                firstName: !!rezdyBooking.customer.firstName,
+                lastName: !!rezdyBooking.customer.lastName,
+                phone: !!rezdyBooking.customer.phone,
+                email: !!rezdyBooking.customer.email
+              } : null,
+              firstItem: rezdyBooking.items[0] ? {
+                productCode: !!rezdyBooking.items[0].productCode,
+                startTime: !!rezdyBooking.items[0].startTimeLocal,
+                quantitiesCount: rezdyBooking.items[0].quantities?.length || 0,
+                totalQuantity: rezdyBooking.items[0].quantities?.reduce((sum, q) => sum + q.value, 0) || 0
+              } : null,
+              paymentsCount: rezdyBooking.payments?.length || 0
+            },
             suggestions: [
-              'Check if quantities array is populated with optionLabel and value',
-              'Verify total quantity is > 0',
-              'Ensure optionLabel matches exact price option labels from product',
-              'Ensure paymentOption is not CREDITCARD (use OTHER for pre-paid bookings)',
-              'Confirm all required customer fields are present'
+              'Verify booking status is set to CONFIRMED',
+              'Check all customer fields are present and valid',
+              'Ensure quantities array has valid optionLabel and value > 0',
+              'Confirm payments array is populated with correct structure',
+              'Validate startTimeLocal format (YYYY-MM-DD HH:mm:ss)'
             ]
           });
           
-          throw new Error(`Booking validation failed: ${errorMessage}. Please contact support with order number ${rezdyBooking.orderNumber}.`);
+          throw new Error(`Booking validation failed: ${errorMessage}. Please check all required fields and try again.`);
         }
 
         // Handle other specific error codes
@@ -372,38 +448,18 @@ export class BookingService {
   }
 
   /**
-   * Map Westpac payment method to Rezdy payment option
+   * Map payment method to Rezdy payment type
    */
-  private mapPaymentMethodToRezdy(paymentMethod: string): string {
-    const methodMap: { [key: string]: string } = {
-      // All Stripe card-based payment methods should map to OTHER
-      // to avoid Rezdy's credit card validation since payment is already processed
-      'credit_card': 'OTHER',
-      'debit_card': 'OTHER', 
-      'visa': 'OTHER',
-      'mastercard': 'OTHER',
-      'amex': 'OTHER',
-      'card': 'OTHER',
-      'link': 'OTHER', // Stripe Link payments
-      // Non-card payment methods
-      'paypal': 'PAYPAL',
-      'bank_transfer': 'BANKTRANSFER',
-      'cash': 'CASH',
-      'other': 'OTHER',
-      // Additional Stripe payment methods
-      'apple_pay': 'OTHER',
-      'google_pay': 'OTHER',
-      'afterpay': 'OTHER',
-      'klarna': 'OTHER',
-      'affirm': 'OTHER'
-    }
-
+  private mapPaymentMethodToRezdy(paymentMethod: string): "CASH" | "CREDIT_CARD" {
     const lowerMethod = paymentMethod.toLowerCase()
-    const mapped = methodMap[lowerMethod] || 'OTHER' // Default to OTHER instead of CREDITCARD
     
-    console.log(`🔄 Mapping payment method: ${paymentMethod} -> ${mapped} (avoiding CREDITCARD to prevent Rezdy validation issues)`);
+    // Most payment methods map to CREDIT_CARD in the new Rezdy API structure
+    if (lowerMethod === 'cash') {
+      return 'CASH';
+    }
     
-    return mapped;
+    // All other payment methods (credit cards, debit cards, digital wallets) map to CREDIT_CARD
+    return 'CREDIT_CARD';
   }
 
   /**
@@ -429,8 +485,8 @@ export class BookingService {
     const errors: string[] = []
 
     // Validate required Rezdy fields
-    if (!rezdyBooking.customer || !rezdyBooking.customer.firstName || !rezdyBooking.customer.lastName || !rezdyBooking.customer.email) {
-      errors.push('Customer information is incomplete (firstName, lastName, email required)')
+    if (!rezdyBooking.customer || !rezdyBooking.customer.firstName || !rezdyBooking.customer.lastName || !rezdyBooking.customer.phone) {
+      errors.push('Customer information is incomplete (firstName, lastName, phone required)')
     }
 
     if (!rezdyBooking.items || rezdyBooking.items.length === 0) {
@@ -466,29 +522,31 @@ export class BookingService {
           errors.push('Total quantity must be greater than 0')
         }
       }
-      
-      if (!item.amount || item.amount <= 0) {
-        errors.push('Item amount must be greater than 0')
+    }
+
+    // Validate payments array (required in new structure)
+    if (!rezdyBooking.payments || rezdyBooking.payments.length === 0) {
+      errors.push('At least one payment entry is required')
+    } else {
+      for (const payment of rezdyBooking.payments) {
+        if (!payment.amount || payment.amount <= 0) {
+          errors.push('Payment amount must be greater than 0')
+        }
+        if (!payment.type) {
+          errors.push('Payment type cannot be empty. Please check all required fields and try again.')
+        } else {
+          // Validate payment type is one of the accepted values
+          const validPaymentTypes: Array<"CASH" | "CREDIT_CARD"> = ["CASH", "CREDIT_CARD"];
+          if (!validPaymentTypes.includes(payment.type)) {
+            errors.push(`Invalid payment type "${payment.type}". Must be CASH or CREDIT_CARD`)
+          }
+        }
+        if (!payment.recipient) {
+          errors.push('Payment recipient is required')
+        } else if (payment.recipient !== "SUPPLIER") {
+          errors.push('Payment recipient must be "SUPPLIER"')
+        }
       }
-    }
-
-    if (!rezdyBooking.totalAmount || rezdyBooking.totalAmount <= 0) {
-      errors.push('Total amount must be greater than 0')
-    }
-
-    if (!rezdyBooking.paymentOption) {
-      errors.push('Payment option is required')
-    }
-
-    // Additional validation for payment status
-    if (rezdyBooking.status === 'CONFIRMED' && rezdyBooking.paymentOption === 'CREDITCARD') {
-      // For confirmed bookings with credit card, ensure we have proper payment confirmation
-      console.log('✅ Rezdy booking validation passed for confirmed credit card payment:', {
-        totalAmount: rezdyBooking.totalAmount,
-        paymentOption: rezdyBooking.paymentOption,
-        status: rezdyBooking.status,
-        participantCount: rezdyBooking.items[0]?.participants?.reduce((sum, p) => sum + p.number, 0) || 0
-      });
     }
 
     return {

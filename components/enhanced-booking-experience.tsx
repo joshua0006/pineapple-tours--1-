@@ -45,6 +45,7 @@ import { ExtrasSelector } from "@/components/ui/extras-selector";
 import { PickupLocationSelector } from "@/components/ui/pickup-location-selector";
 import { BookingOptionSelector } from "@/components/ui/booking-option-selector";
 import { useRezdyAvailability } from "@/hooks/use-rezdy";
+import { fetchAndCacheProduct } from "@/lib/utils/rezdy-product-cache";
 import {
   RezdyProduct,
   RezdySession,
@@ -122,6 +123,17 @@ export function EnhancedBookingExperience({
 }: EnhancedBookingExperienceProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [bookingErrors, setBookingErrors] = useState<string[]>([]);
+  
+  // Cache product data on mount
+  useEffect(() => {
+    if (product && product.productCode) {
+      fetchAndCacheProduct(product.productCode).then(cachedProduct => {
+        if (cachedProduct) {
+          console.log('✅ Product cached for booking:', product.productCode);
+        }
+      });
+    }
+  }, [product?.productCode]);
 
   // Map the preSelectedLocation to a region for FIT tours
   const preSelectedRegion = preSelectedLocation
@@ -782,6 +794,7 @@ export function EnhancedBookingExperience({
         }),
         payment: {
           method: "credit_card",
+          type: "CREDIT_CARD", // Explicitly set the type for Rezdy compatibility
         },
         // Store guest counts for later use
         guestCounts,

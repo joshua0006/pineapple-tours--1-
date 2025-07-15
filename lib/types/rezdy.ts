@@ -88,7 +88,7 @@ export interface RezdySession {
   seatsAvailable: number;
   totalPrice?: number;
   pickupId?: string;
-  pickupLocations?: RezdyPickupLocation[];
+  pickupLocations?: RezdyPickupLocationLegacy[]; // Sessions use legacy format for backwards compatibility
   bookingOptions?: RezdyBookingOption[];
 }
 
@@ -111,16 +111,47 @@ export interface RezdyBookingOption {
   isPreferred?: boolean;
 }
 
+// Primary pickup location interface (matches Rezdy API format)
 export interface RezdyPickupLocation {
+  locationName: string;
+  address?: string;
+  latitude?: number;
+  longitude?: number;
+  minutesPrior?: number;
+  additionalInstructions?: string;
+}
+
+// Legacy interface for backward compatibility (used by session data)
+export interface RezdyPickupLocationLegacy {
   id: string;
   name: string;
   pickupTime?: string;
   address?: string | RezdyAddress;
   latitude?: number;
   longitude?: number;
-  region: "brisbane" | "gold-coast" | "tamborine";
+  region?: "brisbane" | "gold-coast" | "tamborine";
   facilityType?: "hotel" | "casino" | "landmark" | "transport-hub";
   isPreferred?: boolean;
+}
+
+// Utility type for components that need to handle both formats
+export type RezdyPickupLocationUnion = RezdyPickupLocation | RezdyPickupLocationLegacy;
+
+// Type guard to check if a location is in the legacy format
+export function isLegacyPickupLocation(location: RezdyPickupLocationUnion): location is RezdyPickupLocationLegacy {
+  return 'id' in location && 'name' in location;
+}
+
+// Helper to convert legacy format to API format
+export function convertLegacyToApiFormat(legacy: RezdyPickupLocationLegacy): RezdyPickupLocation {
+  return {
+    locationName: legacy.name,
+    address: typeof legacy.address === 'string' ? legacy.address : undefined,
+    latitude: legacy.latitude,
+    longitude: legacy.longitude,
+    minutesPrior: undefined, // Legacy format doesn't have this
+    additionalInstructions: undefined,
+  };
 }
 
 export interface RezdyBooking {
@@ -135,10 +166,27 @@ export interface RezdyBooking {
   };
 }
 
+// Direct Rezdy API booking request format
+export interface RezdyDirectBookingRequest {
+  resellerReference: string;
+  resellerComments?: string;
+  customer: RezdyCustomer;
+  items: RezdyBookingItem[];
+  fields?: RezdyBookingField[];
+  payments: RezdyPayment[];
+}
+
+// Pickup location as a separate item in the items array
+export interface RezdyPickupLocationItem {
+  pickupLocation: {
+    locationName: string;
+  };
+}
+
 export interface RezdyCustomer {
   firstName: string;
   lastName: string;
-  email?: string;
+  email: string;
   phone: string;
 }
 
@@ -193,7 +241,7 @@ export interface RezdyPayment {
   amount: number;
   type: "CASH" | "CREDITCARD";
   recipient: "SUPPLIER";
-  label?: string;
+  label: string;
 }
 
 export interface RezdyQuantity {

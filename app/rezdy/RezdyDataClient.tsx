@@ -23,32 +23,25 @@ import {
 } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Separator } from "@/components/ui/separator";
 import {
   Search,
   RefreshCw,
   AlertCircle,
   Package,
-  Grid,
   Code,
   Tag,
-  Calendar,
   Clock,
-  Users,
   DollarSign,
-  TrendingUp,
-  BarChart3,
   Download,
   Copy,
   CheckCircle,
   Info,
   Zap,
 } from "lucide-react";
-import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 
-import { useRezdyProducts, useRezdyAvailability } from "@/hooks/use-rezdy";
-import { RezdyProduct } from "@/lib/types/rezdy";
+import { useRezdyProducts } from "@/hooks/use-rezdy";
+import { RezdyProduct, RezdyPickupLocation } from "@/lib/types/rezdy";
 
 interface Props {
   initialProducts: RezdyProduct[];
@@ -66,10 +59,14 @@ export default function RezdyDataClient({ initialProducts }: Props) {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedProductType, setSelectedProductType] = useState<string>("all");
   const [selectedBudgetRange, setSelectedBudgetRange] = useState<string>("all");
-  const [jsonViewExpanded, setJsonViewExpanded] = useState(false);
   const [copiedToClipboard, setCopiedToClipboard] = useState(false);
   const [cacheStats, setCacheStats] = useState<CacheStats | null>(null);
   const [lastRefresh, setLastRefresh] = useState<Date>(new Date());
+  const [selectedProduct, setSelectedProduct] = useState<RezdyProduct | null>(null);
+  const [pickupData, setPickupData] = useState<RezdyPickupLocation[] | null>(null);
+  const [pickupLoading, setPickupLoading] = useState(false);
+  const [pickupError, setPickupError] = useState<string | null>(null);
+  const [jsonMode, setJsonMode] = useState<"products" | "pickups">("products");
 
   // Fetch data with initial products
   const {
@@ -200,6 +197,36 @@ export default function RezdyDataClient({ initialProducts }: Props) {
     window.location.reload();
   };
 
+  // Fetch pickup data for selected product
+  const fetchPickupData = async (productCode: string) => {
+    setPickupLoading(true);
+    setPickupError(null);
+    try {
+      const response = await fetch(
+        `/api/rezdy/products/${productCode}/pickups`
+      );
+      if (!response.ok) {
+        throw new Error(`Failed to fetch pickups: ${response.status}`);
+      }
+      const data = await response.json();
+      setPickupData(data.pickups || []);
+    } catch (error) {
+      console.error("Error fetching pickup data:", error);
+      setPickupError(
+        error instanceof Error ? error.message : "Failed to fetch pickups"
+      );
+      setPickupData([]);
+    } finally {
+      setPickupLoading(false);
+    }
+  };
+
+  // Handle product selection for pickups
+  const handleProductSelect = async (product: RezdyProduct) => {
+    setSelectedProduct(product);
+    await fetchPickupData(product.productCode);
+  };
+
   const handleCopyJson = async () => {
     try {
       await navigator.clipboard.writeText(
@@ -266,6 +293,7 @@ export default function RezdyDataClient({ initialProducts }: Props) {
         <TabsList>
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="products">Products</TabsTrigger>
+          <TabsTrigger value="pickups">Pickups</TabsTrigger>
           <TabsTrigger value="endpoints">API Endpoints</TabsTrigger>
           <TabsTrigger value="json">JSON Data</TabsTrigger>
           <TabsTrigger value="analytics">Analytics</TabsTrigger>
@@ -463,7 +491,11 @@ export default function RezdyDataClient({ initialProducts }: Props) {
                     {filteredProducts.map((product) => (
                       <div
                         key={product.productCode}
-                        className="border rounded-lg p-4"
+                        className="border rounded-lg p-4 cursor-pointer hover:border-primary transition-colors"
+                        onClick={() => {
+                          handleProductSelect(product);
+                          setActiveTab("pickups");
+                        }}
                       >
                         <div className="flex justify-between items-start mb-2">
                           <h3 className="font-semibold">{product.name}</h3>
@@ -505,6 +537,184 @@ export default function RezdyDataClient({ initialProducts }: Props) {
               )}
             </CardContent>
           </Card>
+        </TabsContent>
+
+        <TabsContent value="pickups" className="space-y-6">
+          {/* Product Selection */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Select a Product</CardTitle>
+              <CardDescription>
+                {selectedProduct
+                  ? `Viewing pickups for: ${selectedProduct.name}`
+                  : "Choose a product from the Products tab to view its pickup locations"}
+              </CardDescription>
+            </CardHeader>
+            {selectedProduct && (
+              <CardContent>
+                <div className="flex items-center justify-between p-4 bg-muted rounded-lg">
+                  <div>
+                    <h4 className="font-semibold">{selectedProduct.name}</h4>
+                    <p className="text-sm text-muted-foreground">
+                      Code: {selectedProduct.productCode}
+                    </p>
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => fetchPickupData(selectedProduct.productCode)}
+                  >
+                    <RefreshCw className="h-4 w-4 mr-2" />
+                    Refresh Pickups
+                  </Button>
+                </div>
+              </CardContent>
+            )}
+          </Card>
+
+          {/* Pickup Locations */}
+          {selectedProduct && (
+            <Card>
+              <CardHeader>
+                <CardTitle>Pickup Locations</CardTitle>
+                <CardDescription>
+                  Available pickup points from Rezdy API with detailed location information
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {pickupLoading ? (
+                  <div className="space-y-4">
+                    {[...Array(3)].map((_, i) => (
+                      <Skeleton key={i} className="h-24 w-full" />
+                    ))}
+                  </div>
+                ) : pickupError ? (
+                  <Alert variant="destructive">
+                    <AlertCircle className="h-4 w-4" />
+                    <AlertDescription>{pickupError}</AlertDescription>
+                  </Alert>
+                ) : pickupData && pickupData.length > 0 ? (
+                  <ScrollArea className="h-[500px]">
+                    <div className="space-y-4">
+                      {pickupData.map((pickup) => (
+                        <div
+                          key={pickup.id}
+                          className="border rounded-lg p-4 space-y-2"
+                        >
+                          <div className="flex justify-between items-start">
+                            <h4 className="font-semibold">{pickup.locationName}</h4>
+                          </div>
+                          {pickup.address && (
+                            <div className="flex items-start gap-2 text-sm">
+                              <Tag className="h-4 w-4 text-muted-foreground mt-0.5" />
+                              <span>{pickup.address}</span>
+                            </div>
+                          )}
+                          {(pickup.latitude && pickup.longitude) && (
+                            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                              <Info className="h-4 w-4" />
+                              <span>
+                                Coordinates: {pickup.latitude}, {pickup.longitude}
+                              </span>
+                            </div>
+                          )}
+                          {pickup.minutesPrior && (
+                            <div className="flex items-center gap-2 text-sm">
+                              <Clock className="h-4 w-4 text-muted-foreground" />
+                              <span>Arrive {Math.abs(pickup.minutesPrior)} minutes early</span>
+                            </div>
+                          )}
+                          {pickup.additionalInstructions && (
+                            <div className="flex items-start gap-2 text-sm bg-blue-50 p-2 rounded">
+                              <Info className="h-4 w-4 text-blue-600 mt-0.5" />
+                              <span className="text-blue-800">{pickup.additionalInstructions}</span>
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </ScrollArea>
+                ) : (
+                  <Alert>
+                    <Info className="h-4 w-4" />
+                    <AlertDescription>
+                      No pickup locations found for this product in the Rezdy API.
+                    </AlertDescription>
+                  </Alert>
+                )}
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Pickup JSON Data */}
+          {selectedProduct && pickupData && (
+            <Card>
+              <CardHeader>
+                <div className="flex justify-between items-center">
+                  <div>
+                    <CardTitle>Pickup JSON Data</CardTitle>
+                    <CardDescription>
+                      Raw pickup data for {selectedProduct.name}
+                    </CardDescription>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={async () => {
+                        try {
+                          await navigator.clipboard.writeText(
+                            JSON.stringify(pickupData, null, 2)
+                          );
+                          setCopiedToClipboard(true);
+                          setTimeout(() => setCopiedToClipboard(false), 2000);
+                        } catch (error) {
+                          console.error("Failed to copy:", error);
+                        }
+                      }}
+                    >
+                      {copiedToClipboard ? (
+                        <CheckCircle className="h-4 w-4 mr-2" />
+                      ) : (
+                        <Copy className="h-4 w-4 mr-2" />
+                      )}
+                      {copiedToClipboard ? "Copied!" : "Copy"}
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        const dataStr = JSON.stringify(pickupData, null, 2);
+                        const dataBlob = new Blob([dataStr], {
+                          type: "application/json",
+                        });
+                        const url = URL.createObjectURL(dataBlob);
+                        const link = document.createElement("a");
+                        link.href = url;
+                        link.download = `pickups-${selectedProduct.productCode}-${
+                          format(new Date(), "yyyy-MM-dd-HHmm")
+                        }.json`;
+                        document.body.appendChild(link);
+                        link.click();
+                        document.body.removeChild(link);
+                        URL.revokeObjectURL(url);
+                      }}
+                    >
+                      <Download className="h-4 w-4 mr-2" />
+                      Download
+                    </Button>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <ScrollArea className="h-[300px]">
+                  <pre className="text-xs bg-muted p-4 rounded-lg overflow-x-auto">
+                    <code>{JSON.stringify(pickupData, null, 2)}</code>
+                  </pre>
+                </ScrollArea>
+              </CardContent>
+            </Card>
+          )}
         </TabsContent>
 
         <TabsContent value="endpoints" className="space-y-6">
@@ -937,11 +1147,87 @@ export default function RezdyDataClient({ initialProducts }: Props) {
               </CardContent>
             </Card>
 
+            {/* Product Pickups Endpoint */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg">
+                  5. Product Pickups
+                </CardTitle>
+                <Badge variant="secondary">
+                  GET /api/rezdy/products/[productCode]/pickups
+                </Badge>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div>
+                  <h4 className="font-semibold mb-2">URL Example:</h4>
+                  <div className="bg-muted p-3 rounded text-sm">
+                    <code>/api/rezdy/products/PH1FEA/pickups?refresh=false</code>
+                  </div>
+                </div>
+                <div>
+                  <h4 className="font-semibold mb-2">Response Structure:</h4>
+                  <ScrollArea className="h-96">
+                    <pre className="text-xs bg-muted p-3 rounded overflow-x-auto">
+                      <code>
+                        {JSON.stringify(
+                          {
+                            pickups: [
+                              {
+                                locationName: "Brisbane Marriott",
+                                address: "1 Howard Street, Brisbane City QLD, Australia",
+                                latitude: -27.4638665,
+                                longitude: 153.0317271,
+                                minutesPrior: -15,
+                                additionalInstructions: "Please meet at the Howard St Entrance of Brisbane Marriott, Hotel, Please make sure that you are 15 minutes early as the time listed is the departure time. If there are any changes we will notify you via WhatsApp text the evening before your tour."
+                              },
+                              {
+                                locationName: "Royal on the Park",
+                                address: "152 Alice St, Brisbane City QLD 4000, Australia",
+                                minutesPrior: -30,
+                                additionalInstructions: "Please meet at the Main entrance of Royal on the Park on Alice St, Please make sure that you are 15 minutes early as the time listed is the departure time. If there are any changes we will notify you via WhatsApp text the evening before your tour."
+                              },
+                              {
+                                locationName: "Near Emporium Southbank",
+                                address: "267 Grey St, South Brisbane Brisbane, QLD, Australia",
+                                latitude: -27.4821317,
+                                longitude: 153.0238281,
+                                minutesPrior: -40,
+                                additionalInstructions: "Meet at the Grey St Entrance of Emporium Hotel, Please make sure that you are 15 minutes early as the time listed is the departure time. If there are any changes we will notify you via WhatsApp text the evening before your tour."
+                              }
+                            ],
+                            productCode: "PH1FEA",
+                            totalCount: 3,
+                            cached: false,
+                            lastUpdated: "2025-01-15T10:30:00.000Z",
+                            hasPickups: true,
+                            requestStatus: {
+                              success: true,
+                              version: "v1"
+                            }
+                          },
+                          null,
+                          2
+                        )}
+                      </code>
+                    </pre>
+                  </ScrollArea>
+                </div>
+                <Alert>
+                  <Info className="h-4 w-4" />
+                  <AlertDescription>
+                    <strong>Real Rezdy API Data:</strong> This endpoint fetches actual pickup locations
+                    from Rezdy's /products/[productCode]/pickups endpoint with detailed location
+                    information, GPS coordinates, timing instructions, and pickup instructions.
+                  </AlertDescription>
+                </Alert>
+              </CardContent>
+            </Card>
+
             {/* Search Endpoint */}
             <Card>
               <CardHeader>
                 <CardTitle className="text-lg">
-                  5. Search with Availability
+                  6. Search with Availability
                 </CardTitle>
                 <Badge variant="secondary">GET /api/search</Badge>
               </CardHeader>
@@ -990,7 +1276,7 @@ export default function RezdyDataClient({ initialProducts }: Props) {
             {/* Cache Stats Endpoint */}
             <Card>
               <CardHeader>
-                <CardTitle className="text-lg">6. Cache Statistics</CardTitle>
+                <CardTitle className="text-lg">7. Cache Statistics</CardTitle>
                 <Badge variant="secondary">
                   GET /api/rezdy/products?stats=true
                 </Badge>
@@ -1025,7 +1311,7 @@ export default function RezdyDataClient({ initialProducts }: Props) {
             <Card>
               <CardHeader>
                 <CardTitle className="text-lg">
-                  7. Error Response Formats
+                  8. Error Response Formats
                 </CardTitle>
                 <Badge variant="destructive">Error Handling</Badge>
               </CardHeader>
@@ -1086,7 +1372,7 @@ export default function RezdyDataClient({ initialProducts }: Props) {
             <Card>
               <CardHeader>
                 <CardTitle className="text-lg">
-                  8. Direct Rezdy API Structure
+                  9. Direct Rezdy API Structure
                 </CardTitle>
                 <Badge variant="outline">External API</Badge>
               </CardHeader>
@@ -1145,44 +1431,148 @@ export default function RezdyDataClient({ initialProducts }: Props) {
         </TabsContent>
 
         <TabsContent value="json" className="space-y-6">
+          {/* JSON Mode Selector */}
           <Card>
             <CardHeader>
-              <div className="flex justify-between items-center">
-                <div>
-                  <CardTitle>JSON Data Export</CardTitle>
-                  <CardDescription>
-                    Raw product data in JSON format ({filteredProducts.length}{" "}
-                    products)
-                  </CardDescription>
-                </div>
-                <div className="flex gap-2">
-                  <Button variant="outline" size="sm" onClick={handleCopyJson}>
-                    {copiedToClipboard ? (
-                      <CheckCircle className="h-4 w-4 mr-2" />
-                    ) : (
-                      <Copy className="h-4 w-4 mr-2" />
-                    )}
-                    {copiedToClipboard ? "Copied!" : "Copy"}
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={handleDownloadJson}
-                  >
-                    <Download className="h-4 w-4 mr-2" />
-                    Download
-                  </Button>
-                </div>
-              </div>
+              <CardTitle>JSON Data Mode</CardTitle>
             </CardHeader>
             <CardContent>
-              <ScrollArea className="h-[600px] w-full">
-                <pre className="text-xs bg-muted p-4 rounded-lg overflow-x-auto">
-                  <code>{JSON.stringify(filteredProducts, null, 2)}</code>
-                </pre>
-              </ScrollArea>
+              <div className="flex gap-4">
+                <Button
+                  variant={jsonMode === "products" ? "default" : "outline"}
+                  onClick={() => setJsonMode("products")}
+                >
+                  <Package className="h-4 w-4 mr-2" />
+                  Products JSON
+                </Button>
+                <Button
+                  variant={jsonMode === "pickups" ? "default" : "outline"}
+                  onClick={() => setJsonMode("pickups")}
+                  disabled={!selectedProduct || !pickupData}
+                >
+                  <Tag className="h-4 w-4 mr-2" />
+                  Pickups JSON
+                </Button>
+              </div>
+              {jsonMode === "pickups" && !selectedProduct && (
+                <Alert className="mt-4">
+                  <Info className="h-4 w-4" />
+                  <AlertDescription>
+                    Select a product from the Products or Pickups tab to view pickup JSON data.
+                  </AlertDescription>
+                </Alert>
+              )}
             </CardContent>
           </Card>
+
+          {/* JSON Data Display */}
+          {jsonMode === "products" ? (
+            <Card>
+              <CardHeader>
+                <div className="flex justify-between items-center">
+                  <div>
+                    <CardTitle>Products JSON Data</CardTitle>
+                    <CardDescription>
+                      Raw product data in JSON format ({filteredProducts.length}{" "}
+                      products)
+                    </CardDescription>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button variant="outline" size="sm" onClick={handleCopyJson}>
+                      {copiedToClipboard ? (
+                        <CheckCircle className="h-4 w-4 mr-2" />
+                      ) : (
+                        <Copy className="h-4 w-4 mr-2" />
+                      )}
+                      {copiedToClipboard ? "Copied!" : "Copy"}
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={handleDownloadJson}
+                    >
+                      <Download className="h-4 w-4 mr-2" />
+                      Download
+                    </Button>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <ScrollArea className="h-[600px] w-full">
+                  <pre className="text-xs bg-muted p-4 rounded-lg overflow-x-auto">
+                    <code>{JSON.stringify(filteredProducts, null, 2)}</code>
+                  </pre>
+                </ScrollArea>
+              </CardContent>
+            </Card>
+          ) : selectedProduct && pickupData ? (
+            <Card>
+              <CardHeader>
+                <div className="flex justify-between items-center">
+                  <div>
+                    <CardTitle>Pickups JSON Data</CardTitle>
+                    <CardDescription>
+                      Pickup locations for {selectedProduct.name} ({pickupData.length} locations)
+                    </CardDescription>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={async () => {
+                        try {
+                          await navigator.clipboard.writeText(
+                            JSON.stringify(pickupData, null, 2)
+                          );
+                          setCopiedToClipboard(true);
+                          setTimeout(() => setCopiedToClipboard(false), 2000);
+                        } catch (error) {
+                          console.error("Failed to copy:", error);
+                        }
+                      }}
+                    >
+                      {copiedToClipboard ? (
+                        <CheckCircle className="h-4 w-4 mr-2" />
+                      ) : (
+                        <Copy className="h-4 w-4 mr-2" />
+                      )}
+                      {copiedToClipboard ? "Copied!" : "Copy"}
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        const dataStr = JSON.stringify(pickupData, null, 2);
+                        const dataBlob = new Blob([dataStr], {
+                          type: "application/json",
+                        });
+                        const url = URL.createObjectURL(dataBlob);
+                        const link = document.createElement("a");
+                        link.href = url;
+                        link.download = `pickups-${selectedProduct.productCode}-${
+                          format(new Date(), "yyyy-MM-dd-HHmm")
+                        }.json`;
+                        document.body.appendChild(link);
+                        link.click();
+                        document.body.removeChild(link);
+                        URL.revokeObjectURL(url);
+                      }}
+                    >
+                      <Download className="h-4 w-4 mr-2" />
+                      Download
+                    </Button>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <ScrollArea className="h-[600px] w-full">
+                  <pre className="text-xs bg-muted p-4 rounded-lg overflow-x-auto">
+                    <code>{JSON.stringify(pickupData, null, 2)}</code>
+                  </pre>
+                </ScrollArea>
+              </CardContent>
+            </Card>
+          ) : null}
         </TabsContent>
 
         <TabsContent value="analytics" className="space-y-6">

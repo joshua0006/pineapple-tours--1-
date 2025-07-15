@@ -5,22 +5,17 @@ import Link from "next/link";
 import {
   Calendar as CalendarIcon,
   Users,
-  CreditCard,
   MapPin,
   Clock,
-  Star,
   Shield,
-  CheckCircle,
   AlertCircle,
   Info,
   Phone,
   Mail,
-  Globe,
   Heart,
   Share2,
   Calendar,
   ArrowLeft,
-  ArrowRight,
   Home,
   ShoppingCart,
   Plus,
@@ -43,41 +38,36 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { PricingDisplay } from "@/components/ui/pricing-display";
 import { ExtrasSelector } from "@/components/ui/extras-selector";
 import { PickupLocationSelector } from "@/components/ui/pickup-location-selector";
-import { BookingOptionSelector } from "@/components/ui/booking-option-selector";
 import { useRezdyAvailability } from "@/hooks/use-rezdy";
 import { fetchAndCacheProduct } from "@/lib/utils/rezdy-product-cache";
 import {
   RezdyProduct,
   RezdySession,
   RezdyPickupLocation,
-  RezdyBookingOption,
-  RezdyAvailability,
+  convertLegacyToApiFormat,
 } from "@/lib/types/rezdy";
-import { FitTourDataService } from "@/lib/services/fit-tour-data";
 import {
-  formatPrice,
   getLocationString,
   hasPickupServices,
-  getPickupServiceType,
-  extractPickupLocations,
 } from "@/lib/utils/product-utils";
 import {
   calculatePricing,
   formatCurrency,
-  getPricingSummaryText,
   validatePricingOptions,
   type PricingBreakdown,
   type SelectedExtra,
 } from "@/lib/utils/pricing-utils";
 import {
-  transformBookingDataToRezdy,
-  validateBookingDataForRezdy,
-  calculateExtrasPricing,
-  getTotalParticipantCount,
-  getParticipantBreakdown,
   type BookingFormData,
 } from "@/lib/utils/booking-transform";
 import { cn } from "@/lib/utils";
+import { 
+  validateBookingPickupData, 
+  getPickupValidationMessage, 
+  getPickupWarningMessage 
+} from "@/lib/utils/pickup-validation";
+import { useSmartPickupPreloader } from "@/hooks/use-pickup-preloader";
+import { usePickupAnalytics } from "@/lib/utils/pickup-analytics";
 
 interface EnhancedBookingExperienceProps {
   product: RezdyProduct;
@@ -96,24 +86,9 @@ interface EnhancedBookingExperienceProps {
   preSelectedLocation?: string; // Pickup location from search form
 }
 
-// Helper function to map search form locations to booking regions
-const mapLocationToRegion = (location: string): string | undefined => {
-  const locationLower = location.toLowerCase();
-
-  if (locationLower.includes("brisbane")) {
-    return "brisbane";
-  } else if (locationLower.includes("gold coast")) {
-    return "gold-coast";
-  } else if (locationLower.includes("tamborine")) {
-    return "tamborine-direct";
-  }
-
-  return undefined;
-};
 
 export function EnhancedBookingExperience({
   product,
-  onClose,
   preSelectedSession,
   preSelectedParticipants,
   preSelectedExtras,
@@ -121,8 +96,13 @@ export function EnhancedBookingExperience({
   preSelectedSessionId,
   preSelectedLocation,
 }: EnhancedBookingExperienceProps) {
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const [bookingErrors, setBookingErrors] = useState<string[]>([]);
+  
+  // Initialize smart preloader
+  const { preloadOnBookingStart } = useSmartPickupPreloader();
+  
+  // Initialize analytics
+  const { trackApiRequest, trackPickupSelection, trackValidationError } = usePickupAnalytics();
   
   // Cache product data on mount
   useEffect(() => {
@@ -132,25 +112,59 @@ export function EnhancedBookingExperience({
           console.log('✅ Product cached for booking:', product.productCode);
         }
       });
+      
+      // Preload pickup locations when user starts booking
+      preloadOnBookingStart(product.productCode);
     }
-  }, [product?.productCode]);
+  }, [product?.productCode, preloadOnBookingStart]);
 
-  // Map the preSelectedLocation to a region for FIT tours
-  const preSelectedRegion = preSelectedLocation
-    ? mapLocationToRegion(preSelectedLocation)
-    : undefined;
+  // Fetch pickup locations from Rezdy API
+  useEffect(() => {
+    const fetchPickupLocations = async () => {
+      if (!product?.productCode) return;
+      
+      setPickupLocationsLoading(true);
+      setPickupLocationsError(null);
+      
+      const startTime = Date.now();
+      
+      try {
+        const response = await fetch(`/api/rezdy/products/${product.productCode}/pickups`);
+        const responseTime = Date.now() - startTime;
+        
+        if (!response.ok) {
+          trackApiRequest(product.productCode, responseTime, false, false);
+          throw new Error(`Failed to fetch pickup locations: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        setApiPickupLocations(data.pickups || []);
+        
+        // Track successful API request
+        trackApiRequest(product.productCode, responseTime, data.cached || false, true);
+        
+        console.log('✅ Pickup locations loaded:', data.pickups?.length || 0);
+      } catch (error) {
+        console.error('❌ Error fetching pickup locations:', error);
+        setPickupLocationsError(error instanceof Error ? error.message : 'Failed to fetch pickup locations');
+        setApiPickupLocations([]);
+        
+        // Track failed API request
+        const responseTime = Date.now() - startTime;
+        trackApiRequest(product.productCode, responseTime, false, false);
+      } finally {
+        setPickupLocationsLoading(false);
+      }
+    };
+
+    fetchPickupLocations();
+  }, [product?.productCode, trackApiRequest]);
+
 
   // Check if product has pickup services
   const productHasPickupServices = hasPickupServices(product);
-  const pickupServiceType = getPickupServiceType(product);
-  const mentionedPickupLocations = extractPickupLocations(product);
 
-  // Get FIT tour booking options
-  const fitTourBookingOptions = useMemo(() => {
-    return FitTourDataService.getBookingOptions(product.productCode);
-  }, [product.productCode]);
 
-  const hasFitTourOptions = fitTourBookingOptions.length > 0;
 
   // Booking state
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
@@ -159,9 +173,16 @@ export function EnhancedBookingExperience({
   );
   const [selectedPickupLocation, setSelectedPickupLocation] =
     useState<RezdyPickupLocation | null>(null);
-  const [selectedBookingOption, setSelectedBookingOption] =
-    useState<RezdyBookingOption | null>(null);
-  const [wasSessionAutoSelected, setWasSessionAutoSelected] = useState(false);
+  const [, setWasSessionAutoSelected] = useState(false);
+  
+  // API pickup locations state
+  const [apiPickupLocations, setApiPickupLocations] = useState<RezdyPickupLocation[]>([]);
+  const [pickupLocationsLoading, setPickupLocationsLoading] = useState(false);
+  const [pickupLocationsError, setPickupLocationsError] = useState<string | null>(null);
+  
+  // Pickup validation state
+  const [pickupValidationError, setPickupValidationError] = useState<string | null>(null);
+  const [pickupValidationWarning, setPickupValidationWarning] = useState<string | null>(null);
   
   // Simplified guest count - default to minimum required
   const [guestCounts, setGuestCounts] = useState({
@@ -207,33 +228,34 @@ export function EnhancedBookingExperience({
     return `${cleaned.slice(0, 3)} ${cleaned.slice(3, 6)} ${cleaned.slice(6)}`;
   };
 
-  const validateContactFields = () => {
-    const errors: { firstName?: string; lastName?: string; email?: string; phone?: string } = {};
-    
-    if (!contactInfo.firstName.trim()) {
-      errors.firstName = "First name is required";
-    }
-    
-    if (!contactInfo.lastName.trim()) {
-      errors.lastName = "Last name is required";
-    }
-    
-    if (!contactInfo.email) {
-      errors.email = "Email is required";
-    } else if (!emailRegex.test(contactInfo.email)) {
-      errors.email = "Please enter a valid email address";
-    }
+  // Unused function - can be removed if not needed for future validation
+  // const validateContactFields = () => {
+  //   const errors: { firstName?: string; lastName?: string; email?: string; phone?: string } = {};
+  //   
+  //   if (!contactInfo.firstName.trim()) {
+  //     errors.firstName = "First name is required";
+  //   }
+  //   
+  //   if (!contactInfo.lastName.trim()) {
+  //     errors.lastName = "Last name is required";
+  //   }
+  //   
+  //   if (!contactInfo.email) {
+  //     errors.email = "Email is required";
+  //   } else if (!emailRegex.test(contactInfo.email)) {
+  //     errors.email = "Please enter a valid email address";
+  //   }
 
-    const phoneDigits = contactInfo.phone.replace(/\D/g, "");
-    if (!contactInfo.phone) {
-      errors.phone = "Phone number is required";
-    } else if (phoneDigits.length < 6) {
-      errors.phone = "Please enter a valid phone number";
-    }
+  //   const phoneDigits = contactInfo.phone.replace(/\D/g, "");
+  //   if (!contactInfo.phone) {
+  //     errors.phone = "Phone number is required";
+  //   } else if (phoneDigits.length < 6) {
+  //     errors.phone = "Please enter a valid phone number";
+  //   }
 
-    setContactFieldErrors(errors);
-    return Object.keys(errors).length === 0;
-  };
+  //   setContactFieldErrors(errors);
+  //   return Object.keys(errors).length === 0;
+  // };
 
   // Helper function to ensure consistent date formatting across storage and retrieval
   const getConsistentDateString = (input: Date | string): string => {
@@ -267,7 +289,6 @@ export function EnhancedBookingExperience({
     setSelectedDate(undefined);
     setSelectedSession(null);
     setSelectedPickupLocation(null);
-    setSelectedBookingOption(null);
 
     // Clear extras
     setSelectedExtras([]);
@@ -296,7 +317,7 @@ export function EnhancedBookingExperience({
         preSelectedSession.pickupLocations &&
         preSelectedSession.pickupLocations.length > 0
       ) {
-        setSelectedPickupLocation(preSelectedSession.pickupLocations[0]);
+        setSelectedPickupLocation(convertLegacyToApiFormat(preSelectedSession.pickupLocations[0]));
       }
     }
 
@@ -464,39 +485,31 @@ export function EnhancedBookingExperience({
       });
   }, [effectiveAvailabilityData, selectedDate]);
 
-  // Calculate pricing with booking option
+  // Determine which pickup locations to use (API first, then session fallback)
+  const effectivePickupLocations = useMemo(() => {
+    // Use API pickup locations if available
+    if (apiPickupLocations.length > 0) {
+      return apiPickupLocations;
+    }
+    
+    // Fallback to session pickup locations (convert legacy format to API format)
+    const sessionPickupLocations = selectedSession?.pickupLocations || [];
+    return sessionPickupLocations.map(convertLegacyToApiFormat);
+  }, [apiPickupLocations, selectedSession?.pickupLocations]);
+
+  // Calculate pricing (simplified without booking options)
   const pricingBreakdown = useMemo((): PricingBreakdown => {
-    const basePricing = calculatePricing(product, selectedSession, {
+    return calculatePricing(product, selectedSession, {
       adults: guestCounts.adults,
       children: guestCounts.children,
       infants: guestCounts.infants,
       extras: selectedExtras,
     });
-
-    // If FIT tour option is selected, add the option pricing
-    if (selectedBookingOption && hasFitTourOptions) {
-      const participantCount = guestCounts.adults + guestCounts.children;
-      const optionTotal = selectedBookingOption.price * participantCount;
-
-      return {
-        ...basePricing,
-        adultPrice: basePricing.adultPrice + selectedBookingOption.price,
-        subtotal: basePricing.subtotal + optionTotal,
-        total: basePricing.total + optionTotal,
-        bookingOptionPrice: selectedBookingOption.price,
-        bookingOptionTotal: optionTotal,
-        bookingOptionName: selectedBookingOption.name,
-      };
-    }
-
-    return basePricing;
   }, [
     product,
     selectedSession,
     guestCounts,
     selectedExtras,
-    selectedBookingOption,
-    hasFitTourOptions,
   ]);
 
   // Validation
@@ -519,15 +532,11 @@ export function EnhancedBookingExperience({
     // Check if pickup location is required and selected
     const needsPickupLocation =
       productHasPickupServices &&
-      selectedSession?.pickupLocations &&
-      selectedSession.pickupLocations.length > 0;
+      effectivePickupLocations.length > 0;
     const hasValidPickupLocation =
       !needsPickupLocation || selectedPickupLocation;
 
-    // Check if FIT tour booking option is required and selected
-    const needsBookingOption = hasFitTourOptions;
-    const hasValidBookingOption =
-      !needsBookingOption || (selectedBookingOption && selectedPickupLocation);
+    // No longer need FIT tour booking option validation
 
     // Check if terms are agreed to
     const hasAgreedToTerms = agreeToTerms;
@@ -541,12 +550,15 @@ export function EnhancedBookingExperience({
       emailRegex.test(contactInfo.email) && 
       contactInfo.phone.replace(/\D/g, "").length >= 6;
 
+    // Check pickup validation
+    const hasValidPickup = !pickupValidationError;
+
     return (
       hasValidSession &&
       hasValidPickupLocation &&
-      hasValidBookingOption &&
       hasAgreedToTerms &&
-      hasValidContactInfo
+      hasValidContactInfo &&
+      hasValidPickup
     );
   };
 
@@ -564,8 +576,7 @@ export function EnhancedBookingExperience({
       normalizeSessionId(session);
 
       setSelectedSession({ ...session });
-      // Reset booking option selection when session changes
-      setSelectedBookingOption(null);
+      // Reset pickup location selection when session changes
       setSelectedPickupLocation(null);
 
       // Clear auto-selection flag if this is a manual selection
@@ -573,16 +584,9 @@ export function EnhancedBookingExperience({
         setWasSessionAutoSelected(false);
       }
 
-      // Auto-select first pickup location if available (for non-FIT tours)
-      if (
-        !hasFitTourOptions &&
-        session.pickupLocations &&
-        session.pickupLocations.length > 0
-      ) {
-        setSelectedPickupLocation(session.pickupLocations[0]);
-      }
+      // Auto-selection of pickup location is handled by the effectivePickupLocations useEffect
     },
-    [hasFitTourOptions]
+    []
   );
 
   // Auto-select session when availability data loads and we have a sessionId from URL
@@ -604,17 +608,9 @@ export function EnhancedBookingExperience({
         // Inline the session selection logic to avoid dependency on handleSessionSelect
         normalizeSessionId(matchingSession);
         setSelectedSession({ ...matchingSession });
-        setSelectedBookingOption(null);
         setSelectedPickupLocation(null);
 
-        // Auto-select first pickup location if available (for non-FIT tours)
-        if (
-          !hasFitTourOptions &&
-          matchingSession.pickupLocations &&
-          matchingSession.pickupLocations.length > 0
-        ) {
-          setSelectedPickupLocation(matchingSession.pickupLocations[0]);
-        }
+        // Auto-selection of pickup location is handled by the effectivePickupLocations useEffect
       }
     }
   }, [
@@ -622,7 +618,6 @@ export function EnhancedBookingExperience({
     allSessions,
     selectedDate,
     selectedSession,
-    hasFitTourOptions,
   ]);
 
   // Auto-select session when there's only one available session for the selected date
@@ -632,35 +627,63 @@ export function EnhancedBookingExperience({
       const session = availableSessions[0];
       normalizeSessionId(session);
       setSelectedSession({ ...session });
-      setSelectedBookingOption(null);
       setSelectedPickupLocation(null);
       setWasSessionAutoSelected(true);
 
-      // Auto-select first pickup location if available (for non-FIT tours)
-      if (
-        !hasFitTourOptions &&
-        session.pickupLocations &&
-        session.pickupLocations.length > 0
-      ) {
-        setSelectedPickupLocation(session.pickupLocations[0]);
-      }
+      // Auto-selection of pickup location is handled by the effectivePickupLocations useEffect
     }
-  }, [selectedDate, availableSessions, selectedSession, hasFitTourOptions]);
+  }, [selectedDate, availableSessions, selectedSession]);
+
+  // Auto-select pickup location when effective pickup locations are available
+  useEffect(() => {
+    if (
+      selectedSession &&
+      effectivePickupLocations.length > 0 &&
+      !selectedPickupLocation
+    ) {
+      // Auto-select first pickup location if available
+      setSelectedPickupLocation(effectivePickupLocations[0]);
+      console.log('✅ Auto-selected pickup location:', effectivePickupLocations[0].locationName);
+    }
+  }, [selectedSession, effectivePickupLocations, selectedPickupLocation]);
+
+  // Validate pickup location selection
+  useEffect(() => {
+    if (!selectedSession) {
+      setPickupValidationError(null);
+      setPickupValidationWarning(null);
+      return;
+    }
+
+    const validationResult = validateBookingPickupData(
+      selectedPickupLocation,
+      effectivePickupLocations,
+      productHasPickupServices,
+      false
+    );
+
+    const errorMessage = validationResult.isValid ? null : getPickupValidationMessage(validationResult);
+    setPickupValidationError(errorMessage);
+    setPickupValidationWarning(getPickupWarningMessage(validationResult) || null);
+    
+    // Track validation errors
+    if (errorMessage) {
+      trackValidationError(product.productCode, errorMessage);
+    }
+  }, [selectedPickupLocation, effectivePickupLocations, productHasPickupServices, selectedSession, product.productCode, trackValidationError]);
 
   // Auto-select pickup location for regular tours based on preSelectedLocation
   useEffect(() => {
     if (
       selectedSession &&
-      !hasFitTourOptions &&
       preSelectedLocation &&
-      selectedSession.pickupLocations &&
-      selectedSession.pickupLocations.length > 0 &&
+      effectivePickupLocations.length > 0 &&
       !selectedPickupLocation
     ) {
       // Find a pickup location that matches the search form location
-      const matchingLocation = selectedSession.pickupLocations.find(
+      const matchingLocation = effectivePickupLocations.find(
         (location) => {
-          const locationName = location.name.toLowerCase();
+          const locationName = location.locationName.toLowerCase();
           const searchLocation = preSelectedLocation.toLowerCase();
 
           return (
@@ -676,17 +699,17 @@ export function EnhancedBookingExperience({
     }
   }, [
     selectedSession,
-    hasFitTourOptions,
     preSelectedLocation,
+    effectivePickupLocations,
     selectedPickupLocation,
   ]);
 
-  const handleBookingOptionSelect = (
-    option: RezdyBookingOption,
-    location: RezdyPickupLocation
-  ) => {
-    setSelectedBookingOption(option);
+
+  const handlePickupLocationSelect = (location: RezdyPickupLocation) => {
     setSelectedPickupLocation(location);
+    
+    // Track pickup location selection
+    trackPickupSelection(product.productCode, location);
   };
 
   // Guest count management functions
@@ -723,7 +746,7 @@ export function EnhancedBookingExperience({
   };
 
   // Check if we can add more guests of a specific type
-  const canIncrement = (type: 'adults' | 'children' | 'infants'): boolean => {
+  const canIncrement = (_type: 'adults' | 'children' | 'infants'): boolean => {
     const total = guestCounts.adults + guestCounts.children + guestCounts.infants;
     const maxAllowed = product.quantityRequiredMax || 50;
     return total < maxAllowed;
@@ -754,7 +777,6 @@ export function EnhancedBookingExperience({
           startTime: selectedSession?.startTimeLocal || "",
           endTime: selectedSession?.endTimeLocal || "",
           pickupLocation: selectedPickupLocation,
-          bookingOption: selectedBookingOption,
         },
         // We'll collect guest details after payment
         guests: [],
@@ -1157,35 +1179,53 @@ export function EnhancedBookingExperience({
                   </div>
                 )}
 
-                {/* FIT Tour Booking Options or Standard Pickup Location Selection */}
-                {selectedSession && hasFitTourOptions ? (
-                  <BookingOptionSelector
-                    bookingOptions={fitTourBookingOptions}
-                    selectedBookingOption={selectedBookingOption}
-                    selectedPickupLocation={selectedPickupLocation}
-                    onBookingOptionSelect={handleBookingOptionSelect}
-                    participantCount={
-                      guestCounts.adults +
-                      guestCounts.children +
-                      guestCounts.infants
-                    }
-                    showPricing={true}
-                    required={true}
-                    className="w-full"
-                    preSelectedRegion={preSelectedRegion}
-                  />
-                ) : (
-                  selectedSession &&
-                  selectedSession.pickupLocations &&
-                  selectedSession.pickupLocations.length > 0 && (
-                    <PickupLocationSelector
-                      pickupLocations={selectedSession.pickupLocations}
-                      selectedPickupLocation={selectedPickupLocation}
-                      onPickupLocationSelect={setSelectedPickupLocation}
-                      showDirections={true}
-                      required={true}
-                    />
-                  )
+                {/* Pickup Location Selection */}
+                {selectedSession && (
+                  <>
+                    {pickupLocationsLoading && (
+                      <div className="flex items-center justify-center py-4">
+                        <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-coral-500"></div>
+                        <span className="ml-2 text-sm text-muted-foreground">
+                          Loading pickup locations...
+                        </span>
+                      </div>
+                    )}
+                    {pickupLocationsError && (
+                      <Alert className="mb-4">
+                        <AlertCircle className="h-4 w-4" />
+                        <AlertDescription>
+                          {pickupLocationsError}
+                        </AlertDescription>
+                      </Alert>
+                    )}
+                    {!pickupLocationsLoading && effectivePickupLocations.length > 0 && (
+                      <div className="space-y-2">
+                        <PickupLocationSelector
+                          pickupLocations={effectivePickupLocations}
+                          selectedPickupLocation={selectedPickupLocation}
+                          onPickupLocationSelect={handlePickupLocationSelect}
+                          showDirections={true}
+                          required={true}
+                        />
+                        {pickupValidationError && (
+                          <Alert>
+                            <AlertCircle className="h-4 w-4" />
+                            <AlertDescription className="text-red-600">
+                              {pickupValidationError}
+                            </AlertDescription>
+                          </Alert>
+                        )}
+                        {pickupValidationWarning && (
+                          <Alert>
+                            <Info className="h-4 w-4" />
+                            <AlertDescription className="text-yellow-600">
+                              {pickupValidationWarning}
+                            </AlertDescription>
+                          </Alert>
+                        )}
+                      </div>
+                    )}
+                  </>
                 )}
 
                 {/* Date Selection Validation */}
@@ -1602,11 +1642,16 @@ export function EnhancedBookingExperience({
                           <MapPin className="h-4 w-4 mt-0.5 text-muted-foreground" />
                           <div>
                             <div className="font-medium">
-                              {selectedPickupLocation.name}
+                              {selectedPickupLocation.locationName}
                             </div>
-                            {selectedPickupLocation.pickupTime && (
+                            {selectedPickupLocation.minutesPrior && (
                               <div className="text-muted-foreground">
-                                Pickup: {selectedPickupLocation.pickupTime}
+                                Arrive: {Math.abs(selectedPickupLocation.minutesPrior)} minutes early
+                              </div>
+                            )}
+                            {selectedPickupLocation.address && (
+                              <div className="text-sm text-muted-foreground">
+                                {selectedPickupLocation.address}
                               </div>
                             )}
                           </div>

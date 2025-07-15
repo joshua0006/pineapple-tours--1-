@@ -146,6 +146,12 @@ export default function GuestDetailsPage() {
           return;
         }
 
+        // Ensure payment data has proper type field
+        if (data.payment && !data.payment.type) {
+          data.payment.type = data.payment.method === 'cash' ? 'CASH' : 'CREDITCARD';
+          console.log("✅ Added payment type to booking data:", data.payment.type);
+        }
+        
         setBookingData(data);
 
         // Initialize guests based on guest counts
@@ -233,6 +239,7 @@ export default function GuestDetailsPage() {
         });
         
         // For Stripe payments (when sessionId exists), always use CREDITCARD
+        // This ensures Rezdy API requirements are met
         paymentData = {
           method: sessionId ? "stripe" : "credit_card",
           type: "CREDITCARD" as const
@@ -258,17 +265,68 @@ export default function GuestDetailsPage() {
         payment: paymentData
       };
 
-      // Debug: Log the payload being sent to the booking registration API
-      console.log("🚀 Sending booking registration request:", {
-        orderNumber,
-        sessionId,
-        guestCount: updatedBookingData.guests.length,
-        guestCounts: updatedBookingData.guestCounts,
-        totalAmount: updatedBookingData.pricing.total,
-        firstGuest: updatedBookingData.guests[0],
-        payment: updatedBookingData.payment,
-        originalPayment: bookingData.payment
+      // Debug: Log the complete payload being sent to the booking registration API
+      console.group("🚀 COMPLETE BOOKING - Frontend Request Structure");
+      console.log("📤 Full API Request Payload:", {
+        endpoint: "/api/bookings/register",
+        method: "POST",
+        payload: {
+          bookingData: updatedBookingData,
+          orderNumber,
+          sessionId
+        }
       });
+      
+      console.log("📋 Booking Data Structure:", {
+        product: {
+          code: updatedBookingData.product.code,
+          name: updatedBookingData.product.name
+        },
+        session: {
+          id: updatedBookingData.session.id,
+          startTime: updatedBookingData.session.startTime,
+          endTime: updatedBookingData.session.endTime,
+          hasPickupLocation: !!updatedBookingData.session.pickupLocation,
+          pickupLocation: updatedBookingData.session.pickupLocation
+        },
+        guests: {
+          count: updatedBookingData.guests.length,
+          details: updatedBookingData.guests.map(g => ({
+            name: `${g.firstName} ${g.lastName}`,
+            type: g.type,
+            age: g.age
+          }))
+        },
+        guestCounts: updatedBookingData.guestCounts,
+        contact: {
+          name: `${updatedBookingData.contact.firstName} ${updatedBookingData.contact.lastName}`,
+          email: updatedBookingData.contact.email,
+          phone: updatedBookingData.contact.phone,
+          country: updatedBookingData.contact.country
+        },
+        pricing: updatedBookingData.pricing,
+        payment: {
+          method: updatedBookingData.payment.method,
+          type: updatedBookingData.payment.type,
+          isValidType: updatedBookingData.payment.type === "CASH" || updatedBookingData.payment.type === "CREDITCARD"
+        },
+        selectedPriceOptions: updatedBookingData.selectedPriceOptions,
+        extras: updatedBookingData.extras || []
+      });
+      
+      console.log("🔍 Payment Context:", {
+        sessionId: sessionId,
+        sessionIdType: sessionId?.startsWith('cs_') ? 'checkout_session' : sessionId?.startsWith('pi_') ? 'payment_intent' : 'unknown',
+        originalPayment: bookingData.payment,
+        finalPayment: updatedBookingData.payment,
+        paymentValidation: {
+          hasMethod: !!updatedBookingData.payment.method,
+          hasType: !!updatedBookingData.payment.type,
+          isValidType: updatedBookingData.payment.type === "CASH" || updatedBookingData.payment.type === "CREDITCARD"
+        }
+      });
+      
+      console.groupEnd();
 
       // Submit to Rezdy API
       const response = await fetch("/api/bookings/register", {

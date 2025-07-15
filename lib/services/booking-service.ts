@@ -1,5 +1,5 @@
-import { RezdyBooking, RezdyBookingItem, RezdyCustomer, RezdyProduct } from '@/lib/types/rezdy'
-import { transformBookingDataToRezdy, validateBookingDataForRezdy, BookingFormData } from '@/lib/utils/booking-transform'
+import { RezdyBooking, RezdyBookingItem, RezdyCustomer, RezdyProduct, RezdyDirectBookingRequest } from '@/lib/types/rezdy'
+import { transformBookingDataToRezdy, transformBookingDataToDirectRezdy, validateBookingDataForRezdy, BookingFormData } from '@/lib/utils/booking-transform'
 import { fetchAndCacheProduct, rezdyProductCache } from '@/lib/utils/rezdy-product-cache'
 
 export interface PaymentConfirmation {
@@ -37,6 +37,89 @@ export class BookingService {
   }
 
   /**
+   * Submit a booking in direct Rezdy format (no transformation needed)
+   */
+  async submitDirectRezdyBooking(bookingRequest: RezdyDirectBookingRequest): Promise<BookingRegistrationResult> {
+    try {
+      console.groupCollapsed(`🎯 Direct Rezdy booking submission - ${bookingRequest.resellerReference}`);
+
+      // Pass the request directly to Rezdy API without transformation
+      // This ensures 1:1 structure compliance with Rezdy API specification
+      console.log("📦 Direct Rezdy booking structure (1:1 mapping):", {
+        resellerReference: bookingRequest.resellerReference,
+        customer: bookingRequest.customer,
+        itemsCount: bookingRequest.items.length,
+        paymentsCount: bookingRequest.payments.length,
+        hasFields: bookingRequest.fields && bookingRequest.fields.length > 0,
+        resellerComments: bookingRequest.resellerComments
+      });
+
+      // Log items for debugging
+      console.log("📋 Items in request:", bookingRequest.items.map((item, index) => {
+        if ('productCode' in item) {
+          return {
+            index,
+            type: 'BookingItem',
+            productCode: item.productCode,
+            startTimeLocal: item.startTimeLocal,
+            quantities: item.quantities,
+            participants: item.participants?.length || 0,
+            extras: item.extras?.length || 0
+          };
+        } else if ('pickupLocation' in item) {
+          return {
+            index,
+            type: 'PickupLocation',
+            locationName: item.pickupLocation.locationName
+          };
+        }
+        return { index, type: 'Unknown' };
+      }));
+
+      // Validate the direct booking structure
+      const validationResult = this.validateDirectRezdyBooking(bookingRequest);
+      if (!validationResult.isValid) {
+        console.error('❌ Direct booking validation failed:', {
+          errors: validationResult.errors,
+          bookingData: bookingRequest
+        });
+        return {
+          success: false,
+          error: `Booking validation failed: ${validationResult.errors.join(', ')}`
+        };
+      }
+
+      // Submit to Rezdy API directly without any transformation
+      console.time("⏱️ submitToRezdyApi");
+      const rezdyResult = await this.submitToRezdyApiDirect(bookingRequest);
+      console.timeEnd("⏱️ submitToRezdyApi");
+      console.log("📨 Rezdy submission result", rezdyResult);
+      
+      if (rezdyResult.success && rezdyResult.orderNumber) {
+        return {
+          success: true,
+          orderNumber: rezdyResult.orderNumber,
+          rezdyBooking: rezdyResult.booking
+        };
+      } else {
+        return {
+          success: false,
+          error: rezdyResult.error || 'Failed to register booking with Rezdy'
+        };
+      }
+
+    } catch (error) {
+      console.error('Direct booking registration error:', error);
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Unknown error occurred during booking registration'
+      };
+    } finally {
+      console.groupEnd();
+    }
+  }
+
+  /**
    * Complete booking flow: validate payment -> register with Rezdy -> return result
    */
   async registerBooking(request: BookingRequest): Promise<BookingRegistrationResult> {
@@ -63,73 +146,84 @@ export class BookingService {
         }
       }
 
-      // Step 3: Transform booking data to Rezdy format
-      console.time("⏱️ transformBookingData");
-      const rezdyBookingData = transformBookingDataToRezdy(
+      // Step 3: Transform booking data to direct Rezdy format using new field mappings
+      console.time("⏱️ transformBookingDataToDirectRezdy");
+      const rezdyDirectRequest = transformBookingDataToDirectRezdy(
         request.bookingData,
-        request.paymentConfirmation.transactionId
+        request.paymentConfirmation.transactionId // Use Stripe payment intent ID as resellerReference
       )
-      console.timeEnd("⏱️ transformBookingData");
-      console.log("📦 Transformed Rezdy booking data", {
-        productCode: rezdyBookingData.items[0]?.productCode,
-        quantities: rezdyBookingData.items[0]?.quantities,
-        totalQuantity: rezdyBookingData.items[0]?.quantities?.reduce((sum, q) => sum + q.value, 0) || 0,
-        customerName: `${rezdyBookingData.customer.firstName} ${rezdyBookingData.customer.lastName}`,
-        hasPhone: !!rezdyBookingData.customer.phone,
-        paymentsCount: rezdyBookingData.payments?.length || 0,
-        paymentType: rezdyBookingData.payments?.[0]?.type,
-        paymentAmount: rezdyBookingData.payments?.[0]?.amount,
-        paymentLabel: rezdyBookingData.payments?.[0]?.label,
-        participantsCount: rezdyBookingData.items[0]?.participants?.length || 0,
-        extrasCount: rezdyBookingData.items[0]?.extras?.length || 0,
-        fieldsCount: rezdyBookingData.fields.length,
-        hasPickupLocation: !!rezdyBookingData.pickupLocation,
-        comments: rezdyBookingData.comments
+      console.timeEnd("⏱️ transformBookingDataToDirectRezdy");
+      console.group("📦 BOOKING SERVICE - Transformed Direct Rezdy Request");
+      console.log("🔄 Transform Summary:", {
+        transformationSource: "BookingFormData -> RezdyDirectBookingRequest",
+        resellerReference: rezdyDirectRequest.resellerReference,
+        orderNumber: request.paymentConfirmation.orderReference,
+        transformSuccess: true,
+        timestamp: new Date().toISOString()
       });
-
-      // ---
-      // SAFETY NET: Guarantee each payment entry has a valid `type` before running further validations.
-      // Per Rezdy API documentation, payment type MUST be either "CASH" or "CREDITCARD"
-      // For Stripe payments (card, sepa_debit, etc.), we always use "CREDITCARD"
-      if (!rezdyBookingData.payments || rezdyBookingData.payments.length === 0) {
-        const paymentType = this.mapPaymentMethodToRezdy(request.paymentConfirmation.paymentMethod);
-        console.log(`⚠️ SAFETY NET: Creating payment entry with type: ${paymentType}`);
-        
-        rezdyBookingData.payments = [
-          {
-            amount: request.paymentConfirmation.amount,
-            type: paymentType,
-            recipient: "SUPPLIER",
-            label: paymentType === "CASH" ? "Cash Payment" : "Credit Card Payment",
-          },
-        ];
-      } else {
-        rezdyBookingData.payments.forEach((p, index) => {
-          if (!p.type) {
-            const mappedType = this.mapPaymentMethodToRezdy(request.paymentConfirmation.paymentMethod);
-            console.log(`⚠️ SAFETY NET: Setting payment[${index}] type to: ${mappedType}`);
-            p.type = mappedType;
-          }
-          if (!p.recipient) {
-            p.recipient = "SUPPLIER";
-          }
-          if (!p.label) {
-            p.label = p.type === "CASH" ? "Cash Payment" : "Credit Card Payment";
-          }
-        });
-      }
       
-      // Log the payment structure after safety net
-      console.log("💳 Payment structure after safety net:", {
-        paymentsCount: rezdyBookingData.payments?.length || 0,
-        payments: rezdyBookingData.payments?.map(p => ({
-          type: p.type,
-          amount: p.amount,
-          recipient: p.recipient,
-          label: p.label
+      console.log("📋 Complete Direct Rezdy Request Structure:", {
+        resellerReference: rezdyDirectRequest.resellerReference,
+        resellerComments: rezdyDirectRequest.resellerComments,
+        customer: rezdyDirectRequest.customer,
+        items: rezdyDirectRequest.items.map((item, index) => ({
+          index,
+          type: 'BookingItem',
+          productCode: item.productCode,
+          startTimeLocal: item.startTimeLocal,
+          quantities: item.quantities,
+          totalQuantity: item.quantities?.reduce((sum, q) => sum + q.value, 0) || 0,
+          participants: item.participants,
+          participantsCount: item.participants?.length || 0,
+          extras: item.extras,
+          extrasCount: item.extras?.length || 0,
+          pickupId: item.pickupId
         })),
-        paymentConfirmationUsed: !request.bookingData.payment?.type
+        payments: rezdyDirectRequest.payments,
+        fields: rezdyDirectRequest.fields,
+        fieldsCount: rezdyDirectRequest.fields?.length || 0
       });
+      
+      console.log("💳 Payment Structure Analysis:", {
+        paymentsCount: rezdyDirectRequest.payments?.length || 0,
+        payments: rezdyDirectRequest.payments?.map((p, index) => ({
+          index,
+          amount: p.amount,
+          type: p.type,
+          recipient: p.recipient,
+          label: p.label,
+          isValidType: p.type === "CASH" || p.type === "CREDITCARD"
+        })),
+        paymentConfirmation: {
+          originalMethod: request.paymentConfirmation.paymentMethod,
+          mappedToRezdy: rezdyDirectRequest.payments?.[0]?.type,
+          amount: request.paymentConfirmation.amount
+        }
+      });
+      
+      console.log("👥 Guest & Quantity Mapping:", {
+        originalGuests: request.bookingData.guests?.length || 0,
+        guestCounts: request.bookingData.guestCounts,
+        rezdyQuantities: rezdyDirectRequest.items[0]?.quantities,
+        totalQuantity: rezdyDirectRequest.items[0]?.quantities?.reduce((sum, q) => sum + q.value, 0) || 0,
+        participants: rezdyDirectRequest.items[0]?.participants?.length || 0,
+        pickupId: rezdyDirectRequest.items[0]?.pickupId
+      });
+      
+      console.groupEnd();
+
+      // Validate the direct request structure before submission
+      const directValidation = this.validateDirectRezdyBooking(rezdyDirectRequest);
+      if (!directValidation.isValid) {
+        console.error('❌ Direct request validation failed:', {
+          errors: directValidation.errors,
+          requestData: rezdyDirectRequest
+        });
+        return {
+          success: false,
+          error: `Direct booking validation failed: ${directValidation.errors.join(', ')}`
+        };
+      }
 
       // Step 4: Verify amounts match
       const bookingTotal = request.bookingData.pricing.total;
@@ -146,69 +240,31 @@ export class BookingService {
         }
       }
 
-      // Step 6: Final validation before Rezdy submission
-      const preSubmissionValidation = this.validateRezdyBookingData(rezdyBookingData);
-      if (!preSubmissionValidation.isValid) {
-        console.error('❌ Pre-submission validation failed:', {
-          errors: preSubmissionValidation.errors,
-          bookingData: {
-            customer: rezdyBookingData.customer,
-            itemCount: rezdyBookingData.items.length,
-            productCode: rezdyBookingData.items[0]?.productCode,
-            payments: rezdyBookingData.payments?.map(p => ({
-              amount: p.amount,
-              type: p.type,
-              recipient: p.recipient,
-              hasType: !!p.type,
-              typeValue: p.type
-            }))
-          }
-        });
-        return {
-          success: false,
-          error: `Booking validation failed: ${preSubmissionValidation.errors.join(', ')}`,
-          paymentConfirmation: request.paymentConfirmation
-        }
-      }
-      
-      // Step 5.1: Additional validation logging
-      console.log('✅ Pre-submission validation passed:', {
+      // Additional validation logging
+      console.log('✅ Direct request validation passed:', {
+        resellerReference: rezdyDirectRequest.resellerReference,
         customer: {
-          name: `${rezdyBookingData.customer.firstName} ${rezdyBookingData.customer.lastName}`,
-          email: rezdyBookingData.customer.email,
-          hasPhone: !!rezdyBookingData.customer.phone
+          name: `${rezdyDirectRequest.customer.firstName} ${rezdyDirectRequest.customer.lastName}`,
+          email: rezdyDirectRequest.customer.email,
+          hasPhone: !!rezdyDirectRequest.customer.phone
         },
         booking: {
-          itemCount: rezdyBookingData.items.length,
-          totalQuantity: rezdyBookingData.items[0]?.quantities?.reduce((sum, q) => sum + q.value, 0) || 0,
+          itemCount: rezdyDirectRequest.items.length,
+          totalQuantity: rezdyDirectRequest.items[0]?.quantities?.reduce((sum, q) => sum + q.value, 0) || 0,
         },
-        firstItem: rezdyBookingData.items[0] ? {
-          productCode: rezdyBookingData.items[0].productCode,
-          quantities: rezdyBookingData.items[0].quantities,
-          totalQuantity: rezdyBookingData.items[0].quantities?.reduce((sum, q) => sum + q.value, 0) || 0,
-          hasPickup: !!rezdyBookingData.items[0].pickupId,
-          extrasCount: rezdyBookingData.items[0].extras?.length || 0
+        firstItem: rezdyDirectRequest.items[0] ? {
+          productCode: rezdyDirectRequest.items[0].productCode,
+          quantities: rezdyDirectRequest.items[0].quantities,
+          totalQuantity: rezdyDirectRequest.items[0].quantities?.reduce((sum, q) => sum + q.value, 0) || 0,
+          extrasCount: rezdyDirectRequest.items[0].extras?.length || 0,
+          pickupId: rezdyDirectRequest.items[0].pickupId
         } : null
       });
 
-      // Step 7: Pre-submission validation
-      console.time("⏱️ preSubmissionValidation");
-      const preValidation = await this.preValidateBooking(rezdyBookingData);
-      console.timeEnd("⏱️ preSubmissionValidation");
-      
-      if (!preValidation.isValid) {
-        console.error("❌ Pre-submission validation failed:", preValidation.errors);
-        return {
-          success: false,
-          error: `Booking validation failed: ${preValidation.errors.join(', ')}`,
-          paymentConfirmation: request.paymentConfirmation
-        }
-      }
-
-      // Step 8: Submit to Rezdy API (or simulate in development)
-      console.time("⏱️ submitToRezdyApi");
-      const rezdyResult = await this.submitToRezdyApi(rezdyBookingData)
-      console.timeEnd("⏱️ submitToRezdyApi");
+      // Submit direct request to Rezdy API
+      console.time("⏱️ submitDirectRezdyBooking");
+      const rezdyResult = await this.submitToRezdyApiDirect(rezdyDirectRequest)
+      console.timeEnd("⏱️ submitDirectRezdyBooking");
       console.log("📨 Rezdy submission result", rezdyResult);
       
       if (rezdyResult.success && rezdyResult.orderNumber) {
@@ -358,6 +414,239 @@ export class BookingService {
   }
 
   /**
+   * Validate direct Rezdy booking request format
+   */
+  private validateDirectRezdyBooking(bookingRequest: RezdyDirectBookingRequest): {
+    isValid: boolean
+    errors: string[]
+  } {
+    const errors: string[] = []
+
+    // Validate reseller reference
+    if (!bookingRequest.resellerReference || bookingRequest.resellerReference.trim() === '') {
+      errors.push('Reseller reference is required')
+    }
+
+    // Validate customer
+    if (!bookingRequest.customer) {
+      errors.push('Customer information is required')
+    } else {
+      if (!bookingRequest.customer.firstName || bookingRequest.customer.firstName.trim() === '') {
+        errors.push('Customer first name is required')
+      }
+      if (!bookingRequest.customer.lastName || bookingRequest.customer.lastName.trim() === '') {
+        errors.push('Customer last name is required')
+      }
+      if (!bookingRequest.customer.phone || bookingRequest.customer.phone.trim() === '') {
+        errors.push('Customer phone is required')
+      }
+      if (!bookingRequest.customer.email || bookingRequest.customer.email.trim() === '') {
+        errors.push('Customer email is required')
+      }
+    }
+
+    // Validate items array
+    if (!bookingRequest.items || bookingRequest.items.length === 0) {
+      errors.push('At least one item is required')
+    } else {
+      let hasBookingItem = false;
+      bookingRequest.items.forEach((item, index) => {
+        if ('productCode' in item) {
+          hasBookingItem = true;
+          const bookingItem = item as RezdyBookingItem;
+          
+          if (!bookingItem.productCode || bookingItem.productCode.trim() === '') {
+            errors.push(`Item ${index}: Product code is required`)
+          }
+          
+          if (!bookingItem.startTimeLocal || bookingItem.startTimeLocal.trim() === '') {
+            errors.push(`Item ${index}: Start time is required`)
+          }
+          
+          if (!bookingItem.quantities || bookingItem.quantities.length === 0) {
+            errors.push(`Item ${index}: Quantities are required`)
+          } else {
+            let totalQuantity = 0;
+            bookingItem.quantities.forEach((q, qIndex) => {
+              if (!q.optionLabel || q.optionLabel.trim() === '') {
+                errors.push(`Item ${index}, quantity ${qIndex}: Option label is required`)
+              }
+              if (!q.value || q.value <= 0) {
+                errors.push(`Item ${index}, quantity ${qIndex}: Value must be greater than 0`)
+              } else {
+                totalQuantity += q.value;
+              }
+            });
+            
+            if (totalQuantity === 0) {
+              errors.push(`Item ${index}: Total quantity must be greater than 0`)
+            }
+          }
+          
+          if (!bookingItem.participants) {
+            errors.push(`Item ${index}: Participants array is required (can be empty)`)
+          }
+        }
+      });
+      
+      if (!hasBookingItem) {
+        errors.push('At least one booking item with productCode is required')
+      }
+    }
+
+    // Validate payments
+    if (!bookingRequest.payments || bookingRequest.payments.length === 0) {
+      errors.push('At least one payment is required')
+    } else {
+      bookingRequest.payments.forEach((payment, index) => {
+        if (!payment.amount || payment.amount <= 0) {
+          errors.push(`Payment ${index}: Amount must be greater than 0`)
+        }
+        
+        if (!payment.type) {
+          errors.push(`Payment ${index}: Type is required`)
+        } else if (payment.type !== "CASH" && payment.type !== "CREDITCARD") {
+          errors.push(`Payment ${index}: Type must be CASH or CREDITCARD`)
+        }
+        
+        if (!payment.recipient || payment.recipient !== "SUPPLIER") {
+          errors.push(`Payment ${index}: Recipient must be SUPPLIER`)
+        }
+        
+        if (!payment.label || payment.label.trim() === '') {
+          errors.push(`Payment ${index}: Label is required`)
+        }
+      });
+    }
+
+    return {
+      isValid: errors.length === 0,
+      errors
+    }
+  }
+
+  /**
+   * Submit direct booking request to Rezdy API without transformation
+   */
+  private async submitToRezdyApiDirect(bookingRequest: RezdyDirectBookingRequest): Promise<{
+    success: boolean
+    orderNumber?: string
+    booking?: any
+    error?: string
+  }> {
+    // If no API key is configured, simulate the booking in development
+    if (!this.rezdyApiKey) {
+      if (this.isDevelopment) {
+        console.warn('⚠️  Rezdy API key not configured - simulating booking registration for development')
+        
+        // Simulate successful booking with mock order number
+        const mockOrderNumber = `DEV-${Date.now()}-${Math.floor(Math.random() * 1000)}`
+        const mockBooking = {
+          ...bookingRequest,
+          orderNumber: mockOrderNumber,
+          createdDate: new Date().toISOString()
+        }
+        
+        // Simulate API delay
+        await new Promise(resolve => setTimeout(resolve, 1000))
+        
+        return {
+          success: true,
+          orderNumber: mockOrderNumber,
+          booking: mockBooking
+        }
+      } else {
+        return {
+          success: false,
+          error: 'Rezdy API key not configured. Please set REZDY_API_KEY environment variable.'
+        }
+      }
+    }
+
+    try {
+      const url = `${this.rezdyApiUrl}/bookings?apiKey=${this.rezdyApiKey}`
+      
+      console.group('🚀 REZDY API DIRECT SUBMISSION - Exact 1:1 Structure');
+      console.log('🎯 API Submission Details:', {
+        url: url,
+        method: 'POST',
+        contentType: 'application/json',
+        timestamp: new Date().toISOString()
+      });
+      
+      console.log('📋 EXACT REZDY PAYLOAD (1:1 Structure):', JSON.stringify(bookingRequest, null, 2));
+      
+      console.groupEnd();
+
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(bookingRequest),
+      })
+
+      if (!response.ok) {
+        const errorText = await response.text()
+        console.error('Rezdy API error response:', {
+          status: response.status,
+          statusText: response.statusText,
+          body: errorText
+        })
+
+        let parsedError;
+        try {
+          parsedError = JSON.parse(errorText);
+        } catch {
+          parsedError = null;
+        }
+
+        // Log detailed error information
+        console.error('🚨 Rezdy API Error Details:', {
+          status: response.status,
+          statusText: response.statusText,
+          errorCode: parsedError?.requestStatus?.error?.errorCode,
+          errorMessage: parsedError?.requestStatus?.error?.errorMessage,
+          fullError: parsedError
+        });
+
+        // Extract specific error information
+        let errorMessage = parsedError?.requestStatus?.error?.errorMessage || errorText;
+        const errorCode = parsedError?.requestStatus?.error?.errorCode;
+        
+        // Provide more specific error messages based on common Rezdy error codes
+        if (errorCode === 10) {
+          errorMessage = "Invalid booking data: Please check that all required fields are provided and quantities are greater than 0";
+        } else if (errorCode === 20) {
+          errorMessage = "Payment validation failed: Payment type must be either CASH or CREDITCARD";
+        } else if (errorMessage.includes("Payment type cannot be empty")) {
+          errorMessage = "Payment type is required. Please ensure payment information is complete.";
+        } else if (errorMessage.includes("optionLabel")) {
+          errorMessage = "Invalid price option selected. Please refresh and try again.";
+        }
+        
+        throw new Error(`Rezdy API error: ${response.status} ${response.statusText} - ${errorMessage}`)
+      }
+
+      const result = await response.json()
+      console.log('Rezdy API success response:', result)
+      
+      return {
+        success: true,
+        orderNumber: result.orderNumber,
+        booking: result
+      }
+
+    } catch (error) {
+      console.error('Rezdy API submission error:', error)
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Failed to submit to Rezdy API'
+      }
+    }
+  }
+
+  /**
    * Single attempt to submit booking to Rezdy API
    */
   private async attemptRezdySubmission(rezdyBooking: RezdyBooking): Promise<{
@@ -462,36 +751,71 @@ export class BookingService {
         }))
       });
 
-      console.log('🚀 Submitting booking to Rezdy API:', {
+      console.group('🚀 REZDY API SUBMISSION - Final 1:1 Data Structure');
+      console.log('🎯 API Submission Details:', {
         url: url,
-        bookingStructure: {
-          status: rezdyBooking.status,
-          customer: {
-            name: `${rezdyBooking.customer.firstName} ${rezdyBooking.customer.lastName}`,
-            email: rezdyBooking.customer.email,
-            phone: rezdyBooking.customer.phone
-          },
-          itemsCount: rezdyBooking.items.length,
-          firstItem: {
-            productCode: rezdyBooking.items[0]?.productCode,
-            startTime: rezdyBooking.items[0]?.startTimeLocal,
-            quantities: rezdyBooking.items[0]?.quantities,
-            totalQuantity: rezdyBooking.items[0]?.quantities?.reduce((sum, q) => sum + q.value, 0) || 0,
-            participantsCount: rezdyBooking.items[0]?.participants?.length || 0,
-            extrasCount: rezdyBooking.items[0]?.extras?.length || 0
-          },
-          paymentsCount: rezdyBooking.payments?.length || 0,
-          payments: rezdyBooking.payments?.map(p => ({
-            amount: p.amount,
-            type: p.type,
-            recipient: p.recipient,
-            label: p.label
-          })),
-          fieldsCount: rezdyBooking.fields.length,
-          hasPickupLocation: !!rezdyBooking.pickupLocation,
-          commentsLength: rezdyBooking.comments?.length || 0
-        }
-      })
+        method: 'POST',
+        contentType: 'application/json',
+        timestamp: new Date().toISOString()
+      });
+      
+      console.log('📋 EXACT REZDY PAYLOAD (1:1 Structure):', rezdyBooking);
+      
+      console.log('🔍 Payload Structure Analysis:', {
+        status: rezdyBooking.status,
+        customer: {
+          firstName: rezdyBooking.customer.firstName,
+          lastName: rezdyBooking.customer.lastName,
+          email: rezdyBooking.customer.email,
+          phone: rezdyBooking.customer.phone,
+          fullName: `${rezdyBooking.customer.firstName} ${rezdyBooking.customer.lastName}`
+        },
+        items: rezdyBooking.items.map((item, index) => ({
+          index,
+          productCode: item.productCode,
+          startTimeLocal: item.startTimeLocal,
+          quantities: item.quantities,
+          totalQuantity: item.quantities?.reduce((sum, q) => sum + q.value, 0) || 0,
+          participants: item.participants,
+          participantsCount: item.participants?.length || 0,
+          extras: item.extras || [],
+          extrasCount: item.extras?.length || 0,
+          pickupId: item.pickupId
+        })),
+        payments: rezdyBooking.payments?.map((payment, index) => ({
+          index,
+          amount: payment.amount,
+          type: payment.type,
+          recipient: payment.recipient,
+          label: payment.label,
+          isValid: {
+            hasAmount: !!payment.amount && payment.amount > 0,
+            hasType: !!payment.type,
+            isValidType: payment.type === "CASH" || payment.type === "CREDITCARD",
+            hasRecipient: !!payment.recipient,
+            isValidRecipient: payment.recipient === "SUPPLIER"
+          }
+        })),
+        fields: rezdyBooking.fields,
+        fieldsCount: rezdyBooking.fields.length,
+        comments: rezdyBooking.comments,
+        commentsLength: rezdyBooking.comments?.length || 0,
+        pickupLocation: rezdyBooking.pickupLocation,
+        hasPickupLocation: !!rezdyBooking.pickupLocation
+      });
+      
+      console.log('✅ Pre-submission Validation Summary:', {
+        hasValidStatus: !!rezdyBooking.status,
+        hasValidCustomer: !!(rezdyBooking.customer?.firstName && rezdyBooking.customer?.lastName && rezdyBooking.customer?.email && rezdyBooking.customer?.phone),
+        hasValidItems: !!(rezdyBooking.items && rezdyBooking.items.length > 0),
+        hasValidQuantities: !!(rezdyBooking.items?.[0]?.quantities && rezdyBooking.items[0].quantities.length > 0),
+        totalQuantity: rezdyBooking.items?.[0]?.quantities?.reduce((sum, q) => sum + q.value, 0) || 0,
+        hasValidPayments: !!(rezdyBooking.payments && rezdyBooking.payments.length > 0),
+        paymentTypesValid: rezdyBooking.payments?.every(p => p.type === "CASH" || p.type === "CREDITCARD") || false,
+        hasRequiredFields: !!(rezdyBooking.fields && rezdyBooking.comments !== undefined)
+      });
+      
+      console.groupEnd();
 
       // Log the complete booking payload for debugging (in development only)
       if (process.env.NODE_ENV === 'development') {

@@ -98,6 +98,61 @@ export function PickupLocationSelector({
     return null;
   };
 
+  // Map pickup times based on location name and region
+  const getPickupTimeForLocation = (location: RezdyPickupLocation): string | null => {
+    const locationName = location.locationName.toLowerCase();
+    
+    // Brisbane Pickups
+    if (locationName.includes('marriott') && locationName.includes('brisbane')) {
+      return '8:45am';
+    }
+    if (locationName.includes('royal on the park')) {
+      return '9:00am';
+    }
+    if (locationName.includes('emporium') && locationName.includes('southbank')) {
+      return '9:10am';
+    }
+    
+    // Gold Coast Pickups
+    if (locationName.includes('star casino') || locationName.includes('the star')) {
+      return '8:45am';
+    }
+    if (locationName.includes('voco') && locationName.includes('gold coast')) {
+      return '9:00am';
+    }
+    if (locationName.includes('jw marriott')) {
+      return '9:10am';
+    }
+    if (locationName.includes('sheraton') && locationName.includes('mirage')) {
+      return '9:15am';
+    }
+    
+    // Brisbane City Loop
+    if (locationName.includes('southbank') && locationName.includes('grey')) {
+      return '8:00am';
+    }
+    if (locationName.includes('petrie terrace') || locationName.includes('windmill cafe')) {
+      return '8:10am';
+    }
+    if (locationName.includes('anzac square') && locationName.includes('ann st')) {
+      return '8:20am';
+    }
+    if (locationName.includes('howard smith wharves')) {
+      return '8:25am';
+    }
+    if (locationName.includes('kangaroo point') && locationName.includes('cliffs')) {
+      return '8:30am';
+    }
+    
+    // Brisbane Connection to Tamborine Mountain
+    if (locationName.includes('tamborine') && locationName.includes('connection')) {
+      return '9:00am';
+    }
+    
+    // Fallback to original minutesPrior formatting if no specific time found
+    return formatPickupTime(location.minutesPrior);
+  };
+
   const getDirectionsUrl = (location: RezdyPickupLocation): string => {
     if (location.latitude && location.longitude) {
       return `https://www.google.com/maps/dir/?api=1&destination=${location.latitude},${location.longitude}`;
@@ -286,11 +341,11 @@ export function PickupLocationSelector({
                                           {formatAddress(location.address)}
                                         </div>
                                       )}
-                                      {formatPickupTime(location.minutesPrior) && (
+                                      {getPickupTimeForLocation(location) && (
                                         <div className="text-xs text-amber-700 font-medium mt-1 flex items-center gap-1">
                                           <Clock className="h-3 w-3" />
                                           <span>
-                                            Arrive: {formatPickupTime(location.minutesPrior)}
+                                            Pickup: {getPickupTimeForLocation(location) || formatPickupTime(location.minutesPrior)}
                                           </span>
                                         </div>
                                       )}
@@ -415,18 +470,18 @@ export function PickupLocationSelector({
                       </div>
                     )}
 
-                    {formatPickupTime(location.minutesPrior) && (
+                    {getPickupTimeForLocation(location) && (
                       <div className="text-sm text-yellow-700 font-medium mt-2 flex items-center gap-1">
                         <Clock className="h-3 w-3" />
-                        <span>Arrive: {formatPickupTime(location.minutesPrior)}</span>
+                        <span>Pickup: {getPickupTimeForLocation(location) || formatPickupTime(location.minutesPrior)}</span>
                       </div>
                     )}
                     
-                    {location.additionalInstructions && (
+                    {/* {location.additionalInstructions && (
                       <div className="text-sm text-blue-700 mt-2 p-2 bg-blue-50 rounded">
                         {location.additionalInstructions}
                       </div>
-                    )}
+                    )} */}
 
                     {showDirections && (
                       <Button

@@ -213,38 +213,34 @@ export class EnhancedPickupFilter {
         keywords: [
           'brisbane marriott', '1 howard st', 'howard street',
           'royal on the park', '152 alice st', 'alice street',
-          'star grand casino brisbane', 'casino brisbane',
-          'emporium southbank', '267 grey st', 'grey street southbank',
+          'emporium southbank', '267 grey st', 'grey street',
           'marriott', 'royal on park', 'emporium'
         ],
         excludeKeywords: [
-          'loop', 'city loop'
+          'loop', 'city loop', 'south brisbane'
         ]
       },
       'gold coast': {
         keywords: [
-          'star casino', '1 casino dr', 'casino drive broadbeach',
+          'star casino', 'the star casino', '1 casino dr', 'casino drive', 'broadbeach',
           'voco gold coast', '31 hamilton ave', 'hamilton avenue',
-          'jw marriott', 'marriott gold coast',
           'sheraton grand mirage', '71 seaworld dr', 'seaworld drive',
-          'sofitel broadbeach', 'surf parade broadbeach',
-          'surfers paradise', 'broadbeach', 'main beach',
-          'burleigh heads', 'currumbin'
+          'surfers paradise', 'main beach'
         ],
         excludeKeywords: []
       },
       'brisbane loop': {
         keywords: [
           // Southbank stop
-          '267 grey st south brisbane', 'southbank grey st',
+          '267 grey st south brisbane', 'southbank grey st', 'southbank',
           // Petrie Terrace stop
           'petrie terrace', 'sexton st', 'roma st', 'windmill cafe',
           // Anzac Square stop
-          'anzac square', '295 ann st', 'ann street brisbane',
+          'anzac square', 'no 1 anzac square', '295 ann st', 'ann street brisbane',
           // Howard Smith Wharves stop
           'howard smith wharves', '7 boundary st', 'boundary street',
           // Kangaroo Point stop
-          'kangaroo point', '66 river terrace', 'river terrace',
+          'kangaroo point', 'kangaroo point cliffs', '66 river terrace', 'river terrace',
           // General loop identifiers
           'city loop', 'brisbane loop', 'loop tour'
         ],

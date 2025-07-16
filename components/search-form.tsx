@@ -31,8 +31,8 @@ import {
   Users,
   CalendarDays,
   RefreshCw,
-  Clock,
   Info,
+  Clock,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -51,6 +51,7 @@ import { useCityProducts } from "@/hooks/use-city-products";
 import { useRezdyDataManager } from "@/hooks/use-rezdy-data-manager";
 import { usePickupLocations } from "@/hooks/use-pickup-locations";
 import { PickupLocationService } from "@/lib/services/pickup-location-service";
+import { UnifiedPickupFilter } from "@/lib/services/unified-pickup-filter";
 import { getPickupScheduleDisplay } from "@/lib/utils/pickup-location-utils";
 
 // Enhanced pickup locations with detailed schedule information
@@ -180,37 +181,57 @@ export function SearchForm({
     }
   }, [searchParams, promptData]);
 
-  // Handle location selection change with enhanced filtering
+  // Handle location selection change with API-based filtering for browser context
   const handleLocationChange = async (location: string) => {
     setSelectedLocation(location);
     setIsFiltering(true);
 
     try {
+      // Use API endpoint for server-side filtering to avoid Node.js fs operations in browser
+      const response = await fetch('/api/pickup-filter', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          products: rezdyData.products,
+          location,
+          options: {
+            forceLocalData: true,
+            useApiData: false,
+            enableFallback: true,
+            cacheResults: true,
+          }
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`API request failed: ${response.status}`);
+      }
+
+      const result = await response.json();
+      setFilteredProducts(result.filteredProducts);
+      
+      console.log('Search form API filtering:', {
+        location,
+        ...result.filterStats,
+        products: result.filteredProducts.length,
+        dataSource: result.filterStats.dataSource
+      });
+
+    } catch (error) {
+      console.error('Unified filtering failed, using fallback:', error);
+      
+      // Emergency fallback to text-based filtering
       if (location === "all") {
         setFilteredProducts(rezdyData.products);
       } else {
-        // Use enhanced filtering with API data
-        const result = await filterProducts(location, rezdyData.products);
-        if (result) {
-          setFilteredProducts(result.filteredProducts);
-          console.log('Enhanced filtering stats:', result.filterStats);
-        } else {
-          // Fallback to text-based filtering
-          const fallbackProducts = PickupLocationService.filterProductsByPickupLocation(
-            rezdyData.products,
-            location
-          );
-          setFilteredProducts(fallbackProducts);
-        }
+        const fallbackProducts = PickupLocationService.filterProductsByPickupLocation(
+          rezdyData.products,
+          location
+        );
+        setFilteredProducts(fallbackProducts);
       }
-    } catch (error) {
-      console.error('Error filtering products:', error);
-      // Fallback to text-based filtering
-      const fallbackProducts = PickupLocationService.filterProductsByPickupLocation(
-        rezdyData.products,
-        selectedLocation
-      );
-      setFilteredProducts(fallbackProducts);
     } finally {
       setIsFiltering(false);
     }
@@ -268,10 +289,14 @@ export function SearchForm({
       // Redirect to search results page
       const params = new URLSearchParams();
 
-      // Include all parameters if they have values
+      // Include all parameters if they have values - SYNCHRONIZED with tours page
       if (participants) params.append("participants", participants);
-      if (selectedLocation && selectedLocation !== "all")
+      if (selectedLocation && selectedLocation !== "all") {
+        // Use pickupLocation for consistency with tours page
+        params.append("pickupLocation", selectedLocation);
+        // Also include location for backward compatibility
         params.append("location", selectedLocation);
+      }
       if (tourDate) params.append("tourDate", format(tourDate, "yyyy-MM-dd"));
 
       router.push(`/tours?${params.toString()}`);

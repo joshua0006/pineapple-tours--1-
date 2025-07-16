@@ -38,6 +38,7 @@ import { DatePicker } from "@/components/ui/date-picker";
 import { Label } from "@/components/ui/label";
 import { matchesPickupLocationFilter } from "@/lib/utils/pickup-location-utils";
 import { ProductFilterService } from "@/lib/services/product-filter-service";
+import { UnifiedPickupFilter } from "@/lib/services/unified-pickup-filter";
 
 import { PageHeader } from "@/components/page-header";
 import { DynamicTourCard } from "@/components/dynamic-tour-card";
@@ -130,7 +131,12 @@ export default function ToursPage() {
   // Fetch the entire catalogue (cached) once; we will paginate client-side
   const { products, loading, error, refreshProducts } = useAllProducts();
 
-  // Client-side filtering and sorting (applied to current page of server-side paginated data)
+  // State for enhanced filtering
+  const [isFiltering, setIsFiltering] = useState(false);
+  const [filterStats, setFilterStats] = useState<any>(null);
+  const [filteringError, setFilteringError] = useState<string | null>(null);
+
+  // Enhanced client-side filtering using UnifiedPickupFilter
   const {
     filteredProducts,
     totalFilteredCount,
@@ -154,9 +160,11 @@ export default function ToursPage() {
       );
     }
 
-
-    // Pickup Location filter - Using structured pickup data
+    // Enhanced Pickup Location filter - SYNCHRONIZED WITH SEARCH FORM
     if (filters.pickupLocation !== "all") {
+      // Use UnifiedPickupFilter for consistency with search form
+      // For synchronous filtering in useMemo, we'll use the fallback text-based method
+      // The async enhanced filtering will be handled separately
       filtered = filtered.filter((product) => 
         matchesPickupLocationFilter(product, filters.pickupLocation)
       );
@@ -222,6 +230,83 @@ export default function ToursPage() {
       hasMore,
     };
   }, [products, filters]);
+
+  // Enhanced filtering effect for pickup locations (async)
+  useEffect(() => {
+    let isMounted = true;
+
+    const performEnhancedFiltering = async () => {
+      if (filters.pickupLocation === "all" || products.length === 0) {
+        setFilterStats(null);
+        setFilteringError(null);
+        setIsFiltering(false);
+        return;
+      }
+
+      setIsFiltering(true);
+      setFilteringError(null);
+
+      try {
+        // Get base filtered products (without pickup filtering)
+        let baseFiltered = [...products];
+        
+        // Apply basic filters first
+        baseFiltered = ProductFilterService.filterProducts(baseFiltered);
+        
+        if (filters.query) {
+          const query = filters.query.toLowerCase();
+          baseFiltered = baseFiltered.filter(
+            (product) =>
+              product.name.toLowerCase().includes(query) ||
+              product.shortDescription?.toLowerCase().includes(query) ||
+              product.description?.toLowerCase().includes(query)
+          );
+        }
+
+        // Apply LOCAL DATA pickup filtering for optimal performance
+        const enhancedResult = await UnifiedPickupFilter.filterProductsByLocation(
+          baseFiltered,
+          filters.pickupLocation,
+          {
+            forceLocalData: true, // Use local pickup data files first
+            useApiData: false,    // Skip API calls for bulk filtering 
+            enableFallback: true,
+            cacheResults: true,
+          }
+        );
+
+        if (isMounted) {
+          setFilterStats(enhancedResult.filterStats);
+          setIsFiltering(false);
+          
+          // Validate filtering accuracy
+          if (enhancedResult.filterStats.accuracy === 'low') {
+            setFilteringError('Filtering accuracy is low. Some results may be inaccurate.');
+          }
+          
+          // Log filtering results for debugging
+          console.log('LOCAL DATA filtering results:', {
+            location: filters.pickupLocation,
+            ...enhancedResult.filterStats,
+            dataSource: enhancedResult.filterStats.dataSource
+          });
+        }
+      } catch (error) {
+        console.error('Enhanced filtering failed:', error);
+        if (isMounted) {
+          setIsFiltering(false);
+          setFilterStats(null);
+          setFilteringError('Enhanced filtering failed. Using basic text-based filtering.');
+        }
+      }
+    };
+
+    performEnhancedFiltering();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [products, filters.pickupLocation, filters.query]);
 
   // Sync URL parameters with filters when searchParams change
   useEffect(() => {
@@ -685,9 +770,45 @@ export default function ToursPage() {
                           ? "Checking availability..."
                           : "Loading tours..."}
                       </span>
+                    ) : isFiltering ? (
+                      <span className="flex items-center gap-2">
+                        <RefreshCw className="h-4 w-4 animate-spin" />
+                        Enhancing pickup location filters...
+                      </span>
+                    ) : filterStats ? (
+                      <span className="flex items-center gap-2">
+                        <span>
+                          {filteredProducts.length} of {products.length} tours
+                        </span>
+                        {filterStats.dataSource === 'local_files' && (
+                          <Badge variant="secondary" className="bg-green-100 text-green-700 text-xs">
+                            Local data filtering
+                          </Badge>
+                        )}
+                        {filterStats.dataSource === 'api_calls' && (
+                          <Badge variant="outline" className="bg-blue-100 text-blue-700 text-xs">
+                            API filtering
+                          </Badge>
+                        )}
+                        {filterStats.localDataUsed > 0 && (
+                          <Badge variant="outline" className="text-xs">
+                            {filterStats.localDataUsed} with local data
+                          </Badge>
+                        )}
+                        {filteringError && (
+                          <Badge variant="destructive" className="text-xs">
+                            ⚠️ Limited accuracy
+                          </Badge>
+                        )}
+                      </span>
                     ) : (
                       <>
-                       
+                        {filteredProducts.length} of {products.length} tours
+                        {filteringError && (
+                          <Badge variant="outline" className="text-xs text-orange-600 border-orange-200">
+                            Basic filtering
+                          </Badge>
+                        )}
                       </>
                     )}
                   </div>

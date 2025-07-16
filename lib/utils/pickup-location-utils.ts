@@ -12,38 +12,34 @@ const PICKUP_LOCATION_MAPPING = {
     keywords: [
       'brisbane marriott', '1 howard st', 'howard street',
       'royal on the park', '152 alice st', 'alice street',
-      'star grand casino brisbane', 'casino brisbane',
-      'emporium southbank', '267 grey st', 'grey street southbank',
+      'emporium southbank', '267 grey st', 'grey street',
       'marriott', 'royal on park', 'emporium'
     ],
     excludeKeywords: [
-      'loop', 'city loop', 'southbank' // Southbank in loop context
+      'loop', 'city loop', 'south brisbane'
     ]
   },
   'Gold Coast': {
     keywords: [
-      'star casino', '1 casino dr', 'casino drive broadbeach',
+      'star casino', 'the star casino', '1 casino dr', 'casino drive', 'broadbeach',
       'voco gold coast', '31 hamilton ave', 'hamilton avenue',
-      'jw marriott', 'marriott gold coast',
       'sheraton grand mirage', '71 seaworld dr', 'seaworld drive',
-      'sofitel broadbeach', 'surf parade broadbeach',
-      'surfers paradise', 'broadbeach', 'main beach',
-      'burleigh heads', 'currumbin'
+      'surfers paradise', 'main beach'
     ],
     excludeKeywords: []
   },
   'Brisbane Loop': {
     keywords: [
       // Southbank stop
-      '267 grey st south brisbane', 'southbank grey st',
+      '267 grey st south brisbane', 'southbank grey st', 'southbank',
       // Petrie Terrace stop
       'petrie terrace', 'sexton st', 'roma st', 'windmill cafe',
       // Anzac Square stop
-      'anzac square', '295 ann st', 'ann street brisbane',
+      'anzac square', 'no 1 anzac square', '295 ann st', 'ann street brisbane',
       // Howard Smith Wharves stop
       'howard smith wharves', '7 boundary st', 'boundary street',
       // Kangaroo Point stop
-      'kangaroo point', '66 river terrace', 'river terrace',
+      'kangaroo point', 'kangaroo point cliffs', '66 river terrace', 'river terrace',
       // General loop identifiers
       'city loop', 'brisbane loop', 'loop tour'
     ],
@@ -182,13 +178,13 @@ export function getPickupBadgeData(product: RezdyProduct): {
     // Add specific pickup details for each location
     switch (location) {
       case 'Brisbane':
-        description = 'Hotels: Marriott, Royal on the Park, Emporium Southbank';
+        description = 'Hotels: Brisbane Marriott, Royal on the Park, Emporium Southbank';
         break;
       case 'Gold Coast':
-        description = 'Hotels: Star Casino, Voco, JW Marriott, Sheraton Grand Mirage';
+        description = 'Hotels: The Star Casino, Voco Gold Coast, Sheraton Grand Mirage';
         break;
       case 'Brisbane Loop':
-        description = '5 stops: Southbank, Petrie Terrace, Anzac Square, Howard Smith Wharves, Kangaroo Point';
+        description = '5 stops: Southbank, Petrie Terrace, No 1 Anzac Square, Howard Smith Wharves, Kangaroo Point Cliffs';
         break;
     }
     
@@ -324,7 +320,7 @@ export function getPickupScheduleDisplay(location: string): {
         schedule: [
           { time: '8:45am', location: 'Brisbane Marriott', address: '1 Howard St, Brisbane City' },
           { time: '9:00am', location: 'Royal on the Park', address: '152 Alice St, Brisbane City QLD 4000' },
-          { time: '9:10am', location: 'Emporium Southbank', address: '267 Grey St, South Brisbane QLD 4101' }
+          { time: '9:10am', location: 'Emporium Southbank', address: '267 Grey St, South Brisbane QLD' }
         ]
       };
     
@@ -334,7 +330,6 @@ export function getPickupScheduleDisplay(location: string): {
         schedule: [
           { time: '8:45am', location: 'The Star Casino', address: '1 Casino Dr, Broadbeach QLD 4218' },
           { time: '9:00am', location: 'Voco Gold Coast', address: '31 Hamilton Ave, Surfers Paradise QLD 4217' },
-          { time: '9:10am', location: 'JW Marriott' },
           { time: '9:15am', location: 'Sheraton Grand Mirage', address: '71 Seaworld Dr, Main Beach QLD 4217' }
         ]
       };
@@ -345,7 +340,7 @@ export function getPickupScheduleDisplay(location: string): {
         schedule: [
           { time: '8:00am', location: 'Southbank', address: '267 Grey St, South Brisbane' },
           { time: '8:10am', location: 'Petrie Terrace', address: 'Cnr Sexton st and Roma St (Petrie Tce at Windmill Cafe, stop 3)' },
-          { time: '8:20am', location: 'No1 Anzac Square', address: '295 Ann St, Brisbane City' },
+          { time: '8:20am', location: 'No 1 Anzac Square', address: '295 Ann St, Brisbane City' },
           { time: '8:25am', location: 'Howard Smith Wharves', address: '7 Boundary St, Brisbane City' },
           { time: '8:30am', location: 'Kangaroo Point Cliffs', address: '66 River Terrace, Kangaroo Point QLD 4169' }
         ]

@@ -158,6 +158,29 @@ function PaymentPageContent() {
       });
 
       if (result.success && result.clientSecret) {
+        // Always update session storage with payment data to ensure it persists
+        if (bookingDataObj) {
+          const paymentData = result.paymentData || {
+            method: "stripe",
+            type: "CREDITCARD" as const
+          };
+          
+          const updatedBookingData = {
+            ...bookingDataObj,
+            payment: paymentData
+          };
+          
+          sessionStorage.setItem(`booking_${orderNumber}`, JSON.stringify(updatedBookingData));
+          setBookingData(updatedBookingData); // Update local state as well
+          
+          console.log("💾 Updated session storage with payment data:", {
+            orderNumber: orderNumber,
+            paymentType: paymentData.type,
+            paymentMethod: paymentData.method,
+            storageKey: `booking_${orderNumber}`
+          });
+        }
+        
         setClientSecret(result.clientSecret);
         console.log("✅ Payment intent created successfully");
       } else {

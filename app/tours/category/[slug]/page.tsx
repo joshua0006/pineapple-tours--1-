@@ -41,8 +41,12 @@ import { useToursOnly } from "@/hooks/use-tours-only";
 import { RezdyProduct } from "@/lib/types/rezdy";
 import {
   getCategoryBySlug,
-  filterProductsByCategory,
 } from "@/lib/constants/categories";
+import {
+  filterProductsByCategoryWithConfidence,
+  ProductWithConfidence,
+  CategoryMatch,
+} from "@/lib/utils/category-filters";
 
 // Category-specific configurations for PageHeader
 const getCategoryHeaderConfig = (categorySlug: string, categoryConfig: any) => {
@@ -169,10 +173,15 @@ export default function CategoryPage({
   // Get category configuration
   const categoryConfig = getCategoryBySlug(categorySlug);
 
-  // Enhanced filtering logic using shared helper function
-  const categoryFilteredProducts =
+  // Enhanced filtering logic using confidence-based matching
+  const categoryFilteredProducts: ProductWithConfidence[] =
     allProducts && categoryConfig
-      ? filterProductsByCategory(allProducts, categoryConfig)
+      ? filterProductsByCategoryWithConfidence(
+          allProducts, 
+          categoryConfig.id, 
+          0, // minimum confidence 
+          true // include confidence scores for sorting
+        )
       : [];
 
   // Apply search filter with relevance scoring
@@ -234,15 +243,21 @@ export default function CategoryPage({
       return { ...product, relevanceScore };
     });
 
-  // Sort products with relevance prioritization
+  // Sort products with combined relevance and confidence scoring
   const sortedProducts = [...searchFilteredProducts].sort((a, b) => {
-    // If there's a search query, prioritize by relevance first
+    // If there's a search query, prioritize by search relevance first
     if (searchQuery.trim()) {
       const relevanceDiff = b.relevanceScore - a.relevanceScore;
       if (relevanceDiff !== 0) return relevanceDiff;
     }
 
-    // Apply secondary sorting based on user selection
+    // Then prioritize by category confidence (higher confidence first)
+    const confidenceA = a.categoryConfidence || 0;
+    const confidenceB = b.categoryConfidence || 0;
+    const confidenceDiff = confidenceB - confidenceA;
+    if (confidenceDiff !== 0) return confidenceDiff;
+
+    // Apply tertiary sorting based on user selection
     switch (sortBy) {
       case "price-low":
         return (a.advertisedPrice || 0) - (b.advertisedPrice || 0);

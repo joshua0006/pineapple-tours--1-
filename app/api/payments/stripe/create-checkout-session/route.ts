@@ -42,12 +42,26 @@ export async function POST(request: NextRequest) {
         type: "CREDITCARD" as const
       }
     };
+    
+    console.log("💾 Storing booking data for Stripe checkout:", {
+      orderNumber: orderNumber,
+      hasPayment: !!bookingDataWithPayment.payment,
+      paymentType: bookingDataWithPayment.payment?.type,
+      paymentMethod: bookingDataWithPayment.payment?.method,
+      productName: bookingDataWithPayment.product?.name,
+      totalAmount: bookingDataWithPayment.pricing?.total,
+      contactEmail: bookingDataWithPayment.contact?.email
+    });
+    
     await bookingDataStore.store(orderNumber, bookingDataWithPayment);
 
     // Determine success & cancel URLs
     const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000";
     const successUrl = `${baseUrl}/booking/guest-details?orderNumber=${orderNumber}&session_id={CHECKOUT_SESSION_ID}`;
     const cancelUrl = `${baseUrl}/booking/payment-failed?orderNumber=${orderNumber}`;
+    
+    console.log("🔗 Success URL pattern:", successUrl);
+    console.log("📋 Order number in URL:", orderNumber);
 
     // Create the Stripe Checkout Session
     const session = await stripe.checkout.sessions.create({
@@ -78,6 +92,12 @@ export async function POST(request: NextRequest) {
       cancel_url: cancelUrl,
     });
 
+    console.log("✅ Checkout session created successfully:", {
+      sessionId: session.id,
+      orderNumber: orderNumber,
+      checkoutUrl: session.url
+    });
+    
     return NextResponse.json({
       success: true,
       url: session.url,

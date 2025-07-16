@@ -1,10 +1,64 @@
 import { NextRequest, NextResponse } from "next/server";
 import { validateBookingDataForRezdy, BookingFormData } from "@/lib/utils/booking-transform";
 import { BookingService, PaymentConfirmation } from "@/lib/services/booking-service";
+import { bookingDataStore } from "@/lib/services/booking-data-store";
+import { RezdyDirectBookingRequest } from "@/lib/types/rezdy";
+
+// Helper function to check if request is in direct Rezdy format
+function isDirectRezdyFormat(body: unknown): body is RezdyDirectBookingRequest {
+  const obj = body as Record<string, unknown>;
+  return (
+    obj.resellerReference !== undefined &&
+    obj.customer !== undefined &&
+    obj.items !== undefined &&
+    obj.payments !== undefined &&
+    !obj.bookingData // Ensure it's not the old format
+  );
+}
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
+
+    // Check if this is a direct Rezdy format request
+    if (isDirectRezdyFormat(body)) {
+      console.log("📥 /api/bookings/register invoked with direct Rezdy format", {
+        resellerReference: body.resellerReference,
+        customer: body.customer,
+        itemsCount: body.items.length,
+        paymentsCount: body.payments.length,
+        timestamp: new Date().toISOString()
+      });
+
+      // For direct Rezdy format, submit directly to the API
+      const bookingService = new BookingService();
+      const result = await bookingService.submitDirectRezdyBooking(body);
+
+      if (result.success) {
+        console.log("✅ Direct booking registration successful:", {
+          bookingId: result.orderNumber,
+          resellerReference: body.resellerReference
+        });
+        
+        return NextResponse.json({
+          success: true,
+          bookingId: result.orderNumber,
+          message: "Booking completed successfully",
+        });
+      } else {
+        console.error("❌ Direct booking registration failed:", {
+          error: result.error,
+          resellerReference: body.resellerReference
+        });
+        
+        return NextResponse.json(
+          { error: result.error || "Failed to create booking" },
+          { status: 500 }
+        );
+      }
+    }
+
+    // Handle legacy format
     const { bookingData, orderNumber, sessionId } = body;
 
     // Initial debug log
@@ -219,16 +273,58 @@ export async function POST(request: NextRequest) {
       const bookingService = new BookingService();
       const bookingRequest = BookingService.createBookingRequest(formData, paymentConfirmation);
 
-      console.log("📤 Creating booking request for Rezdy", {
-        bookingPayment: bookingRequest.bookingData.payment,
-        paymentMethod: bookingRequest.bookingData.payment?.method,
-        paymentType: bookingRequest.bookingData.payment?.type,
-        paymentConfirmationAmount: paymentConfirmation.amount,
-        paymentConfirmationMethod: paymentConfirmation.paymentMethod,
-        paymentConfirmationType: typeof paymentConfirmation.paymentMethod,
-        willUseSafetyNet: !bookingRequest.bookingData.payment?.type,
-        orderNumber
+      console.group("📤 BOOKING REGISTRATION ROUTE - Creating Rezdy Request");
+      console.log("🎯 Route Processing Summary:", {
+        route: "/api/bookings/register",
+        orderNumber: orderNumber,
+        sessionId: sessionId,
+        isLegacyFormat: true,
+        paymentSource: sessionId ? "Stripe" : "Fallback"
       });
+      
+      console.log("📋 Complete BookingRequest Structure:", {
+        bookingData: {
+          product: bookingRequest.bookingData.product,
+          session: bookingRequest.bookingData.session,
+          guests: {
+            count: bookingRequest.bookingData.guests?.length || 0,
+            details: bookingRequest.bookingData.guests?.map(g => ({
+              name: `${g.firstName} ${g.lastName}`,
+              type: g.type,
+              age: g.age
+            })) || []
+          },
+          guestCounts: bookingRequest.bookingData.guestCounts,
+          contact: bookingRequest.bookingData.contact,
+          pricing: bookingRequest.bookingData.pricing,
+          payment: bookingRequest.bookingData.payment,
+          selectedPriceOptions: bookingRequest.bookingData.selectedPriceOptions,
+          extras: bookingRequest.bookingData.extras
+        },
+        paymentConfirmation: paymentConfirmation
+      });
+      
+      console.log("💳 Payment Analysis:", {
+        bookingPayment: {
+          method: bookingRequest.bookingData.payment?.method,
+          type: bookingRequest.bookingData.payment?.type,
+          hasType: !!bookingRequest.bookingData.payment?.type,
+          isValidType: bookingRequest.bookingData.payment?.type === "CASH" || bookingRequest.bookingData.payment?.type === "CREDITCARD"
+        },
+        paymentConfirmation: {
+          transactionId: paymentConfirmation.transactionId,
+          amount: paymentConfirmation.amount,
+          currency: paymentConfirmation.currency,
+          method: paymentConfirmation.paymentMethod,
+          status: paymentConfirmation.status
+        },
+        validation: {
+          amountMatch: Math.abs(bookingRequest.bookingData.pricing.total - paymentConfirmation.amount) <= 0.01,
+          willUseSafetyNet: !bookingRequest.bookingData.payment?.type
+        }
+      });
+      
+      console.groupEnd();
 
       console.log("🚀 Submitting booking request to Rezdy...");
       const bookingResult = await bookingService.registerBooking(bookingRequest);
@@ -238,6 +334,10 @@ export async function POST(request: NextRequest) {
           bookingId: bookingResult.orderNumber,
           transactionId: paymentConfirmation.transactionId
         });
+        
+        // Clear booking data from server store after successful registration
+        await bookingDataStore.remove(orderNumber);
+        console.log("🧹 Cleared booking data from server store for order:", orderNumber);
         
         return NextResponse.json({
           success: true,
@@ -263,9 +363,17 @@ export async function POST(request: NextRequest) {
       }
     } catch (rezdyError) {
       console.error("💥 Rezdy booking creation failed:", rezdyError);
+      
+      // Check if it's a validation error (should be 400) or system error (500)
+      const errorMessage = rezdyError instanceof Error ? rezdyError.message : "Failed to process booking with tour provider";
+      const isValidationError = errorMessage.includes("validation failed") || 
+                               errorMessage.includes("cannot be empty") ||
+                               errorMessage.includes("is required") ||
+                               errorMessage.includes("Invalid");
+      
       return NextResponse.json(
-        { error: "Failed to process booking with tour provider" },
-        { status: 500 }
+        { error: errorMessage },
+        { status: isValidationError ? 400 : 500 }
       );
     }
   } catch (error) {
@@ -280,7 +388,112 @@ export async function POST(request: NextRequest) {
 // Test endpoint to create sample booking registration
 export async function GET() {
   try {
-    // Sample booking data for testing
+    // Sample direct Rezdy format
+    const sampleDirectRezdyFormat: RezdyDirectBookingRequest = {
+      resellerReference: "ORDER12345",
+      resellerComments: "This comment is visible to both supplier and reseller",
+      customer: {
+        firstName: "Rick",
+        lastName: "Sanchez",
+        phone: "+61484123456",
+        email: "ricksanchez@test.com"
+      },
+      items: [
+        {
+          productCode: "PWQF1Y",
+          startTimeLocal: "2025-10-01 09:00:00",
+          quantities: [
+            {
+              optionLabel: "Adult",
+              value: 2
+            }
+          ],
+          extras: [
+            {
+              name: "Underwater camera rental",
+              quantity: 1
+            }
+          ],
+          participants: [
+            {
+              fields: [
+                {
+                  label: "First Name",
+                  value: "Rick"
+                },
+                {
+                  label: "Last Name",
+                  value: "Sanchez"
+                },
+                {
+                  label: "Certification level",
+                  value: "Open Water"
+                },
+                {
+                  label: "Certification number",
+                  value: "123456798"
+                },
+                {
+                  label: "Certification agency",
+                  value: "PADI"
+                }
+              ]
+            },
+            {
+              fields: [
+                {
+                  label: "First Name",
+                  value: "Morty"
+                },
+                {
+                  label: "Last Name",
+                  value: "Smith"
+                },
+                {
+                  label: "Certification level",
+                  value: "Rescue Diver"
+                },
+                {
+                  label: "Certification number",
+                  value: "111222333"
+                },
+                {
+                  label: "Certification agency",
+                  value: "SDI"
+                }
+              ]
+            }
+          ]
+        } as RezdyBookingItem
+      ],
+      fields: [
+        {
+          label: "Special Requirements",
+          value: "Gluten free lunch for Morty"
+        }
+      ],
+      payments: [
+        {
+          amount: 515,
+          type: "CASH",
+          recipient: "SUPPLIER",
+          label: "Paid in cash to API specification demo"
+        }
+      ]
+    };
+
+    // Note: pickup information is included in the booking item as pickupId
+    const sampleWithPickup = {
+      ...sampleDirectRezdyFormat,
+      items: [
+        {
+          ...sampleDirectRezdyFormat.items[0],
+          pickupId: "divers_hotel_pickup"  // Pickup information included in booking item
+        }
+      ]
+    };
+
+    // Sample booking data for testing (legacy format)
     const sampleBookingData: BookingFormData = {
       product: {
         code: "PH1FEA", // Real product code from Rezdy system
@@ -353,11 +566,17 @@ export async function GET() {
     };
 
     return NextResponse.json({
-      sampleBookingData,
-      samplePaymentConfirmation,
-      message: "Sample data for testing booking registration",
-      usage:
-        "POST this data to /api/bookings/register to test the booking flow",
+      directRezdyFormat: {
+        sample: sampleDirectRezdyFormat,
+        sampleWithPickup: sampleWithPickup,
+        usage: "POST this data to /api/bookings/register for direct Rezdy format (1:1 mapping)"
+      },
+      legacyFormat: {
+        sampleBookingData,
+        samplePaymentConfirmation,
+        usage: "POST this data to /api/bookings/register for legacy format (with transformation)"
+      },
+      message: "Sample data for testing booking registration - supports both formats"
     });
   } catch (error) {
     console.error("Error generating sample data:", error);

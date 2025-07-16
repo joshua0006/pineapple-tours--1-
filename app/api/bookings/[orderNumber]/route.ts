@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { bookingDataStore } from "@/lib/services/booking-data-store";
 
 export async function GET(
   request: NextRequest,
@@ -6,29 +7,47 @@ export async function GET(
 ) {
   try {
     const { orderNumber } = params;
+    
+    console.log("🔍 API: Retrieving booking for order:", orderNumber);
+    console.log("📋 Request details:", {
+      url: request.url,
+      orderNumber: orderNumber,
+      orderNumberLength: orderNumber?.length,
+      headers: Object.fromEntries(request.headers.entries())
+    });
 
     if (!orderNumber) {
+      console.error("❌ API: No order number provided");
       return NextResponse.json(
         { error: "Order number is required" },
         { status: 400 }
       );
     }
 
-    // In a real implementation, you would fetch booking details from your database
-    // For now, we'll return a basic response indicating the booking exists
-    // This is just a placeholder - you should implement actual booking retrieval logic
+    // Retrieve booking data from the server-side store
+    console.log("🔄 API: Attempting to retrieve with fallbacks...");
+    const bookingData = await bookingDataStore.retrieveWithFallbacks(orderNumber);
 
+    if (!bookingData) {
+      console.error("❌ API: Booking not found for order:", orderNumber);
+      console.error("📊 Store state:", bookingDataStore.getStats());
+      return NextResponse.json(
+        { error: "Booking not found", orderNumber: orderNumber },
+        { status: 404 }
+      );
+    }
+
+    // Return the actual booking data
+    console.log("✅ API: Successfully retrieved booking data:", {
+      orderNumber: orderNumber,
+      hasPayment: !!bookingData.payment,
+      paymentType: bookingData.payment?.type,
+      productName: bookingData.product?.name
+    });
+    
     return NextResponse.json({
-      orderNumber,
-      productName: "Tour Booking",
-      date: new Date().toISOString().split('T')[0],
-      time: "TBD",
-      guestCount: 1,
-      pickupLocation: "TBD",
-      totalAmount: 0,
-      customerEmail: "",
-      status: "CONFIRMED",
-      message: "Booking details retrieved successfully",
+      success: true,
+      data: bookingData
     });
   } catch (error) {
     console.error("Error fetching booking details:", error);

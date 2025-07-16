@@ -30,6 +30,11 @@ interface PickupLocationSelectorProps {
   showPricing?: boolean;
 }
 
+// Extended pickup location type with region for grouping
+interface PickupLocationWithRegion extends RezdyPickupLocation {
+  region?: string;
+}
+
 export function PickupLocationSelector({
   pickupLocations,
   bookingOptions,
@@ -68,6 +73,86 @@ export function PickupLocationSelector({
     return parts.join(", ");
   };
 
+  // Generate consistent ID for pickup locations (API format doesn't have id field)
+  const getLocationId = (location: RezdyPickupLocation): string => {
+    // Use locationName as the primary identifier, with fallback to coordinates
+    return location.locationName || `${location.latitude},${location.longitude}` || 'unknown';
+  };
+
+  // Safe version that handles null selectedPickupLocation
+  const getSelectedLocationId = (): string => {
+    if (!selectedPickupLocation) return '';
+    return getLocationId(selectedPickupLocation);
+  };
+
+  // Format pickup time display from minutesPrior
+  const formatPickupTime = (minutesPrior?: number): string | null => {
+    if (!minutesPrior) return null;
+    
+    const absMinutes = Math.abs(minutesPrior);
+    if (minutesPrior < 0) {
+      return `${absMinutes} minutes early`;
+    } else if (minutesPrior > 0) {
+      return `${absMinutes} minutes after`;
+    }
+    return null;
+  };
+
+  // Map pickup times based on location name and region
+  const getPickupTimeForLocation = (location: RezdyPickupLocation): string | null => {
+    const locationName = location.locationName.toLowerCase();
+    
+    // Brisbane Pickups
+    if (locationName.includes('marriott') && locationName.includes('brisbane')) {
+      return '8:45am';
+    }
+    if (locationName.includes('royal on the park')) {
+      return '9:00am';
+    }
+    if (locationName.includes('emporium') && locationName.includes('southbank')) {
+      return '9:10am';
+    }
+    
+    // Gold Coast Pickups
+    if (locationName.includes('star casino') || locationName.includes('the star')) {
+      return '8:45am';
+    }
+    if (locationName.includes('voco') && locationName.includes('gold coast')) {
+      return '9:00am';
+    }
+    if (locationName.includes('jw marriott')) {
+      return '9:10am';
+    }
+    if (locationName.includes('sheraton') && locationName.includes('mirage')) {
+      return '9:15am';
+    }
+    
+    // Brisbane City Loop
+    if (locationName.includes('southbank') && locationName.includes('grey')) {
+      return '8:00am';
+    }
+    if (locationName.includes('petrie terrace') || locationName.includes('windmill cafe')) {
+      return '8:10am';
+    }
+    if (locationName.includes('anzac square') && locationName.includes('ann st')) {
+      return '8:20am';
+    }
+    if (locationName.includes('howard smith wharves')) {
+      return '8:25am';
+    }
+    if (locationName.includes('kangaroo point') && locationName.includes('cliffs')) {
+      return '8:30am';
+    }
+    
+    // Brisbane Connection to Tamborine Mountain
+    if (locationName.includes('tamborine') && locationName.includes('connection')) {
+      return '9:00am';
+    }
+    
+    // Fallback to original minutesPrior formatting if no specific time found
+    return formatPickupTime(location.minutesPrior);
+  };
+
   const getDirectionsUrl = (location: RezdyPickupLocation): string => {
     if (location.latitude && location.longitude) {
       return `https://www.google.com/maps/dir/?api=1&destination=${location.latitude},${location.longitude}`;
@@ -81,7 +166,7 @@ export function PickupLocationSelector({
     }
 
     return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
-      location.name
+      location.locationName
     )}`;
   };
 
@@ -107,6 +192,23 @@ export function PickupLocationSelector({
     }
   };
 
+  // Helper function to determine region from location name
+  const getLocationRegion = (location: RezdyPickupLocation): string => {
+    const locationName = location.locationName.toLowerCase();
+    
+    if (locationName.includes('brisbane') || locationName.includes('city')) {
+      return 'brisbane';
+    }
+    if (locationName.includes('gold coast') || locationName.includes('surfers') || locationName.includes('broadbeach')) {
+      return 'gold-coast';
+    }
+    if (locationName.includes('tamborine')) {
+      return 'tamborine';
+    }
+    
+    return 'other';
+  };
+
   // Render booking options interface
   if (hasBookingOptions) {
     return (
@@ -127,7 +229,7 @@ export function PickupLocationSelector({
             const isSelected = selectedBookingOption?.id === option.id;
             const groupedLocations = option.pickupLocations.reduce(
               (acc, location) => {
-                const region = location.region || "other";
+                const region = getLocationRegion(location);
                 if (!acc[region]) acc[region] = [];
                 acc[region].push(location);
                 return acc;
@@ -206,13 +308,14 @@ export function PickupLocationSelector({
                           </h5>
                           <div className="space-y-2">
                             {locations.map((location) => {
+                              const locationId = getLocationId(location);
                               const isLocationSelected =
                                 isSelected &&
-                                selectedPickupLocation?.id === location.id;
+                                getSelectedLocationId() === locationId;
 
                               return (
                                 <div
-                                  key={location.id}
+                                  key={locationId}
                                   className={cn(
                                     "p-3 rounded-lg border cursor-pointer transition-colors",
                                     isLocationSelected
@@ -231,18 +334,18 @@ export function PickupLocationSelector({
                                     <MapPin className="h-3 w-3 mt-0.5 flex-shrink-0 text-muted-foreground" />
                                     <div className="flex-1 min-w-0">
                                       <div className="font-medium text-sm">
-                                        {location.name}
+                                        {location.locationName}
                                       </div>
                                       {formatAddress(location.address) && (
                                         <div className="text-xs text-muted-foreground break-words">
                                           {formatAddress(location.address)}
                                         </div>
                                       )}
-                                      {location.pickupTime && (
+                                      {getPickupTimeForLocation(location) && (
                                         <div className="text-xs text-amber-700 font-medium mt-1 flex items-center gap-1">
                                           <Clock className="h-3 w-3" />
                                           <span>
-                                            Pickup: {location.pickupTime}
+                                            Pickup: {getPickupTimeForLocation(location) || formatPickupTime(location.minutesPrior)}
                                           </span>
                                         </div>
                                       )}
@@ -323,72 +426,83 @@ export function PickupLocationSelector({
       </div>
 
       <div className="space-y-2">
-        {pickupLocations!.map((location) => (
-          <Card
-            key={location.id}
-            className={cn(
-              "cursor-pointer transition-all duration-200 hover:shadow-md",
-              selectedPickupLocation?.id === location.id
-                ? "ring-2 ring-coral-500 bg-coral-50 border-coral-200"
-                : "hover:bg-gray-50 border-gray-200"
-            )}
-            onClick={() => onPickupLocationSelect(location)}
-          >
-            <CardContent className="p-4">
-              <div className="flex items-start gap-3">
-                <div
-                  className={cn(
-                    "w-5 h-5 rounded-full border-2 flex items-center justify-center mt-0.5",
-                    selectedPickupLocation?.id === location.id
-                      ? "border-coral-500 bg-coral-500"
-                      : "border-gray-300 bg-white"
-                  )}
-                >
-                  {selectedPickupLocation?.id === location.id && (
-                    <div className="w-2 h-2 bg-white rounded-full" />
-                  )}
-                </div>
-
-                <div className="flex-1 min-w-0">
-                  <div className="font-medium text-gray-900">
-                    {location.name}
+        {pickupLocations!.map((location) => {
+          const locationId = getLocationId(location);
+          const isSelected = getSelectedLocationId() === locationId;
+          
+          return (
+            <Card
+              key={locationId}
+              className={cn(
+                "cursor-pointer transition-all duration-200 hover:shadow-md",
+                isSelected
+                  ? "ring-2 ring-coral-500 bg-coral-50 border-coral-200"
+                  : "hover:bg-gray-50 border-gray-200"
+              )}
+              onClick={() => onPickupLocationSelect(location)}
+            >
+              <CardContent className="p-4">
+                <div className="flex items-start gap-3">
+                  <div
+                    className={cn(
+                      "w-5 h-5 rounded-full border-2 flex items-center justify-center mt-0.5",
+                      isSelected
+                        ? "border-coral-500 bg-coral-500"
+                        : "border-gray-300 bg-white"
+                    )}
+                  >
+                    {isSelected && (
+                      <div className="w-2 h-2 bg-white rounded-full" />
+                    )}
                   </div>
 
-                  {formatAddress(location.address) && (
-                    <div className="text-sm text-gray-600 mt-1 flex items-start gap-1">
-                      <MapPin className="h-3 w-3 mt-0.5 flex-shrink-0" />
-                      <span className="break-words">
-                        {formatAddress(location.address)}
-                      </span>
+                  <div className="flex-1 min-w-0">
+                    <div className="font-medium text-gray-900">
+                      {location.locationName}
                     </div>
-                  )}
 
-                  {location.pickupTime && (
-                    <div className="text-sm text-yellow-700 font-medium mt-2 flex items-center gap-1">
-                      <Clock className="h-3 w-3" />
-                      <span>Pickup: {location.pickupTime}</span>
-                    </div>
-                  )}
+                    {formatAddress(location.address) && (
+                      <div className="text-sm text-gray-600 mt-1 flex items-start gap-1">
+                        <MapPin className="h-3 w-3 mt-0.5 flex-shrink-0" />
+                        <span className="break-words">
+                          {formatAddress(location.address)}
+                        </span>
+                      </div>
+                    )}
 
-                  {showDirections && (
-                    <Button
-                      variant="link"
-                      size="sm"
-                      className="h-auto p-0 mt-2 text-blue-600 hover:text-blue-700"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        window.open(getDirectionsUrl(location), "_blank");
-                      }}
-                    >
-                      <Navigation className="h-3 w-3 mr-1" />
-                      Get Directions
-                    </Button>
-                  )}
+                    {getPickupTimeForLocation(location) && (
+                      <div className="text-sm text-yellow-700 font-medium mt-2 flex items-center gap-1">
+                        <Clock className="h-3 w-3" />
+                        <span>Pickup: {getPickupTimeForLocation(location) || formatPickupTime(location.minutesPrior)}</span>
+                      </div>
+                    )}
+                    
+                    {/* {location.additionalInstructions && (
+                      <div className="text-sm text-blue-700 mt-2 p-2 bg-blue-50 rounded">
+                        {location.additionalInstructions}
+                      </div>
+                    )} */}
+
+                    {showDirections && (
+                      <Button
+                        variant="link"
+                        size="sm"
+                        className="h-auto p-0 mt-2 text-blue-600 hover:text-blue-700"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          window.open(getDirectionsUrl(location), "_blank");
+                        }}
+                      >
+                        <Navigation className="h-3 w-3 mr-1" />
+                        Get Directions
+                      </Button>
+                    )}
+                  </div>
                 </div>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
+              </CardContent>
+            </Card>
+          );
+        })}
       </div>
 
       {required && !selectedPickupLocation && (

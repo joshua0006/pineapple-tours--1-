@@ -46,6 +46,7 @@ import { DatePicker } from "@/components/ui/date-picker";
 import { useBookingPrompt } from "@/hooks/use-booking-prompt";
 import { useCityProducts } from "@/hooks/use-city-products";
 import { useRezdyDataManager } from "@/hooks/use-rezdy-data-manager";
+import { usePickupLocations } from "@/hooks/use-pickup-locations";
 import { PickupLocationService } from "@/lib/services/pickup-location-service";
 
 // Static pickup locations (fallback)
@@ -81,15 +82,47 @@ export function SearchForm({
     autoRefresh: false,
   });
 
-  // Use only the 3 static pickup locations
+  // Enhanced pickup locations with API data
+  const {
+    locations: apiPickupLocations,
+    stats: pickupStats,
+    isLoading: pickupLoading,
+    error: pickupError,
+    refreshLocations,
+    filterProducts,
+    preloadData,
+  } = usePickupLocations({
+    useApiData: true,
+    autoRefresh: false,
+    preloadOnMount: true, // Enable automatic preloading
+  });
+
+  // Use enhanced pickup locations with fallback to static locations
   const pickupLocations = useMemo(() => {
-    return STATIC_PICKUP_LOCATIONS.map((location) => ({ location, count: 0 }));
-  }, []);
+    if (apiPickupLocations.length > 0) {
+      return apiPickupLocations.map((location) => ({
+        location: location.location,
+        count: location.productCount,
+        hasApiData: location.hasApiData,
+      }));
+    }
+    
+    // Fallback to static locations
+    return STATIC_PICKUP_LOCATIONS.map((location) => ({ 
+      location, 
+      count: 0, 
+      hasApiData: false 
+    }));
+  }, [apiPickupLocations]);
 
   // Form state for simplified search
   const [selectedLocation, setSelectedLocation] = useState<string>("all");
   const [tourDate, setTourDate] = useState<Date | undefined>();
   const [participants, setParticipants] = useState("2");
+  
+  // State for filtered products
+  const [filteredProducts, setFilteredProducts] = useState(rezdyData.products);
+  const [isFiltering, setIsFiltering] = useState(false);
 
   // Initialize form with URL parameters or booking prompt data
   useEffect(() => {
@@ -118,22 +151,59 @@ export function SearchForm({
     }
   }, [searchParams, promptData]);
 
-  // Handle location selection change
-  const handleLocationChange = (location: string) => {
+  // Handle location selection change with enhanced filtering
+  const handleLocationChange = async (location: string) => {
     setSelectedLocation(location);
+    setIsFiltering(true);
+
+    try {
+      if (location === "all") {
+        setFilteredProducts(rezdyData.products);
+      } else {
+        // Use enhanced filtering with API data
+        const result = await filterProducts(location, rezdyData.products);
+        if (result) {
+          setFilteredProducts(result.filteredProducts);
+          console.log('Enhanced filtering stats:', result.filterStats);
+        } else {
+          // Fallback to text-based filtering
+          const fallbackProducts = PickupLocationService.filterProductsByPickupLocation(
+            rezdyData.products,
+            location
+          );
+          setFilteredProducts(fallbackProducts);
+        }
+      }
+    } catch (error) {
+      console.error('Error filtering products:', error);
+      // Fallback to text-based filtering
+      const fallbackProducts = PickupLocationService.filterProductsByPickupLocation(
+        rezdyData.products,
+        selectedLocation
+      );
+      setFilteredProducts(fallbackProducts);
+    } finally {
+      setIsFiltering(false);
+    }
   };
 
-  // Filter products based on selected location
-  const currentLocationProducts = useMemo(() => {
-    if (selectedLocation === "all") {
-      return rezdyData.products;
-    }
+  // Current location products (for backward compatibility)
+  const currentLocationProducts = filteredProducts;
 
-    return PickupLocationService.filterProductsByPickupLocation(
-      rezdyData.products,
-      selectedLocation
-    );
-  }, [selectedLocation, rezdyData.products]);
+  // Initialize filtered products when Rezdy data changes
+  useEffect(() => {
+    if (selectedLocation === "all") {
+      setFilteredProducts(rezdyData.products);
+    }
+  }, [rezdyData.products, selectedLocation]);
+
+  // Preload pickup data when component mounts or Rezdy data is ready
+  useEffect(() => {
+    if (rezdyData.products.length > 0 && preloadData) {
+      const productCodes = rezdyData.products.map(p => p.productCode);
+      preloadData(productCodes).catch(console.warn);
+    }
+  }, [rezdyData.products, preloadData]);
 
   // Notify parent component when location changes
   useEffect(() => {
@@ -158,7 +228,9 @@ export function SearchForm({
       // Include filtered products from Rezdy data
       products: currentLocationProducts,
       totalProducts: rezdyData.products.length,
-      dataQuality: rezdyError ? "error" : "good",
+      filteredCount: currentLocationProducts.length,
+      dataQuality: rezdyError || pickupError ? "error" : (pickupStats?.dataQuality || "good"),
+      filteringMethod: apiPickupLocations.length > 0 ? "enhanced" : "text_based",
     };
 
     if (onSearch) {
@@ -193,17 +265,20 @@ export function SearchForm({
             <h2 className="font-primary text-[24px] leading-[36px] font-semibold text-gray-900">
               {isPrePopulated ? "Complete Your Booking" : "Find a Tour"}
             </h2>
-            {rezdyError && (
+            {(rezdyError || pickupError) && (
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => refreshData()}
-                disabled={rezdyLoading}
+                onClick={() => {
+                  refreshData();
+                  refreshLocations();
+                }}
+                disabled={rezdyLoading || pickupLoading}
                 className="text-xs"
               >
                 <RefreshCw
                   className={`w-3 h-3 mr-1 ${
-                    rezdyLoading ? "animate-spin" : ""
+                    rezdyLoading || pickupLoading ? "animate-spin" : ""
                   }`}
                 />
                 Refresh Data
@@ -221,9 +296,15 @@ export function SearchForm({
               </span>
             )}
 
-            {rezdyError && (
+            {(rezdyError || pickupError) && (
               <span className="ml-2 inline-flex items-center px-2 py-1 rounded-full text-xs bg-red-100 text-red-700">
                 Data sync issue
+              </span>
+            )}
+
+            {pickupStats && pickupStats.dataQuality === 'enhanced' && (
+              <span className="ml-2 inline-flex items-center px-2 py-1 rounded-full text-xs bg-green-100 text-green-700">
+                Enhanced filtering active
               </span>
             )}
           </p>
@@ -312,7 +393,7 @@ export function SearchForm({
                       <MapPin className="h-4 w-4 text-muted-foreground" />
                       <SelectValue
                         placeholder={
-                          citiesLoading || rezdyLoading
+                          citiesLoading || rezdyLoading || pickupLoading || isFiltering
                             ? "Loading..."
                             : "Select pickup location"
                         }
@@ -321,9 +402,19 @@ export function SearchForm({
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">All Locations</SelectItem>
-                    {pickupLocations.map(({ location }) => (
+                    {pickupLocations.map(({ location, count, hasApiData }) => (
                       <SelectItem key={location} value={location}>
-                        {location}
+                        <div className="flex items-center justify-between w-full">
+                          <span>{location}</span>
+                          {count > 0 && (
+                            <div className="flex items-center gap-1 ml-2">
+                              <span className="text-xs text-muted-foreground">({count})</span>
+                              {hasApiData && (
+                                <span className="text-xs text-green-600">✓</span>
+                              )}
+                            </div>
+                          )}
+                        </div>
                       </SelectItem>
                     ))}
                   </SelectContent>

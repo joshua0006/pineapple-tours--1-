@@ -66,7 +66,6 @@ import {
   getPickupValidationMessage, 
   getPickupWarningMessage 
 } from "@/lib/utils/pickup-validation";
-import { useSmartPickupPreloader } from "@/hooks/use-pickup-preloader";
 import { usePickupAnalytics } from "@/lib/utils/pickup-analytics";
 
 interface EnhancedBookingExperienceProps {
@@ -100,9 +99,6 @@ export function EnhancedBookingExperience({
 }: EnhancedBookingExperienceProps) {
   const [bookingErrors, setBookingErrors] = useState<string[]>([]);
   
-  // Initialize smart preloader
-  const { preloadOnBookingStart } = useSmartPickupPreloader();
-  
   // Initialize analytics
   const { trackApiRequest, trackPickupSelection, trackValidationError } = usePickupAnalytics();
   
@@ -114,26 +110,28 @@ export function EnhancedBookingExperience({
           console.log('✅ Product cached for booking:', product.productCode);
         }
       });
-      
-      // Preload pickup locations when user starts booking
-      preloadOnBookingStart(product.productCode);
     }
-  }, [product?.productCode, preloadOnBookingStart]);
+  }, [product?.productCode]);
 
   // Fetch pickup locations from Rezdy API (only if not preloaded)
   useEffect(() => {
+    // Skip if we already have preloaded pickup locations
+    if (preloadedPickupLocations && preloadedPickupLocations.length > 0) {
+      console.log('✅ Using preloaded pickup locations:', preloadedPickupLocations.length);
+      // Track cache hit for analytics
+      trackApiRequest(product.productCode, 0, true, true);
+      // Ensure loading state is false when using preloaded data
+      setPickupLocationsLoading(false);
+      return;
+    }
+
     const fetchPickupLocations = async () => {
-      if (!product?.productCode) return;
-      
-      // Skip API call if we already have preloaded pickup locations
-      if (preloadedPickupLocations && preloadedPickupLocations.length > 0) {
-        console.log('✅ Using preloaded pickup locations:', preloadedPickupLocations.length);
-        // Track cache hit for analytics
-        trackApiRequest(product.productCode, 0, true, true);
-        // Ensure loading state is false when using preloaded data
-        setPickupLocationsLoading(false);
+      if (!product?.productCode) {
+        console.warn('⚠️ No product code available for pickup location fetch');
         return;
       }
+      
+      console.log(`🔍 Fetching pickup locations for product: ${product.productCode}`);
       
       setPickupLocationsLoading(true);
       setPickupLocationsError(null);
@@ -141,21 +139,49 @@ export function EnhancedBookingExperience({
       const startTime = Date.now();
       
       try {
-        const response = await fetch(`/api/rezdy/products/${product.productCode}/pickups`);
+        const apiUrl = `/api/rezdy/products/${product.productCode}/pickups`;
+        console.log(`📡 Making API request to: ${apiUrl}`);
+        
+        const response = await fetch(apiUrl);
         const responseTime = Date.now() - startTime;
         
         if (!response.ok) {
           trackApiRequest(product.productCode, responseTime, false, false);
-          throw new Error(`Failed to fetch pickup locations: ${response.status}`);
+          const errorText = await response.text();
+          console.error(`❌ API request failed: ${response.status} - ${errorText}`);
+          throw new Error(`Failed to fetch pickup locations: ${response.status} ${response.statusText}`);
         }
         
         const data = await response.json();
-        setApiPickupLocations(data.pickups || []);
+        const pickupLocations = data.pickups || [];
+        
+        console.log(`✅ Pickup locations response:`, {
+          productCode: data.productCode,
+          totalCount: data.totalCount,
+          pickupsReceived: pickupLocations.length,
+          cached: data.cached,
+          source: data.source,
+          hasPickups: data.hasPickups
+        });
+        
+        setApiPickupLocations(pickupLocations);
         
         // Track successful API request
         trackApiRequest(product.productCode, responseTime, data.cached || false, true);
         
-        console.log('✅ Pickup locations loaded from API:', data.pickups?.length || 0);
+        console.log('✅ Pickup locations loaded from API:', pickupLocations.length);
+        
+                 // Log first few pickup locations for debugging
+         if (pickupLocations.length > 0) {
+           console.log('📍 Sample pickup locations:', pickupLocations.slice(0, 3).map((p: RezdyPickupLocation) => ({
+             name: p.locationName,
+             address: p.address,
+             minutesPrior: p.minutesPrior
+           })));
+         } else {
+           console.log('ℹ️ No pickup locations available for this product');
+         }
+        
       } catch (error) {
         console.error('❌ Error fetching pickup locations:', error);
         setPickupLocationsError(error instanceof Error ? error.message : 'Failed to fetch pickup locations');
@@ -170,7 +196,7 @@ export function EnhancedBookingExperience({
     };
 
     fetchPickupLocations();
-  }, [product?.productCode, preloadedPickupLocations, trackApiRequest]);
+  }, [product?.productCode, trackApiRequest]);
 
 
   // Check if product has pickup services
@@ -193,7 +219,7 @@ export function EnhancedBookingExperience({
   );
   const [pickupLocationsLoading, setPickupLocationsLoading] = useState(
     // Only show loading if we don't have preloaded data
-    !preloadedPickupLocations || preloadedPickupLocations.length === 0
+    !(preloadedPickupLocations && preloadedPickupLocations.length > 0)
   );
   const [pickupLocationsError, setPickupLocationsError] = useState<string | null>(null);
   

@@ -343,20 +343,49 @@ export default function GuestDetailsPage() {
 
       const result = await response.json();
 
-      if (result.success) {
-        // Clear session storage
-        if (orderNumber && typeof window !== 'undefined') {
+      // For successful payments, always redirect to thank you page
+      // Payment has already been processed, so user should see confirmation
+      if (response.ok || (sessionId && response.status >= 400)) {
+        // Use whichever transaction identifier we can reliably obtain.
+        const transactionIdSafe =
+          (result && (result.transactionId || result.bookingId)) ||
+          sessionId ||
+          orderNumber;
+
+        // Build redirect URL (avoid appending "undefined"/empty values)
+        let redirectUrl = `/booking/confirmation?orderNumber=${orderNumber}`;
+        if (transactionIdSafe) {
+          redirectUrl += `&transactionId=${transactionIdSafe}`;
+        }
+
+        // Log Rezdy registration errors for monitoring, but don't block user flow
+        if (!response.ok) {
+          console.warn("⚠️ Rezdy registration failed but redirecting user (payment successful):", {
+            orderNumber,
+            error: result.error,
+            status: response.status,
+            sessionId: sessionId
+          });
+        }
+
+        // Clear session storage once we know the payment went through
+        if (orderNumber && typeof window !== "undefined") {
           sessionStorage.removeItem(`booking_${orderNumber}`);
         }
-        
-        // Redirect to confirmation page
-        router.push(
-          `/booking/confirmation?orderNumber=${orderNumber}&transactionId=${result.transactionId || sessionId}`
-        );
-      } else {
+
+        router.push(redirectUrl);
+        return; // exit early so we don't run the error branch below
+      }
+
+      // Only show error to user if payment wasn't successful (no sessionId)
+      if (!sessionId) {
         setSubmitErrors([
           result.error || "Failed to complete booking. Please try again.",
         ]);
+      } else {
+        // Payment was successful, but we couldn't register - redirect anyway
+        console.warn("⚠️ Payment successful but booking registration failed, redirecting user");
+        router.push(`/booking/confirmation?orderNumber=${orderNumber}&transactionId=${sessionId}`);
       }
     } catch (error) {
       console.error("Error submitting guest details:", error);

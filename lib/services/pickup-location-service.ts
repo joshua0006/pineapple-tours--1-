@@ -5,20 +5,60 @@ import { RezdyProduct, RezdyAddress } from '@/lib/types/rezdy';
  */
 export class PickupLocationService {
   // Main pickup locations we support
-  private static readonly SUPPORTED_LOCATIONS = ['Brisbane', 'Gold Coast', 'Mount Tamborine'];
+  private static readonly SUPPORTED_LOCATIONS = ['Brisbane', 'Gold Coast', 'Brisbane Loop'];
   
   // Location name normalization mappings
   private static readonly LOCATION_MAPPINGS: Record<string, string> = {
-    'tamborine': 'Mount Tamborine',
-    'tamborine mountain': 'Mount Tamborine',
-    'mt tamborine': 'Mount Tamborine',
-    'mount tamborine': 'Mount Tamborine',
     'brisbane': 'Brisbane',
     'brisbane city': 'Brisbane',
     'brisbane cbd': 'Brisbane',
+    'brisbane marriott': 'Brisbane',
+    'marriott': 'Brisbane',
+    '1 howard st': 'Brisbane',
+    'howard street': 'Brisbane',
+    'royal on the park': 'Brisbane',
+    '152 alice st': 'Brisbane',
+    'alice street': 'Brisbane',
+    'emporium southbank': 'Brisbane',
+    '267 grey st': 'Brisbane',
+    'grey street': 'Brisbane',
     'gold coast': 'Gold Coast',
     'the gold coast': 'Gold Coast',
     'goldcoast': 'Gold Coast',
+    'star casino': 'Gold Coast',
+    'the star casino': 'Gold Coast',
+    '1 casino dr': 'Gold Coast',
+    'casino drive': 'Gold Coast',
+    'broadbeach': 'Gold Coast',
+    'voco gold coast': 'Gold Coast',
+    '31 hamilton ave': 'Gold Coast',
+    'hamilton avenue': 'Gold Coast',
+    'surfers paradise': 'Gold Coast',
+    'sheraton grand mirage': 'Gold Coast',
+    '71 seaworld dr': 'Gold Coast',
+    'seaworld drive': 'Gold Coast',
+    'main beach': 'Gold Coast',
+    'brisbane loop': 'Brisbane Loop',
+    'brisbane city loop': 'Brisbane Loop',
+    'city loop': 'Brisbane Loop',
+    'loop': 'Brisbane Loop',
+    'southbank': 'Brisbane Loop',
+    '267 grey st south brisbane': 'Brisbane Loop',
+    'petrie terrace': 'Brisbane Loop',
+    'sexton st': 'Brisbane Loop',
+    'roma st': 'Brisbane Loop',
+    'windmill cafe': 'Brisbane Loop',
+    'anzac square': 'Brisbane Loop',
+    'no 1 anzac square': 'Brisbane Loop',
+    '295 ann st': 'Brisbane Loop',
+    'ann street': 'Brisbane Loop',
+    'howard smith wharves': 'Brisbane Loop',
+    '7 boundary st': 'Brisbane Loop',
+    'boundary street': 'Brisbane Loop',
+    'kangaroo point': 'Brisbane Loop',
+    'kangaroo point cliffs': 'Brisbane Loop',
+    '66 river terrace': 'Brisbane Loop',
+    'river terrace': 'Brisbane Loop',
   };
 
   // Patterns for extracting pickup locations from text
@@ -118,6 +158,18 @@ export class PickupLocationService {
     
     const trimmed = location.trim().toLowerCase();
     
+    // Special handling for Brisbane Loop keywords (check these first)
+    const loopKeywords = [
+      'southbank', 'petrie terrace', 'anzac square', 'howard smith wharves', 
+      'kangaroo point', 'kangaroo point cliffs', 'loop', 'city loop',
+      '267 grey st south brisbane', 'sexton st', 'roma st', 'windmill cafe',
+      'no 1 anzac square', '295 ann st', '7 boundary st', '66 river terrace'
+    ];
+    
+    if (loopKeywords.some(keyword => trimmed.includes(keyword))) {
+      return 'Brisbane Loop';
+    }
+    
     // Check direct mappings
     for (const [key, value] of Object.entries(this.LOCATION_MAPPINGS)) {
       if (trimmed === key || trimmed.includes(key)) {
@@ -126,8 +178,9 @@ export class PickupLocationService {
     }
     
     // Check if it contains any of our supported locations
+    // Note: Brisbane check should come after loop keywords to avoid misclassification
     for (const supportedLocation of this.SUPPORTED_LOCATIONS) {
-      if (trimmed.includes(supportedLocation.toLowerCase())) {
+      if (supportedLocation !== 'Brisbane Loop' && trimmed.includes(supportedLocation.toLowerCase())) {
         return supportedLocation;
       }
     }

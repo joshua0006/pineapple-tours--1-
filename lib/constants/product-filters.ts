@@ -76,6 +76,8 @@ export const PRODUCT_FILTER_CONFIG = {
     'GIFT_CARD',
     'VOUCHER',
     'MERCHANDISE',
+    'TRANSFER',
+    'CHARTER',
   ],
   
   // Price-related filters
@@ -86,8 +88,8 @@ export const PRODUCT_FILTER_CONFIG = {
     excludeNullPrice: true,
     
     // Optional: Set min/max price thresholds
-    // minPrice: 0,
-    // maxPrice: 10000,
+    minPrice: undefined as number | undefined,
+    maxPrice: undefined as number | undefined,
   },
   
   // Product status filters

@@ -1,24 +1,20 @@
 "use client";
 
 /**
- * Enhanced Search Form with Rezdy Data Management Integration
+ * Enhanced Search Form with City-Based Location Filtering
  *
  * This component provides a simplified search interface with three main inputs:
  * - Participants: Number of people for the tour
  * - Tour Date: When the tour should take place
- * - Pick up Location: Where participants will be picked up
+ * - Location: City-based location selector using locationAddress.city data
  *
  * Rezdy Integration Features:
  * - Real-time data fetching from Rezdy API with caching
- * - Data validation and cleaning pipeline
+ * - City-based location filtering using locationAddress.city
  * - Product segmentation and filtering
  * - Quality metrics and error handling
  * - Smart cache invalidation and refresh capabilities
- * - Dynamic location extraction from product data
- *
- * The form integrates with the comprehensive data management system
- * documented in DATA_MANAGEMENT_IMPLEMENTATION.md and follows the
- * strategies outlined in REZDY_DATA_MANAGEMENT_STRATEGIES.md
+ * - Dynamic city extraction from product data
  */
 
 import { useState, useEffect, useMemo } from "react";
@@ -46,10 +42,7 @@ import { DatePicker } from "@/components/ui/date-picker";
 import { useBookingPrompt } from "@/hooks/use-booking-prompt";
 import { useCityProducts } from "@/hooks/use-city-products";
 import { useRezdyDataManager } from "@/hooks/use-rezdy-data-manager";
-import { PickupLocationService } from "@/lib/services/pickup-location-service";
-
-// Static pickup locations (fallback)
-const STATIC_PICKUP_LOCATIONS = ["Brisbane", "Gold Coast", "Mount Tamborine"];
+import { filterProductsByCity } from "@/lib/utils/product-utils";
 
 interface SearchFormProps {
   onSearch?: (searchData: any) => void;
@@ -77,19 +70,18 @@ export function SearchForm({
   } = useRezdyDataManager({
     enableCaching: true,
     enableValidation: true,
-    enableSegmentation: false, // We're doing our own filtering
+    enableSegmentation: false,
     autoRefresh: false,
   });
-
-  // Use only the 3 static pickup locations
-  const pickupLocations = useMemo(() => {
-    return STATIC_PICKUP_LOCATIONS.map((location) => ({ location, count: 0 }));
-  }, []);
 
   // Form state for simplified search
   const [selectedLocation, setSelectedLocation] = useState<string>("all");
   const [tourDate, setTourDate] = useState<Date | undefined>();
   const [participants, setParticipants] = useState("2");
+  
+  // State for filtered products
+  const [filteredProducts, setFilteredProducts] = useState(rezdyData.products);
+  const [isFiltering, setIsFiltering] = useState(false);
 
   // Initialize form with URL parameters or booking prompt data
   useEffect(() => {
@@ -97,6 +89,7 @@ export function SearchForm({
     const urlParticipants = searchParams.get("participants");
     const urlTourDate = searchParams.get("tourDate");
     const urlLocation = searchParams.get("location");
+    const urlCity = searchParams.get("city");
 
     // Handle participants parameter
     if (urlParticipants) {
@@ -112,28 +105,46 @@ export function SearchForm({
       setTourDate(promptData.bookingDate);
     }
 
-    // Handle location parameter
-    if (urlLocation) {
+    // Handle location parameter (city takes priority)
+    if (urlCity) {
+      setSelectedLocation(urlCity);
+    } else if (urlLocation) {
       setSelectedLocation(urlLocation);
     }
   }, [searchParams, promptData]);
 
-  // Handle location selection change
+  // Handle location selection change with city-based filtering
   const handleLocationChange = (location: string) => {
     setSelectedLocation(location);
+    setIsFiltering(true);
+
+    try {
+      if (location === "all") {
+        setFilteredProducts(rezdyData.products);
+      } else {
+        // Use city-based filtering
+        const filtered = filterProductsByCity(rezdyData.products, location);
+        setFilteredProducts(filtered);
+      }
+    } catch (error) {
+      console.error('Error filtering products:', error);
+      setFilteredProducts(rezdyData.products);
+    } finally {
+      setIsFiltering(false);
+    }
   };
 
-  // Filter products based on selected location
-  const currentLocationProducts = useMemo(() => {
-    if (selectedLocation === "all") {
-      return rezdyData.products;
-    }
+  // Current location products
+  const currentLocationProducts = filteredProducts;
 
-    return PickupLocationService.filterProductsByPickupLocation(
-      rezdyData.products,
-      selectedLocation
-    );
-  }, [selectedLocation, rezdyData.products]);
+  // Initialize filtered products when Rezdy data changes
+  useEffect(() => {
+    if (selectedLocation === "all") {
+      setFilteredProducts(rezdyData.products);
+    } else {
+      handleLocationChange(selectedLocation);
+    }
+  }, [rezdyData.products, selectedLocation]);
 
   // Notify parent component when location changes
   useEffect(() => {
@@ -149,7 +160,7 @@ export function SearchForm({
       participants: participants,
       tourDate: tourDate ? format(tourDate, "yyyy-MM-dd") : "",
       location: selectedLocation === "all" ? "" : selectedLocation,
-      pickupLocation: selectedLocation === "all" ? "" : selectedLocation,
+      city: selectedLocation === "all" ? "" : selectedLocation,
       searchType: "tours",
       // Additional Rezdy-specific parameters
       productType: "tour",
@@ -158,7 +169,9 @@ export function SearchForm({
       // Include filtered products from Rezdy data
       products: currentLocationProducts,
       totalProducts: rezdyData.products.length,
+      filteredCount: currentLocationProducts.length,
       dataQuality: rezdyError ? "error" : "good",
+      filteringMethod: "city_based",
     };
 
     if (onSearch) {
@@ -170,7 +183,7 @@ export function SearchForm({
       // Include all parameters if they have values
       if (participants) params.append("participants", participants);
       if (selectedLocation && selectedLocation !== "all")
-        params.append("location", selectedLocation);
+        params.append("city", selectedLocation);
       if (tourDate) params.append("tourDate", format(tourDate, "yyyy-MM-dd"));
 
       router.push(`/tours?${params.toString()}`);
@@ -213,17 +226,11 @@ export function SearchForm({
           <p className="font-text text-xs sm:text-sm text-gray-600 leading-relaxed">
             {isPrePopulated
               ? "We've pre-filled your preferences. Adjust as needed and search for available tours."
-              : "Search for tours by selecting participants, date, and pickup location"}
+              : "Search for tours by selecting participants, date, and location"}
             {hasDateSelected && (
               <span className="ml-2 inline-flex items-center px-2 py-1 rounded-full text-xs bg-accent/10 text-accent">
                 <CalendarDays className="w-3 h-3 mr-1" />
                 <span>{dateText}</span>
-              </span>
-            )}
-
-            {rezdyError && (
-              <span className="ml-2 inline-flex items-center px-2 py-1 rounded-full text-xs bg-red-100 text-red-700">
-                Data sync issue
               </span>
             )}
           </p>
@@ -291,13 +298,13 @@ export function SearchForm({
               </div>
             </div>
 
-            {/* Pick up Location */}
+            {/* Location */}
             <div className="space-y-2 text-start">
               <Label
-                htmlFor="pickup-location"
+                htmlFor="location"
                 className="font-text text-sm font-medium text-gray-700"
               >
-                Pick up Location
+                Location
               </Label>
               <div className="relative">
                 <Select
@@ -305,25 +312,29 @@ export function SearchForm({
                   onValueChange={handleLocationChange}
                 >
                   <SelectTrigger
-                    id="pickup-location"
+                    id="location"
                     className="h-12 border-gray-300 text-sm focus:border-coral-500 focus:ring-coral-500"
                   >
                     <div className="flex items-center gap-2">
                       <MapPin className="h-4 w-4 text-muted-foreground" />
                       <SelectValue
                         placeholder={
-                          citiesLoading || rezdyLoading
+                          citiesLoading || rezdyLoading || isFiltering
                             ? "Loading..."
-                            : "Select pickup location"
+                            : "Select location"
                         }
                       />
                     </div>
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">All Locations</SelectItem>
-                    {pickupLocations.map(({ location }) => (
-                      <SelectItem key={location} value={location}>
-                        {location}
+                    <SelectItem value="all">
+                      All Locations
+                    </SelectItem>
+                    
+                    {/* Cities from locationAddress.city data */}
+                    {cities.map((city) => (
+                      <SelectItem key={city} value={city}>
+                        {city}
                       </SelectItem>
                     ))}
                   </SelectContent>

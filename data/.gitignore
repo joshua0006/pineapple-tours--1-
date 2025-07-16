@@ -1,0 +1,9 @@
+# Ignore all pickup cache files
+pickups/*.json
+
+# Keep directory structure
+!pickups/.gitkeep
+
+# Ignore any other cache files in data directory
+*.cache
+*.tmp

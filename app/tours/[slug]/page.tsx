@@ -36,6 +36,7 @@ import { ImageGallery } from "@/components/ui/responsive-image";
 import { AddToCartButton } from "@/components/ui/add-to-cart-button";
 import { useRezdyAvailability } from "@/hooks/use-rezdy";
 import { useAllProducts } from "@/hooks/use-all-products";
+import { usePickupCache } from "@/hooks/use-pickup-cache";
 import {
   extractProductCodeFromSlug,
   getPrimaryImageUrl,
@@ -91,6 +92,19 @@ export default function TourDetailPage({
     endDate,
     `ADULT:${groupSize}`
   );
+
+  // Pre-fetch pickup locations for this product
+  const {
+    pickupLocations,
+    hasPickupLocations,
+    preloadPickupLocations,
+    isLoading: pickupLoading,
+    error: pickupError,
+  } = usePickupCache({
+    productCode,
+    autoFetch: true,
+    cacheKey: 'tour-detail-pickup'
+  });
 
   // Find the specific product when products are loaded
   useEffect(() => {
@@ -947,27 +961,53 @@ export default function TourDetailPage({
                         )}
                       </div>
 
-                      {/* Pickup Information */}
-                      {availableSessions.length > 0 &&
-                        availableSessions[0]?.pickupLocations &&
-                        availableSessions[0].pickupLocations.length > 0 && (
-                          <div className="pt-2 border-t border-gray-100">
-                            <div className="flex items-center gap-2 mb-1">
-                              <div className="w-2 h-2 bg-emerald-500 rounded-full"></div>
-                              <span className="text-xs font-medium text-gray-700">
-                                Pickup Available
-                              </span>
-                            </div>
-                            <p className="text-xs text-gray-600">
-                              {availableSessions[0].pickupLocations.length}{" "}
-                              pickup location
-                              {availableSessions[0].pickupLocations.length > 1
-                                ? "s"
-                                : ""}{" "}
-                              available
-                            </p>
+                      {/* Enhanced Pickup Information */}
+                      {hasPickupLocations && pickupLocations.length > 0 && (
+                        <div className="pt-2 border-t border-gray-100">
+                          <div className="flex items-center gap-2 mb-2">
+                            <div className="w-2 h-2 bg-emerald-500 rounded-full"></div>
+                            <span className="text-xs font-medium text-gray-700">
+                              Pickup Service Available
+                            </span>
                           </div>
-                        )}
+                          <p className="text-xs text-gray-600 mb-2">
+                            {pickupLocations.length} pickup location{pickupLocations.length > 1 ? "s" : ""} available
+                          </p>
+                          {pickupLoading && (
+                            <div className="text-xs text-gray-500 animate-pulse">
+                              Loading pickup locations...
+                            </div>
+                          )}
+                          {pickupError && (
+                            <div className="text-xs text-red-600">
+                              Unable to load pickup locations
+                            </div>
+                          )}
+                          {pickupLocations.slice(0, 3).map((location, index) => (
+                            <div key={index} className="text-xs text-gray-600 mb-1">
+                              📍 {location.locationName}
+                            </div>
+                          ))}
+                          {pickupLocations.length > 3 && (
+                            <div className="text-xs text-gray-500 italic">
+                              +{pickupLocations.length - 3} more locations
+                            </div>
+                          )}
+                        </div>
+                      )}
+                      {!hasPickupLocations && !pickupLoading && (
+                        <div className="pt-2 border-t border-gray-100">
+                          <div className="flex items-center gap-2 mb-1">
+                            <div className="w-2 h-2 bg-gray-400 rounded-full"></div>
+                            <span className="text-xs font-medium text-gray-700">
+                              Meet at Location
+                            </span>
+                          </div>
+                          <p className="text-xs text-gray-600">
+                            Please arrive at the meeting point
+                          </p>
+                        </div>
+                      )}
 
                       <Button
                         variant="outline"

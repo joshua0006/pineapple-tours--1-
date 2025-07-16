@@ -36,8 +36,8 @@ import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { DatePicker } from "@/components/ui/date-picker";
 import { Label } from "@/components/ui/label";
-import { matchesPickupLocationFilter } from "@/lib/utils/pickup-location-utils";
 import { ProductFilterService } from "@/lib/services/product-filter-service";
+import { filterProductsByCity } from "@/lib/utils/product-utils";
 
 import { PageHeader } from "@/components/page-header";
 import { DynamicTourCard } from "@/components/dynamic-tour-card";
@@ -47,9 +47,6 @@ import { useAllProducts } from "@/hooks/use-all-products";
 import { useCityProducts } from "@/hooks/use-city-products";
 import { useBookingPrompt } from "@/hooks/use-booking-prompt";
 import { RezdyProduct } from "@/lib/types/rezdy";
-
-// Static pickup locations (matching search form)
-const STATIC_PICKUP_LOCATIONS = ["Brisbane", "Gold Coast", "Mount Tamborine"];
 
 interface Filters {
   query: string;
@@ -61,14 +58,14 @@ interface Filters {
   limit: string;
   offset: string;
   tourDate: string;
-  pickupLocation: string;
 }
 
 export default function ToursPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
-
+  // Get city data for the dropdown
+  const { cities, loading: citiesLoading } = useCityProducts();
 
   // Local filter state
   const [filters, setFilters] = useState<Filters>({
@@ -76,15 +73,11 @@ export default function ToursPage() {
     participants: searchParams.get("participants") || "2",
     checkIn: searchParams.get("checkIn") || "",
     checkOut: searchParams.get("checkOut") || "",
-    city: searchParams.get("city") || "",
+    city: searchParams.get("city") || searchParams.get("location") || "",
     location: searchParams.get("location") || "",
     limit: searchParams.get("limit") || "100",
     offset: searchParams.get("offset") || "0",
     tourDate: searchParams.get("tourDate") || searchParams.get("checkIn") || "",
-    pickupLocation:
-      searchParams.get("pickupLocation") ||
-      searchParams.get("location") ||
-      "all",
   });
 
   const [localQuery, setLocalQuery] = useState(filters.query);
@@ -102,7 +95,10 @@ export default function ToursPage() {
   // Fetch the entire catalogue (cached) once; we will paginate client-side
   const { products, loading, error, refreshProducts } = useAllProducts();
 
-  // Client-side filtering and sorting (applied to current page of server-side paginated data)
+  // State for filtering
+  const [isFiltering, setIsFiltering] = useState(false);
+
+  // Enhanced client-side filtering using city-based filtering
   const {
     filteredProducts,
     totalFilteredCount,
@@ -126,36 +122,14 @@ export default function ToursPage() {
       );
     }
 
-
-    // Pickup Location filter - Using structured pickup data
-    if (filters.pickupLocation !== "all") {
-      filtered = filtered.filter((product) => 
-        matchesPickupLocationFilter(product, filters.pickupLocation)
-      );
+    // City-based location filter
+    if (filters.city && filters.city !== "all") {
+      filtered = filterProductsByCity(filtered, filters.city);
     }
 
-    // City/location filter (fallback for legacy URL params)
-    if (filters.city || filters.location) {
-      const locationFilter = filters.city || filters.location;
-      filtered = filtered.filter((product) => {
-        const address = product.locationAddress;
-        if (typeof address === "string") {
-          return address.toLowerCase().includes(locationFilter.toLowerCase());
-        } else if (address && typeof address === "object") {
-          return (
-            address.city
-              ?.toLowerCase()
-              .includes(locationFilter.toLowerCase()) ||
-            address.state
-              ?.toLowerCase()
-              .includes(locationFilter.toLowerCase()) ||
-            address.addressLine
-              ?.toLowerCase()
-              .includes(locationFilter.toLowerCase())
-          );
-        }
-        return false;
-      });
+    // Legacy location filter fallback
+    if (!filters.city && (filters.location && filters.location !== "all")) {
+      filtered = filterProductsByCity(filtered, filters.location);
     }
 
     // Tour Date filter - check if product has availability on selected date
@@ -172,7 +146,6 @@ export default function ToursPage() {
       // Most tours can accommodate the typical participant counts
       // You could add specific capacity checks here if available in product data
     }
-
 
     // --- Client-side pagination ---
     const limit = parseInt(filters.limit) || 100;
@@ -202,22 +175,16 @@ export default function ToursPage() {
       participants: searchParams.get("participants") || "2",
       checkIn: searchParams.get("checkIn") || "",
       checkOut: searchParams.get("checkOut") || "",
-      city: searchParams.get("city") || "",
+      city: searchParams.get("city") || searchParams.get("location") || "",
       location: searchParams.get("location") || "",
       limit: searchParams.get("limit") || "100",
       offset: searchParams.get("offset") || "0",
       tourDate: searchParams.get("tourDate") || searchParams.get("checkIn") || "",
-      pickupLocation:
-        searchParams.get("pickupLocation") ||
-        searchParams.get("location") ||
-        "all",
     };
 
     setFilters(urlFilters);
     setLocalQuery(urlFilters.query);
   }, [searchParams]);
-
-  // No need to refetch on every page change – we already have the full dataset.
 
   const updateFilter = (key: keyof Filters, value: string) => {
     setFilters((prev) => {
@@ -258,7 +225,6 @@ export default function ToursPage() {
       limit: "100",
       offset: "0",
       tourDate: "",
-      pickupLocation: "all",
     };
     updateFilter(key, defaultValues[key]);
   };
@@ -274,7 +240,6 @@ export default function ToursPage() {
       limit: "100",
       offset: "0",
       tourDate: "",
-      pickupLocation: "all",
     });
     setLocalQuery("");
   };
@@ -295,11 +260,9 @@ export default function ToursPage() {
     filters.checkOut !== "" ||
     filters.city !== "" ||
     filters.location !== "" ||
-    filters.tourDate !== "" ||
-    filters.pickupLocation !== "all";
+    filters.tourDate !== "";
 
   const hasResults = filteredProducts.length > 0;
-
 
   // Keep the URL in sync with the current filters so the page is shareable / bookmarkable
   useEffect(() => {
@@ -430,8 +393,8 @@ export default function ToursPage() {
                               return false;
                             if (key === "checkIn" || key === "checkOut")
                               return false; // Legacy params
-                            if (key === "city" || key === "location")
-                              return false; // Legacy params
+                            if (key === "location")
+                              return false; // Legacy param
 
                             // Count active filters
                             return (
@@ -477,17 +440,17 @@ export default function ToursPage() {
                         </button>
                       </Badge>
                     )}
-                    {filters.pickupLocation !== "all" && (
+                    {filters.city && filters.city !== "all" && (
                       <Badge
                         variant="secondary"
                         className="flex items-center gap-1 px-3 py-1 rounded-full"
                       >
                         <span className="flex items-center gap-1">
                           <MapPin className="h-3 w-3" />
-                          {filters.pickupLocation}
+                          {filters.city}
                         </span>
                         <button
-                          onClick={() => clearFilter("pickupLocation")}
+                          onClick={() => clearFilter("city")}
                           className="ml-1 hover:text-destructive"
                         >
                           <X className="h-3 w-3" />
@@ -592,34 +555,43 @@ export default function ToursPage() {
                     </div>
                   </div>
 
-                  {/* Pick up Location Filter */}
+                  {/* Location Filter - Updated to use city-based filtering */}
                   <div className="space-y-2">
                     <Label className="text-sm font-medium text-muted-foreground">
-                      Pick up Location
+                      Location
                     </Label>
                     <Select
-                      value={filters.pickupLocation}
+                      value={filters.city || "all"}
                       onValueChange={(value) =>
-                        updateFilter("pickupLocation", value)
+                        updateFilter("city", value === "all" ? "" : value)
                       }
                     >
                       <SelectTrigger className="w-full h-10">
                         <div className="flex items-center gap-2">
                           <MapPin className="h-4 w-4 text-muted-foreground" />
-                          <SelectValue placeholder="Select pickup location" />
+                          <SelectValue 
+                            placeholder={
+                              citiesLoading 
+                                ? "Loading..." 
+                                : "Select location"
+                            }
+                          />
                         </div>
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="all">All Locations</SelectItem>
-                        {STATIC_PICKUP_LOCATIONS.map((location) => (
-                          <SelectItem key={location} value={location}>
-                            {location}
+                        <SelectItem value="all">
+                          All Locations
+                        </SelectItem>
+                        
+                        {/* Cities from locationAddress.city data */}
+                        {cities.map((city) => (
+                          <SelectItem key={city} value={city}>
+                            {city}
                           </SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
                   </div>
-
                 </div>
               </div>
             </div>
@@ -629,20 +601,7 @@ export default function ToursPage() {
               {/* Results count and status */}
               <div className="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <div className="flex items-center gap-2">
-                  <div className="text-sm text-muted-foreground">
-                    {loading ? (
-                      <span className="flex items-center gap-2">
-                        <RefreshCw className="h-4 w-4 animate-spin" />
-                        {filters.tourDate
-                          ? "Checking availability..."
-                          : "Loading tours..."}
-                      </span>
-                    ) : (
-                      <>
-                       
-                      </>
-                    )}
-                  </div>
+                
                 </div>
               </div>
 
@@ -668,7 +627,7 @@ export default function ToursPage() {
                             product={product}
                             selectedDate={filters.tourDate}
                             participants={filters.participants}
-                            selectedLocation={filters.pickupLocation}
+                            selectedLocation={filters.city || filters.location}
                           />
                         ))}
                       </div>

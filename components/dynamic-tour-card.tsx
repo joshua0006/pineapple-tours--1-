@@ -55,7 +55,6 @@
 
     const validImages = getValidImages(product);
     const slug = generateProductSlug(product);
-    const isUsingPlaceholder = validImages[0]?.itemUrl === "/pineapple-tour-logo.png";
 
     const buildDirectBookingUrl = () => {
       const baseUrl = `/booking/${product.productCode}`;
@@ -74,7 +73,6 @@
       return params.toString() ? `${baseUrl}?${params.toString()}` : baseUrl;
     };
 
-    // Build tour details URL with search parameters preserved
     const buildTourDetailsUrl = () => {
       const baseUrl = `/tours/${slug}`;
       const params = new URLSearchParams();
@@ -96,15 +94,14 @@
 
     return (
       <Card className="relative h-80 w-full overflow-hidden group hover:shadow-2xl transition-all duration-300 border-0 shadow-lg cursor-pointer">
-        {/* Background Image */}
-        <div className={`absolute inset-0 ${isUsingPlaceholder ? 'flex items-center justify-center bg-gradient-to-br from-brand-primary/10 to-brand-accent/10' : ''}`}>
+        {/* Background Image - Full Height */}
+        <div className="absolute inset-0">
           <ResponsiveImage
             images={validImages}
             alt={`${product.name} tour`}
             aspectRatio="landscape"
-            className={`transition-transform duration-700 group-hover:scale-110 object-cover ${
-              isUsingPlaceholder ? 'object-contain w-40 h-40 opacity-80' : ''
-            }`}
+            className="transition-transform duration-700 group-hover:scale-110 object-cover w-full h-full"
+            showNavigation={false}
             sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
             priority
             onImageError={(error) => {
@@ -116,11 +113,7 @@
         </div>
 
         {/* Gradient Overlay */}
-        <div className={`absolute inset-0 bg-gradient-to-t transition-all duration-300 ${
-          isUsingPlaceholder 
-            ? 'from-brand-primary/90 via-brand-primary/60 to-brand-primary/30 group-hover:from-brand-primary/95' 
-            : 'from-black/70 via-black/20 to-transparent group-hover:from-black/80'
-        }`} />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent group-hover:from-black/80 transition-all duration-300" />
 
         {/* Content */}
         <div className="absolute bottom-0 left-0 right-0 p-6 text-white">

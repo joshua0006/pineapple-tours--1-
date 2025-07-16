@@ -9,46 +9,70 @@ const API_KEY = process.env.REZDY_API_KEY;
 let lastRequestTime = 0;
 const RATE_LIMIT_DELAY = 600; // 600ms between requests
 
+// Request deduplication - track ongoing requests
+const ongoingRequests = new Map<string, Promise<RezdyPickupLocation[]>>();
+
 /**
- * Fetch pickup locations from Rezdy API
+ * Fetch pickup locations from Rezdy API with request deduplication
  */
-async function fetchFromRezdyApi(productCode: string): Promise<RezdyPickupLocation[]> {
+async function fetchFromRezdyApi(productCode: string, forceRefresh = false): Promise<RezdyPickupLocation[]> {
   if (!API_KEY) {
     throw new Error("Rezdy API key not configured");
   }
 
-  // Rate limiting
-  const now = Date.now();
-  const timeSinceLastRequest = now - lastRequestTime;
-  if (timeSinceLastRequest < RATE_LIMIT_DELAY) {
-    await new Promise((resolve) =>
-      setTimeout(resolve, RATE_LIMIT_DELAY - timeSinceLastRequest)
-    );
+  const requestKey = `${productCode}:${forceRefresh}`;
+
+  // Check if there's already an ongoing request for this product
+  if (!forceRefresh && ongoingRequests.has(requestKey)) {
+    console.log(`🔄 Deduplicating request for ${productCode} - waiting for ongoing request`);
+    return await ongoingRequests.get(requestKey)!;
   }
-  lastRequestTime = Date.now();
 
-  const url = `${REZDY_BASE_URL}/products/${productCode}/pickups?apiKey=${API_KEY}`;
-  const headers: HeadersInit = {
-    "Content-Type": "application/json",
-    Accept: "application/json",
-  };
+  // Create new request promise
+  const requestPromise = (async (): Promise<RezdyPickupLocation[]> => {
+    try {
+      // Rate limiting
+      const now = Date.now();
+      const timeSinceLastRequest = now - lastRequestTime;
+      if (timeSinceLastRequest < RATE_LIMIT_DELAY) {
+        await new Promise((resolve) =>
+          setTimeout(resolve, RATE_LIMIT_DELAY - timeSinceLastRequest)
+        );
+      }
+      lastRequestTime = Date.now();
 
-  const response = await fetch(url, {
-    method: "GET",
-    headers,
-    cache: "no-store",
-  });
+      const url = `${REZDY_BASE_URL}/products/${productCode}/pickups?apiKey=${API_KEY}`;
+      const headers: HeadersInit = {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+      };
 
-  if (!response.ok) {
-    if (response.status === 404) {
-      // Product has no pickup locations
-      return [];
+      const response = await fetch(url, {
+        method: "GET",
+        headers,
+        cache: "no-store",
+      });
+
+      if (!response.ok) {
+        if (response.status === 404) {
+          // Product has no pickup locations
+          return [];
+        }
+        throw new Error(`Rezdy API error: ${response.status}`);
+      }
+
+      const data = await response.json();
+      return data.pickupLocations || [];
+    } finally {
+      // Clean up the ongoing request when done
+      ongoingRequests.delete(requestKey);
     }
-    throw new Error(`Rezdy API error: ${response.status}`);
-  }
+  })();
 
-  const data = await response.json();
-  return data.pickupLocations || [];
+  // Store the request promise for deduplication
+  ongoingRequests.set(requestKey, requestPromise);
+
+  return await requestPromise;
 }
 
 export async function GET(
@@ -64,7 +88,7 @@ export async function GET(
 
     // Define API client for PickupStorage
     const apiClient = {
-      fetchFromApi: fetchFromRezdyApi,
+      fetchFromApi: (productCode: string) => fetchFromRezdyApi(productCode, refresh),
     };
 
     let pickups: RezdyPickupLocation[];

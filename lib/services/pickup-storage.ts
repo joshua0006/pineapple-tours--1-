@@ -19,6 +19,11 @@ export class PickupStorage {
   private static readonly PICKUP_DIR = path.join(process.cwd(), 'data', 'pickups');
   private static readonly MAX_RETRIES = 3;
   private static readonly RETRY_DELAY = 100; // ms
+  private static readonly STALE_THRESHOLD = 24 * 60 * 60 * 1000; // 24 hours in ms
+  private static readonly BACKGROUND_REFRESH_THRESHOLD = 12 * 60 * 60 * 1000; // 12 hours in ms
+  
+  // Track background refresh operations to avoid duplicates
+  private static refreshPromises = new Map<string, Promise<void>>();
 
   /**
    * Initialize pickup storage (create directory if needed)
@@ -418,5 +423,167 @@ export class PickupStorage {
     }
 
     return result;
+  }
+
+  /**
+   * Check if pickup data is stale and needs background refresh
+   */
+  private static isDataStale(fetchedAt: string, threshold: number = this.BACKGROUND_REFRESH_THRESHOLD): boolean {
+    const fetchTime = new Date(fetchedAt).getTime();
+    const now = Date.now();
+    return (now - fetchTime) > threshold;
+  }
+
+  /**
+   * Check if pickup data should be considered expired
+   */
+  private static isDataExpired(fetchedAt: string): boolean {
+    return this.isDataStale(fetchedAt, this.STALE_THRESHOLD);
+  }
+
+  /**
+   * Get pickup data with background refresh capability
+   * Returns cached data immediately, but triggers background refresh if stale
+   */
+  static async getPickupDataWithBackgroundRefresh(
+    productCode: string,
+    apiClient: {
+      fetchFromApi: (productCode: string) => Promise<RezdyPickupLocation[]>;
+    }
+  ): Promise<RezdyPickupLocation[]> {
+    try {
+      // Try to load existing data
+      const existingData = await this.loadPickupDataRaw(productCode);
+      
+      if (existingData) {
+        // If data is expired, force refresh
+        if (this.isDataExpired(existingData.fetchedAt)) {
+          console.log(`📦 Pickup data expired for ${productCode}, refreshing...`);
+          return await this.refreshPickupData(productCode, apiClient);
+        }
+        
+        // If data is stale but not expired, trigger background refresh
+        if (this.isDataStale(existingData.fetchedAt)) {
+          console.log(`🔄 Triggering background refresh for ${productCode}`);
+          this.backgroundRefreshPickupData(productCode, apiClient);
+        }
+        
+        // Return existing data immediately
+        return existingData.pickups;
+      }
+      
+      // No existing data, fetch fresh
+      console.log(`🆕 No cached data for ${productCode}, fetching fresh data...`);
+      return await this.refreshPickupData(productCode, apiClient);
+      
+    } catch (error) {
+      console.error(`Error in getPickupDataWithBackgroundRefresh for ${productCode}:`, error);
+      // Fallback to regular API call
+      return await apiClient.fetchFromApi(productCode);
+    }
+  }
+
+  /**
+   * Trigger background refresh without blocking
+   */
+  private static backgroundRefreshPickupData(
+    productCode: string,
+    apiClient: {
+      fetchFromApi: (productCode: string) => Promise<RezdyPickupLocation[]>;
+    }
+  ): void {
+    // Check if refresh is already in progress
+    if (this.refreshPromises.has(productCode)) {
+      return;
+    }
+
+    const refreshPromise = (async () => {
+      try {
+        console.log(`🔄 Background refresh started for ${productCode}`);
+        await this.refreshPickupData(productCode, apiClient);
+        console.log(`✅ Background refresh completed for ${productCode}`);
+      } catch (error) {
+        console.warn(`⚠️ Background refresh failed for ${productCode}:`, error);
+      } finally {
+        // Clean up the promise reference
+        this.refreshPromises.delete(productCode);
+      }
+    })();
+
+    this.refreshPromises.set(productCode, refreshPromise);
+  }
+
+  /**
+   * Load raw pickup data including metadata
+   */
+  private static async loadPickupDataRaw(productCode: string): Promise<StoredPickupData | null> {
+    try {
+      const filePath = this.getFilePath(productCode);
+      const data = await fs.promises.readFile(filePath, 'utf-8');
+      return JSON.parse(data) as StoredPickupData;
+    } catch (error) {
+      return null;
+    }
+  }
+
+  /**
+   * Get cache statistics for monitoring
+   */
+  static async getCacheStats(): Promise<{
+    totalProducts: number;
+    freshData: number;
+    staleData: number;
+    expiredData: number;
+    totalSize: number;
+  }> {
+    try {
+      await this.initialize();
+      const files = await fs.promises.readdir(this.PICKUP_DIR);
+      const jsonFiles = files.filter(file => file.endsWith('.json'));
+      
+      let totalSize = 0;
+      let freshData = 0;
+      let staleData = 0;
+      let expiredData = 0;
+      
+      for (const file of jsonFiles) {
+        try {
+          const filePath = path.join(this.PICKUP_DIR, file);
+          const stats = await fs.promises.stat(filePath);
+          totalSize += stats.size;
+          
+          const data = await fs.promises.readFile(filePath, 'utf-8');
+          const pickupData = JSON.parse(data) as StoredPickupData;
+          
+          if (this.isDataExpired(pickupData.fetchedAt)) {
+            expiredData++;
+          } else if (this.isDataStale(pickupData.fetchedAt)) {
+            staleData++;
+          } else {
+            freshData++;
+          }
+        } catch (error) {
+          // Skip invalid files
+          continue;
+        }
+      }
+      
+      return {
+        totalProducts: jsonFiles.length,
+        freshData,
+        staleData,
+        expiredData,
+        totalSize,
+      };
+    } catch (error) {
+      console.error('Error getting cache stats:', error);
+      return {
+        totalProducts: 0,
+        freshData: 0,
+        staleData: 0,
+        expiredData: 0,
+        totalSize: 0,
+      };
+    }
   }
 }

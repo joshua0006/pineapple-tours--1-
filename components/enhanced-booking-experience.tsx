@@ -84,6 +84,7 @@ interface EnhancedBookingExperienceProps {
   preSelectedDate?: string; // ISO date string (YYYY-MM-DD)
   preSelectedSessionId?: string; // Session ID to auto-select when availability loads
   preSelectedLocation?: string; // Pickup location from search form
+  preloadedPickupLocations?: RezdyPickupLocation[]; // Pre-fetched pickup locations for faster loading
 }
 
 
@@ -95,6 +96,7 @@ export function EnhancedBookingExperience({
   preSelectedDate,
   preSelectedSessionId,
   preSelectedLocation,
+  preloadedPickupLocations,
 }: EnhancedBookingExperienceProps) {
   const [bookingErrors, setBookingErrors] = useState<string[]>([]);
   
@@ -118,10 +120,20 @@ export function EnhancedBookingExperience({
     }
   }, [product?.productCode, preloadOnBookingStart]);
 
-  // Fetch pickup locations from Rezdy API
+  // Fetch pickup locations from Rezdy API (only if not preloaded)
   useEffect(() => {
     const fetchPickupLocations = async () => {
       if (!product?.productCode) return;
+      
+      // Skip API call if we already have preloaded pickup locations
+      if (preloadedPickupLocations && preloadedPickupLocations.length > 0) {
+        console.log('✅ Using preloaded pickup locations:', preloadedPickupLocations.length);
+        // Track cache hit for analytics
+        trackApiRequest(product.productCode, 0, true, true);
+        // Ensure loading state is false when using preloaded data
+        setPickupLocationsLoading(false);
+        return;
+      }
       
       setPickupLocationsLoading(true);
       setPickupLocationsError(null);
@@ -143,7 +155,7 @@ export function EnhancedBookingExperience({
         // Track successful API request
         trackApiRequest(product.productCode, responseTime, data.cached || false, true);
         
-        console.log('✅ Pickup locations loaded:', data.pickups?.length || 0);
+        console.log('✅ Pickup locations loaded from API:', data.pickups?.length || 0);
       } catch (error) {
         console.error('❌ Error fetching pickup locations:', error);
         setPickupLocationsError(error instanceof Error ? error.message : 'Failed to fetch pickup locations');
@@ -158,7 +170,7 @@ export function EnhancedBookingExperience({
     };
 
     fetchPickupLocations();
-  }, [product?.productCode, trackApiRequest]);
+  }, [product?.productCode, preloadedPickupLocations, trackApiRequest]);
 
 
   // Check if product has pickup services
@@ -175,9 +187,14 @@ export function EnhancedBookingExperience({
     useState<RezdyPickupLocation | null>(null);
   const [, setWasSessionAutoSelected] = useState(false);
   
-  // API pickup locations state
-  const [apiPickupLocations, setApiPickupLocations] = useState<RezdyPickupLocation[]>([]);
-  const [pickupLocationsLoading, setPickupLocationsLoading] = useState(false);
+  // API pickup locations state - initialize with preloaded data if available
+  const [apiPickupLocations, setApiPickupLocations] = useState<RezdyPickupLocation[]>(
+    preloadedPickupLocations || []
+  );
+  const [pickupLocationsLoading, setPickupLocationsLoading] = useState(
+    // Only show loading if we don't have preloaded data
+    !preloadedPickupLocations || preloadedPickupLocations.length === 0
+  );
   const [pickupLocationsError, setPickupLocationsError] = useState<string | null>(null);
   
   // Pickup validation state
@@ -1179,27 +1196,54 @@ export function EnhancedBookingExperience({
                   </div>
                 )}
 
-                {/* Pickup Location Selection */}
+                {/* Enhanced Pickup Location Selection */}
                 {selectedSession && (
                   <>
                     {pickupLocationsLoading && (
-                      <div className="flex items-center justify-center py-4">
-                        <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-coral-500"></div>
-                        <span className="ml-2 text-sm text-muted-foreground">
-                          Loading pickup locations...
-                        </span>
+                      <div className="space-y-3">
+                        <div className="flex items-center gap-3 py-2">
+                          <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-brand-accent"></div>
+                          <span className="text-sm text-muted-foreground font-medium">
+                            Loading pickup locations...
+                          </span>
+                        </div>
+                        {/* Skeleton loader for pickup locations */}
+                        <div className="space-y-2">
+                          {[1, 2, 3].map((i) => (
+                            <div key={i} className="flex items-center space-x-3 p-3 bg-muted/20 rounded-lg animate-pulse">
+                              <div className="w-4 h-4 bg-muted rounded-full"></div>
+                              <div className="flex-1 space-y-2">
+                                <div className="h-4 bg-muted rounded w-2/3"></div>
+                                <div className="h-3 bg-muted rounded w-1/2"></div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
                       </div>
                     )}
+                    
                     {pickupLocationsError && (
-                      <Alert className="mb-4">
+                      <Alert variant="destructive" className="mb-4">
                         <AlertCircle className="h-4 w-4" />
                         <AlertDescription>
-                          {pickupLocationsError}
+                          <div className="space-y-2">
+                            <p className="font-medium">Unable to load pickup locations</p>
+                            <p className="text-sm">{pickupLocationsError}</p>
+                            <button 
+                              onClick={() => window.location.reload()} 
+                              className="text-sm underline hover:no-underline"
+                            >
+                              Try refreshing the page
+                            </button>
+                          </div>
                         </AlertDescription>
                       </Alert>
                     )}
+                    
                     {!pickupLocationsLoading && effectivePickupLocations.length > 0 && (
-                      <div className="space-y-2">
+                      <div className="space-y-3">
+                      
+                        
                         <PickupLocationSelector
                           pickupLocations={effectivePickupLocations}
                           selectedPickupLocation={selectedPickupLocation}
@@ -1207,23 +1251,37 @@ export function EnhancedBookingExperience({
                           showDirections={true}
                           required={true}
                         />
+                        
                         {pickupValidationError && (
-                          <Alert>
+                          <Alert variant="destructive">
                             <AlertCircle className="h-4 w-4" />
-                            <AlertDescription className="text-red-600">
+                            <AlertDescription>
                               {pickupValidationError}
                             </AlertDescription>
                           </Alert>
                         )}
+                        
                         {pickupValidationWarning && (
-                          <Alert>
-                            <Info className="h-4 w-4" />
-                            <AlertDescription className="text-yellow-600">
+                          <Alert className="border-yellow-200 bg-yellow-50">
+                            <Info className="h-4 w-4 text-yellow-600" />
+                            <AlertDescription className="text-yellow-800">
                               {pickupValidationWarning}
                             </AlertDescription>
                           </Alert>
                         )}
                       </div>
+                    )}
+                    
+                    {!pickupLocationsLoading && !pickupLocationsError && effectivePickupLocations.length === 0 && (
+                      <Alert className="border-blue-200 bg-blue-50">
+                        <Info className="h-4 w-4 text-blue-600" />
+                        <AlertDescription className="text-blue-800">
+                          <div className="space-y-1">
+                            <p className="font-medium">No pickup service available</p>
+                            <p className="text-sm">Please arrive at the meeting point specified in your booking confirmation.</p>
+                          </div>
+                        </AlertDescription>
+                      </Alert>
                     )}
                   </>
                 )}

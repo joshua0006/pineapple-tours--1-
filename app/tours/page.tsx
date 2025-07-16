@@ -36,9 +36,8 @@ import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { DatePicker } from "@/components/ui/date-picker";
 import { Label } from "@/components/ui/label";
-import { matchesPickupLocationFilter } from "@/lib/utils/pickup-location-utils";
 import { ProductFilterService } from "@/lib/services/product-filter-service";
-import { UnifiedPickupFilter } from "@/lib/services/unified-pickup-filter";
+import { filterProductsByCity } from "@/lib/utils/product-utils";
 
 import { PageHeader } from "@/components/page-header";
 import { DynamicTourCard } from "@/components/dynamic-tour-card";
@@ -48,37 +47,6 @@ import { useAllProducts } from "@/hooks/use-all-products";
 import { useCityProducts } from "@/hooks/use-city-products";
 import { useBookingPrompt } from "@/hooks/use-booking-prompt";
 import { RezdyProduct } from "@/lib/types/rezdy";
-
-// Enhanced pickup locations with detailed schedule information
-const ENHANCED_PICKUP_LOCATIONS = [
-  {
-    value: "Brisbane",
-    label: "Brisbane",
-    description: "Hotel pickups from city center",
-    schedule: "8:45am - 9:10am",
-    stops: ["Marriott", "Royal on the Park", "Emporium Southbank"],
-    details: "Brisbane Marriott • Royal on the Park • Emporium Southbank"
-  },
-  {
-    value: "Gold Coast", 
-    label: "Gold Coast",
-    description: "Hotel pickups from main precincts",
-    schedule: "8:45am - 9:15am",
-    stops: ["Star Casino", "Voco", "JW Marriott", "Sheraton Grand Mirage"],
-    details: "Star Casino • Voco Gold Coast • JW Marriott • Sheraton Grand Mirage"
-  },
-  {
-    value: "Brisbane Loop",
-    label: "Brisbane City Loop",
-    description: "Multiple city stops",
-    schedule: "8:00am - 8:30am",
-    stops: ["Southbank", "Petrie Terrace", "Anzac Square", "Howard Smith Wharves", "Kangaroo Point"],
-    details: "5 stops: Southbank • Petrie Terrace • Anzac Square • Howard Smith Wharves • Kangaroo Point"
-  }
-];
-
-// Static pickup locations (matching search form)
-const STATIC_PICKUP_LOCATIONS = ["Brisbane", "Gold Coast", "Brisbane Loop"];
 
 interface Filters {
   query: string;
@@ -90,14 +58,14 @@ interface Filters {
   limit: string;
   offset: string;
   tourDate: string;
-  pickupLocation: string;
 }
 
 export default function ToursPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
-
+  // Get city data for the dropdown
+  const { cities, loading: citiesLoading } = useCityProducts();
 
   // Local filter state
   const [filters, setFilters] = useState<Filters>({
@@ -105,15 +73,11 @@ export default function ToursPage() {
     participants: searchParams.get("participants") || "2",
     checkIn: searchParams.get("checkIn") || "",
     checkOut: searchParams.get("checkOut") || "",
-    city: searchParams.get("city") || "",
+    city: searchParams.get("city") || searchParams.get("location") || "",
     location: searchParams.get("location") || "",
     limit: searchParams.get("limit") || "100",
     offset: searchParams.get("offset") || "0",
     tourDate: searchParams.get("tourDate") || searchParams.get("checkIn") || "",
-    pickupLocation:
-      searchParams.get("pickupLocation") ||
-      searchParams.get("location") ||
-      "all",
   });
 
   const [localQuery, setLocalQuery] = useState(filters.query);
@@ -131,12 +95,10 @@ export default function ToursPage() {
   // Fetch the entire catalogue (cached) once; we will paginate client-side
   const { products, loading, error, refreshProducts } = useAllProducts();
 
-  // State for enhanced filtering
+  // State for filtering
   const [isFiltering, setIsFiltering] = useState(false);
-  const [filterStats, setFilterStats] = useState<any>(null);
-  const [filteringError, setFilteringError] = useState<string | null>(null);
 
-  // Enhanced client-side filtering using UnifiedPickupFilter
+  // Enhanced client-side filtering using city-based filtering
   const {
     filteredProducts,
     totalFilteredCount,
@@ -160,38 +122,14 @@ export default function ToursPage() {
       );
     }
 
-    // Enhanced Pickup Location filter - SYNCHRONIZED WITH SEARCH FORM
-    if (filters.pickupLocation !== "all") {
-      // Use UnifiedPickupFilter for consistency with search form
-      // For synchronous filtering in useMemo, we'll use the fallback text-based method
-      // The async enhanced filtering will be handled separately
-      filtered = filtered.filter((product) => 
-        matchesPickupLocationFilter(product, filters.pickupLocation)
-      );
+    // City-based location filter
+    if (filters.city && filters.city !== "all") {
+      filtered = filterProductsByCity(filtered, filters.city);
     }
 
-    // City/location filter (fallback for legacy URL params)
-    if (filters.city || filters.location) {
-      const locationFilter = filters.city || filters.location;
-      filtered = filtered.filter((product) => {
-        const address = product.locationAddress;
-        if (typeof address === "string") {
-          return address.toLowerCase().includes(locationFilter.toLowerCase());
-        } else if (address && typeof address === "object") {
-          return (
-            address.city
-              ?.toLowerCase()
-              .includes(locationFilter.toLowerCase()) ||
-            address.state
-              ?.toLowerCase()
-              .includes(locationFilter.toLowerCase()) ||
-            address.addressLine
-              ?.toLowerCase()
-              .includes(locationFilter.toLowerCase())
-          );
-        }
-        return false;
-      });
+    // Legacy location filter fallback
+    if (!filters.city && (filters.location && filters.location !== "all")) {
+      filtered = filterProductsByCity(filtered, filters.location);
     }
 
     // Tour Date filter - check if product has availability on selected date
@@ -208,7 +146,6 @@ export default function ToursPage() {
       // Most tours can accommodate the typical participant counts
       // You could add specific capacity checks here if available in product data
     }
-
 
     // --- Client-side pagination ---
     const limit = parseInt(filters.limit) || 100;
@@ -231,83 +168,6 @@ export default function ToursPage() {
     };
   }, [products, filters]);
 
-  // Enhanced filtering effect for pickup locations (async)
-  useEffect(() => {
-    let isMounted = true;
-
-    const performEnhancedFiltering = async () => {
-      if (filters.pickupLocation === "all" || products.length === 0) {
-        setFilterStats(null);
-        setFilteringError(null);
-        setIsFiltering(false);
-        return;
-      }
-
-      setIsFiltering(true);
-      setFilteringError(null);
-
-      try {
-        // Get base filtered products (without pickup filtering)
-        let baseFiltered = [...products];
-        
-        // Apply basic filters first
-        baseFiltered = ProductFilterService.filterProducts(baseFiltered);
-        
-        if (filters.query) {
-          const query = filters.query.toLowerCase();
-          baseFiltered = baseFiltered.filter(
-            (product) =>
-              product.name.toLowerCase().includes(query) ||
-              product.shortDescription?.toLowerCase().includes(query) ||
-              product.description?.toLowerCase().includes(query)
-          );
-        }
-
-        // Apply LOCAL DATA pickup filtering for optimal performance
-        const enhancedResult = await UnifiedPickupFilter.filterProductsByLocation(
-          baseFiltered,
-          filters.pickupLocation,
-          {
-            forceLocalData: true, // Use local pickup data files first
-            useApiData: false,    // Skip API calls for bulk filtering 
-            enableFallback: true,
-            cacheResults: true,
-          }
-        );
-
-        if (isMounted) {
-          setFilterStats(enhancedResult.filterStats);
-          setIsFiltering(false);
-          
-          // Validate filtering accuracy
-          if (enhancedResult.filterStats.accuracy === 'low') {
-            setFilteringError('Filtering accuracy is low. Some results may be inaccurate.');
-          }
-          
-          // Log filtering results for debugging
-          console.log('LOCAL DATA filtering results:', {
-            location: filters.pickupLocation,
-            ...enhancedResult.filterStats,
-            dataSource: enhancedResult.filterStats.dataSource
-          });
-        }
-      } catch (error) {
-        console.error('Enhanced filtering failed:', error);
-        if (isMounted) {
-          setIsFiltering(false);
-          setFilterStats(null);
-          setFilteringError('Enhanced filtering failed. Using basic text-based filtering.');
-        }
-      }
-    };
-
-    performEnhancedFiltering();
-
-    return () => {
-      isMounted = false;
-    };
-  }, [products, filters.pickupLocation, filters.query]);
-
   // Sync URL parameters with filters when searchParams change
   useEffect(() => {
     const urlFilters: Filters = {
@@ -315,22 +175,16 @@ export default function ToursPage() {
       participants: searchParams.get("participants") || "2",
       checkIn: searchParams.get("checkIn") || "",
       checkOut: searchParams.get("checkOut") || "",
-      city: searchParams.get("city") || "",
+      city: searchParams.get("city") || searchParams.get("location") || "",
       location: searchParams.get("location") || "",
       limit: searchParams.get("limit") || "100",
       offset: searchParams.get("offset") || "0",
       tourDate: searchParams.get("tourDate") || searchParams.get("checkIn") || "",
-      pickupLocation:
-        searchParams.get("pickupLocation") ||
-        searchParams.get("location") ||
-        "all",
     };
 
     setFilters(urlFilters);
     setLocalQuery(urlFilters.query);
   }, [searchParams]);
-
-  // No need to refetch on every page change – we already have the full dataset.
 
   const updateFilter = (key: keyof Filters, value: string) => {
     setFilters((prev) => {
@@ -371,7 +225,6 @@ export default function ToursPage() {
       limit: "100",
       offset: "0",
       tourDate: "",
-      pickupLocation: "all",
     };
     updateFilter(key, defaultValues[key]);
   };
@@ -387,7 +240,6 @@ export default function ToursPage() {
       limit: "100",
       offset: "0",
       tourDate: "",
-      pickupLocation: "all",
     });
     setLocalQuery("");
   };
@@ -408,11 +260,9 @@ export default function ToursPage() {
     filters.checkOut !== "" ||
     filters.city !== "" ||
     filters.location !== "" ||
-    filters.tourDate !== "" ||
-    filters.pickupLocation !== "all";
+    filters.tourDate !== "";
 
   const hasResults = filteredProducts.length > 0;
-
 
   // Keep the URL in sync with the current filters so the page is shareable / bookmarkable
   useEffect(() => {
@@ -543,8 +393,8 @@ export default function ToursPage() {
                               return false;
                             if (key === "checkIn" || key === "checkOut")
                               return false; // Legacy params
-                            if (key === "city" || key === "location")
-                              return false; // Legacy params
+                            if (key === "location")
+                              return false; // Legacy param
 
                             // Count active filters
                             return (
@@ -590,22 +440,17 @@ export default function ToursPage() {
                         </button>
                       </Badge>
                     )}
-                    {filters.pickupLocation !== "all" && (
+                    {filters.city && filters.city !== "all" && (
                       <Badge
                         variant="secondary"
                         className="flex items-center gap-1 px-3 py-1 rounded-full"
                       >
                         <span className="flex items-center gap-1">
                           <MapPin className="h-3 w-3" />
-                          {(() => {
-                            const locationData = ENHANCED_PICKUP_LOCATIONS.find(
-                              loc => loc.value === filters.pickupLocation
-                            );
-                            return locationData ? locationData.label : filters.pickupLocation;
-                          })()}
+                          {filters.city}
                         </span>
                         <button
-                          onClick={() => clearFilter("pickupLocation")}
+                          onClick={() => clearFilter("city")}
                           className="ml-1 hover:text-destructive"
                         >
                           <X className="h-3 w-3" />
@@ -710,21 +555,27 @@ export default function ToursPage() {
                     </div>
                   </div>
 
-                  {/* Pick up Location Filter */}
+                  {/* Location Filter - Updated to use city-based filtering */}
                   <div className="space-y-2">
                     <Label className="text-sm font-medium text-muted-foreground">
-                      Pick up Location
+                      Location
                     </Label>
                     <Select
-                      value={filters.pickupLocation}
+                      value={filters.city || "all"}
                       onValueChange={(value) =>
-                        updateFilter("pickupLocation", value)
+                        updateFilter("city", value === "all" ? "" : value)
                       }
                     >
                       <SelectTrigger className="w-full h-10">
                         <div className="flex items-center gap-2">
                           <MapPin className="h-4 w-4 text-muted-foreground" />
-                          <SelectValue placeholder="Select pickup location" />
+                          <SelectValue 
+                            placeholder={
+                              citiesLoading 
+                                ? "Loading..." 
+                                : "Select location"
+                            }
+                          />
                         </div>
                       </SelectTrigger>
                       <SelectContent>
@@ -732,27 +583,15 @@ export default function ToursPage() {
                           All Locations
                         </SelectItem>
                         
-                        {/* Enhanced pickup locations with clean labels */}
-                        {ENHANCED_PICKUP_LOCATIONS.map((location) => (
-                          <SelectItem key={location.value} value={location.value}>
-                            {location.label}
+                        {/* Cities from locationAddress.city data */}
+                        {cities.map((city) => (
+                          <SelectItem key={city} value={city}>
+                            {city}
                           </SelectItem>
                         ))}
-                        
-                        {/* Legacy static locations as fallback */}
-                        {STATIC_PICKUP_LOCATIONS
-                          .filter((location: string) => !ENHANCED_PICKUP_LOCATIONS.some(enhanced => enhanced.value === location))
-                          .map((location: string) => (
-                            <SelectItem key={location} value={location}>
-                              {location}
-                            </SelectItem>
-                          ))}
                       </SelectContent>
                     </Select>
-                    
-                   
                   </div>
-
                 </div>
               </div>
             </div>
@@ -762,56 +601,7 @@ export default function ToursPage() {
               {/* Results count and status */}
               <div className="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <div className="flex items-center gap-2">
-                  <div className="text-sm text-muted-foreground">
-                    {loading ? (
-                      <span className="flex items-center gap-2">
-                        <RefreshCw className="h-4 w-4 animate-spin" />
-                        {filters.tourDate
-                          ? "Checking availability..."
-                          : "Loading tours..."}
-                      </span>
-                    ) : isFiltering ? (
-                      <span className="flex items-center gap-2">
-                        <RefreshCw className="h-4 w-4 animate-spin" />
-                        Enhancing pickup location filters...
-                      </span>
-                    ) : filterStats ? (
-                      <span className="flex items-center gap-2">
-                        <span>
-                          {filteredProducts.length} of {products.length} tours
-                        </span>
-                        {filterStats.dataSource === 'local_files' && (
-                          <Badge variant="secondary" className="bg-green-100 text-green-700 text-xs">
-                            Local data filtering
-                          </Badge>
-                        )}
-                        {filterStats.dataSource === 'api_calls' && (
-                          <Badge variant="outline" className="bg-blue-100 text-blue-700 text-xs">
-                            API filtering
-                          </Badge>
-                        )}
-                        {filterStats.localDataUsed > 0 && (
-                          <Badge variant="outline" className="text-xs">
-                            {filterStats.localDataUsed} with local data
-                          </Badge>
-                        )}
-                        {filteringError && (
-                          <Badge variant="destructive" className="text-xs">
-                            ⚠️ Limited accuracy
-                          </Badge>
-                        )}
-                      </span>
-                    ) : (
-                      <>
-                        {filteredProducts.length} of {products.length} tours
-                        {filteringError && (
-                          <Badge variant="outline" className="text-xs text-orange-600 border-orange-200">
-                            Basic filtering
-                          </Badge>
-                        )}
-                      </>
-                    )}
-                  </div>
+                
                 </div>
               </div>
 
@@ -837,7 +627,7 @@ export default function ToursPage() {
                             product={product}
                             selectedDate={filters.tourDate}
                             participants={filters.participants}
-                            selectedLocation={filters.pickupLocation}
+                            selectedLocation={filters.city || filters.location}
                           />
                         ))}
                       </div>

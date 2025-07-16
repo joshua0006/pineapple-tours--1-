@@ -2,6 +2,10 @@ import { NextRequest, NextResponse } from 'next/server';
 import { UnifiedPickupFilter } from '@/lib/services/unified-pickup-filter';
 import { RezdyProduct } from '@/lib/types/rezdy';
 
+/**
+ * City-based product filtering API endpoint
+ * Modernized to use locationAddress.city data from Rezdy products
+ */
 export async function POST(request: NextRequest) {
   try {
     const { products, location, options } = await request.json();
@@ -21,22 +25,19 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Use UnifiedPickupFilter with server-side optimizations
+    // Use UnifiedPickupFilter with city-based filtering
     const result = await UnifiedPickupFilter.filterProductsByLocation(
       products as RezdyProduct[],
       location,
       {
-        useApiData: false,
         enableFallback: true,
-        cacheResults: true,
-        forceLocalData: true, // Server-side can use local data
         ...options
       }
     );
 
     return NextResponse.json(result);
   } catch (error) {
-    console.error('Pickup filter API error:', error);
+    console.error('City filter API error:', error);
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
@@ -47,7 +48,8 @@ export async function POST(request: NextRequest) {
 // GET endpoint for testing
 export async function GET() {
   return NextResponse.json({
-    message: 'Pickup filter API endpoint',
-    usage: 'POST with { products: RezdyProduct[], location: string, options?: object }'
+    message: 'City-based product filtering API endpoint',
+    usage: 'POST with { products: RezdyProduct[], location: string, options?: object }',
+    note: 'Now uses locationAddress.city data for high-performance filtering'
   });
 }

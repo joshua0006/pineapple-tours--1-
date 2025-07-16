@@ -1,49 +1,43 @@
-import { RezdyProduct, RezdyPickupLocation } from '@/lib/types/rezdy';
-import { EnhancedPickupFilter } from './enhanced-pickup-filter';
-import { PickupLocationService } from './pickup-location-service';
-import { LocalPickupIndexService } from './local-pickup-index';
+import { RezdyProduct } from '@/lib/types/rezdy';
+import { CityFilterService } from './city-filter';
 
 /**
- * Unified pickup filtering service that ensures consistent filtering logic
+ * Unified city-based filtering service that ensures consistent filtering logic
  * between search form and tours page components.
  * 
- * OPTIMIZED: Prioritizes local pickup data files over API calls for maximum performance
+ * MODERNIZED: Uses locationAddress.city data directly from Rezdy products
+ * for simplified, high-performance filtering
  */
 export class UnifiedPickupFilter {
-  private static readonly SUPPORTED_LOCATIONS = ['Brisbane', 'Gold Coast', 'Brisbane Loop'];
+  private static readonly SUPPORTED_LOCATIONS = ['Brisbane', 'Gold Coast', 'Byron Bay', 'Tamborine Mountain'];
 
   /**
    * Main filtering method used by both search form and tours page
-   * OPTIMIZED: Uses local pickup data files first, API calls only as fallback
+   * MODERNIZED: Uses city-based filtering with locationAddress.city data
    */
   static async filterProductsByLocation(
     products: RezdyProduct[],
     location: string,
     options: {
-      useApiData?: boolean;
-      enableFallback?: boolean;
-      cacheResults?: boolean;
-      forceLocalData?: boolean; // NEW: Force use of local data only
+      useApiData?: boolean; // Kept for backward compatibility (ignored)
+      enableFallback?: boolean; // Kept for backward compatibility
+      cacheResults?: boolean; // Kept for backward compatibility (ignored)
+      forceLocalData?: boolean; // Kept for backward compatibility (ignored)
     } = {}
   ): Promise<{
     filteredProducts: RezdyProduct[];
     filterStats: {
       totalProducts: number;
       filteredCount: number;
-      localDataUsed: number; // Changed from apiDataUsed
-      fallbackUsed: number;
+      localDataUsed: number; // Always 0 now (kept for compatibility)
+      fallbackUsed: number; // Always 0 now (kept for compatibility)
       location: string;
-      filteringMethod: 'local_data' | 'enhanced' | 'text_based' | 'mixed';
+      filteringMethod: 'city_based' | 'text_based'; // Simplified options
       accuracy: 'high' | 'medium' | 'low';
-      dataSource: 'local_files' | 'api_calls' | 'mixed' | 'text_based';
+      dataSource: 'city_data'; // Always city_data now
     };
   }> {
-    const {
-      useApiData = false, // Changed default to prefer local data
-      enableFallback = true,
-      cacheResults = true,
-      forceLocalData = true // Default to local data first
-    } = options;
+    const { enableFallback = true } = options;
 
     // Handle 'all' location case
     if (!location || location === 'all') {
@@ -55,16 +49,60 @@ export class UnifiedPickupFilter {
           localDataUsed: 0,
           fallbackUsed: 0,
           location: 'all',
-          filteringMethod: 'local_data',
+          filteringMethod: 'city_based',
           accuracy: 'high',
-          dataSource: 'local_files',
+          dataSource: 'city_data',
         },
       };
     }
 
-    // Normalize location first
-    const normalizedLocation = PickupLocationService.normalizeLocation(location);
-    if (!normalizedLocation) {
+    try {
+      // Use city-based filtering as primary method
+      const cityResult = CityFilterService.filterProductsByCity(products, location);
+      
+      console.log('City-based filtering results:', {
+        location,
+        normalizedCity: cityResult.filterStats.normalizedCity,
+        totalProducts: cityResult.filterStats.totalProducts,
+        filteredProducts: cityResult.filterStats.filteredCount,
+        accuracy: cityResult.filterStats.accuracy,
+        matchMethod: cityResult.filterStats.matchMethod
+      });
+
+      return {
+        filteredProducts: cityResult.filteredProducts,
+        filterStats: {
+          totalProducts: cityResult.filterStats.totalProducts,
+          filteredCount: cityResult.filterStats.filteredCount,
+          localDataUsed: 0, // No longer applicable
+          fallbackUsed: 0, // No longer applicable
+          location: cityResult.filterStats.normalizedCity,
+          filteringMethod: 'city_based',
+          accuracy: cityResult.filterStats.accuracy,
+          dataSource: 'city_data',
+        },
+      };
+    } catch (error) {
+      console.error('City filtering failed:', error);
+      
+      if (enableFallback) {
+        // Simple fallback: return all products for now
+        // In the future, could implement text-based fallback if needed
+        return {
+          filteredProducts: products,
+          filterStats: {
+            totalProducts: products.length,
+            filteredCount: products.length,
+            localDataUsed: 0,
+            fallbackUsed: products.length,
+            location,
+            filteringMethod: 'text_based',
+            accuracy: 'low',
+            dataSource: 'city_data',
+          },
+        };
+      }
+
       return {
         filteredProducts: [],
         filterStats: {
@@ -73,319 +111,113 @@ export class UnifiedPickupFilter {
           localDataUsed: 0,
           fallbackUsed: 0,
           location,
-          filteringMethod: 'local_data',
+          filteringMethod: 'city_based',
           accuracy: 'low',
-          dataSource: 'local_files',
+          dataSource: 'city_data',
         },
       };
     }
-
-    let filteredProducts: RezdyProduct[] = [];
-    let localDataUsed = 0;
-    let fallbackUsed = 0;
-    let filteringMethod: 'local_data' | 'enhanced' | 'text_based' | 'mixed' = 'local_data';
-    let dataSource: 'local_files' | 'api_calls' | 'mixed' | 'text_based' = 'local_files';
-
-    try {
-      // PRIORITY 1: Use local pickup data files (fastest and most reliable)
-      // Only attempt local data on server side or when explicitly forced
-      if ((forceLocalData || typeof window === 'undefined') && typeof window === 'undefined') {
-        try {
-          const productCodes = products.map(p => p.productCode);
-          const localResult = await LocalPickupIndexService.filterProductCodesByLocation(
-            productCodes,
-            normalizedLocation
-          );
-
-          // Convert product codes back to products
-          const validCodes = new Set(localResult.filteredProducts);
-          filteredProducts = products.filter(p => validCodes.has(p.productCode));
-          
-          localDataUsed = localResult.stats.hasLocalData;
-          filteringMethod = 'local_data';
-          dataSource = 'local_files';
-
-          console.log('Local data filtering results:', {
-            location: normalizedLocation,
-            totalProducts: products.length,
-            filteredProducts: filteredProducts.length,
-            localDataCoverage: localResult.stats.hasLocalData,
-            method: 'local_files'
-          });
-
-          // If we get good results from local data, return immediately
-          if (filteredProducts.length > 0 || !enableFallback) {
-            const accuracy: 'high' | 'medium' | 'low' = localDataUsed > 0 ? 'high' : 'medium';
-            
-            return {
-              filteredProducts,
-              filterStats: {
-                totalProducts: products.length,
-                filteredCount: filteredProducts.length,
-                localDataUsed,
-                fallbackUsed: 0,
-                location: normalizedLocation,
-                filteringMethod: 'local_data',
-                accuracy,
-                dataSource: 'local_files',
-              },
-            };
-          }
-        } catch (localError) {
-          console.warn('Local pickup data filtering failed:', localError);
-          // Continue to fallback methods
-        }
-      } else if (typeof window !== 'undefined') {
-        console.log('Skipping local data filtering in browser context, using fallback methods');
-      }
-
-      // PRIORITY 2: Fallback to API-based filtering (if enabled and local data insufficient)
-      if (useApiData && enableFallback && filteredProducts.length === 0) {
-        console.log('Falling back to API-based filtering for location:', normalizedLocation);
-        
-        const enhancedResult = await EnhancedPickupFilter.filterProductsByPickupLocation(
-          products,
-          normalizedLocation,
-          true
-        );
-
-        filteredProducts = enhancedResult.filteredProducts;
-        const apiDataUsed = enhancedResult.filterStats.apiDataUsed;
-        fallbackUsed = enhancedResult.filterStats.fallbackUsed;
-
-        // Determine filtering method based on data sources used
-        if (localDataUsed > 0 && apiDataUsed > 0) {
-          filteringMethod = 'mixed';
-          dataSource = 'mixed';
-        } else if (apiDataUsed > 0) {
-          filteringMethod = 'enhanced';
-          dataSource = 'api_calls';
-        } else {
-          filteringMethod = 'text_based';
-          dataSource = 'text_based';
-        }
-      }
-
-      // PRIORITY 3: Final fallback to text-based filtering
-      if (enableFallback && filteredProducts.length === 0) {
-        console.log('Final fallback to text-based filtering for location:', normalizedLocation);
-        
-        filteredProducts = PickupLocationService.filterProductsByPickupLocation(
-          products,
-          normalizedLocation
-        );
-        fallbackUsed = filteredProducts.length;
-        filteringMethod = localDataUsed > 0 ? 'mixed' : 'text_based';
-        dataSource = localDataUsed > 0 ? 'mixed' : 'text_based';
-      }
-    } catch (error) {
-      console.error('Filtering failed, using text-based fallback:', error);
-      
-      if (enableFallback) {
-        // Emergency fallback to text-based filtering
-        filteredProducts = PickupLocationService.filterProductsByPickupLocation(
-          products,
-          normalizedLocation
-        );
-        fallbackUsed = filteredProducts.length;
-        filteringMethod = 'text_based';
-        dataSource = 'text_based';
-      }
-    }
-
-    // Determine accuracy based on filtering method and data source
-    let accuracy: 'high' | 'medium' | 'low' = 'medium';
-    if (dataSource === 'local_files' && localDataUsed > 0) {
-      accuracy = 'high';
-    } else if (dataSource === 'api_calls' || (dataSource === 'mixed' && localDataUsed > fallbackUsed)) {
-      accuracy = 'high';
-    } else if (dataSource === 'text_based' && filteredProducts.length > 0) {
-      accuracy = 'medium';
-    } else {
-      accuracy = 'low';
-    }
-
-    return {
-      filteredProducts,
-      filterStats: {
-        totalProducts: products.length,
-        filteredCount: filteredProducts.length,
-        localDataUsed,
-        fallbackUsed,
-        location: normalizedLocation,
-        filteringMethod,
-        accuracy,
-        dataSource,
-      },
-    };
   }
 
   /**
-   * Quick filtering method for simple location checks
-   * OPTIMIZED: Uses local pickup data files first, API calls only as fallback
+   * Quick filtering method for simple city checks
+   * MODERNIZED: Uses city-based filtering with locationAddress.city data
    */
   static async hasPickupFromLocation(
     product: RezdyProduct,
     location: string,
-    useApiData = false // Changed default to prefer local data
-  ): Promise<{ hasPickup: boolean; method: 'local' | 'api' | 'text'; confidence: 'high' | 'medium' | 'low' }> {
-    const normalizedLocation = PickupLocationService.normalizeLocation(location);
-    if (!normalizedLocation) {
-      return { hasPickup: false, method: 'text', confidence: 'low' };
+    useApiData = false // Kept for backward compatibility (ignored)
+  ): Promise<{ hasPickup: boolean; method: 'city' | 'fallback'; confidence: 'high' | 'medium' | 'low' }> {
+    if (!location) {
+      return { hasPickup: false, method: 'city', confidence: 'low' };
     }
 
     try {
-      // PRIORITY 1: Check local pickup data first
-      const localResult = await LocalPickupIndexService.hasProductPickupFromLocation(
-        product.productCode,
-        normalizedLocation
-      );
+      // Use city-based checking
+      const cityResult = CityFilterService.hasProductFromCity(product, location);
       
-      if (localResult.hasLocalData) {
-        return {
-          hasPickup: localResult.hasPickup,
-          method: 'local',
-          confidence: localResult.confidence
-        };
-      }
-
-      // PRIORITY 2: Fallback to API if enabled and no local data
-      if (useApiData) {
-        const apiResult = await EnhancedPickupFilter.productHasPickupFromLocation(
-          product,
-          normalizedLocation,
-          true
-        );
-        
-        if (apiResult.usedApiData) {
-          return {
-            hasPickup: apiResult.hasPickup,
-            method: 'api',
-            confidence: 'high'
-          };
-        }
-      }
+      return {
+        hasPickup: cityResult.hasCity,
+        method: 'city',
+        confidence: cityResult.confidence
+      };
     } catch (error) {
-      console.warn(`Local/API filtering failed for ${product.productCode}:`, error);
+      console.warn(`City filtering failed for ${product.productCode}:`, error);
+      
+      // Simple fallback
+      return {
+        hasPickup: false,
+        method: 'fallback',
+        confidence: 'low'
+      };
     }
-
-    // PRIORITY 3: Final fallback to text-based
-    const textResult = PickupLocationService.hasPickupFromLocation(product, normalizedLocation);
-    return {
-      hasPickup: textResult,
-      method: 'text',
-      confidence: textResult ? 'medium' : 'low'
-    };
   }
 
   /**
-   * Get comprehensive pickup location data for products
-   * OPTIMIZED: Uses local pickup data files for statistics
+   * Get comprehensive city data for products
+   * MODERNIZED: Uses city-based filtering with locationAddress.city data
    */
   static async getLocationSummary(
     products: RezdyProduct[],
-    useApiData = false // Changed default to prefer local data
+    useApiData = false // Kept for backward compatibility (ignored)
   ): Promise<{
     locations: Array<{
       location: string;
       productCount: number;
-      hasLocalData: boolean; // Changed from hasApiData
+      hasLocalData: boolean; // Always true now (kept for compatibility)
       accuracy: 'high' | 'medium' | 'low';
     }>;
     totalProcessed: number;
-    localDataAvailable: number; // Changed from apiDataAvailable
+    localDataAvailable: number; // Number of products with city data
     dataQuality: 'excellent' | 'good' | 'fair' | 'poor';
-    dataSource: 'local_files' | 'api_calls' | 'text_based';
+    dataSource: 'city_data';
   }> {
     try {
-      // PRIORITY 1: Use local pickup data statistics
-      const localStats = await LocalPickupIndexService.getLocationStats();
+      // Use city-based summary
+      const citySummary = CityFilterService.getCitySummary(products);
       
-      if (localStats.totalProducts > 0) {
-        const locations = Object.entries(localStats.locationCounts)
-          .filter(([_, count]) => count > 0)
-          .map(([location, count]) => ({
-            location,
-            productCount: count,
-            hasLocalData: true,
-            accuracy: 'high' as const,
-          }));
-
-        // Calculate data quality based on local data coverage
-        let dataQuality: 'excellent' | 'good' | 'fair' | 'poor' = 'poor';
-        if (localStats.coverage >= 80) {
-          dataQuality = 'excellent';
-        } else if (localStats.coverage >= 60) {
-          dataQuality = 'good';
-        } else if (localStats.coverage >= 30) {
-          dataQuality = 'fair';
-        }
-
-        return {
-          locations,
-          totalProcessed: products.length,
-          localDataAvailable: localStats.productsWithPickups,
-          dataQuality,
-          dataSource: 'local_files',
-        };
-      }
-
-      // PRIORITY 2: Fallback to API data if enabled and no local data
-      if (useApiData) {
-        const aggregateData = await EnhancedPickupFilter.getAggregatePickupData(products, true);
-        
-        // Calculate data quality based on API availability
-        let dataQuality: 'excellent' | 'good' | 'fair' | 'poor' = 'poor';
-        const apiPercentage = aggregateData.totalProcessed > 0 
-          ? (aggregateData.apiDataAvailable / aggregateData.totalProcessed) * 100 
-          : 0;
-
-        if (apiPercentage >= 80) {
-          dataQuality = 'excellent';
-        } else if (apiPercentage >= 60) {
-          dataQuality = 'good';
-        } else if (apiPercentage >= 30) {
-          dataQuality = 'fair';
-        }
-
-        // Add accuracy assessment to each location
-        const locationsWithAccuracy = aggregateData.locations.map(loc => ({
-          location: loc.location,
-          productCount: loc.productCount,
-          hasLocalData: false, // This is API data
-          accuracy: loc.hasApiData ? 'high' as const : 'medium' as const
-        }));
-
-        return {
-          locations: locationsWithAccuracy,
-          totalProcessed: aggregateData.totalProcessed,
-          localDataAvailable: aggregateData.apiDataAvailable, // Using API data as local fallback
-          dataQuality,
-          dataSource: 'api_calls',
-        };
-      }
-    } catch (error) {
-      console.warn('Failed to get location summary from local/API data:', error);
-    }
-    
-    // PRIORITY 3: Final fallback to basic text-based analysis
-    const locationStats = PickupLocationService.getPickupLocationStats(products);
-    const locations = Object.entries(locationStats)
-      .filter(([_, count]) => count > 0)
-      .map(([location, count]) => ({
-        location,
-        productCount: count,
-        hasLocalData: false,
-        accuracy: 'medium' as const,
+      const locations = citySummary.cities.map(city => ({
+        location: city.city,
+        productCount: city.productCount,
+        hasLocalData: true, // City data is always considered "local"
+        accuracy: city.isSupported ? 'high' as const : 'medium' as const,
       }));
 
-    return {
-      locations,
-      totalProcessed: products.length,
-      localDataAvailable: 0,
-      dataQuality: 'fair',
-      dataSource: 'text_based',
-    };
+      // Calculate data quality based on city data coverage
+      let dataQuality: 'excellent' | 'good' | 'fair' | 'poor' = 'poor';
+      if (citySummary.supportedCityCoverage >= 80) {
+        dataQuality = 'excellent';
+      } else if (citySummary.supportedCityCoverage >= 60) {
+        dataQuality = 'good';
+      } else if (citySummary.supportedCityCoverage >= 30) {
+        dataQuality = 'fair';
+      }
+
+      // Count products with valid city data
+      const productsWithCityData = products.filter(product => {
+        const city = CityFilterService['getCityFromProduct'](product);
+        return city && city.trim().length > 0;
+      }).length;
+
+      return {
+        locations,
+        totalProcessed: citySummary.totalProducts,
+        localDataAvailable: productsWithCityData,
+        dataQuality,
+        dataSource: 'city_data',
+      };
+    } catch (error) {
+      console.warn('Failed to get city summary:', error);
+      
+      // Simple fallback
+      return {
+        locations: [],
+        totalProcessed: products.length,
+        localDataAvailable: 0,
+        dataQuality: 'poor',
+        dataSource: 'city_data',
+      };
+    }
   }
 
   /**
@@ -443,25 +275,48 @@ export class UnifiedPickupFilter {
   }
 
   /**
-   * Preload pickup data for better performance
-   * Should be called early in component lifecycle
+   * Preload city data for better performance
+   * MODERNIZED: City data is already available in products, no preloading needed
    */
   static async preloadPickupData(products: RezdyProduct[]): Promise<void> {
-    const productCodes = products.map(p => p.productCode);
-    await EnhancedPickupFilter.preloadPickupData(productCodes);
+    // City data is already available in products, no preloading needed
+    // This method is kept for backward compatibility
+    console.log('City data preloading: no action needed, data is already available');
   }
 
   /**
-   * Get supported pickup locations in preferred order
+   * Get supported cities in preferred order
    */
   static getSupportedLocations(): string[] {
-    return [...this.SUPPORTED_LOCATIONS];
+    return CityFilterService.getSupportedCities();
   }
 
   /**
    * Clear all caches (useful for testing or when data is updated)
+   * MODERNIZED: No caches to clear with city-based filtering
    */
   static clearAllCaches(): void {
-    EnhancedPickupFilter.clearCache();
+    // No caches to clear with city-based filtering
+    // This method is kept for backward compatibility
+    console.log('City filtering: no caches to clear');
+  }
+
+  /**
+   * Get city filter configuration validation
+   */
+  static validateConfiguration(): {
+    isValid: boolean;
+    issues: string[];
+    supportedCities: number;
+    dataSource: 'city_data';
+  } {
+    const cityValidation = CityFilterService.validateConfiguration();
+    
+    return {
+      isValid: cityValidation.isValid,
+      issues: cityValidation.issues,
+      supportedCities: cityValidation.supportedCities,
+      dataSource: 'city_data',
+    };
   }
 }

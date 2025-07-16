@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { Metadata } from "next";
 import { EnhancedBookingExperience } from "@/components/enhanced-booking-experience";
+import { RezdyPickupLocation } from "@/lib/types/rezdy";
 
 interface BookingPageProps {
   params: Promise<{
@@ -62,6 +63,38 @@ async function getProduct(productCode: string) {
   }
 }
 
+async function getPickupLocations(productCode: string): Promise<RezdyPickupLocation[]> {
+  try {
+    console.log(`getPickupLocations: Pre-loading pickup data for ${productCode}`);
+
+    const url = `${
+      process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000"
+    }/api/rezdy/products/${productCode}/pickups`;
+
+    const response = await fetch(url, {
+      cache: "force-cache",
+      next: { revalidate: 1800 }, // 30 minutes
+    });
+
+    if (!response.ok) {
+      console.warn(
+        `getPickupLocations: Failed to fetch pickup locations: ${response.status}`
+      );
+      return [];
+    }
+
+    const data = await response.json();
+    console.log(
+      `getPickupLocations: Successfully fetched ${data.pickups?.length || 0} pickup locations`
+    );
+
+    return data.pickups || [];
+  } catch (error) {
+    console.warn("getPickupLocations: Error fetching pickup locations:", error);
+    return [];
+  }
+}
+
 export async function generateMetadata({
   params,
 }: BookingPageProps): Promise<Metadata> {
@@ -96,12 +129,17 @@ export default async function BookingPage({
     searchParams: searchParamsData,
   });
 
-  const product = await getProduct(decodedProductCode);
+  // Fetch product and pickup locations in parallel
+  const [product, preloadedPickupLocations] = await Promise.all([
+    getProduct(decodedProductCode),
+    getPickupLocations(decodedProductCode),
+  ]);
 
   console.log("Product lookup result:", {
     productCode: decodedProductCode,
     productFound: !!product,
     productName: product?.name,
+    pickupLocationsFound: preloadedPickupLocations.length,
   });
 
   if (!product) {
@@ -163,6 +201,7 @@ export default async function BookingPage({
         preSelectedLocation={
           searchParamsData.pickupLocation || searchParamsData.location
         }
+        preloadedPickupLocations={preloadedPickupLocations}
       />
     </div>
   );

@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useMemo, useCallback } from "react";
 import { MapPin, Clock, Navigation, Users, Star } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
@@ -30,12 +30,12 @@ interface PickupLocationSelectorProps {
   showPricing?: boolean;
 }
 
-// Extended pickup location type with region for grouping
-interface PickupLocationWithRegion extends RezdyPickupLocation {
-  region?: string;
+// Extended pickup location type with city for grouping
+interface PickupLocationWithCity extends RezdyPickupLocation {
+  city?: string;
 }
 
-export function PickupLocationSelector({
+const PickupLocationSelectorComponent = ({
   pickupLocations,
   bookingOptions,
   selectedPickupLocation,
@@ -46,7 +46,7 @@ export function PickupLocationSelector({
   showDirections = false,
   required = false,
   showPricing = false,
-}: PickupLocationSelectorProps) {
+}: PickupLocationSelectorProps) => {
   // If we have booking options, use those; otherwise fall back to simple pickup locations
   const hasBookingOptions = bookingOptions && bookingOptions.length > 0;
   const hasSimplePickupLocations =
@@ -56,7 +56,8 @@ export function PickupLocationSelector({
     return null;
   }
 
-  const formatAddress = (
+  // Memoize address formatting function
+  const formatAddress = useCallback((
     address: string | RezdyAddress | undefined
   ): string => {
     if (!address) return "";
@@ -71,22 +72,22 @@ export function PickupLocationSelector({
     if (address.state) parts.push(address.state);
     if (address.postCode) parts.push(address.postCode);
     return parts.join(", ");
-  };
+  }, []);
 
-  // Generate consistent ID for pickup locations (API format doesn't have id field)
-  const getLocationId = (location: RezdyPickupLocation): string => {
+  // Memoize location ID generation
+  const getLocationId = useCallback((location: RezdyPickupLocation): string => {
     // Use locationName as the primary identifier, with fallback to coordinates
     return location.locationName || `${location.latitude},${location.longitude}` || 'unknown';
-  };
+  }, []);
 
-  // Safe version that handles null selectedPickupLocation
-  const getSelectedLocationId = (): string => {
+  // Memoize selected location ID
+  const selectedLocationId = useMemo(() => {
     if (!selectedPickupLocation) return '';
     return getLocationId(selectedPickupLocation);
-  };
+  }, [selectedPickupLocation, getLocationId]);
 
-  // Format pickup time display from minutesPrior
-  const formatPickupTime = (minutesPrior?: number): string | null => {
+  // Memoize pickup time formatting
+  const formatPickupTime = useCallback((minutesPrior?: number): string | null => {
     if (!minutesPrior) return null;
     
     const absMinutes = Math.abs(minutesPrior);
@@ -96,64 +97,76 @@ export function PickupLocationSelector({
       return `${absMinutes} minutes after`;
     }
     return null;
-  };
+  }, []);
 
-  // Map pickup times based on location name and region
-  const getPickupTimeForLocation = (location: RezdyPickupLocation): string | null => {
+  // Memoize location city determination
+  const getLocationCity = useCallback((location: RezdyPickupLocation): string => {
+    // First try to extract from address if it's an object
+    if (location.address && typeof location.address === 'object') {
+      const address = location.address as RezdyAddress;
+      if (address.city) {
+        return address.city;
+      }
+    }
+    
+    // Try to extract from location name
     const locationName = location.locationName.toLowerCase();
     
-    // Brisbane Pickups
-    if (locationName.includes('marriott') && locationName.includes('brisbane')) {
-      return '8:45am';
+    if (locationName.includes('brisbane')) {
+      return 'Brisbane';
     }
-    if (locationName.includes('royal on the park')) {
-      return '9:00am';
+    if (locationName.includes('gold coast')) {
+      return 'Gold Coast';
     }
-    if (locationName.includes('emporium') && locationName.includes('southbank')) {
-      return '9:10am';
+    if (locationName.includes('byron')) {
+      return 'Byron Bay';
     }
-    
-    // Gold Coast Pickups
-    if (locationName.includes('star casino') || locationName.includes('the star')) {
-      return '8:45am';
+    if (locationName.includes('tamborine')) {
+      return 'Tamborine Mountain';
     }
-    if (locationName.includes('voco') && locationName.includes('gold coast')) {
-      return '9:00am';
-    }
-    if (locationName.includes('jw marriott')) {
-      return '9:10am';
-    }
-    if (locationName.includes('sheraton') && locationName.includes('mirage')) {
-      return '9:15am';
+    if (locationName.includes('springbrook')) {
+      return 'Springbrook';
     }
     
-    // Brisbane City Loop
-    if (locationName.includes('southbank') && locationName.includes('grey')) {
-      return '8:00am';
-    }
-    if (locationName.includes('petrie terrace') || locationName.includes('windmill cafe')) {
-      return '8:10am';
-    }
-    if (locationName.includes('anzac square') && locationName.includes('ann st')) {
-      return '8:20am';
-    }
-    if (locationName.includes('howard smith wharves')) {
-      return '8:25am';
-    }
-    if (locationName.includes('kangaroo point') && locationName.includes('cliffs')) {
-      return '8:30am';
+    // If no match found, try to extract from address string
+    if (typeof location.address === 'string') {
+      const addressLower = location.address.toLowerCase();
+      if (addressLower.includes('brisbane')) return 'Brisbane';
+      if (addressLower.includes('gold coast')) return 'Gold Coast';
+      if (addressLower.includes('byron')) return 'Byron Bay';
+      if (addressLower.includes('tamborine')) return 'Tamborine Mountain';
+      if (addressLower.includes('springbrook')) return 'Springbrook';
     }
     
-    // Brisbane Connection to Tamborine Mountain
-    if (locationName.includes('tamborine') && locationName.includes('connection')) {
-      return '9:00am';
-    }
-    
-    // Fallback to original minutesPrior formatting if no specific time found
-    return formatPickupTime(location.minutesPrior);
-  };
+    return 'Unknown';
+  }, []);
 
-  const getDirectionsUrl = (location: RezdyPickupLocation): string => {
+  // Simplified pickup time formatting - uses minutesPrior or generic city-based times
+  const getPickupTimeForLocation = useCallback((location: RezdyPickupLocation): string | null => {
+    // First try to use the minutesPrior field if available
+    const priorTime = formatPickupTime(location.minutesPrior);
+    if (priorTime) {
+      return priorTime;
+    }
+    
+    // Fallback to generic city-based pickup times
+    const city = getLocationCity(location);
+    switch (city) {
+      case 'Brisbane':
+        return '8:45am - 9:15am';
+      case 'Gold Coast':
+        return '8:45am - 9:15am';
+      case 'Byron Bay':
+        return '9:00am - 9:30am';
+      case 'Tamborine Mountain':
+        return '9:00am - 9:30am';
+      default:
+        return 'Check details';
+    }
+  }, [formatPickupTime, getLocationCity]);
+
+  // Memoize directions URL generation
+  const getDirectionsUrl = useCallback((location: RezdyPickupLocation): string => {
     if (location.latitude && location.longitude) {
       return `https://www.google.com/maps/dir/?api=1&destination=${location.latitude},${location.longitude}`;
     }
@@ -168,46 +181,61 @@ export function PickupLocationSelector({
     return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
       location.locationName
     )}`;
-  };
+  }, [formatAddress]);
 
-  const formatPrice = (price: number): string => {
+  // Memoize price formatting
+  const formatPrice = useCallback((price: number): string => {
     return new Intl.NumberFormat("en-AU", {
       style: "currency",
       currency: "AUD",
     }).format(price);
-  };
+  }, []);
 
-  const getRegionDisplayName = (region: string): string => {
-    switch (region) {
-      case "brisbane":
-        return "Brisbane Pickups";
-      case "gold-coast":
-        return "Gold Coast Pickups";
-      case "brisbane-city-loop":
-        return "Brisbane City Loop";
-      case "tamborine":
-        return "Tamborine Mountain";
-      default:
-        return region.charAt(0).toUpperCase() + region.slice(1);
-    }
-  };
+  // Memoize city display name mapping
+  const getCityDisplayName = useCallback((city: string): string => {
+    if (!city) return "Other Locations";
+    
+    // Clean up city names for display
+    return city
+      .split(' ')
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+      .join(' ');
+  }, []);
 
-  // Helper function to determine region from location name
-  const getLocationRegion = (location: RezdyPickupLocation): string => {
-    const locationName = location.locationName.toLowerCase();
+
+
+  // Memoize grouped locations for booking options by city
+  const groupedLocationsByOption = useMemo(() => {
+    if (!bookingOptions) return {};
     
-    if (locationName.includes('brisbane') || locationName.includes('city')) {
-      return 'brisbane';
-    }
-    if (locationName.includes('gold coast') || locationName.includes('surfers') || locationName.includes('broadbeach')) {
-      return 'gold-coast';
-    }
-    if (locationName.includes('tamborine')) {
-      return 'tamborine';
-    }
+    return bookingOptions.reduce((acc, option) => {
+      acc[option.id] = option.pickupLocations.reduce(
+        (locationAcc, location) => {
+          const city = getLocationCity(location);
+          if (!locationAcc[city]) locationAcc[city] = [];
+          locationAcc[city].push(location);
+          return locationAcc;
+        },
+        {} as Record<string, RezdyPickupLocation[]>
+      );
+      return acc;
+    }, {} as Record<string, Record<string, RezdyPickupLocation[]>>);
+  }, [bookingOptions, getLocationCity]);
+
+  // Memoize simple pickup locations grouped by city for the simple interface
+  const groupedSimpleLocations = useMemo(() => {
+    if (!pickupLocations) return {};
     
-    return 'other';
-  };
+    return pickupLocations.reduce(
+      (acc, location) => {
+        const city = getLocationCity(location);
+        if (!acc[city]) acc[city] = [];
+        acc[city].push(location);
+        return acc;
+      },
+      {} as Record<string, RezdyPickupLocation[]>
+    );
+  }, [pickupLocations, getLocationCity]);
 
   // Render booking options interface
   if (hasBookingOptions) {
@@ -227,15 +255,7 @@ export function PickupLocationSelector({
         <div className="space-y-4">
           {bookingOptions!.map((option) => {
             const isSelected = selectedBookingOption?.id === option.id;
-            const groupedLocations = option.pickupLocations.reduce(
-              (acc, location) => {
-                const region = getLocationRegion(location);
-                if (!acc[region]) acc[region] = [];
-                acc[region].push(location);
-                return acc;
-              },
-              {} as Record<string, RezdyPickupLocation[]>
-            );
+            const groupedLocations = groupedLocationsByOption[option.id] || {};
 
             return (
               <Card
@@ -298,20 +318,20 @@ export function PickupLocationSelector({
                 </CardHeader>
 
                 <CardContent className="pt-0">
-                  {/* Pickup locations grouped by region */}
+                  {/* Pickup locations grouped by city */}
                   <div className="space-y-3">
                     {Object.entries(groupedLocations).map(
-                      ([region, locations]) => (
-                        <div key={region}>
+                      ([city, locations]) => (
+                        <div key={city}>
                           <h5 className="font-medium text-sm text-gray-700 mb-2">
-                            {getRegionDisplayName(region)}
+                            {getCityDisplayName(city)}
                           </h5>
                           <div className="space-y-2">
                             {locations.map((location) => {
                               const locationId = getLocationId(location);
                               const isLocationSelected =
                                 isSelected &&
-                                getSelectedLocationId() === locationId;
+                                selectedLocationId === locationId;
 
                               return (
                                 <div
@@ -428,7 +448,7 @@ export function PickupLocationSelector({
       <div className="space-y-2">
         {pickupLocations!.map((location) => {
           const locationId = getLocationId(location);
-          const isSelected = getSelectedLocationId() === locationId;
+          const isSelected = selectedLocationId === locationId;
           
           return (
             <Card
@@ -512,4 +532,7 @@ export function PickupLocationSelector({
       )}
     </div>
   );
-}
+};
+
+// Memoize the component to prevent unnecessary re-renders
+export const PickupLocationSelector = React.memo(PickupLocationSelectorComponent);

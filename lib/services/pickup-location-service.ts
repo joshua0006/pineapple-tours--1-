@@ -5,20 +5,26 @@ import { RezdyProduct, RezdyAddress } from '@/lib/types/rezdy';
  */
 export class PickupLocationService {
   // Main pickup locations we support
-  private static readonly SUPPORTED_LOCATIONS = ['Brisbane', 'Gold Coast', 'Mount Tamborine'];
+  private static readonly SUPPORTED_LOCATIONS = ['Brisbane', 'Gold Coast', 'Brisbane Loop'];
   
   // Location name normalization mappings
   private static readonly LOCATION_MAPPINGS: Record<string, string> = {
-    'tamborine': 'Mount Tamborine',
-    'tamborine mountain': 'Mount Tamborine',
-    'mt tamborine': 'Mount Tamborine',
-    'mount tamborine': 'Mount Tamborine',
     'brisbane': 'Brisbane',
     'brisbane city': 'Brisbane',
     'brisbane cbd': 'Brisbane',
     'gold coast': 'Gold Coast',
     'the gold coast': 'Gold Coast',
     'goldcoast': 'Gold Coast',
+    'brisbane loop': 'Brisbane Loop',
+    'brisbane city loop': 'Brisbane Loop',
+    'city loop': 'Brisbane Loop',
+    'loop': 'Brisbane Loop',
+    'southbank': 'Brisbane Loop',
+    'petrie terrace': 'Brisbane Loop',
+    'anzac square': 'Brisbane Loop',
+    'howard smith wharves': 'Brisbane Loop',
+    'kangaroo point': 'Brisbane Loop',
+    'kangaroo point cliffs': 'Brisbane Loop',
   };
 
   // Patterns for extracting pickup locations from text
@@ -118,6 +124,16 @@ export class PickupLocationService {
     
     const trimmed = location.trim().toLowerCase();
     
+    // Special handling for Brisbane Loop keywords (check these first)
+    const loopKeywords = [
+      'southbank', 'petrie terrace', 'anzac square', 'howard smith wharves', 
+      'kangaroo point', 'kangaroo point cliffs', 'loop', 'city loop'
+    ];
+    
+    if (loopKeywords.some(keyword => trimmed.includes(keyword))) {
+      return 'Brisbane Loop';
+    }
+    
     // Check direct mappings
     for (const [key, value] of Object.entries(this.LOCATION_MAPPINGS)) {
       if (trimmed === key || trimmed.includes(key)) {
@@ -126,8 +142,9 @@ export class PickupLocationService {
     }
     
     // Check if it contains any of our supported locations
+    // Note: Brisbane check should come after loop keywords to avoid misclassification
     for (const supportedLocation of this.SUPPORTED_LOCATIONS) {
-      if (trimmed.includes(supportedLocation.toLowerCase())) {
+      if (supportedLocation !== 'Brisbane Loop' && trimmed.includes(supportedLocation.toLowerCase())) {
         return supportedLocation;
       }
     }

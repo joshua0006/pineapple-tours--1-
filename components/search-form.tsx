@@ -31,6 +31,8 @@ import {
   Users,
   CalendarDays,
   RefreshCw,
+  Clock,
+  Info,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -43,14 +45,41 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { DatePicker } from "@/components/ui/date-picker";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useBookingPrompt } from "@/hooks/use-booking-prompt";
 import { useCityProducts } from "@/hooks/use-city-products";
 import { useRezdyDataManager } from "@/hooks/use-rezdy-data-manager";
 import { usePickupLocations } from "@/hooks/use-pickup-locations";
 import { PickupLocationService } from "@/lib/services/pickup-location-service";
+import { getPickupScheduleDisplay } from "@/lib/utils/pickup-location-utils";
+
+// Enhanced pickup locations with detailed schedule information
+const ENHANCED_PICKUP_LOCATIONS = [
+  {
+    value: "Brisbane",
+    label: "Brisbane",
+    description: "Hotel pickups from city center",
+    schedule: "8:45am - 9:10am",
+    stops: ["Marriott", "Royal on the Park", "Emporium Southbank"]
+  },
+  {
+    value: "Gold Coast", 
+    label: "Gold Coast",
+    description: "Hotel pickups from main precincts",
+    schedule: "8:45am - 9:15am",
+    stops: ["Star Casino", "Voco", "JW Marriott", "Sheraton Grand Mirage"]
+  },
+  {
+    value: "Brisbane Loop",
+    label: "Brisbane City Loop",
+    description: "Multiple city stops",
+    schedule: "8:00am - 8:30am",
+    stops: ["Southbank", "Petrie Terrace", "Anzac Square", "Howard Smith Wharves", "Kangaroo Point"]
+  }
+];
 
 // Static pickup locations (fallback)
-const STATIC_PICKUP_LOCATIONS = ["Brisbane", "Gold Coast", "Mount Tamborine"];
+const STATIC_PICKUP_LOCATIONS = ["Brisbane", "Gold Coast", "Brisbane Loop"];
 
 interface SearchFormProps {
   onSearch?: (searchData: any) => void;
@@ -307,6 +336,13 @@ export function SearchForm({
                 Enhanced filtering active
               </span>
             )}
+
+            {/* Show product count summary */}
+            {filteredProducts.length !== rezdyData.products.length && selectedLocation !== "all" && (
+              <span className="ml-2 inline-flex items-center px-2 py-1 rounded-full text-xs bg-blue-100 text-blue-700">
+                {filteredProducts.length} tours available
+              </span>
+            )}
           </p>
         </div>
 
@@ -376,9 +412,28 @@ export function SearchForm({
             <div className="space-y-2 text-start">
               <Label
                 htmlFor="pickup-location"
-                className="font-text text-sm font-medium text-gray-700"
+                className="font-text text-sm font-medium text-gray-700 flex items-center gap-2"
               >
                 Pick up Location
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger>
+                      <Info className="h-3 w-3 text-muted-foreground" />
+                    </TooltipTrigger>
+                    <TooltipContent side="right" className="max-w-sm">
+                      <div className="space-y-2">
+                        <p className="font-medium">Pickup Schedules:</p>
+                        {ENHANCED_PICKUP_LOCATIONS.map((location) => (
+                          <div key={location.value} className="text-xs">
+                            <span className="font-medium">{location.label}:</span> {location.schedule}
+                            <br />
+                            <span className="text-muted-foreground">{location.stops.join(", ")}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
               </Label>
               <div className="relative">
                 <Select
@@ -401,25 +456,82 @@ export function SearchForm({
                     </div>
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">All Locations</SelectItem>
-                    {pickupLocations.map(({ location, count, hasApiData }) => (
-                      <SelectItem key={location} value={location}>
-                        <div className="flex items-center justify-between w-full">
-                          <span>{location}</span>
-                          {count > 0 && (
-                            <div className="flex items-center gap-1 ml-2">
-                              <span className="text-xs text-muted-foreground">({count})</span>
-                              {hasApiData && (
-                                <span className="text-xs text-green-600">✓</span>
-                              )}
-                            </div>
-                          )}
-                        </div>
+                    <SelectItem value="all">
+                      All Locations
+                    </SelectItem>
+                    
+                    {/* Enhanced pickup locations with clean labels */}
+                    {ENHANCED_PICKUP_LOCATIONS.map((location) => (
+                      <SelectItem key={location.value} value={location.value}>
+                        {location.label}
                       </SelectItem>
                     ))}
+                    
+                    {/* Fallback locations from API if they don't match enhanced ones */}
+                    {pickupLocations
+                      .filter(({ location }) => !ENHANCED_PICKUP_LOCATIONS.some(enhanced => enhanced.value === location))
+                      .map(({ location, count, hasApiData }) => (
+                        <SelectItem key={location} value={location}>
+                          <div className="flex items-center justify-between w-full">
+                            <span>{location}</span>
+                            {count > 0 && (
+                              <div className="flex items-center gap-1 ml-2">
+                                <span className="text-xs text-muted-foreground">({count})</span>
+                                {hasApiData && (
+                                  <span className="text-xs text-green-600">✓</span>
+                                )}
+                              </div>
+                            )}
+                          </div>
+                        </SelectItem>
+                      ))}
                   </SelectContent>
                 </Select>
               </div>
+              
+              {/* Show pickup schedule details when a location is selected */}
+              {selectedLocation && selectedLocation !== "all" && (
+                <div className="mt-2 p-3 bg-gray-50 rounded-lg text-xs">
+                  {(() => {
+                    const scheduleData = getPickupScheduleDisplay(selectedLocation);
+                    if (scheduleData) {
+                      return (
+                        <div>
+                          <div className="font-medium text-gray-700 mb-2 flex items-center gap-1">
+                            <Clock className="h-3 w-3" />
+                            {scheduleData.title}
+                          </div>
+                          <div className="space-y-1">
+                            {scheduleData.schedule.slice(0, 3).map((stop, index) => (
+                              <div key={index} className="flex justify-between items-start">
+                                <span className="font-medium text-coral-600">{stop.time}</span>
+                                <span className="text-gray-600 text-right flex-1 ml-2">
+                                  {stop.location}
+                                  {stop.address && (
+                                    <div className="text-gray-500 font-normal">
+                                      {stop.address.length > 30 ? `${stop.address.substring(0, 30)}...` : stop.address}
+                                    </div>
+                                  )}
+                                </span>
+                              </div>
+                            ))}
+                            {scheduleData.schedule.length > 3 && (
+                              <div className="text-gray-500 text-center pt-1">
+                                +{scheduleData.schedule.length - 3} more stops
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    }
+                    return (
+                      <div className="text-gray-600">
+                        Pickup location selected: {selectedLocation}
+                      </div>
+                    );
+                  })()}
+                </div>
+              )}
             </div>
           </div>
 

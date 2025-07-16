@@ -48,8 +48,36 @@ import { useCityProducts } from "@/hooks/use-city-products";
 import { useBookingPrompt } from "@/hooks/use-booking-prompt";
 import { RezdyProduct } from "@/lib/types/rezdy";
 
+// Enhanced pickup locations with detailed schedule information
+const ENHANCED_PICKUP_LOCATIONS = [
+  {
+    value: "Brisbane",
+    label: "Brisbane",
+    description: "Hotel pickups from city center",
+    schedule: "8:45am - 9:10am",
+    stops: ["Marriott", "Royal on the Park", "Emporium Southbank"],
+    details: "Brisbane Marriott • Royal on the Park • Emporium Southbank"
+  },
+  {
+    value: "Gold Coast", 
+    label: "Gold Coast",
+    description: "Hotel pickups from main precincts",
+    schedule: "8:45am - 9:15am",
+    stops: ["Star Casino", "Voco", "JW Marriott", "Sheraton Grand Mirage"],
+    details: "Star Casino • Voco Gold Coast • JW Marriott • Sheraton Grand Mirage"
+  },
+  {
+    value: "Brisbane Loop",
+    label: "Brisbane City Loop",
+    description: "Multiple city stops",
+    schedule: "8:00am - 8:30am",
+    stops: ["Southbank", "Petrie Terrace", "Anzac Square", "Howard Smith Wharves", "Kangaroo Point"],
+    details: "5 stops: Southbank • Petrie Terrace • Anzac Square • Howard Smith Wharves • Kangaroo Point"
+  }
+];
+
 // Static pickup locations (matching search form)
-const STATIC_PICKUP_LOCATIONS = ["Brisbane", "Gold Coast", "Mount Tamborine"];
+const STATIC_PICKUP_LOCATIONS = ["Brisbane", "Gold Coast", "Brisbane Loop"];
 
 interface Filters {
   query: string;
@@ -484,7 +512,12 @@ export default function ToursPage() {
                       >
                         <span className="flex items-center gap-1">
                           <MapPin className="h-3 w-3" />
-                          {filters.pickupLocation}
+                          {(() => {
+                            const locationData = ENHANCED_PICKUP_LOCATIONS.find(
+                              loc => loc.value === filters.pickupLocation
+                            );
+                            return locationData ? locationData.label : filters.pickupLocation;
+                          })()}
                         </span>
                         <button
                           onClick={() => clearFilter("pickupLocation")}
@@ -610,14 +643,29 @@ export default function ToursPage() {
                         </div>
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="all">All Locations</SelectItem>
-                        {STATIC_PICKUP_LOCATIONS.map((location) => (
-                          <SelectItem key={location} value={location}>
-                            {location}
+                        <SelectItem value="all">
+                          All Locations
+                        </SelectItem>
+                        
+                        {/* Enhanced pickup locations with clean labels */}
+                        {ENHANCED_PICKUP_LOCATIONS.map((location) => (
+                          <SelectItem key={location.value} value={location.value}>
+                            {location.label}
                           </SelectItem>
                         ))}
+                        
+                        {/* Legacy static locations as fallback */}
+                        {STATIC_PICKUP_LOCATIONS
+                          .filter((location: string) => !ENHANCED_PICKUP_LOCATIONS.some(enhanced => enhanced.value === location))
+                          .map((location: string) => (
+                            <SelectItem key={location} value={location}>
+                              {location}
+                            </SelectItem>
+                          ))}
                       </SelectContent>
                     </Select>
+                    
+                   
                   </div>
 
                 </div>

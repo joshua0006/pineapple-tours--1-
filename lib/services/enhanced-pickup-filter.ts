@@ -7,7 +7,7 @@ import { PickupStorage } from './pickup-storage';
  * with fallback text-based extraction for comprehensive product filtering
  */
 export class EnhancedPickupFilter {
-  private static readonly SUPPORTED_LOCATIONS = ['Brisbane', 'Gold Coast', 'Mount Tamborine'];
+  private static readonly SUPPORTED_LOCATIONS = ['Brisbane', 'Gold Coast', 'Brisbane Loop'];
   
   // Simplified memory cache for client-side performance only
   private static pickupCache = new Map<string, {
@@ -198,9 +198,85 @@ export class EnhancedPickupFilter {
   private static pickupLocationMatches(pickup: RezdyPickupLocation, targetLocation: string): boolean {
     if (!pickup.locationName) return false;
 
-    const pickupName = pickup.locationName.toLowerCase();
-    const target = targetLocation.toLowerCase();
+    // Combine all available text for comprehensive matching
+    const searchText = [
+      pickup.locationName || '',
+      pickup.address || '',
+      pickup.additionalInstructions || ''
+    ].join(' ').toLowerCase().trim();
 
+    const target = targetLocation.toLowerCase();
+    
+    // Use the detailed mapping from pickup-location-utils
+    const PICKUP_LOCATION_MAPPING = {
+      'brisbane': {
+        keywords: [
+          'brisbane marriott', '1 howard st', 'howard street',
+          'royal on the park', '152 alice st', 'alice street',
+          'star grand casino brisbane', 'casino brisbane',
+          'emporium southbank', '267 grey st', 'grey street southbank',
+          'marriott', 'royal on park', 'emporium'
+        ],
+        excludeKeywords: [
+          'loop', 'city loop'
+        ]
+      },
+      'gold coast': {
+        keywords: [
+          'star casino', '1 casino dr', 'casino drive broadbeach',
+          'voco gold coast', '31 hamilton ave', 'hamilton avenue',
+          'jw marriott', 'marriott gold coast',
+          'sheraton grand mirage', '71 seaworld dr', 'seaworld drive',
+          'sofitel broadbeach', 'surf parade broadbeach',
+          'surfers paradise', 'broadbeach', 'main beach',
+          'burleigh heads', 'currumbin'
+        ],
+        excludeKeywords: []
+      },
+      'brisbane loop': {
+        keywords: [
+          // Southbank stop
+          '267 grey st south brisbane', 'southbank grey st',
+          // Petrie Terrace stop
+          'petrie terrace', 'sexton st', 'roma st', 'windmill cafe',
+          // Anzac Square stop
+          'anzac square', '295 ann st', 'ann street brisbane',
+          // Howard Smith Wharves stop
+          'howard smith wharves', '7 boundary st', 'boundary street',
+          // Kangaroo Point stop
+          'kangaroo point', '66 river terrace', 'river terrace',
+          // General loop identifiers
+          'city loop', 'brisbane loop', 'loop tour'
+        ],
+        excludeKeywords: []
+      }
+    };
+
+    const mapping = PICKUP_LOCATION_MAPPING[target as keyof typeof PICKUP_LOCATION_MAPPING];
+    
+    if (mapping) {
+      // Check exclude keywords first
+      const hasExcludeKeywords = mapping.excludeKeywords.some(keyword => 
+        searchText.includes(keyword.toLowerCase())
+      );
+      
+      if (hasExcludeKeywords && target !== 'brisbane loop') {
+        return false;
+      }
+
+      // Check for matching keywords
+      const hasMatchingKeywords = mapping.keywords.some(keyword => 
+        searchText.includes(keyword.toLowerCase())
+      );
+      
+      if (hasMatchingKeywords) {
+        return true;
+      }
+    }
+    
+    // Fallback to existing logic for backward compatibility
+    const pickupName = pickup.locationName.toLowerCase();
+    
     // Direct match
     if (pickupName.includes(target) || target.includes(pickupName)) {
       return true;

@@ -77,19 +77,51 @@ export function getPrimaryImageUrl(
 
 /**
  * Get all valid images from a product, filtering out broken or empty URLs
+ * Returns placeholder image if no valid images are found
  */
 export function getValidImages(product: RezdyProduct): RezdyImage[] {
-  if (!product.images) return [];
+  if (!product.images) {
+    // Return placeholder image structure when no images exist
+    return [{
+      id: 0,
+      itemUrl: "/pineapple-tour-logo.png",
+      thumbnailUrl: "/pineapple-tour-logo.png",
+      mediumSizeUrl: "/pineapple-tour-logo.png",
+      largeSizeUrl: "/pineapple-tour-logo.png",
+      isPrimary: true,
+      caption: "Pineapple Tours Logo"
+    }];
+  }
 
-  return product.images.filter(
+  const validImages = product.images.filter(
     (image) =>
       image.itemUrl &&
       image.itemUrl.trim() !== "" &&
       !image.itemUrl.includes("placeholder") &&
       image.thumbnailUrl &&
       image.mediumSizeUrl &&
-      image.largeSizeUrl
+      image.largeSizeUrl &&
+      // Filter out URLs with problematic characters that often cause 404s
+      !image.itemUrl.includes("Screen_Shot_") &&
+      !image.itemUrl.includes("_at_") &&
+      !image.itemUrl.includes("_pm.png") &&
+      !image.itemUrl.includes("_am.png")
   );
+
+  // If no valid images found, return placeholder
+  if (validImages.length === 0) {
+    return [{
+      id: 0,
+      itemUrl: "/pineapple-tour-logo.png",
+      thumbnailUrl: "/pineapple-tour-logo.png",
+      mediumSizeUrl: "/pineapple-tour-logo.png",
+      largeSizeUrl: "/pineapple-tour-logo.png",
+      isPrimary: true,
+      caption: "Pineapple Tours Logo"
+    }];
+  }
+
+  return validImages;
 }
 
 /**

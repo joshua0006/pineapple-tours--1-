@@ -1,13 +1,13 @@
   "use client";
 
-  import Image from "next/image";
+  import { ResponsiveImage } from "@/components/ui/responsive-image";
   import Link from "next/link";
 
   import { Button } from "@/components/ui/button";
   import { Card } from "@/components/ui/card";
   import { RezdyProduct } from "@/lib/types/rezdy";
   import {
-    getPrimaryImageUrl,
+    getValidImages,
     generateProductSlug,
   } from "@/lib/utils/product-utils";
 
@@ -53,8 +53,9 @@
       );
     }
 
-    const primaryImageUrl = getPrimaryImageUrl(product);
+    const validImages = getValidImages(product);
     const slug = generateProductSlug(product);
+    const isUsingPlaceholder = validImages[0]?.itemUrl === "/pineapple-tour-logo.png";
 
     const buildDirectBookingUrl = () => {
       const baseUrl = `/booking/${product.productCode}`;
@@ -96,25 +97,30 @@
     return (
       <Card className="relative h-80 w-full overflow-hidden group hover:shadow-2xl transition-all duration-300 border-0 shadow-lg cursor-pointer">
         {/* Background Image */}
-        <div className="absolute inset-0">
-          {primaryImageUrl ? (
-            <Image
-              src={primaryImageUrl}
-              alt={`${product.name} tour`}
-              fill
-              className="transition-transform duration-700 group-hover:scale-110 object-cover"
-              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-              priority
-            />
-          ) : (
-            <div className="w-full h-full bg-gradient-to-br from-gray-300 to-gray-400 flex items-center justify-center">
-              <span className="text-gray-600 text-lg font-medium">No image available</span>
-            </div>
-          )}
+        <div className={`absolute inset-0 ${isUsingPlaceholder ? 'flex items-center justify-center bg-gradient-to-br from-brand-primary/10 to-brand-accent/10' : ''}`}>
+          <ResponsiveImage
+            images={validImages}
+            alt={`${product.name} tour`}
+            aspectRatio="landscape"
+            className={`transition-transform duration-700 group-hover:scale-110 object-cover ${
+              isUsingPlaceholder ? 'object-contain w-40 h-40 opacity-80' : ''
+            }`}
+            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+            priority
+            onImageError={(error) => {
+              console.warn(`Image failed to load for ${product.name} (${product.productCode}):`, error);
+              console.warn('Available images:', validImages.length);
+              console.warn('First image URL:', validImages[0]?.itemUrl);
+            }}
+          />
         </div>
 
         {/* Gradient Overlay */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent group-hover:from-black/80 transition-all duration-300" />
+        <div className={`absolute inset-0 bg-gradient-to-t transition-all duration-300 ${
+          isUsingPlaceholder 
+            ? 'from-brand-primary/90 via-brand-primary/60 to-brand-primary/30 group-hover:from-brand-primary/95' 
+            : 'from-black/70 via-black/20 to-transparent group-hover:from-black/80'
+        }`} />
 
         {/* Content */}
         <div className="absolute bottom-0 left-0 right-0 p-6 text-white">

@@ -22,7 +22,7 @@ const readline = require('readline');
 // Configuration
 const CONFIG = {
   REZDY_BASE_URL: 'https://api.rezdy.com/v1',
-  API_KEY: "5d306fa86b9e4bc5b8c1692ed2a95069",
+  API_KEY: process.env.REZDY_API_KEY || "5d306fa86b9e4bc5b8c1692ed2a95069", // Fallback for backward compatibility
   RATE_LIMIT_DELAY: 600, // 600ms between requests
   DATA_DIR: path.join(__dirname, '../data/pickups'),
   PRODUCTS_FILE: path.join(__dirname, '../tours-only-products.json'),

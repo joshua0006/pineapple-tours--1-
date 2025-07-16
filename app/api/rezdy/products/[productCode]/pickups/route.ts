@@ -42,6 +42,9 @@ async function fetchFromRezdyApi(productCode: string, forceRefresh = false): Pro
       lastRequestTime = Date.now();
 
       const url = `${REZDY_BASE_URL}/products/${productCode}/pickups?apiKey=${API_KEY}`;
+      console.log(`🌐 Making Rezdy API request for product: ${productCode}`);
+      console.log(`📍 Request URL: ${REZDY_BASE_URL}/products/${productCode}/pickups?apiKey=***`);
+      
       const headers: HeadersInit = {
         "Content-Type": "application/json",
         Accept: "application/json",
@@ -53,16 +56,28 @@ async function fetchFromRezdyApi(productCode: string, forceRefresh = false): Pro
         cache: "no-store",
       });
 
+      console.log(`📊 Rezdy API response status: ${response.status} for product ${productCode}`);
+
       if (!response.ok) {
         if (response.status === 404) {
-          // Product has no pickup locations
+          console.log(`ℹ️ Product ${productCode} has no pickup locations (404)`);
           return [];
         }
-        throw new Error(`Rezdy API error: ${response.status}`);
+        const errorText = await response.text();
+        console.error(`❌ Rezdy API error for ${productCode}: ${response.status} - ${errorText}`);
+        throw new Error(`Rezdy API error: ${response.status} - ${response.statusText}`);
       }
 
       const data = await response.json();
-      return data.pickupLocations || [];
+      const pickupLocations = data.pickupLocations || [];
+      
+      console.log(`✅ Successfully fetched ${pickupLocations.length} pickup locations for product ${productCode}`);
+      
+      if (pickupLocations.length > 0) {
+        console.log(`📍 Sample pickup: ${pickupLocations[0]?.locationName || 'N/A'}`);
+      }
+      
+      return pickupLocations;
     } finally {
       // Clean up the ongoing request when done
       ongoingRequests.delete(requestKey);
@@ -84,7 +99,16 @@ export async function GET(
     const refresh = searchParams.get("refresh") === "true";
     const { productCode } = await params;
 
-    console.log(`📡 Pickup request for ${productCode} (refresh: ${refresh})`);
+    console.log(`📡 Pickup API request for product: ${productCode} (refresh: ${refresh})`);
+
+    // Validate product code
+    if (!productCode || productCode.trim() === '') {
+      console.error('❌ Invalid product code provided');
+      return NextResponse.json(
+        { error: 'Product code is required and cannot be empty' },
+        { status: 400 }
+      );
+    }
 
     // Define API client for PickupStorage
     const apiClient = {

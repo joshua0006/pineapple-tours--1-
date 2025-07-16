@@ -123,7 +123,12 @@ export function EnhancedBookingExperience({
   // Fetch pickup locations from Rezdy API (only if not preloaded)
   useEffect(() => {
     const fetchPickupLocations = async () => {
-      if (!product?.productCode) return;
+      if (!product?.productCode) {
+        console.warn('⚠️ No product code available for pickup location fetch');
+        return;
+      }
+      
+      console.log(`🔍 Fetching pickup locations for product: ${product.productCode}`);
       
       // Skip API call if we already have preloaded pickup locations
       if (preloadedPickupLocations && preloadedPickupLocations.length > 0) {
@@ -141,21 +146,49 @@ export function EnhancedBookingExperience({
       const startTime = Date.now();
       
       try {
-        const response = await fetch(`/api/rezdy/products/${product.productCode}/pickups`);
+        const apiUrl = `/api/rezdy/products/${product.productCode}/pickups`;
+        console.log(`📡 Making API request to: ${apiUrl}`);
+        
+        const response = await fetch(apiUrl);
         const responseTime = Date.now() - startTime;
         
         if (!response.ok) {
           trackApiRequest(product.productCode, responseTime, false, false);
-          throw new Error(`Failed to fetch pickup locations: ${response.status}`);
+          const errorText = await response.text();
+          console.error(`❌ API request failed: ${response.status} - ${errorText}`);
+          throw new Error(`Failed to fetch pickup locations: ${response.status} ${response.statusText}`);
         }
         
         const data = await response.json();
-        setApiPickupLocations(data.pickups || []);
+        const pickupLocations = data.pickups || [];
+        
+        console.log(`✅ Pickup locations response:`, {
+          productCode: data.productCode,
+          totalCount: data.totalCount,
+          pickupsReceived: pickupLocations.length,
+          cached: data.cached,
+          source: data.source,
+          hasPickups: data.hasPickups
+        });
+        
+        setApiPickupLocations(pickupLocations);
         
         // Track successful API request
         trackApiRequest(product.productCode, responseTime, data.cached || false, true);
         
-        console.log('✅ Pickup locations loaded from API:', data.pickups?.length || 0);
+        console.log('✅ Pickup locations loaded from API:', pickupLocations.length);
+        
+                 // Log first few pickup locations for debugging
+         if (pickupLocations.length > 0) {
+           console.log('📍 Sample pickup locations:', pickupLocations.slice(0, 3).map((p: RezdyPickupLocation) => ({
+             name: p.locationName,
+             address: p.address,
+             minutesPrior: p.minutesPrior
+           })));
+         } else {
+           console.log('ℹ️ No pickup locations available for this product');
+         }
+        
       } catch (error) {
         console.error('❌ Error fetching pickup locations:', error);
         setPickupLocationsError(error instanceof Error ? error.message : 'Failed to fetch pickup locations');

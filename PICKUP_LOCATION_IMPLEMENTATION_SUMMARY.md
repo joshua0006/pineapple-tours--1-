@@ -235,4 +235,25 @@ curl -H "Content-Type: application/json" \
 ls -la data/pickups/
 ```
 
-This implementation ensures that pickup locations are fetched correctly and securely for each product, with robust error handling and performance optimizations. 
+This implementation ensures that pickup locations are fetched correctly and securely for each product, with robust error handling and performance optimizations.
+
+## Recent Fix: Duplicate API Call Prevention
+
+### Issue Resolved (2025-07-16)
+Fixed multiple API calls being triggered for the same pickup location data.
+
+### Problem
+The pickup location fetching was being triggered up to 3 times:
+1. Server-side preload in `app/booking/[productCode]/page.tsx`
+2. Client-side fetch in `components/enhanced-booking-experience.tsx` via useEffect
+3. Smart preloader call via `preloadOnBookingStart()`
+
+### Solution
+1. **Fixed useEffect dependencies**: Removed `preloadedPickupLocations` from dependency array to prevent re-triggering
+2. **Early return optimization**: Check for preloaded data at the start of useEffect
+3. **Removed redundant preloader**: Eliminated unnecessary `useSmartPickupPreloader` usage
+
+### Result
+- Only one API call when no preloaded data exists
+- Zero API calls when using preloaded data
+- Improved loading performance and reduced server load 

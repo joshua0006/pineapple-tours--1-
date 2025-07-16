@@ -66,7 +66,6 @@ import {
   getPickupValidationMessage, 
   getPickupWarningMessage 
 } from "@/lib/utils/pickup-validation";
-import { useSmartPickupPreloader } from "@/hooks/use-pickup-preloader";
 import { usePickupAnalytics } from "@/lib/utils/pickup-analytics";
 
 interface EnhancedBookingExperienceProps {
@@ -100,9 +99,6 @@ export function EnhancedBookingExperience({
 }: EnhancedBookingExperienceProps) {
   const [bookingErrors, setBookingErrors] = useState<string[]>([]);
   
-  // Initialize smart preloader
-  const { preloadOnBookingStart } = useSmartPickupPreloader();
-  
   // Initialize analytics
   const { trackApiRequest, trackPickupSelection, trackValidationError } = usePickupAnalytics();
   
@@ -114,14 +110,21 @@ export function EnhancedBookingExperience({
           console.log('✅ Product cached for booking:', product.productCode);
         }
       });
-      
-      // Preload pickup locations when user starts booking
-      preloadOnBookingStart(product.productCode);
     }
-  }, [product?.productCode, preloadOnBookingStart]);
+  }, [product?.productCode]);
 
   // Fetch pickup locations from Rezdy API (only if not preloaded)
   useEffect(() => {
+    // Skip if we already have preloaded pickup locations
+    if (preloadedPickupLocations && preloadedPickupLocations.length > 0) {
+      console.log('✅ Using preloaded pickup locations:', preloadedPickupLocations.length);
+      // Track cache hit for analytics
+      trackApiRequest(product.productCode, 0, true, true);
+      // Ensure loading state is false when using preloaded data
+      setPickupLocationsLoading(false);
+      return;
+    }
+
     const fetchPickupLocations = async () => {
       if (!product?.productCode) {
         console.warn('⚠️ No product code available for pickup location fetch');
@@ -129,16 +132,6 @@ export function EnhancedBookingExperience({
       }
       
       console.log(`🔍 Fetching pickup locations for product: ${product.productCode}`);
-      
-      // Skip API call if we already have preloaded pickup locations
-      if (preloadedPickupLocations && preloadedPickupLocations.length > 0) {
-        console.log('✅ Using preloaded pickup locations:', preloadedPickupLocations.length);
-        // Track cache hit for analytics
-        trackApiRequest(product.productCode, 0, true, true);
-        // Ensure loading state is false when using preloaded data
-        setPickupLocationsLoading(false);
-        return;
-      }
       
       setPickupLocationsLoading(true);
       setPickupLocationsError(null);
@@ -203,7 +196,7 @@ export function EnhancedBookingExperience({
     };
 
     fetchPickupLocations();
-  }, [product?.productCode, preloadedPickupLocations, trackApiRequest]);
+  }, [product?.productCode, trackApiRequest]);
 
 
   // Check if product has pickup services
@@ -226,7 +219,7 @@ export function EnhancedBookingExperience({
   );
   const [pickupLocationsLoading, setPickupLocationsLoading] = useState(
     // Only show loading if we don't have preloaded data
-    !preloadedPickupLocations || preloadedPickupLocations.length === 0
+    !(preloadedPickupLocations && preloadedPickupLocations.length > 0)
   );
   const [pickupLocationsError, setPickupLocationsError] = useState<string | null>(null);
   

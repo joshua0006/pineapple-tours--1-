@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { RezdyPickupLocation } from "@/lib/types/rezdy";
 import { PickupStorage } from "@/lib/services/pickup-storage";
 
-const REZDY_BASE_URL = "https://api.rezdy.com/v1";
+const REZDY_BASE_URL = process.env.REZDY_API_URL || "https://api.rezdy.com/v1";
 const API_KEY = process.env.REZDY_API_KEY;
 
 // Rate limiting for API calls
@@ -101,11 +101,31 @@ export async function GET(
 
     console.log(`📡 Pickup API request for product: ${productCode} (refresh: ${refresh})`);
 
+    // Validate environment setup
+    if (!API_KEY) {
+      console.error('❌ REZDY_API_KEY environment variable is not set');
+      return NextResponse.json(
+        { 
+          error: 'Server configuration error',
+          message: 'Rezdy API key not configured',
+          pickups: [],
+          productCode,
+          hasPickups: false
+        },
+        { status: 500 }
+      );
+    }
+
     // Validate product code
     if (!productCode || productCode.trim() === '') {
       console.error('❌ Invalid product code provided');
       return NextResponse.json(
-        { error: 'Product code is required and cannot be empty' },
+        { 
+          error: 'Product code is required and cannot be empty',
+          pickups: [],
+          productCode: productCode || '',
+          hasPickups: false
+        },
         { status: 400 }
       );
     }
@@ -142,28 +162,59 @@ export async function GET(
       }
     }
 
-    return NextResponse.json({
+    const response = {
       pickups,
       productCode,
       totalCount: pickups.length,
       cached: fromCache,
       lastUpdated: fetchedAt,
       hasPickups: pickups.length > 0,
-      source: fromCache ? 'file_storage' : 'rezdy_api',
+      source: fromCache ? 'memory_cache' : 'rezdy_api',
+      environment: process.env.VERCEL ? 'vercel' : 'local',
       cacheStats: {
         hitCount: fromCache ? 1 : 0,
         age: fromCache ? 'permanent' : 0,
       },
+    };
+
+    console.log(`✅ Pickup API response for ${productCode}:`, {
+      totalCount: pickups.length,
+      cached: fromCache,
+      hasPickups: pickups.length > 0,
+      source: response.source,
+      environment: response.environment
     });
+
+    return NextResponse.json(response);
   } catch (error) {
-    console.error("Error fetching product pickups:", error);
+    console.error("❌ Error fetching product pickups:", error);
+    
+    // Provide specific error messages for debugging
+    let errorMessage = "Failed to fetch product pickups";
+    let details = error instanceof Error ? error.message : "Unknown error";
+    
+    if (error instanceof Error) {
+      if (error.message.includes('API key')) {
+        errorMessage = "API authentication error";
+        details = "Please check Rezdy API key configuration";
+      } else if (error.message.includes('fetch')) {
+        errorMessage = "Network error connecting to Rezdy API";
+        details = "Please check internet connection and API endpoint";
+      } else if (error.message.includes('timeout')) {
+        errorMessage = "Request timeout";
+        details = "Rezdy API response took too long";
+      }
+    }
+    
     return NextResponse.json(
       {
-        error: "Failed to fetch product pickups",
-        message: error instanceof Error ? error.message : "Unknown error",
+        error: errorMessage,
+        message: details,
         pickups: [],
         productCode: (await params).productCode,
         hasPickups: false,
+        environment: process.env.VERCEL ? 'vercel' : 'local',
+        timestamp: new Date().toISOString(),
       },
       { status: 500 }
     );

@@ -12,8 +12,8 @@ interface StoredPickupData {
 }
 
 /**
- * Permanent file-based storage service for pickup location data
- * Stores pickup data permanently to eliminate repeated API calls
+ * Pickup location storage service with Vercel compatibility
+ * Uses file storage in development, memory-only in production
  */
 export class PickupStorage {
   private static readonly PICKUP_DIR = path.join(process.cwd(), 'data', 'pickups');
@@ -24,6 +24,26 @@ export class PickupStorage {
   
   // Track background refresh operations to avoid duplicates
   private static refreshPromises = new Map<string, Promise<void>>();
+  
+  // In-memory cache for serverless environments
+  private static memoryCache = new Map<string, {
+    data: RezdyPickupLocation[];
+    fetchedAt: string;
+    source: StoredPickupData['source'];
+  }>();
+  
+  /**
+   * Check if we're running in a serverless environment (like Vercel)
+   */
+  private static isServerlessEnvironment(): boolean {
+    return !!(
+      process.env.VERCEL ||
+      process.env.VERCEL_ENV ||
+      process.env.AWS_LAMBDA_FUNCTION_NAME ||
+      process.env.NETLIFY ||
+      process.env.NODE_ENV === 'production' && !process.env.ENABLE_FILE_STORAGE
+    );
+  }
 
   /**
    * Initialize pickup storage (create directory if needed)
@@ -50,6 +70,11 @@ export class PickupStorage {
    * Check if pickup data exists for a product
    */
   static async hasPickupData(productCode: string): Promise<boolean> {
+    // In serverless environments, check memory cache only
+    if (this.isServerlessEnvironment()) {
+      return this.memoryCache.has(productCode);
+    }
+    
     try {
       const filePath = this.getFilePath(productCode);
       await fs.promises.access(filePath, fs.constants.F_OK);
@@ -60,9 +85,19 @@ export class PickupStorage {
   }
 
   /**
-   * Load pickup data from file
+   * Load pickup data from file or memory cache
    */
   static async loadPickupData(productCode: string): Promise<RezdyPickupLocation[] | null> {
+    // In serverless environments, use memory cache only
+    if (this.isServerlessEnvironment()) {
+      const cached = this.memoryCache.get(productCode);
+      if (cached) {
+        console.log(`💾 Using memory cache for ${productCode} (${cached.data.length} locations)`);
+        return cached.data;
+      }
+      return null;
+    }
+    
     try {
       const filePath = this.getFilePath(productCode);
       const fileContent = await fs.promises.readFile(filePath, 'utf8');
@@ -99,21 +134,34 @@ export class PickupStorage {
   }
 
   /**
-   * Save pickup data to file
+   * Save pickup data to file or memory cache
    */
   static async savePickupData(
     productCode: string, 
     pickups: RezdyPickupLocation[],
     source: StoredPickupData['source'] = 'rezdy_api'
   ): Promise<void> {
+    const timestamp = new Date().toISOString();
+    
+    // In serverless environments, use memory cache only
+    if (this.isServerlessEnvironment()) {
+      this.memoryCache.set(productCode, {
+        data: pickups,
+        fetchedAt: timestamp,
+        source
+      });
+      console.log(`💾 Saved pickup data to memory cache for ${productCode} (${pickups.length} locations)`);
+      return;
+    }
+    
     await this.initialize();
 
     const data: StoredPickupData = {
       productCode,
       pickups,
-      fetchedAt: new Date().toISOString(),
+      fetchedAt: timestamp,
       source,
-      lastAccessed: new Date().toISOString(),
+      lastAccessed: timestamp,
       accessCount: 1,
     };
 
@@ -141,6 +189,13 @@ export class PickupStorage {
    * Delete pickup data file for a product
    */
   static async deletePickupData(productCode: string): Promise<void> {
+    // In serverless environments, delete from memory cache
+    if (this.isServerlessEnvironment()) {
+      this.memoryCache.delete(productCode);
+      console.log(`🗑️ Deleted pickup data from memory cache for ${productCode}`);
+      return;
+    }
+    
     try {
       const filePath = this.getFilePath(productCode);
       await fs.promises.unlink(filePath);

@@ -213,6 +213,9 @@ export function EnhancedBookingExperience({
     useState<RezdyPickupLocation | null>(null);
   const [, setWasSessionAutoSelected] = useState(false);
   
+  // Calendar popover state
+  const [calendarOpen, setCalendarOpen] = useState(false);
+  
   // API pickup locations state - initialize with preloaded data if available
   const [apiPickupLocations, setApiPickupLocations] = useState<RezdyPickupLocation[]>(
     preloadedPickupLocations || []
@@ -611,6 +614,11 @@ export function EnhancedBookingExperience({
     setSelectedSession(null);
     setSelectedPickupLocation(null);
     setWasSessionAutoSelected(false); // Reset auto-selection flag when date changes
+    
+    // Close the calendar popover after date selection
+    if (date) {
+      setCalendarOpen(false);
+    }
   };
 
   const handleSessionSelect = useCallback(
@@ -1049,7 +1057,7 @@ export function EnhancedBookingExperience({
                 <div>
                   <Label className="text-base font-medium">Select Date</Label>
                   <div className="mt-2">
-                    <Popover>
+                    <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
                       <PopoverTrigger asChild>
                         <Button
                           variant="outline"

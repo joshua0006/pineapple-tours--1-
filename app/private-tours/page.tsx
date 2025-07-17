@@ -7,8 +7,6 @@ import {
   MapPin,
   Star,
   RefreshCw,
-  ChevronLeft,
-  ChevronRight,
   Crown,
   Users,
   Calendar,
@@ -32,11 +30,9 @@ import { RezdyProduct } from "@/lib/types/rezdy";
 export default function PrivateToursPage() {
   const router = useRouter();
 
-  // Local state for search and pagination
+  // Local state for search
   const [searchQuery, setSearchQuery] = useState("");
   const [localQuery, setLocalQuery] = useState("");
-  const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 12;
 
   // Fetch all products
   const { products, loading, error, refreshProducts, totalCount, isCached } =
@@ -92,50 +88,20 @@ export default function PrivateToursPage() {
     return filtered;
   }, [products, searchQuery]);
 
-  // Pagination
-  const { paginatedTours, totalPages } = useMemo(() => {
-    const startIndex = (currentPage - 1) * itemsPerPage;
-    const endIndex = startIndex + itemsPerPage;
-    const paginated = privateTours.slice(startIndex, endIndex);
-    const pages = Math.max(1, Math.ceil(privateTours.length / itemsPerPage));
-
-    return {
-      paginatedTours: paginated,
-      totalPages: pages,
-    };
-  }, [privateTours, currentPage, itemsPerPage]);
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setSearchQuery(localQuery);
-    setCurrentPage(1); // Reset to first page when searching
   };
 
   const handleRetry = () => {
     refreshProducts();
   };
 
-  const goToPage = (page: number) => {
-    setCurrentPage(page);
-    window.scrollTo({ top: 0, behavior: "smooth" });
-  };
-
-  const nextPage = () => {
-    if (currentPage < totalPages) {
-      goToPage(currentPage + 1);
-    }
-  };
-
-  const prevPage = () => {
-    if (currentPage > 1) {
-      goToPage(currentPage - 1);
-    }
-  };
 
   const clearSearch = () => {
     setSearchQuery("");
     setLocalQuery("");
-    setCurrentPage(1);
   };
 
   return (
@@ -218,16 +184,9 @@ export default function PrivateToursPage() {
                   </span>
                 ) : (
                   <>
-                    {paginatedTours.length > 0
-                      ? `Showing ${paginatedTours.length} of ${privateTours.length} private tours`
-                      : privateTours.length === 0
-                      ? "No private tours found"
-                      : ""}
-                    {totalPages > 1 && (
-                      <span className="text-muted-foreground">
-                        {` • Page ${currentPage} of ${totalPages}`}
-                      </span>
-                    )}
+                    {privateTours.length > 0
+                      ? `Showing ${privateTours.length} private tours`
+                      : "No private tours found"}
                   </>
                 )}
               </div>
@@ -247,78 +206,15 @@ export default function PrivateToursPage() {
 
           {!loading && !error && (
             <>
-              {paginatedTours.length > 0 ? (
-                <>
-                  <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-                    {paginatedTours.map((product: RezdyProduct) => (
-                      <DynamicTourCard
-                        key={product.productCode}
-                        product={product}
-                      />
-                    ))}
-                  </div>
-
-                  {/* Pagination Controls */}
-                  {totalPages > 1 && (
-                    <div className="mt-8 flex items-center justify-center gap-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={prevPage}
-                        disabled={currentPage === 1}
-                        className="flex items-center gap-1"
-                      >
-                        <ChevronLeft className="h-4 w-4" />
-                        Previous
-                      </Button>
-
-                      <div className="flex items-center gap-1">
-                        {Array.from(
-                          { length: Math.min(5, totalPages) },
-                          (_, i) => {
-                            let pageNum;
-                            if (totalPages <= 5) {
-                              pageNum = i + 1;
-                            } else if (currentPage <= 3) {
-                              pageNum = i + 1;
-                            } else if (currentPage >= totalPages - 2) {
-                              pageNum = totalPages - 4 + i;
-                            } else {
-                              pageNum = currentPage - 2 + i;
-                            }
-
-                            return (
-                              <Button
-                                key={pageNum}
-                                variant={
-                                  currentPage === pageNum
-                                    ? "default"
-                                    : "outline"
-                                }
-                                size="sm"
-                                onClick={() => goToPage(pageNum)}
-                                className="w-10 h-10 p-0"
-                              >
-                                {pageNum}
-                              </Button>
-                            );
-                          }
-                        )}
-                      </div>
-
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={nextPage}
-                        disabled={currentPage === totalPages}
-                        className="flex items-center gap-1"
-                      >
-                        Next
-                        <ChevronRight className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  )}
-                </>
+              {privateTours.length > 0 ? (
+                <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                  {privateTours.map((product: RezdyProduct) => (
+                    <DynamicTourCard
+                      key={product.productCode}
+                      product={product}
+                    />
+                  ))}
+                </div>
               ) : (
                 <div className="text-center py-12">
                   <div className="mx-auto max-w-md">
@@ -357,7 +253,7 @@ export default function PrivateToursPage() {
           )}
 
           {/* Custom Tour Request Section */}
-          {!loading && !error && paginatedTours.length > 0 && (
+          {!loading && !error && privateTours.length > 0 && (
             <section className="mt-16 bg-gradient-to-r from-amber-50 to-orange-50 rounded-lg p-8">
               <div className="max-w-3xl mx-auto text-center">
                 <Crown className="mx-auto h-12 w-12 text-amber-600 mb-4" />

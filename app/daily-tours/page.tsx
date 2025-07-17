@@ -7,8 +7,6 @@ import {
   MapPin,
   Star,
   RefreshCw,
-  ChevronLeft,
-  ChevronRight,
   Clock,
   Calendar,
   Users,
@@ -31,41 +29,22 @@ import { RezdyProduct } from "@/lib/types/rezdy";
 export default function DailyToursPage() {
   const router = useRouter();
 
-  // Local state for search and pagination
+  // Local state for search
   const [searchQuery, setSearchQuery] = useState("");
   const [localQuery, setLocalQuery] = useState("");
-  const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 12;
 
   // Fetch all products
   const { products, loading, error, refreshProducts, totalCount, isCached } =
     useAllProducts();
 
-  // Filter for daily tours (exclude private tours, custom tours, gift cards)
+  // Filter for daily tours (only include tours with productType: "DAYTOUR")
   const dailyTours = useMemo(() => {
     let filtered = [...products];
 
-    // Filter for daily tours only
+    // Filter for daily tours only - use productType for accurate filtering
     filtered = filtered.filter((product) => {
-      const name = product.name.toLowerCase();
-      const description = product.shortDescription?.toLowerCase() || "";
-
-      // Exclude private tours, custom tours, gift cards
-      const isPrivate =
-        name.includes("private") ||
-        name.includes("charter") ||
-        description.includes("private");
-      const isCustom =
-        name.includes("custom") ||
-        name.includes("bespoke") ||
-        description.includes("custom");
-      const isGiftCard =
-        product.productType === "GIFT_CARD" ||
-        name.includes("gift card") ||
-        name.includes("gift voucher");
-
-      // Include only scheduled daily tours
-      return !isPrivate && !isCustom && !isGiftCard;
+      // Primary filter: only include DAYTOUR products
+      return product.productType === "DAYTOUR";
     });
 
     // Apply search filter
@@ -85,50 +64,20 @@ export default function DailyToursPage() {
     return filtered;
   }, [products, searchQuery]);
 
-  // Pagination
-  const { paginatedTours, totalPages } = useMemo(() => {
-    const startIndex = (currentPage - 1) * itemsPerPage;
-    const endIndex = startIndex + itemsPerPage;
-    const paginated = dailyTours.slice(startIndex, endIndex);
-    const pages = Math.max(1, Math.ceil(dailyTours.length / itemsPerPage));
-
-    return {
-      paginatedTours: paginated,
-      totalPages: pages,
-    };
-  }, [dailyTours, currentPage, itemsPerPage]);
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setSearchQuery(localQuery);
-    setCurrentPage(1); // Reset to first page when searching
   };
 
   const handleRetry = () => {
     refreshProducts();
   };
 
-  const goToPage = (page: number) => {
-    setCurrentPage(page);
-    window.scrollTo({ top: 0, behavior: "smooth" });
-  };
-
-  const nextPage = () => {
-    if (currentPage < totalPages) {
-      goToPage(currentPage + 1);
-    }
-  };
-
-  const prevPage = () => {
-    if (currentPage > 1) {
-      goToPage(currentPage - 1);
-    }
-  };
 
   const clearSearch = () => {
     setSearchQuery("");
     setLocalQuery("");
-    setCurrentPage(1);
   };
 
   return (
@@ -155,7 +104,7 @@ export default function DailyToursPage() {
         ]}
         backButton={{
           label: "Back to Tours",
-          icon: ChevronLeft,
+          icon: Clock,
           onClick: () => router.push("/tours"),
         }}
       />
@@ -211,16 +160,9 @@ export default function DailyToursPage() {
                   </span>
                 ) : (
                   <>
-                    {paginatedTours.length > 0
-                      ? `Showing ${paginatedTours.length} of ${dailyTours.length} daily tours`
-                      : dailyTours.length === 0
-                      ? "No daily tours found"
-                      : ""}
-                    {totalPages > 1 && (
-                      <span className="text-muted-foreground">
-                        {` • Page ${currentPage} of ${totalPages}`}
-                      </span>
-                    )}
+                    {dailyTours.length > 0
+                      ? `Showing ${dailyTours.length} daily tours`
+                      : "No daily tours found"}
                   </>
                 )}
               </div>
@@ -240,78 +182,15 @@ export default function DailyToursPage() {
 
           {!loading && !error && (
             <>
-              {paginatedTours.length > 0 ? (
-                <>
-                  <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-                    {paginatedTours.map((product: RezdyProduct) => (
-                      <DynamicTourCard
-                        key={product.productCode}
-                        product={product}
-                      />
-                    ))}
-                  </div>
-
-                  {/* Pagination Controls */}
-                  {totalPages > 1 && (
-                    <div className="mt-8 flex items-center justify-center gap-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={prevPage}
-                        disabled={currentPage === 1}
-                        className="flex items-center gap-1"
-                      >
-                        <ChevronLeft className="h-4 w-4" />
-                        Previous
-                      </Button>
-
-                      <div className="flex items-center gap-1">
-                        {Array.from(
-                          { length: Math.min(5, totalPages) },
-                          (_, i) => {
-                            let pageNum;
-                            if (totalPages <= 5) {
-                              pageNum = i + 1;
-                            } else if (currentPage <= 3) {
-                              pageNum = i + 1;
-                            } else if (currentPage >= totalPages - 2) {
-                              pageNum = totalPages - 4 + i;
-                            } else {
-                              pageNum = currentPage - 2 + i;
-                            }
-
-                            return (
-                              <Button
-                                key={pageNum}
-                                variant={
-                                  currentPage === pageNum
-                                    ? "default"
-                                    : "outline"
-                                }
-                                size="sm"
-                                onClick={() => goToPage(pageNum)}
-                                className="w-10 h-10 p-0"
-                              >
-                                {pageNum}
-                              </Button>
-                            );
-                          }
-                        )}
-                      </div>
-
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={nextPage}
-                        disabled={currentPage === totalPages}
-                        className="flex items-center gap-1"
-                      >
-                        Next
-                        <ChevronRight className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  )}
-                </>
+              {dailyTours.length > 0 ? (
+                <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                  {dailyTours.map((product: RezdyProduct) => (
+                    <DynamicTourCard
+                      key={product.productCode}
+                      product={product}
+                    />
+                  ))}
+                </div>
               ) : (
                 <div className="text-center py-12">
                   <div className="mx-auto max-w-md">

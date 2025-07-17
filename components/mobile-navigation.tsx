@@ -52,6 +52,7 @@ export function MobileNavigation({
             <img
               src="/pineapple-tour-logo.png"
               alt="Pineapple Tours"
+              loading="lazy"
               className={cn(
                 "transition-all duration-300 ease-in-out drop-shadow-sm",
                 "h-10 sm:h-12" // Responsive logo size

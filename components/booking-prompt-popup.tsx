@@ -435,6 +435,7 @@ export function BookingPromptPopup({
                   alt="Pineapple Tours"
                   width={48}
                   height={48}
+                  loading="lazy"
                   className="object-contain"
                 />
               </div>

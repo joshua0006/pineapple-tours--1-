@@ -21,13 +21,10 @@ export function PreloadResources() {
       {/* <link rel="preload" href="/styles/globals.css" as="style" /> */}
 
       {/* Hero / Above-the-fold images */}
-      <link
-        rel="preload"
-        href="/pineapple-tour-logo.png"
-        as="image"
-        type="image/png"
-        crossOrigin="anonymous"
-      />
+      {/* Logo preload removed to prevent unused preload warnings.
+          The logo is used in conditionally rendered components (mobile nav, popups)
+          that may not appear immediately on page load. The main header logo
+          will load fast enough without preloading due to its small size. */}
 
       {/* Note: hop-on-hop-off images removed from preload as they're loaded conditionally
           with skeleton loading states, causing unused preload warnings */}

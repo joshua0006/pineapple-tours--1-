@@ -4,6 +4,11 @@ import React from "react";
  * PreloadResources embeds <link rel="preload"> directives for critical assets
  * that are required for the first paint. Only include truly critical assets here
  * to avoid degrading performance by clogging the preload queue.
+ * 
+ * Note: Font preloading has been intentionally removed. The fonts (Barlow, Open_Sans, Work_Sans)
+ * use display: "optional" which allows them to be skipped on slow connections. Preloading fonts
+ * with display: "optional" is counterproductive as it forces downloads that may not be used,
+ * causing unused preload warnings and wasting bandwidth.
  */
 export function PreloadResources() {
   return (
@@ -15,31 +20,17 @@ export function PreloadResources() {
           future-proofing. */}
       {/* <link rel="preload" href="/styles/globals.css" as="style" /> */}
 
-      {/* Fonts are automatically preloaded by next/font. Preconnect to speed them up further. */}
-      <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
-      <link rel="preconnect" href="https://fonts.googleapis.com" />
-
       {/* Hero / Above-the-fold images */}
-      <link
-        rel="preload"
-        href="/scenic-rim-landscape.jpg"
-        as="image"
-        type="image/jpeg"
-      />
       <link
         rel="preload"
         href="/pineapple-tour-logo.png"
         as="image"
         type="image/png"
+        crossOrigin="anonymous"
       />
 
-      {/* Hop-on hop-off critical images */}
-      <link
-        rel="preload"
-        href="/hop-on-hop-off/hop-on-hop-off-bus-1.jpg"
-        as="image"
-        type="image/jpeg"
-      />
+      {/* Note: hop-on-hop-off images removed from preload as they're loaded conditionally
+          with skeleton loading states, causing unused preload warnings */}
 
       {/* Prefetch critical API endpoints for faster navigation */}
       <link rel="prefetch" href="/api/tours" />
@@ -50,9 +41,13 @@ export function PreloadResources() {
       {/* DNS prefetch for external services */}
       <link rel="dns-prefetch" href="//api.rezdy.com" />
       <link rel="dns-prefetch" href="//maps.googleapis.com" />
+      <link rel="dns-prefetch" href="//fonts.googleapis.com" />
+      <link rel="dns-prefetch" href="//fonts.gstatic.com" />
 
-      {/* Preconnect to Rezdy API for faster data fetching */}
+      {/* Preconnect to external services for faster loading */}
       <link rel="preconnect" href="https://api.rezdy.com" />
+      <link rel="preconnect" href="https://fonts.googleapis.com" crossOrigin="" />
+      <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
 
       {/* Prefetch common product data endpoints */}
       <link rel="prefetch" href="/api/rezdy/categories" />

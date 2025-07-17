@@ -993,12 +993,6 @@ export function EnhancedBookingExperience({
               </p>
             </div>
             <div className="flex items-center gap-2">
-              <Button variant="ghost" size="sm">
-                <Heart className="h-4 w-4" />
-              </Button>
-              <Button variant="ghost" size="sm">
-                <Share2 className="h-4 w-4" />
-              </Button>
               <Link href={`/tours/${product.productCode}`}>
                 <Button variant="outline" size="sm">
                   <ArrowLeft className="h-4 w-4 mr-2" />

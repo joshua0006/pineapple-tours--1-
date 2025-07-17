@@ -17,18 +17,21 @@ const barlow = Barlow({
   subsets: ["latin"],
   weight: ["600"],
   variable: "--font-barlow",
+  display: "optional",
 });
 
 const openSans = Open_Sans({
   subsets: ["latin"],
   weight: ["400"],
   variable: "--font-open-sans",
+  display: "optional",
 });
 
 const workSans = Work_Sans({
   subsets: ["latin"],
   weight: ["400"],
   variable: "--font-work-sans",
+  display: "optional",
 });
 
 export const metadata = {

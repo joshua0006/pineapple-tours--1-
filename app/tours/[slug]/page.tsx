@@ -887,33 +887,7 @@ export default function TourDetailPage({
                       </Link>
                     </div>
 
-                    <div className="text-center text-sm text-gray-600 mb-6">
-                      Free cancellation up to 24 hours before
-                    </div>
-
-                    {/* Quick Info */}
-                    <div className="space-y-4 pt-6 border-t border-gray-200">
-                      <div className="flex items-center gap-3">
-                        <MapPin className="h-4 w-4 text-coral-500" />
-                        <span className="text-sm text-gray-700">
-                          {location}
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-3">
-                        <Users className="h-4 w-4 text-coral-500" />
-                        <span className="text-sm text-gray-700">
-                          {selectedProduct.quantityRequiredMin || 1}-
-                          {selectedProduct.quantityRequiredMax || 20} people
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-3">
-                        <Shield className="h-4 w-4 text-coral-500" />
-                        <span className="text-sm text-gray-700">
-                          Safety certified
-                        </span>
-                      </div>
-                    </div>
-
+                   
                     <div className="pt-6 border-t border-gray-200 mt-6">
                       <Link href="/contact">
                         <Button
@@ -964,12 +938,7 @@ export default function TourDetailPage({
                       {/* Enhanced Pickup Information */}
                       {hasPickupLocations && pickupLocations.length > 0 && (
                         <div className="pt-2 border-t border-gray-100">
-                          <div className="flex items-center gap-2 mb-2">
-                            <div className="w-2 h-2 bg-emerald-500 rounded-full"></div>
-                            <span className="text-xs font-medium text-gray-700">
-                              Pickup Service Available
-                            </span>
-                          </div>
+                         
                           <p className="text-xs text-gray-600 mb-2">
                             {pickupLocations.length} pickup location{pickupLocations.length > 1 ? "s" : ""} available
                           </p>

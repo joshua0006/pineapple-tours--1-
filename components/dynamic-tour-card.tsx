@@ -6,6 +6,8 @@
   import { Button } from "@/components/ui/button";
   import { Card } from "@/components/ui/card";
   import { RezdyProduct } from "@/lib/types/rezdy";
+  import { Badge } from "@/components/ui/badge";
+  import { Users } from "lucide-react";
   import {
     getValidImages,
     generateProductSlug,
@@ -54,6 +56,14 @@
     }
 
     const validImages = getValidImages(product);
+    
+    // Use 3rd and 4th images for brewery tour products
+    const breweryTourProducts = ['PRVHY0', 'PTS7WT'];
+    const isBreweryTour = breweryTourProducts.includes(product.productCode);
+    const imagesToUse = isBreweryTour && validImages.length >= 4 
+      ? validImages.slice(2, 4) // Use 3rd and 4th images (indices 2-3)
+      : validImages; // Use all valid images for other products
+    
     const slug = generateProductSlug(product);
 
     const buildDirectBookingUrl = () => {
@@ -97,7 +107,7 @@
         {/* Background Image - Full Height */}
         <div className="absolute inset-0">
           <ResponsiveImage
-            images={validImages}
+            images={imagesToUse}
             alt={`${product.name} tour`}
             aspectRatio="landscape"
             className="transition-transform duration-700 group-hover:scale-110 object-cover w-full h-full"
@@ -106,8 +116,8 @@
             priority
             onImageError={(error) => {
               console.warn(`Image failed to load for ${product.name} (${product.productCode}):`, error);
-              console.warn('Available images:', validImages.length);
-              console.warn('First image URL:', validImages[0]?.itemUrl);
+              console.warn('Available images:', imagesToUse.length);
+              console.warn('First image URL:', imagesToUse[0]?.itemUrl);
             }}
           />
         </div>

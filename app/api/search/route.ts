@@ -122,8 +122,10 @@ export async function GET(request: NextRequest) {
     const data = await response.json();
     let products = data.products || data.data || [];
 
-    // Apply comprehensive product filtering first
-    products = ProductFilterService.filterProducts(products);
+    // Apply comprehensive product filtering first, including participant filtering
+    products = ProductFilterService.filterProducts(products, {
+      participants: filters.participants ? parseInt(filters.participants) : undefined
+    });
     console.log(`Applied comprehensive filtering: ${products.length} products remaining`);
 
     // Filter products based on search criteria

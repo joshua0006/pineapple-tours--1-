@@ -22,9 +22,37 @@ export class ProductFilterService {
       includeGiftCards?: boolean;
       includeInactive?: boolean;
       skipWhitelist?: boolean;
+      participants?: number;
     }
   ): RezdyProduct[] {
-    return products.filter(product => !this.shouldExcludeProduct(product, options));
+    let filtered = products.filter(product => !this.shouldExcludeProduct(product, options));
+    
+    // Apply participant filtering if specified
+    if (options?.participants !== undefined && options.participants > 0) {
+      filtered = this.filterByParticipants(filtered, options.participants);
+    }
+    
+    return filtered;
+  }
+
+  /**
+   * Filter products by participant count
+   * @param products - Array of Rezdy products to filter
+   * @param participantCount - Number of participants
+   * @returns Products that can accommodate the participant count
+   */
+  static filterByParticipants(
+    products: RezdyProduct[],
+    participantCount: number
+  ): RezdyProduct[] {
+    return products.filter(product => {
+      // Default values if not specified
+      const minRequired = product.quantityRequiredMin || 1;
+      const maxAllowed = product.quantityRequiredMax || 999;
+      
+      // Product is valid if participant count is within the allowed range
+      return participantCount >= minRequired && participantCount <= maxAllowed;
+    });
   }
 
   /**

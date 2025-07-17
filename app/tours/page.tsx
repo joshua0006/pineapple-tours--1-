@@ -141,10 +141,16 @@ export default function ToursPage() {
     }
 
     // Participants filter - check if product supports the number of participants
-    // Note: This is basic validation. Real implementation would check capacity
     if (filters.participants && parseInt(filters.participants) > 0) {
-      // Most tours can accommodate the typical participant counts
-      // You could add specific capacity checks here if available in product data
+      const participantCount = parseInt(filters.participants);
+      filtered = filtered.filter((product) => {
+        // Default values if not specified
+        const minRequired = product.quantityRequiredMin || 1;
+        const maxAllowed = product.quantityRequiredMax || 999;
+        
+        // Product is valid if participant count is within the allowed range
+        return participantCount >= minRequired && participantCount <= maxAllowed;
+      });
     }
 
     // --- Client-side pagination ---

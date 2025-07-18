@@ -429,7 +429,7 @@ export default function ApiDataDashboard() {
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
                     <div>
                       <span className="text-muted-foreground">Total Categories:</span>
-                      <div className="font-medium">{categoriesData.totalCategories || 0}</div>
+                      <div className="font-medium">{categoriesData.categories?.length || 0}</div>
                     </div>
                     <div>
                       <span className="text-muted-foreground">Cached:</span>

@@ -1,39 +1,28 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { simpleCacheManager } from '@/lib/utils/simple-cache-manager';
 import { RezdyProduct } from '@/lib/types/rezdy';
-import { TOUR_CATEGORIES } from '@/lib/constants/categories';
+import { REZDY_TOUR_CATEGORIES } from '@/lib/constants/categories';
 
 const REZDY_BASE_URL = 'https://api.rezdy.com/v1';
 const API_KEY = process.env.REZDY_API_KEY;
 
 interface CategoryWithCount {
-  id: string;
+  id: number;
   title: string;
   description: string;
-  productTypes: string[];
-  keywords: string[];
   slug: string;
   categoryGroup: 'tours' | 'experiences' | 'transportation';
   tourCount: number;
   products?: RezdyProduct[];
 }
 
-function matchesCategory(product: RezdyProduct, categoryId: string): boolean {
-  const category = TOUR_CATEGORIES.find(cat => cat.id === categoryId);
-  if (!category) return false;
-
-  // Check if product type matches
-  if (category.productTypes.includes(product.productType || '')) {
-    return true;
-  }
-
-  // Check if any keywords match in product name or description
-  const searchText = `${product.name || ''} ${product.description || ''} ${product.shortDescription || ''}`.toLowerCase();
-  return category.keywords.some(keyword => searchText.includes(keyword.toLowerCase()));
+function matchesCategory(product: RezdyProduct, categoryId: number): boolean {
+  // Products from Rezdy API should have categoryId property
+  return product.categoryId === categoryId;
 }
 
 function categorizeProducts(products: RezdyProduct[]): CategoryWithCount[] {
-  const categoriesWithCounts: CategoryWithCount[] = TOUR_CATEGORIES.map(category => ({
+  const categoriesWithCounts: CategoryWithCount[] = REZDY_TOUR_CATEGORIES.map(category => ({
     ...category,
     tourCount: 0,
     products: []

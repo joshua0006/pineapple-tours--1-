@@ -1,435 +1,199 @@
-// Comprehensive tour categories based on actual Rezdy data analysis
-export interface TourCategory {
-  id: string;
+// Rezdy tour categories - direct integration with Rezdy API
+export interface RezdyTourCategory {
+  id: number;
   title: string;
   description: string;
-  icon?: any;
-  productTypes: string[];
-  keywords: string[];
-  image?: string;
   slug: string;
-  tourCount?: number;
   categoryGroup: "tours" | "experiences" | "transportation";
 }
 
-// Categories based on actual Rezdy product data analysis - validated to work with real data
-export const TOUR_CATEGORIES: Omit<
-  TourCategory,
-  "tourCount" | "icon" | "image"
->[] = [
-  // Winery Tours - 46 products (46%) - VALIDATED
+// Rezdy tour categories - direct from Rezdy API with specific category IDs
+export const REZDY_TOUR_CATEGORIES: RezdyTourCategory[] = [
   {
-    id: "winery-tours",
+    id: 620779,
     title: "Winery Tours",
     description: "Wine tasting experiences at local wineries and vineyards",
-    productTypes: ["DAYTOUR", "PRIVATE_TOUR", "GIFT_CARD", "CUSTOM"],
-    keywords: [
-      "winery",
-      "wine",
-      "vineyard",
-      "cellar",
-      "vintage",
-      "wine tasting",
-      "wine tour",
-    ],
     slug: "winery-tours",
     categoryGroup: "tours",
   },
-
-  // Brewery Tours - 32 products (32%) - VALIDATED
   {
-    id: "brewery-tours",
-    title: "Brewery Tours",
-    description: "Craft beer experiences and brewery visits",
-    productTypes: ["DAYTOUR", "PRIVATE_TOUR", "CUSTOM"],
-    keywords: [
-      "brewery",
-      "beer",
-      "craft beer",
-      "brewing",
-      "ale",
-      "lager",
-      "beer tasting",
-      "brewery tour",
-    ],
-    slug: "brewery-tours",
-    categoryGroup: "tours",
-  },
-
-  // Hop-On Hop-Off - 34 products (34%) - VALIDATED
-  {
-    id: "hop-on-hop-off",
-    title: "Hop-On Hop-Off",
+    id: 620780,
+    title: "Hop-On-Hop-Off",
     description: "Flexible sightseeing with hop-on hop-off bus services",
-    productTypes: ["CUSTOM", "TRANSFER", "ACTIVITY"],
-    keywords: [
-      "hop-on",
-      "hop off",
-      "hop on hop off",
-      "sightseeing bus",
-      "city tour bus",
-      "tourist bus",
-    ],
     slug: "hop-on-hop-off",
     categoryGroup: "transportation",
   },
-
-  // Bus Charter - 22 products (22%) - VALIDATED
   {
-    id: "bus-charter",
-    title: "Bus Charter",
-    description: "Private bus and coach charter services for groups",
-    productTypes: ["CHARTER", "CUSTOM"],
-    keywords: [
-      "bus charter",
-      "charter bus",
-      "private bus",
-      "group transport",
-      "coach charter",
-    ],
-    slug: "bus-charter",
-    categoryGroup: "transportation",
-  },
-
-  // Day Tours - 18 products (18%) - VALIDATED
-  {
-    id: "day-tours",
+    id: 620781,
     title: "Day Tours",
     description: "Full-day guided tours and excursions",
-    productTypes: ["DAYTOUR", "GIFT_CARD"],
-    keywords: [
-      "day tour",
-      "full day",
-      "day trip",
-      "day excursion",
-      "all day",
-      "daily tour",
-    ],
     slug: "day-tours",
     categoryGroup: "tours",
   },
-
-  // Corporate Tours - 20 products (20%) - VALIDATED
   {
-    id: "corporate-tours",
-    title: "Corporate Tours",
-    description: "Business events, team building, and corporate experiences",
-    productTypes: ["DAYTOUR", "CHARTER", "CUSTOM"],
-    keywords: [
-      "corporate",
-      "business",
-      "team building",
-      "company",
-      "corporate event",
-      "business tour",
-    ],
-    slug: "corporate-tours",
-    categoryGroup: "experiences",
-  },
-
-  // Barefoot Luxury - 34 products (34%) - VALIDATED
-  {
-    id: "barefoot-luxury",
-    title: "Barefoot Luxury",
-    description: "Premium and luxury experiences with exclusive service",
-    productTypes: ["DAYTOUR", "PRIVATE_TOUR", "GIFT_CARD"],
-    keywords: [
-      "barefoot luxury",
-      "luxury",
-      "premium",
-      "exclusive",
-      "vip",
-      "high-end",
-      "upscale",
-    ],
-    slug: "barefoot-luxury",
-    categoryGroup: "tours",
-  },
-
-  // Hens Party - Special celebrations for brides-to-be
-  {
-    id: "hens-party",
+    id: 620782,
     title: "Hens Party",
     description: "Special celebrations for brides-to-be and their friends",
-    productTypes: ["DAYTOUR", "PRIVATE_TOUR", "CUSTOM"],
-    keywords: [
-      "hens party",
-      "hen party",
-      "bachelorette",
-      "bridal party",
-      "girls night",
-      "ladies night",
-      "celebration",
-    ],
     slug: "hens-party",
     categoryGroup: "experiences",
   },
-
-  // Additional categories based on actual Rezdy product types found
-
-  // Activities - Based on ACTIVITY product type
   {
-    id: "activities",
-    title: "Activities",
-    description: "Various activities and experiences",
-    productTypes: ["ACTIVITY"],
-    keywords: ["activity", "experience", "adventure", "fun", "entertainment"],
-    slug: "activities",
+    id: 620783,
+    title: "Brewery Tours",
+    description: "Craft beer experiences and brewery visits",
+    slug: "brewery-tours",
+    categoryGroup: "tours",
+  },
+  {
+    id: 620784,
+    title: "Bus Charter",
+    description: "Private bus and coach charter services for groups",
+    slug: "bus-charter",
+    categoryGroup: "transportation",
+  },
+  {
+    id: 620785,
+    title: "Corporate Tours",
+    description: "Business events, team building, and corporate experiences",
+    slug: "corporate-tours",
     categoryGroup: "experiences",
   },
-
-  // Private Tours - Based on PRIVATE_TOUR product type
   {
-    id: "private-tours",
+    id: 620786,
+    title: "Barefoot Luxury",
+    description: "Premium and luxury experiences with exclusive service",
+    slug: "barefoot-luxury",
+    categoryGroup: "tours",
+  },
+  {
+    id: 620787,
+    title: "Daily Tours",
+    description: "Daily scheduled tours and regular departures",
+    slug: "daily-tours",
+    categoryGroup: "tours",
+  },
+  {
+    id: 620788,
     title: "Private Tours",
     description: "Exclusive private guided tours and experiences",
-    productTypes: ["PRIVATE_TOUR"],
-    keywords: ["private", "exclusive", "personal", "intimate", "customized"],
     slug: "private-tours",
     categoryGroup: "tours",
   },
-
-  // Multi-day Tours - Based on MULTIDAYTOUR product type
-  {
-    id: "multiday-tours",
-    title: "Multi-day Tours",
-    description: "Extended adventures spanning multiple days",
-    productTypes: ["MULTIDAYTOUR"],
-    keywords: [
-      "multiday",
-      "multi-day",
-      "package",
-      "extended",
-      "overnight",
-      "itinerary",
-      "multiple days",
-    ],
-    slug: "multiday-tours",
-    categoryGroup: "tours",
-  },
-
-  // Transfers - Based on TRANSFER product type
-  {
-    id: "transfers",
-    title: "Transfers",
-    description: "Airport transfers and transportation services",
-    productTypes: ["TRANSFER"],
-    keywords: [
-      "transfer",
-      "transport",
-      "shuttle",
-      "airport",
-      "pickup",
-      "dropoff",
-    ],
-    slug: "transfers",
-    categoryGroup: "transportation",
-  },
-
-  // Lessons - Based on LESSON product type
-  {
-    id: "lessons",
-    title: "Lessons",
-    description: "Educational lessons and skill-building experiences",
-    productTypes: ["LESSON"],
-    keywords: [
-      "lesson",
-      "learn",
-      "instruction",
-      "teaching",
-      "skill",
-      "education",
-    ],
-    slug: "lessons",
-    categoryGroup: "experiences",
-  },
-
-  // Tickets - Based on TICKET product type
-  {
-    id: "tickets",
-    title: "Tickets",
-    description: "Event tickets and attraction entries",
-    productTypes: ["TICKET"],
-    keywords: ["ticket", "entry", "admission", "event", "show", "attraction"],
-    slug: "tickets",
-    categoryGroup: "experiences",
-  },
-
-  // Rentals - Based on RENTAL product type
-  {
-    id: "rentals",
-    title: "Rentals",
-    description: "Equipment and vehicle rentals",
-    productTypes: ["RENTAL"],
-    keywords: ["rental", "hire", "rent", "equipment", "vehicle"],
-    slug: "rentals",
-    categoryGroup: "experiences",
-  },
-
-  // Gift Cards - Based on GIFT_CARD product type
-  {
-    id: "gift-cards",
-    title: "Gift Cards",
-    description: "Gift vouchers for tours and experiences",
-    productTypes: ["GIFT_CARD"],
-    keywords: ["gift", "voucher", "card", "present", "certificate"],
-    slug: "gift-cards",
-    categoryGroup: "experiences",
-  },
-
-  // Merchandise - Based on MERCHANDISE product type
-  {
-    id: "merchandise",
-    title: "Merchandise",
-    description: "Souvenirs and branded merchandise",
-    productTypes: ["MERCHANDISE"],
-    keywords: ["merchandise", "souvenir", "shop", "buy", "product", "branded"],
-    slug: "merchandise",
-    categoryGroup: "experiences",
-  },
 ];
 
-// Legacy support
-export const LEGACY_CATEGORY_MAPPING: Record<string, string> = {
-  adventure: "activities",
-  cultural: "day-tours",
-  "food-wine": "winery-tours",
-  nature: "day-tours",
-  urban: "day-tours",
-  family: "day-tours",
-  romantic: "private-tours",
-  luxury: "barefoot-luxury",
-  photography: "private-tours",
-  "water-activities": "activities",
-  workshops: "lessons",
-  classes: "lessons",
-  tastings: "winery-tours",
-  honeymoon: "private-tours",
+// Legacy support - map old slugs to new Rezdy category IDs
+export const LEGACY_CATEGORY_MAPPING: Record<string, number> = {
+  "winery-tours": 620779,
+  "hop-on-hop-off": 620780,
+  "day-tours": 620781,
+  "hens-party": 620782,
+  "brewery-tours": 620783,
+  "bus-charter": 620784,
+  "corporate-tours": 620785,
+  "barefoot-luxury": 620786,
+  "daily-tours": 620787,
+  "private-tours": 620788,
+  // Additional legacy mappings
+  adventure: 620781,
+  cultural: 620781,
+  "food-wine": 620779,
+  nature: 620781,
+  urban: 620781,
+  family: 620781,
+  romantic: 620788,
+  luxury: 620786,
+  photography: 620788,
+  tastings: 620779,
+  honeymoon: 620788,
 };
 
-// Helper function to filter products by category using validated keywords and product types
-export function filterProductsByCategory(
-  products: any[],
-  category: Omit<TourCategory, "tourCount" | "icon" | "image">
-) {
-  return products.filter((product) => {
-    const searchText = `${product.name || ""} ${
-      product.shortDescription || ""
-    } ${product.description || ""}`.toLowerCase();
-    const productTypeUpper = product.productType?.toUpperCase() || "";
-
-    // Check if any keywords match in the text
-    const keywordMatch = category.keywords.some((keyword) =>
-      searchText.includes(keyword.toLowerCase())
-    );
-
-    // Check if product type matches exactly
-    const productTypeMatch = category.productTypes.some(
-      (type) => productTypeUpper === type
-    );
-
-    // For generic product types (CUSTOM, DAYTOUR), require keyword match
-    // For specific product types (CHARTER, TICKET, etc.), type match alone is sufficient
-    const genericTypes = ["CUSTOM", "DAYTOUR", "GIFT_CARD", "PRIVATE_TOUR"];
-    const isGenericType = genericTypes.includes(productTypeUpper);
-    
-    if (isGenericType) {
-      // For generic types, require keyword match
-      return keywordMatch;
-    } else {
-      // For specific types, either keyword or type match is sufficient
-      return keywordMatch || productTypeMatch;
+// Get products for a specific Rezdy category using the API
+export async function getProductsForCategory(categoryId: number): Promise<any[]> {
+  try {
+    const response = await fetch(`/api/rezdy/categories/${categoryId}/products`);
+    if (!response.ok) {
+      throw new Error(`Failed to fetch products for category ${categoryId}`);
     }
-  });
+    const data = await response.json();
+    return data.products || [];
+  } catch (error) {
+    console.error(`Error fetching products for category ${categoryId}:`, error);
+    return [];
+  }
 }
 
 // Get category by slug
-export function getCategoryBySlug(slug: string) {
-  return TOUR_CATEGORIES.find((category) => category.slug === slug);
+export function getCategoryBySlug(slug: string): RezdyTourCategory | undefined {
+  return REZDY_TOUR_CATEGORIES.find((category) => category.slug === slug);
 }
 
-// Legacy function - map old category IDs to new ones
-function mapLegacyCategory(categoryId: string): string {
-  return LEGACY_CATEGORY_MAPPING[categoryId] || categoryId;
+// Legacy function - map old category IDs to new Rezdy category IDs
+function mapLegacyCategory(categoryId: string): number {
+  return LEGACY_CATEGORY_MAPPING[categoryId] || parseInt(categoryId) || 620781;
 }
 
 // Get category by ID (with legacy support)
 export function getCategoryById(
-  id: string
-): Omit<TourCategory, "tourCount" | "icon" | "image"> | undefined {
-  const mappedId = mapLegacyCategory(id);
-  return TOUR_CATEGORIES.find((category) => category.id === mappedId);
+  id: string | number
+): RezdyTourCategory | undefined {
+  const categoryId = typeof id === 'string' ? mapLegacyCategory(id) : id;
+  return REZDY_TOUR_CATEGORIES.find((category) => category.id === categoryId);
 }
 
 // Get all category IDs
-export function getAllCategoryIds(): string[] {
-  return TOUR_CATEGORIES.map((category) => category.id);
+export function getAllCategoryIds(): number[] {
+  return REZDY_TOUR_CATEGORIES.map((category) => category.id);
 }
 
 // Get category display name
-export function getCategoryDisplayName(id: string): string {
-  const mappedId = mapLegacyCategory(id);
-  const category = getCategoryById(mappedId);
-  return category?.title || id;
+export function getCategoryDisplayName(id: string | number): string {
+  const category = getCategoryById(id);
+  return category?.title || String(id);
 }
 
-// Check if product matches category using validated filtering logic
+// Check if product belongs to a specific Rezdy category
 export function doesProductMatchCategory(
   product: any,
-  categoryId: string
+  categoryId: string | number
 ): boolean {
-  const mappedId = mapLegacyCategory(categoryId);
-  const category = getCategoryById(mappedId);
-
-  if (!category) return false;
-
-  const searchText = `${product.name || ""} ${product.shortDescription || ""} ${
-    product.description || ""
-  }`.toLowerCase();
-  const productTypeUpper = product.productType?.toUpperCase() || "";
-
-  // Check keyword matches
-  const keywordMatch = category.keywords.some((keyword) =>
-    searchText.includes(keyword.toLowerCase())
-  );
-
-  // Check product type matches
-  const productTypeMatch = category.productTypes.some(
-    (type) => productTypeUpper === type
-  );
-
-  // For generic product types (CUSTOM, DAYTOUR), require keyword match
-  // For specific product types (CHARTER, TICKET, etc.), type match alone is sufficient
-  const genericTypes = ["CUSTOM", "DAYTOUR", "GIFT_CARD", "PRIVATE_TOUR"];
-  const isGenericType = genericTypes.includes(productTypeUpper);
-  
-  if (isGenericType) {
-    // For generic types, require keyword match
-    return keywordMatch;
-  } else {
-    // For specific types, either keyword or type match is sufficient
-    return keywordMatch || productTypeMatch;
-  }
+  const rezdyCategoryId = typeof categoryId === 'string' ? mapLegacyCategory(categoryId) : categoryId;
+  return product.categoryId === rezdyCategoryId;
 }
 
-// Get main tour categories (excluding support categories like gift cards, merchandise)
-export function getMainTourCategories(): Omit<
-  TourCategory,
-  "tourCount" | "icon" | "image"
->[] {
-  return TOUR_CATEGORIES.filter(
-    (category) =>
-      ["tours", "transportation"].includes(category.categoryGroup) &&
-      !["gift-cards", "merchandise", "tickets"].includes(category.id)
+// Get main tour categories (excluding support categories)
+export function getMainTourCategories(): RezdyTourCategory[] {
+  return REZDY_TOUR_CATEGORIES.filter(
+    (category) => ["tours", "transportation"].includes(category.categoryGroup)
   );
 }
 
 // Get all categories for search dropdown
-export function getSearchCategories(): Omit<
-  TourCategory,
-  "tourCount" | "icon" | "image"
->[] {
-  return TOUR_CATEGORIES.filter(
-    (category) => !["merchandise", "gift-cards"].includes(category.id)
-  );
+export function getSearchCategories(): RezdyTourCategory[] {
+  return REZDY_TOUR_CATEGORIES;
+}
+
+// Get category statistics for Rezdy categories
+export function getCategoryStatistics(
+  rezdyCategoryProducts?: Record<number, any[]>
+): Record<number, { productCount: number }> {
+  const stats: Record<number, { productCount: number }> = {};
+
+  for (const category of REZDY_TOUR_CATEGORIES) {
+    const productCount = rezdyCategoryProducts?.[category.id]?.length || 0;
+    stats[category.id] = {
+      productCount,
+    };
+  }
+
+  return stats;
+}
+
+// Get all categories
+export function getAllCategories(): RezdyTourCategory[] {
+  return REZDY_TOUR_CATEGORIES;
+}
+
+// Get category by Rezdy ID
+export function getCategoryByRezdyId(rezdyId: number): RezdyTourCategory | undefined {
+  return REZDY_TOUR_CATEGORIES.find((category) => category.id === rezdyId);
 }

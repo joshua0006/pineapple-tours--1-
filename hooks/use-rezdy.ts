@@ -4,10 +4,15 @@ import {
   RezdyAvailability,
   RezdySession,
   RezdyBooking,
+  RezdyCategory,
+  RezdyCategoryProduct,
   RezdyProductsResponse,
   RezdyAvailabilityResponse,
   RezdyBookingsResponse,
+  RezdyCategoriesResponse,
+  RezdyCategoryProductsResponse,
 } from "@/lib/types/rezdy";
+import { RezdyTourCategory, REZDY_TOUR_CATEGORIES } from "@/lib/constants/categories";
 
 interface UseRezdyDataState<T> {
   data: T | null;
@@ -272,6 +277,138 @@ export function useRezdyBookings(limit = 50, offset = 0) {
 
     fetchBookings();
   }, [limit, offset]);
+
+  return state;
+}
+
+export function useRezdyCategories(
+  initialData?: RezdyTourCategory[]
+) {
+  const [state, setState] = useState<UseRezdyDataState<RezdyTourCategory[]>>({
+    data: initialData ?? REZDY_TOUR_CATEGORIES,
+    loading: false,
+    error: null,
+  });
+
+  useEffect(() => {
+    // Always return the predefined categories
+    setState({
+      data: REZDY_TOUR_CATEGORIES,
+      loading: false,
+      error: null,
+    });
+    
+    console.log("useRezdyCategories: Using predefined categories:", {
+      totalCategories: REZDY_TOUR_CATEGORIES.length,
+      firstCategory: REZDY_TOUR_CATEGORIES[0]?.title || "None",
+    });
+  }, [initialData]);
+
+  return state;
+}
+
+export function useRezdyCategoryProducts(
+  categoryId: number | null,
+  limit = 100,
+  offset = 0
+) {
+  const [state, setState] = useState<UseRezdyDataState<RezdyCategoryProduct[]>>({
+    data: null,
+    loading: false,
+    error: null,
+  });
+
+  useEffect(() => {
+    if (!categoryId) {
+      setState({ data: null, loading: false, error: null });
+      return;
+    }
+
+    const fetchCategoryProducts = async () => {
+      try {
+        setState((prev) => ({ ...prev, loading: true, error: null }));
+
+        const params = new URLSearchParams({
+          limit: limit.toString(),
+          offset: offset.toString(),
+        });
+
+        const response = await fetch(
+          `/api/rezdy/categories/${categoryId}/products?${params.toString()}`
+        );
+
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const data: RezdyCategoryProductsResponse = await response.json();
+
+        if (data.error) {
+          throw new Error(data.error);
+        }
+
+        const products = data.products || data.data || [];
+        console.log("useRezdyCategoryProducts: Fetched products:", {
+          categoryId,
+          totalProducts: products.length,
+          firstProduct: products[0]?.name || "None",
+        });
+
+        setState({
+          data: products,
+          loading: false,
+          error: null,
+        });
+      } catch (error) {
+        console.error("useRezdyCategoryProducts error:", error);
+        setState({
+          data: null,
+          loading: false,
+          error:
+            error instanceof Error
+              ? error.message
+              : "Failed to fetch category products",
+        });
+      }
+    };
+
+    fetchCategoryProducts();
+  }, [categoryId, limit, offset]);
+
+  return state;
+}
+
+export function useRezdyCategoryById(categoryId: number | null) {
+  const [state, setState] = useState<UseRezdyDataState<RezdyTourCategory>>({
+    data: null,
+    loading: false,
+    error: null,
+  });
+
+  useEffect(() => {
+    if (!categoryId) {
+      setState({ data: null, loading: false, error: null });
+      return;
+    }
+
+    // Find category from predefined categories
+    const category = REZDY_TOUR_CATEGORIES.find((cat) => cat.id === categoryId);
+
+    if (!category) {
+      setState({
+        data: null,
+        loading: false,
+        error: `Category with ID ${categoryId} not found`,
+      });
+      return;
+    }
+
+    setState({
+      data: category,
+      loading: false,
+      error: null,
+    });
+  }, [categoryId]);
 
   return state;
 }

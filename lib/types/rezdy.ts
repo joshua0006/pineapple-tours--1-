@@ -1,5 +1,37 @@
 // Rezdy API Types
 
+export interface RezdyCategory {
+  id: number;
+  name: string;
+  description?: string;
+  isVisible: boolean;
+  image?: RezdyImage;
+  seoTags?: string[];
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface RezdyCategoryProduct {
+  productCode: string;
+  name: string;
+  shortDescription?: string;
+  description?: string;
+  advertisedPrice?: number;
+  priceOptions?: RezdyPriceOption[];
+  images?: RezdyImage[];
+  productType?: string;
+  status?: string;
+  categoryId: number;
+}
+
+export interface RezdyCategoriesResponse extends RezdyApiResponse<RezdyCategory[]> {
+  categories?: RezdyCategory[];
+}
+
+export interface RezdyCategoryProductsResponse extends RezdyApiResponse<RezdyCategoryProduct[]> {
+  products?: RezdyCategoryProduct[];
+}
+
 export interface RezdyAddress {
   addressLine?: string;
   postCode?: string;

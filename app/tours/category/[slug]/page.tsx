@@ -37,7 +37,7 @@ import { PageHeader } from "@/components/page-header";
 import { DynamicTourCard } from "@/components/dynamic-tour-card";
 import { TourGridSkeleton } from "@/components/tour-grid-skeleton";
 import { ErrorState } from "@/components/error-state";
-import { useToursOnly } from "@/hooks/use-tours-only";
+import { useCategoryProducts } from "@/hooks/use-category-products";
 import { RezdyProduct } from "@/lib/types/rezdy";
 import {
   getCategoryBySlug,
@@ -168,17 +168,24 @@ export default function CategoryPage({
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [searchQuery, setSearchQuery] = useState("");
 
-  const { data: allProducts, loading, error } = useToursOnly();
-
   // Get category configuration
   const categoryConfig = getCategoryBySlug(categorySlug);
 
-  // Enhanced filtering logic using confidence-based matching
+  // Use direct category products API with fallback to filtered products
+  const { data: categoryProducts, loading, error } = useCategoryProducts(
+    categoryConfig?.id || null,
+    {
+      enabled: !!categoryConfig,
+      fallbackToAll: true,
+    }
+  );
+
+  // Enhanced filtering logic using confidence-based matching as secondary filter
   const categoryFilteredProducts: ProductWithConfidence[] =
-    allProducts && categoryConfig
+    categoryProducts && categoryConfig
       ? filterProductsByCategoryWithConfidence(
-          allProducts, 
-          categoryConfig.id, 
+          categoryProducts, 
+          categoryConfig.slug, // Use slug for the filter system
           0, // minimum confidence 
           true // include confidence scores for sorting
         )

@@ -30,10 +30,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 import { useRezdyProducts } from "@/hooks/use-rezdy";
 import { RezdyProductCard } from "@/components/rezdy-product-card";
-import {
-  filterProductsByCategory,
-  getCategoryBySlug,
-} from "@/lib/constants/categories";
+import { getCategoryBySlug } from "@/lib/constants/categories";
+import { filterProductsByCategory } from "@/lib/utils/category-filters";
 import { RezdyProduct } from "@/lib/types/rezdy";
 
 interface Props {

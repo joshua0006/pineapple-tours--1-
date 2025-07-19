@@ -13,7 +13,6 @@ interface UseCategoryProductsReturn extends UseCategoryProductsState {
 
 interface UseCategoryProductsOptions {
   enabled?: boolean;
-  fallbackToAll?: boolean;
   forceRefresh?: boolean;
 }
 
@@ -21,7 +20,7 @@ export function useCategoryProducts(
   categoryId: number | null,
   options: UseCategoryProductsOptions = {}
 ) {
-  const { enabled = true, fallbackToAll = true, forceRefresh = false } = options;
+  const { enabled = true, forceRefresh = false } = options;
   const abortControllerRef = useRef<AbortController | null>(null);
   
   const [state, setState] = useState<UseCategoryProductsState>({
@@ -93,56 +92,9 @@ export function useCategoryProducts(
           return;
         }
 
-        // If no products and fallback is enabled, try the fallback API
-        if (fallbackToAll && products.length === 0) {
-          console.log("useCategoryProducts: No products found, falling back to filtered all products");
-          
-          const fallbackParams = new URLSearchParams();
-          if (forceRefresh) {
-            fallbackParams.append('refresh', 'true');
-          }
-          
-          const fallbackQueryString = fallbackParams.toString();
-          const fallbackUrl = `/api/rezdy/products/tours-only${fallbackQueryString ? `?${fallbackQueryString}` : ''}`;
-          
-          const allProductsResponse = await fetch(fallbackUrl, {
-            signal: abortController.signal,
-          });
-          
-          if (!allProductsResponse.ok) {
-            throw new Error(`Fallback HTTP error! status: ${allProductsResponse.status}`);
-          }
-
-          const allProductsData = await allProductsResponse.json();
-          if (allProductsData.error) {
-            throw new Error(allProductsData.error);
-          }
-
-          const allProducts = allProductsData.products || [];
-          
-          // Filter products that have the matching categoryId
-          const filteredProducts = allProducts.filter((product: RezdyProduct) => 
-            product.categoryId === categoryId
-          );
-
-          console.log("useCategoryProducts: Fallback filtering result:", {
-            categoryId,
-            totalAllProducts: allProducts.length,
-            filteredProducts: filteredProducts.length,
-            cached: allProductsData.cached || false,
-          });
-
-          setState({
-            data: filteredProducts,
-            loading: false,
-            error: null,
-          });
-          return;
-        }
-
-        // No products found and no fallback
+        // Use products directly from Rezdy API (may be empty array)
         setState({
-          data: [],
+          data: products,
           loading: false,
           error: null,
         });
@@ -170,7 +122,7 @@ export function useCategoryProducts(
         abortControllerRef.current.abort();
       }
     };
-  }, [categoryId, enabled, fallbackToAll, forceRefresh]);
+  }, [categoryId, enabled, forceRefresh]);
 
   return {
     ...state,

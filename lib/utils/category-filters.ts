@@ -29,7 +29,10 @@ export interface CategoryMatch {
   };
 }
 
-// Comprehensive categories mapping - VALIDATED with actual Rezdy data
+// LEGACY: Comprehensive categories mapping - VALIDATED with actual Rezdy data
+// NOTE: This keyword-based filtering system is now legacy. Modern category pages 
+// at /tours/category/[slug] use direct Rezdy API calls without keyword filtering.
+// This file is maintained only for legacy /rezdy/[category] pages that still exist.
 export const CATEGORY_DEFINITIONS: Record<string, CategoryDefinition> = {
   "winery-tours": {
     id: "winery-tours",

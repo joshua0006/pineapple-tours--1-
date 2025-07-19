@@ -21,6 +21,7 @@ interface Category {
   icon: React.ReactNode;
   href: string;
   featured?: boolean;
+  subcategories?: Category[];
 }
 
 // Updated categories based on user requirements
@@ -31,6 +32,20 @@ const tourCategories: Category[] = [
     icon: <Wine className="w-4 h-4" />,
     href: "/tours/category/winery-tours",
     featured: true,
+    subcategories: [
+      {
+        id: "daily-winery-tours",
+        name: "Daily Winery Tours",
+        icon: <Calendar className="w-4 h-4" />,
+        href: "/tours/category/winery-tours?type=daily",
+      },
+      {
+        id: "private-winery-tours",
+        name: "Private Winery Tours",
+        icon: <Sparkles className="w-4 h-4" />,
+        href: "/tours/category/winery-tours?type=private",
+      },
+    ],
   },
   {
     id: "brewery-tours",
@@ -91,6 +106,7 @@ export function TourCategoriesDropdown({
   isMobile = false,
 }: TourCategoriesDropdownProps) {
   const [isOpen, setIsOpen] = useState(false);
+  const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set());
   const dropdownRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
 
@@ -125,8 +141,20 @@ export function TourCategoriesDropdown({
   }, [isOpen]);
 
   const handleCategoryClick = (category: Category) => {
-    router.push(category.href);
-    setIsOpen(false);
+    if (category.subcategories && category.subcategories.length > 0) {
+      // Toggle expanded state for categories with subcategories
+      const newExpanded = new Set(expandedCategories);
+      if (newExpanded.has(category.id)) {
+        newExpanded.delete(category.id);
+      } else {
+        newExpanded.add(category.id);
+      }
+      setExpandedCategories(newExpanded);
+    } else {
+      // Navigate for categories without subcategories
+      router.push(category.href);
+      setIsOpen(false);
+    }
   };
 
   if (isMobile) {
@@ -165,13 +193,40 @@ export function TourCategoriesDropdown({
                     <span className="text-coral-500 group-hover:text-coral-600 dark:group-hover:text-coral-400 transition-colors">
                       {category.icon}
                     </span>
-                    <span>{category.name}</span>
+                    <span className="flex-1">{category.name}</span>
                     {category.featured && (
                       <span className="px-1.5 py-0.5 text-xs bg-coral-500/20 text-coral-700 dark:text-coral-300 rounded">
                         Popular
                       </span>
                     )}
+                    {category.subcategories && (
+                      <ChevronDown className={cn(
+                        "w-4 h-4 text-coral-500 transition-transform duration-200",
+                        expandedCategories.has(category.id) && "rotate-180"
+                      )} />
+                    )}
                   </button>
+                  {category.subcategories && expandedCategories.has(category.id) && (
+                    <div className="ml-6 mt-1 space-y-1 animate-dropdown-in">
+                      {category.subcategories.map((sub) => (
+                        <button
+                          key={sub.id}
+                          onClick={() => {
+                            router.push(sub.href);
+                            setIsOpen(false);
+                          }}
+                          className="flex items-center gap-2 w-full px-3 py-1.5 text-left text-sm rounded-md transition-colors hover:bg-coral-50 hover:text-coral-700 dark:hover:bg-coral-500/10 dark:hover:text-coral-300"
+                        >
+                          <span className="text-coral-400">
+                            {sub.icon}
+                          </span>
+                          <span className="text-gray-600 dark:text-gray-300">
+                            {sub.name}
+                          </span>
+                        </button>
+                      ))}
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
@@ -215,29 +270,59 @@ export function TourCategoriesDropdown({
             </div>
             <div className="grid grid-cols-2 gap-1">
               {tourCategories.map((category) => (
-                <button
-                  key={category.id}
-                  onClick={() => handleCategoryClick(category)}
-                  className="flex items-center gap-3 px-3 py-2.5 text-sm rounded-lg transition-all duration-200 text-left group hover:bg-gradient-to-r hover:from-coral-50 hover:to-orange-50 dark:hover:from-coral-900/20 dark:hover:to-orange-900/20 hover:shadow-sm relative overflow-hidden"
-                >
-                  <div className="relative z-10 p-2 bg-coral-100 dark:bg-coral-900/30 rounded-lg group-hover:bg-coral-200 dark:group-hover:bg-coral-800/40 transition-colors">
-                    <span className="text-coral-600 dark:text-coral-400">
-                      {category.icon}
-                    </span>
-                  </div>
-                  <div className="flex-1 relative z-10">
-                    <span className="font-medium text-gray-700 dark:text-gray-200 group-hover:text-gray-900 dark:group-hover:text-white block">
-                      {category.name}
-                    </span>
-                    {category.featured && (
-                      <span className="text-xs text-coral-600 dark:text-coral-400 mt-0.5 inline-flex items-center gap-1">
-                        <Sparkles className="w-3 h-3" />
-                        Popular
+                <div key={category.id}>
+                  <button
+                    onClick={() => handleCategoryClick(category)}
+                    className="w-full flex items-center gap-3 px-3 py-2.5 text-sm rounded-lg transition-all duration-200 text-left group hover:bg-gradient-to-r hover:from-coral-50 hover:to-orange-50 dark:hover:from-coral-900/20 dark:hover:to-orange-900/20 hover:shadow-sm relative overflow-hidden"
+                  >
+                    <div className="relative z-10 p-2 bg-coral-100 dark:bg-coral-900/30 rounded-lg group-hover:bg-coral-200 dark:group-hover:bg-coral-800/40 transition-colors">
+                      <span className="text-coral-600 dark:text-coral-400">
+                        {category.icon}
                       </span>
+                    </div>
+                    <div className="flex-1 relative z-10">
+                      <span className="font-medium text-gray-700 dark:text-gray-200 group-hover:text-gray-900 dark:group-hover:text-white block">
+                        {category.name}
+                      </span>
+                      {category.featured && (
+                        <span className="text-xs text-coral-600 dark:text-coral-400 mt-0.5 inline-flex items-center gap-1">
+                          <Sparkles className="w-3 h-3" />
+                          Popular
+                        </span>
+                      )}
+                    </div>
+                    {category.subcategories && (
+                      <ChevronDown className={cn(
+                        "w-4 h-4 text-gray-400 dark:text-gray-500 relative z-10 transition-transform duration-200",
+                        expandedCategories.has(category.id) && "rotate-180"
+                      )} />
                     )}
-                  </div>
-                  <div className="absolute inset-0 bg-gradient-to-r from-coral-100/0 via-coral-100/50 to-coral-100/0 dark:from-coral-500/0 dark:via-coral-500/10 dark:to-coral-500/0 translate-x-full group-hover:translate-x-0 transition-transform duration-500" />
-                </button>
+                    <div className="absolute inset-0 bg-gradient-to-r from-coral-100/0 via-coral-100/50 to-coral-100/0 dark:from-coral-500/0 dark:via-coral-500/10 dark:to-coral-500/0 translate-x-full group-hover:translate-x-0 transition-transform duration-500" />
+                  </button>
+                  {category.subcategories && expandedCategories.has(category.id) && (
+                    <div className="mt-1 ml-4 space-y-1 animate-dropdown-in">
+                      {category.subcategories.map((sub) => (
+                        <button
+                          key={sub.id}
+                          onClick={() => {
+                            router.push(sub.href);
+                            setIsOpen(false);
+                          }}
+                          className="w-full flex items-center gap-2 px-3 py-2 text-xs rounded-md transition-all duration-200 text-left group hover:bg-coral-50 dark:hover:bg-coral-900/20 hover:shadow-sm"
+                        >
+                          <div className="p-1.5 bg-coral-50 dark:bg-coral-900/20 rounded-md group-hover:bg-coral-100 dark:group-hover:bg-coral-800/30 transition-colors">
+                            <span className="text-coral-500 dark:text-coral-400">
+                              {sub.icon}
+                            </span>
+                          </div>
+                          <span className="text-gray-600 dark:text-gray-300 group-hover:text-gray-900 dark:group-hover:text-white">
+                            {sub.name}
+                          </span>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
               ))}
             </div>
             <div className="mt-2 pt-2 border-t border-gray-100 dark:border-gray-800 px-3 pb-1">

@@ -237,12 +237,12 @@ export function PageHeader({
                 {featureCards.map((card, index) => (
                   <div key={index} className="cursor-default">
                     {/* Content */}
-                    <div className="p-4 lg:p-5 text-center">
-                      <div className="flex flex-col items-center space-y-2">
+                    <div className="p-4 lg:p-5">
+                      <div className="flex items-center space-x-3">
                         {/* Icon container */}
                         <div
                           className={cn(
-                            "p-3 rounded-full",
+                            "p-3 rounded-lg flex-shrink-0",
                             backgroundImage
                               ? "bg-white/10 border border-white/30"
                               : "bg-primary/10 border border-primary/20"

@@ -42,11 +42,6 @@ import { RezdyProduct } from "@/lib/types/rezdy";
 import {
   getCategoryBySlug,
 } from "@/lib/constants/categories";
-import {
-  filterProductsByCategoryWithConfidence,
-  ProductWithConfidence,
-  CategoryMatch,
-} from "@/lib/utils/category-filters";
 
 // Category-specific configurations for PageHeader
 const getCategoryHeaderConfig = (categorySlug: string, categoryConfig: any) => {
@@ -171,28 +166,19 @@ export default function CategoryPage({
   // Get category configuration
   const categoryConfig = getCategoryBySlug(categorySlug);
 
-  // Use direct category products API with fallback to filtered products
+  // Use direct category products API
   const { data: categoryProducts, loading, error } = useCategoryProducts(
     categoryConfig?.id || null,
     {
       enabled: !!categoryConfig,
-      fallbackToAll: true,
     }
   );
 
-  // Enhanced filtering logic using confidence-based matching as secondary filter
-  const categoryFilteredProducts: ProductWithConfidence[] =
-    categoryProducts && categoryConfig
-      ? filterProductsByCategoryWithConfidence(
-          categoryProducts, 
-          categoryConfig.slug, // Use slug for the filter system
-          0, // minimum confidence 
-          true // include confidence scores for sorting
-        )
-      : [];
+  // Use products directly from Rezdy API without additional filtering
+  const filteredProducts = categoryProducts || [];
 
   // Apply search filter with relevance scoring
-  const searchFilteredProducts = categoryFilteredProducts
+  const searchFilteredProducts = filteredProducts
     .filter((product) => {
       if (!searchQuery.trim()) return true;
 
@@ -250,7 +236,7 @@ export default function CategoryPage({
       return { ...product, relevanceScore };
     });
 
-  // Sort products with combined relevance and confidence scoring
+  // Sort products with search relevance and user selection
   const sortedProducts = [...searchFilteredProducts].sort((a, b) => {
     // If there's a search query, prioritize by search relevance first
     if (searchQuery.trim()) {
@@ -258,13 +244,7 @@ export default function CategoryPage({
       if (relevanceDiff !== 0) return relevanceDiff;
     }
 
-    // Then prioritize by category confidence (higher confidence first)
-    const confidenceA = a.categoryConfidence || 0;
-    const confidenceB = b.categoryConfidence || 0;
-    const confidenceDiff = confidenceB - confidenceA;
-    if (confidenceDiff !== 0) return confidenceDiff;
-
-    // Apply tertiary sorting based on user selection
+    // Apply sorting based on user selection
     switch (sortBy) {
       case "price-low":
         return (a.advertisedPrice || 0) - (b.advertisedPrice || 0);

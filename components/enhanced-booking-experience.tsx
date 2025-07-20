@@ -334,6 +334,46 @@ export function EnhancedBookingExperience({
   //   return Object.keys(errors).length === 0;
   // };
 
+  // Helper to get guest selector content based on pricing pattern
+  const getGuestSelectorContent = (product: RezdyProduct) => {
+    if (!product.priceOptions || product.priceOptions.length === 0) {
+      return {
+        title: "Select Guests",
+        description: "Choose the number of guests for your booking"
+      };
+    }
+
+    const labels = product.priceOptions.map(opt => opt.label.toLowerCase());
+    
+    if (labels.some(label => label.includes('private') || label.includes('group'))) {
+      return {
+        title: "Group Size",
+        description: "Specify your private group requirements"
+      };
+    }
+    
+    if (labels.length === 1 && labels[0].includes('quantity')) {
+      return {
+        title: "Number of Participants",
+        description: "How many people will be joining this experience?"
+      };
+    }
+    
+    if (labels.some(label => 
+      label.includes('adult') || label.includes('child') || label.includes('infant')
+    )) {
+      return {
+        title: "Select Guests",
+        description: "Choose the number of guests by age group"
+      };
+    }
+    
+    return {
+      title: "Select Options",
+      description: "Choose your preferred pricing options"
+    };
+  };
+
   // Helper function to ensure consistent date formatting across storage and retrieval
   const getConsistentDateString = (input: Date | string): string => {
     // For Date objects – easy path
@@ -606,6 +646,40 @@ export function EnhancedBookingExperience({
 
   // Calculate pricing (simplified without booking options)
   const pricingBreakdown = useMemo((): PricingBreakdown => {
+    // Validate guest counts data
+    if (!guestCounts || Object.keys(guestCounts).length === 0) {
+      console.warn('No guest counts available for pricing calculation');
+      return calculatePricing(product, selectedSession, {
+        adults: 1,
+        children: 0,
+        infants: 0,
+        extras: selectedExtras,
+        dynamicGuestCounts: {},
+      });
+    }
+
+    // Validate that product price options match guest count keys
+    if (product.priceOptions && product.priceOptions.length > 0) {
+      const priceOptionLabels = product.priceOptions.map(opt => opt.label);
+      const guestCountLabels = Object.keys(guestCounts);
+      
+      // Check for mismatched labels and log warnings
+      guestCountLabels.forEach(label => {
+        const hasExactMatch = priceOptionLabels.includes(label);
+        const hasCaseInsensitiveMatch = priceOptionLabels.some(optLabel => 
+          optLabel.toLowerCase() === label.toLowerCase()
+        );
+        const hasPartialMatch = priceOptionLabels.some(optLabel => 
+          optLabel.toLowerCase().includes(label.toLowerCase()) ||
+          label.toLowerCase().includes(optLabel.toLowerCase())
+        );
+        
+        if (!hasExactMatch && !hasCaseInsensitiveMatch && !hasPartialMatch) {
+          console.warn(`Guest count label "${label}" does not match any price option:`, priceOptionLabels);
+        }
+      });
+    }
+    
     // Convert dynamic guest counts to standard format for pricing calculation
     const standardCounts = {
       adults: 0,
@@ -628,25 +702,57 @@ export function EnhancedBookingExperience({
           // Family packages typically count as multiple adults
           standardCounts.adults += count * 2; // Assume family of 4 = 2 adults + 2 children
           standardCounts.children += count * 2;
+        } else if (labelLower.includes('quantity') || labelLower.includes('person')) {
+          // Generic quantity types default to adults
+          standardCounts.adults += count;
         } else {
-          // Default unknown types to adults
+          // Default unknown types to adults but log warning
+          console.warn(`Unknown guest type "${label}" defaulting to adult`);
           standardCounts.adults += count;
         }
       });
     } else {
       // Use guest counts directly if no price options
-      standardCounts.adults = guestCounts['Adult'] || 0;
-      standardCounts.children = guestCounts['Child'] || 0;
-      standardCounts.infants = guestCounts['Infant'] || 0;
+      standardCounts.adults = guestCounts['Adult'] || guestCounts['adult'] || 0;
+      standardCounts.children = guestCounts['Child'] || guestCounts['child'] || 0;
+      standardCounts.infants = guestCounts['Infant'] || guestCounts['infant'] || 0;
     }
     
-    return calculatePricing(product, selectedSession, {
-      adults: standardCounts.adults,
-      children: standardCounts.children,
-      infants: standardCounts.infants,
-      extras: selectedExtras,
-      dynamicGuestCounts: guestCounts,
-    });
+    // Ensure at least one guest for valid booking
+    const totalGuests = standardCounts.adults + standardCounts.children + standardCounts.infants;
+    if (totalGuests === 0) {
+      console.warn('No guests found in pricing calculation, defaulting to 1 adult');
+      standardCounts.adults = 1;
+    }
+    
+    try {
+      return calculatePricing(product, selectedSession, {
+        adults: standardCounts.adults,
+        children: standardCounts.children,
+        infants: standardCounts.infants,
+        extras: selectedExtras,
+        dynamicGuestCounts: guestCounts,
+      });
+    } catch (error) {
+      console.error('Error calculating pricing:', error);
+      // Return fallback pricing
+      return {
+        adults: standardCounts.adults,
+        children: standardCounts.children,
+        infants: standardCounts.infants,
+        basePrice: product.advertisedPrice || 0,
+        adultPrice: selectedSession?.totalPrice || product.advertisedPrice || 0,
+        childPrice: 0,
+        infantPrice: 0,
+        subtotal: (selectedSession?.totalPrice || product.advertisedPrice || 0) * totalGuests,
+        extrasSubtotal: 0,
+        taxes: 0,
+        serviceFees: 0,
+        total: (selectedSession?.totalPrice || product.advertisedPrice || 0) * totalGuests,
+        selectedExtras: selectedExtras,
+        dynamicGuestCounts: guestCounts,
+      };
+    }
   }, [
     product,
     selectedSession,
@@ -865,10 +971,6 @@ export function EnhancedBookingExperience({
       const newCounts = { ...prev };
       const currentValue = prev[optionLabel] || 0;
       const newValue = currentValue + delta;
-      
-      // Get the price option for this label
-      const priceOption = product.priceOptions?.find(opt => opt.label === optionLabel);
-      const seatsUsed = priceOption?.seatsUsed || 1;
       
       // Check if this is the primary/first option (must have at least 1)
       const isPrimaryOption = product.priceOptions?.[0]?.label === optionLabel;
@@ -1461,10 +1563,10 @@ export function EnhancedBookingExperience({
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Users className="h-5 w-5" />
-                  Select Guests
+                  {getGuestSelectorContent(product).title}
                 </CardTitle>
                 <p className="text-muted-foreground">
-                  Choose the number of guests for your booking
+                  {getGuestSelectorContent(product).description}
                 </p>
               </CardHeader>
               <CardContent>
@@ -1870,9 +1972,7 @@ export function EnhancedBookingExperience({
                       <div className="flex items-center gap-2">
                         <Users className="h-4 w-4 text-muted-foreground" />
                         <span>
-                          {guestCounts.adults +
-                            guestCounts.children +
-                            guestCounts.infants}{" "}
+                          {Object.values(guestCounts).reduce((sum, count) => sum + count, 0)}{" "}
                           guests
                         </span>
                       </div>
@@ -1917,9 +2017,7 @@ export function EnhancedBookingExperience({
                   selectedExtras={selectedExtras}
                   onExtrasChange={setSelectedExtras}
                   guestCount={
-                    guestCounts.adults +
-                    guestCounts.children +
-                    guestCounts.infants
+                    Object.values(guestCounts).reduce((sum, count) => sum + count, 0)
                   }
                 />
               )}

@@ -27,6 +27,61 @@ interface PricingDisplayProps {
   className?: string;
 }
 
+// Helper to detect pricing pattern
+function detectPricingPattern(product?: RezdyProduct): {
+  type: 'standard' | 'quantity' | 'private' | 'multi-tier';
+  title: string;
+  description: string;
+} {
+  if (!product?.priceOptions || product.priceOptions.length === 0) {
+    return { 
+      type: 'standard', 
+      title: 'Pricing Summary', 
+      description: 'Price breakdown for your booking' 
+    };
+  }
+
+  const labels = product.priceOptions.map(opt => opt.label.toLowerCase());
+  
+  // Check for private/group tours
+  if (labels.some(label => label.includes('private') || label.includes('group'))) {
+    return { 
+      type: 'private', 
+      title: 'Group Pricing', 
+      description: 'Private tour pricing for your group' 
+    };
+  }
+  
+  // Check for quantity-only pricing
+  if (labels.length === 1 && labels[0].includes('quantity')) {
+    return { 
+      type: 'quantity', 
+      title: 'Per Person Pricing', 
+      description: 'Individual pricing per participant' 
+    };
+  }
+  
+  // Check for multi-tier pricing (multiple non-standard options)
+  const hasStandardOptions = labels.some(label => 
+    label.includes('adult') || label.includes('child') || label.includes('infant')
+  );
+  
+  if (!hasStandardOptions && product.priceOptions.length > 1) {
+    return { 
+      type: 'multi-tier', 
+      title: 'Pricing Options', 
+      description: 'Select your preferred pricing tier' 
+    };
+  }
+  
+  // Default to standard
+  return { 
+    type: 'standard', 
+    title: 'Pricing Summary', 
+    description: 'Price breakdown by guest type' 
+  };
+}
+
 export function PricingDisplay({
   breakdown,
   product,
@@ -37,6 +92,7 @@ export function PricingDisplay({
   const discountInfo = getDiscountInfo(breakdown);
   const taxBreakdown = getTaxBreakdown(breakdown.subtotal, product);
   const feeBreakdown = getFeeBreakdown(breakdown.subtotal);
+  const pricingPattern = detectPricingPattern(product);
 
   if (compact) {
     return (
@@ -63,7 +119,7 @@ export function PricingDisplay({
     <Card className={className}>
       <CardHeader>
         <div className="flex items-center justify-between">
-          <CardTitle className="text-lg">Pricing Summary</CardTitle>
+          <CardTitle className="text-lg">{pricingPattern.title}</CardTitle>
           {showDetails && (
             <Popover>
               <PopoverTrigger asChild>
@@ -109,41 +165,104 @@ export function PricingDisplay({
             </Popover>
           )}
         </div>
+        <p className="text-sm text-muted-foreground mt-1">{pricingPattern.description}</p>
       </CardHeader>
       <CardContent className="space-y-3">
-        {/* Guest breakdown */}
-        {breakdown.adults > 0 && (
-          <div className="flex justify-between">
-            <span>
-              {breakdown.adults} Adult{breakdown.adults > 1 ? "s" : ""} ×{" "}
-              {formatCurrency(breakdown.adultPrice)}
-            </span>
-            <span>
-              {formatCurrency(breakdown.adults * breakdown.adultPrice)}
-            </span>
-          </div>
-        )}
-        {breakdown.children > 0 && (
-          <div className="flex justify-between">
-            <span>
-              {breakdown.children} Child{breakdown.children > 1 ? "ren" : ""} ×{" "}
-              {formatCurrency(breakdown.childPrice)}
-            </span>
-            <span>
-              {formatCurrency(breakdown.children * breakdown.childPrice)}
-            </span>
-          </div>
-        )}
-        {breakdown.infants > 0 && (
-          <div className="flex justify-between">
-            <span>
-              {breakdown.infants} Infant{breakdown.infants > 1 ? "s" : ""} ×{" "}
-              {formatCurrency(breakdown.infantPrice)}
-            </span>
-            <span>
-              {formatCurrency(breakdown.infants * breakdown.infantPrice)}
-            </span>
-          </div>
+        {/* Dynamic guest breakdown based on actual price options */}
+        {breakdown.dynamicGuestCounts && product?.priceOptions ? (
+          // Show dynamic price option breakdown
+          Object.entries(breakdown.dynamicGuestCounts).map(([label, count]) => {
+            if (count === 0) return null;
+            
+            // Enhanced label matching - try exact match first, then case-insensitive, then partial match
+            let priceOption = product.priceOptions?.find(opt => opt.label === label);
+            
+            if (!priceOption) {
+              // Try case-insensitive match
+              priceOption = product.priceOptions?.find(opt => 
+                opt.label.toLowerCase() === label.toLowerCase()
+              );
+            }
+            
+            if (!priceOption) {
+              // Try partial match (for cases like "Adult" matching "Adult (18+)")
+              priceOption = product.priceOptions?.find(opt => 
+                opt.label.toLowerCase().includes(label.toLowerCase()) ||
+                label.toLowerCase().includes(opt.label.toLowerCase())
+              );
+            }
+            
+            // If still no match, log warning and use fallback
+            if (!priceOption) {
+              console.warn(`No price option found for label: "${label}". Available options:`, 
+                product.priceOptions?.map(opt => opt.label));
+              
+              // Use breakdown selected price options as fallback
+              if (breakdown.selectedPriceOptions) {
+                const fallbackOption = Object.values(breakdown.selectedPriceOptions).find(opt => 
+                  opt && (opt.label === label || opt.label.toLowerCase() === label.toLowerCase())
+                );
+                if (fallbackOption) {
+                  priceOption = fallbackOption;
+                }
+              }
+            }
+            
+            // If we still don't have a price option, skip this entry
+            if (!priceOption) {
+              console.error(`Unable to find price for guest type: ${label}`);
+              return null;
+            }
+            
+            return (
+              <div key={label} className="flex justify-between">
+                <span>
+                  {count} {label}{count > 1 ? "s" : ""} ×{" "}
+                  {formatCurrency(priceOption.price)}
+                </span>
+                <span>
+                  {formatCurrency(count * priceOption.price)}
+                </span>
+              </div>
+            );
+          }).filter(Boolean) // Remove null entries
+        ) : (
+          // Fallback to standard guest type breakdown
+          <>
+            {breakdown.adults > 0 && (
+              <div className="flex justify-between">
+                <span>
+                  {breakdown.adults} Adult{breakdown.adults > 1 ? "s" : ""} ×{" "}
+                  {formatCurrency(breakdown.adultPrice)}
+                </span>
+                <span>
+                  {formatCurrency(breakdown.adults * breakdown.adultPrice)}
+                </span>
+              </div>
+            )}
+            {breakdown.children > 0 && (
+              <div className="flex justify-between">
+                <span>
+                  {breakdown.children} Child{breakdown.children > 1 ? "ren" : ""} ×{" "}
+                  {formatCurrency(breakdown.childPrice)}
+                </span>
+                <span>
+                  {formatCurrency(breakdown.children * breakdown.childPrice)}
+                </span>
+              </div>
+            )}
+            {breakdown.infants > 0 && (
+              <div className="flex justify-between">
+                <span>
+                  {breakdown.infants} Infant{breakdown.infants > 1 ? "s" : ""} ×{" "}
+                  {formatCurrency(breakdown.infantPrice)}
+                </span>
+                <span>
+                  {formatCurrency(breakdown.infants * breakdown.infantPrice)}
+                </span>
+              </div>
+            )}
+          </>
         )}
 
         {/* Extras breakdown */}

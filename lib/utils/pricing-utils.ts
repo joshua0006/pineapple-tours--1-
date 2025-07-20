@@ -31,6 +31,8 @@ export interface PricingBreakdown {
   total: number;
   savings?: number;
   selectedExtras?: SelectedExtra[];
+  // Dynamic pricing support
+  dynamicGuestCounts?: Record<string, number>;
   // Booking option pricing (for FIT tours)
   bookingOptionPrice?: number;
   bookingOptionTotal?: number;
@@ -186,19 +188,47 @@ export function calculatePricing(
   // If we have dynamic guest counts, calculate price directly from price options
   if (options.dynamicGuestCounts && product.priceOptions) {
     Object.entries(options.dynamicGuestCounts).forEach(([label, count]) => {
-      const priceOption = product.priceOptions?.find(opt => opt.label === label);
-      if (priceOption && count > 0) {
+      if (count <= 0) return;
+      
+      // Enhanced price option matching with fallbacks
+      let priceOption = product.priceOptions?.find(opt => opt.label === label);
+      
+      if (!priceOption) {
+        // Try case-insensitive match
+        priceOption = product.priceOptions?.find(opt => 
+          opt.label.toLowerCase() === label.toLowerCase()
+        );
+      }
+      
+      if (!priceOption) {
+        // Try partial match
+        priceOption = product.priceOptions?.find(opt => 
+          opt.label.toLowerCase().includes(label.toLowerCase()) ||
+          label.toLowerCase().includes(opt.label.toLowerCase())
+        );
+      }
+      
+      if (priceOption) {
         subtotal += priceOption.price * count;
         
         // Store selected price options for reference
         const labelLower = label.toLowerCase();
-        if (labelLower.includes('adult')) {
+        if (labelLower.includes('adult') || labelLower.includes('senior') || 
+            labelLower.includes('concession') || labelLower.includes('student')) {
           selectedPriceOptions.adult = priceOption;
         } else if (labelLower.includes('child')) {
           selectedPriceOptions.child = priceOption;
         } else if (labelLower.includes('infant')) {
           selectedPriceOptions.infant = priceOption;
         }
+      } else {
+        console.warn(`No price option found for "${label}" (count: ${count}). Available options:`, 
+          product.priceOptions?.map(opt => `${opt.label}: $${opt.price}`));
+        
+        // Use session/base price as fallback
+        const fallbackPrice = sessionPrice || basePrice || 0;
+        subtotal += fallbackPrice * count;
+        console.warn(`Using fallback price of $${fallbackPrice} for ${count} ${label}(s)`);
       }
     });
   } else {
@@ -305,6 +335,7 @@ export function calculatePricing(
     total,
     savings: savings > 0 ? savings : undefined,
     selectedExtras,
+    dynamicGuestCounts: options.dynamicGuestCounts,
     selectedPriceOptions: Object.keys(selectedPriceOptions).length > 0 ? selectedPriceOptions : undefined,
   };
 }

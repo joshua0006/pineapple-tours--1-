@@ -23,8 +23,10 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { GuestManager, type GuestInfo } from "@/components/ui/guest-manager";
+import { GuestManager, type GuestInfo, type PriceOptionConfig } from "@/components/ui/guest-manager";
 import { BookingFormData } from "@/lib/utils/booking-transform";
+import { createPriceOptionConfigs, generateGuestInstancesFromCounts, convertDynamicGuestCountsToStandard } from "@/lib/utils/guest-type-mapping";
+import { RezdyPriceOption } from "@/lib/types/rezdy";
 
 
 
@@ -49,6 +51,8 @@ export default function GuestDetailsPage() {
 
   // Guest state
   const [guests, setGuests] = useState<GuestInfo[]>([]);
+  const [priceOptionConfigs, setPriceOptionConfigs] = useState<PriceOptionConfig[]>([]);
+  const [useDynamicTypes, setUseDynamicTypes] = useState(false);
 
 
   // Load booking data on mount
@@ -154,47 +158,151 @@ export default function GuestDetailsPage() {
         
         setBookingData(data);
 
-        // Initialize guests based on guest counts
+        // Determine if we need to use dynamic pricing based on booking data
+        const hasDynamicGuestCounts = data.guestCounts && !('adults' in data.guestCounts);
+        const hasSelectedPriceOptions = data.selectedPriceOptions && Object.keys(data.selectedPriceOptions).length > 0;
+        const shouldUseDynamicTypes = hasDynamicGuestCounts || hasSelectedPriceOptions;
+        
+        setUseDynamicTypes(shouldUseDynamicTypes);
+
+        // Initialize guests based on guest counts and pricing structure
         if (data.guestCounts) {
-          const initialGuests: GuestInfo[] = [];
-          let guestId = 1;
+          let initialGuests: GuestInfo[] = [];
+          
+          if (shouldUseDynamicTypes && hasDynamicGuestCounts) {
+            // Handle dynamic guest counts (e.g., {"Adult": 2, "Child": 1, "Senior": 1})
+            console.log("🔄 Using dynamic guest type initialization");
+            
+            // Try to extract price options from selected options or reconstruct them
+            let priceOptions: RezdyPriceOption[] = [];
+            
+            if (data.selectedPriceOptions) {
+              // Reconstruct price options from selected options
+              Object.entries(data.selectedPriceOptions).forEach(([type, option]) => {
+                if (option) {
+                  priceOptions.push({
+                    id: option.id,
+                    label: option.label,
+                    price: option.price,
+                    seatsUsed: 1 // Default value
+                  });
+                }
+              });
+            } else {
+              // Create mock price options based on guest count keys
+              Object.keys(data.guestCounts as Record<string, number>).forEach((label, index) => {
+                priceOptions.push({
+                  id: 1000 + index, // Temporary ID
+                  label: label,
+                  price: 0, // Will be filled from booking data
+                  seatsUsed: 1
+                });
+              });
+            }
+            
+            // Create configurations for dynamic pricing
+            const configs = createPriceOptionConfigs(priceOptions);
+            setPriceOptionConfigs(configs);
+            
+            // Generate guests from dynamic counts
+            initialGuests = generateGuestInstancesFromCounts(
+              data.guestCounts as Record<string, number>,
+              configs
+            );
+            
+            // Set first guest info from contact data
+            if (initialGuests.length > 0) {
+              initialGuests[0].firstName = data.contact.firstName;
+              initialGuests[0].lastName = data.contact.lastName;
+            }
+            
+          } else {
+            // Handle standard guest counts (legacy format)
+            console.log("🔄 Using standard guest type initialization");
+            
+            const standardCounts = data.guestCounts as { adults: number; children: number; infants: number };
+            let guestId = 1;
 
-          // Add adults
-          for (let i = 0; i < data.guestCounts.adults; i++) {
-            // For the first guest, use contact information from pre-payment
-            const isFirstGuest = i === 0;
-            initialGuests.push({
-              id: guestId.toString(),
-              firstName: isFirstGuest ? data.contact.firstName : "",
-              lastName: isFirstGuest ? data.contact.lastName : "",
-              age: 25,
-              type: "ADULT",
-            });
-            guestId++;
-          }
+            // Add adults
+            for (let i = 0; i < standardCounts.adults; i++) {
+              const isFirstGuest = i === 0;
+              initialGuests.push({
+                id: guestId.toString(),
+                firstName: isFirstGuest ? data.contact.firstName : "",
+                lastName: isFirstGuest ? data.contact.lastName : "",
+                age: 25,
+                type: "ADULT",
+                priceOptionId: data.selectedPriceOptions?.adult?.id,
+                priceOptionLabel: data.selectedPriceOptions?.adult?.label,
+                customFieldValues: {}
+              });
+              guestId++;
+            }
 
-          // Add children
-          for (let i = 0; i < data.guestCounts.children; i++) {
-            initialGuests.push({
-              id: guestId.toString(),
-              firstName: "",
-              lastName: "",
-              age: 12,
-              type: "CHILD",
-            });
-            guestId++;
-          }
+            // Add children
+            for (let i = 0; i < standardCounts.children; i++) {
+              initialGuests.push({
+                id: guestId.toString(),
+                firstName: "",
+                lastName: "",
+                age: 12,
+                type: "CHILD",
+                priceOptionId: data.selectedPriceOptions?.child?.id,
+                priceOptionLabel: data.selectedPriceOptions?.child?.label,
+                customFieldValues: {}
+              });
+              guestId++;
+            }
 
-          // Add infants
-          for (let i = 0; i < data.guestCounts.infants; i++) {
-            initialGuests.push({
-              id: guestId.toString(),
-              firstName: "",
-              lastName: "",
-              age: 1,
-              type: "INFANT",
-            });
-            guestId++;
+            // Add infants
+            for (let i = 0; i < standardCounts.infants; i++) {
+              initialGuests.push({
+                id: guestId.toString(),
+                firstName: "",
+                lastName: "",
+                age: 1,
+                type: "INFANT",
+                priceOptionId: data.selectedPriceOptions?.infant?.id,
+                priceOptionLabel: data.selectedPriceOptions?.infant?.label,
+                customFieldValues: {}
+              });
+              guestId++;
+            }
+            
+            // Create standard price option configs for consistency
+            if (data.selectedPriceOptions) {
+              const standardPriceOptions: RezdyPriceOption[] = [];
+              
+              if (data.selectedPriceOptions.adult) {
+                standardPriceOptions.push({
+                  id: data.selectedPriceOptions.adult.id,
+                  label: data.selectedPriceOptions.adult.label,
+                  price: data.selectedPriceOptions.adult.price,
+                  seatsUsed: 1
+                });
+              }
+              
+              if (data.selectedPriceOptions.child) {
+                standardPriceOptions.push({
+                  id: data.selectedPriceOptions.child.id,
+                  label: data.selectedPriceOptions.child.label,
+                  price: data.selectedPriceOptions.child.price,
+                  seatsUsed: 1
+                });
+              }
+              
+              if (data.selectedPriceOptions.infant) {
+                standardPriceOptions.push({
+                  id: data.selectedPriceOptions.infant.id,
+                  label: data.selectedPriceOptions.infant.label,
+                  price: data.selectedPriceOptions.infant.price,
+                  seatsUsed: 1
+                });
+              }
+              
+              const configs = createPriceOptionConfigs(standardPriceOptions);
+              setPriceOptionConfigs(configs);
+            }
           }
 
           setGuests(initialGuests);
@@ -495,6 +603,25 @@ export default function GuestDetailsPage() {
               minGuests={guests.length}
               requireAdult={true}
               autoManageGuests={false}
+              priceOptionConfigs={priceOptionConfigs}
+              enableDynamicTypes={useDynamicTypes}
+              customValidation={(guestList) => {
+                const errors: string[] = [];
+                
+                // Ensure we have the right number of guests for each price option
+                if (useDynamicTypes && bookingData?.guestCounts && typeof bookingData.guestCounts === 'object' && !('adults' in bookingData.guestCounts)) {
+                  const expectedCounts = bookingData.guestCounts as Record<string, number>;
+                  
+                  Object.entries(expectedCounts).forEach(([optionLabel, expectedCount]) => {
+                    const actualCount = guestList.filter(g => g.priceOptionLabel === optionLabel).length;
+                    if (actualCount !== expectedCount) {
+                      errors.push(`Expected ${expectedCount} guests for ${optionLabel}, but found ${actualCount}`);
+                    }
+                  });
+                }
+                
+                return errors;
+              }}
             />
           </CardContent>
         </Card>
@@ -538,29 +665,48 @@ export default function GuestDetailsPage() {
                   <div className="flex items-center gap-2">
                     <Users className="h-4 w-4 text-muted-foreground" />
                     <span>
-                      {bookingData.guestCounts.adults +
-                        bookingData.guestCounts.children +
-                        bookingData.guestCounts.infants}{" "}
+                      {useDynamicTypes && typeof bookingData.guestCounts === 'object' && !('adults' in bookingData.guestCounts) ? 
+                        Object.values(bookingData.guestCounts as Record<string, number>).reduce((sum, count) => sum + count, 0) :
+                        ((bookingData.guestCounts as any).adults || 0) + 
+                        ((bookingData.guestCounts as any).children || 0) + 
+                        ((bookingData.guestCounts as any).infants || 0)
+                      }{" "}
                       guests
                     </span>
                   </div>
                 )}
-                {bookingData.selectedPriceOptions && bookingData.guestCounts && (
+                {bookingData.guestCounts && (
                   <div className="space-y-1 pt-2">
-                    {bookingData.guestCounts.adults > 0 && bookingData.selectedPriceOptions.adult && (
-                      <div className="text-sm text-muted-foreground">
-                        {bookingData.guestCounts.adults} × {bookingData.selectedPriceOptions.adult.label}
-                      </div>
-                    )}
-                    {bookingData.guestCounts.children > 0 && bookingData.selectedPriceOptions.child && (
-                      <div className="text-sm text-muted-foreground">
-                        {bookingData.guestCounts.children} × {bookingData.selectedPriceOptions.child.label}
-                      </div>
-                    )}
-                    {bookingData.guestCounts.infants > 0 && bookingData.selectedPriceOptions.infant && (
-                      <div className="text-sm text-muted-foreground">
-                        {bookingData.guestCounts.infants} × {bookingData.selectedPriceOptions.infant.label}
-                      </div>
+                    {useDynamicTypes && typeof bookingData.guestCounts === 'object' && !('adults' in bookingData.guestCounts) ? (
+                      // Display dynamic guest counts
+                      Object.entries(bookingData.guestCounts as Record<string, number>).map(([label, count]) => (
+                        count > 0 && (
+                          <div key={label} className="text-sm text-muted-foreground">
+                            {count} × {label}
+                          </div>
+                        )
+                      ))
+                    ) : (
+                      // Display standard guest counts with price options
+                      bookingData.selectedPriceOptions && (
+                        <>
+                          {(bookingData.guestCounts as any).adults > 0 && bookingData.selectedPriceOptions.adult && (
+                            <div className="text-sm text-muted-foreground">
+                              {(bookingData.guestCounts as any).adults} × {bookingData.selectedPriceOptions.adult.label}
+                            </div>
+                          )}
+                          {(bookingData.guestCounts as any).children > 0 && bookingData.selectedPriceOptions.child && (
+                            <div className="text-sm text-muted-foreground">
+                              {(bookingData.guestCounts as any).children} × {bookingData.selectedPriceOptions.child.label}
+                            </div>
+                          )}
+                          {(bookingData.guestCounts as any).infants > 0 && bookingData.selectedPriceOptions.infant && (
+                            <div className="text-sm text-muted-foreground">
+                              {(bookingData.guestCounts as any).infants} × {bookingData.selectedPriceOptions.infant.label}
+                            </div>
+                          )}
+                        </>
+                      )
                     )}
                   </div>
                 )}

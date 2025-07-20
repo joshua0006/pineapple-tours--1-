@@ -29,11 +29,14 @@ export interface BookingFormData {
     firstName: string;
     lastName: string;
     age: number;
-    type: "ADULT" | "CHILD" | "INFANT";
+    type: "ADULT" | "CHILD" | "INFANT" | "SENIOR" | "STUDENT" | "CONCESSION" | "FAMILY" | "GROUP" | "QUANTITY" | "CUSTOM";
+    priceOptionId?: number;
+    priceOptionLabel?: string;
     certificationLevel?: string;
     certificationNumber?: string;
     certificationAgency?: string;
     barcode?: string;
+    customFieldValues?: Record<string, string>;
   }>;
   contact: {
     firstName: string;
@@ -67,12 +70,12 @@ export interface BookingFormData {
     cardNumber?: string;
     [key: string]: any;
   };
-  // Optional guest counts for simplified booking flow
+  // Guest counts - can be either standard format or dynamic price option based
   guestCounts?: {
     adults: number;
     children: number;
     infants: number;
-  };
+  } | Record<string, number>;
   // Track selected priceOptions from Rezdy
   selectedPriceOptions?: {
     adult?: { id: number; label: string; price: number };

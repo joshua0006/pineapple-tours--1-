@@ -87,7 +87,7 @@ export interface BookingFormData {
 export function createRezdyQuantities(
   guests: BookingFormData["guests"],
   selectedPriceOptions?: BookingFormData["selectedPriceOptions"],
-  guestCounts?: BookingFormData["guestCounts"],
+  guestCounts?: BookingFormData["guestCounts"] | Record<string, number>,
   productCode?: string
 ): RezdyQuantity[] {
   console.log("🔄 Creating Rezdy quantities:", {
@@ -99,6 +99,22 @@ export function createRezdyQuantities(
   });
 
   const quantities: RezdyQuantity[] = [];
+  
+  // Check if we have dynamic guest counts (from price options)
+  if (guestCounts && !('adults' in guestCounts) && typeof guestCounts === 'object') {
+    // Dynamic guest counts - create quantities directly from price option labels
+    Object.entries(guestCounts).forEach(([label, count]) => {
+      if (count > 0) {
+        quantities.push({
+          optionLabel: label,
+          value: count
+        });
+      }
+    });
+    
+    console.log("✅ Created quantities from dynamic guest counts:", quantities);
+    return quantities;
+  }
 
   // Use guest counts or individual guests to determine quantities
   if (guestCounts || (guests && guests.length > 0)) {
@@ -109,10 +125,10 @@ export function createRezdyQuantities(
       infants: 0
     };
 
-    if (guestCounts) {
-      counts.adults = guestCounts.adults;
-      counts.children = guestCounts.children;
-      counts.infants = guestCounts.infants;
+    if (guestCounts && 'adults' in guestCounts) {
+      counts.adults = (guestCounts as BookingFormData["guestCounts"]).adults;
+      counts.children = (guestCounts as BookingFormData["guestCounts"]).children;
+      counts.infants = (guestCounts as BookingFormData["guestCounts"]).infants;
     } else if (guests) {
       guests.forEach(guest => {
         if (guest.type === "ADULT") counts.adults++;
@@ -219,7 +235,7 @@ export function createRezdyQuantities(
 export function aggregateParticipants(
   guests: BookingFormData["guests"],
   selectedPriceOptions?: BookingFormData["selectedPriceOptions"],
-  guestCounts?: BookingFormData["guestCounts"]
+  guestCounts?: BookingFormData["guestCounts"] | Record<string, number>
 ): RezdyParticipant[] {
   console.log("🔄 Aggregating participants:", {
     guestCount: guests?.length || 0,

@@ -170,7 +170,7 @@ export function getTaxInfoFromProduct(product: RezdyProduct): TaxInfo | null {
 export function calculatePricing(
   product: RezdyProduct,
   session: RezdySession | null,
-  options: PricingOptions
+  options: PricingOptions & { dynamicGuestCounts?: Record<string, number> }
 ): PricingBreakdown {
   // Use Rezdy tax rate if available, otherwise fall back to provided option or default
   const taxRate = options.taxRate || getTaxRateFromProduct(product);
@@ -180,40 +180,62 @@ export function calculatePricing(
   const basePrice = product.advertisedPrice || 0;
   const sessionPrice = session?.totalPrice || basePrice;
 
-  // Try to get prices from priceOptions first, then fall back to calculated prices
-  const priceOptionsData = getPricesFromPriceOptions(product);
-  
-  let adultPrice: number;
-  let childPrice: number;
-  let infantPrice: number;
+  let subtotal = 0;
   let selectedPriceOptions: PricingBreakdown['selectedPriceOptions'] = {};
-
-  if (priceOptionsData) {
-    // Use actual Rezdy priceOptions data
-    adultPrice = priceOptionsData.adult;
-    childPrice = priceOptionsData.child;
-    infantPrice = priceOptionsData.infant;
-
-    // Get the actual priceOption objects
-    const adultOption = getPriceOptionByGuestType(product, 'adult');
-    const childOption = getPriceOptionByGuestType(product, 'child');
-    const infantOption = getPriceOptionByGuestType(product, 'infant');
-
-    if (adultOption) selectedPriceOptions.adult = adultOption;
-    if (childOption) selectedPriceOptions.child = childOption;
-    if (infantOption) selectedPriceOptions.infant = infantOption;
+  
+  // If we have dynamic guest counts, calculate price directly from price options
+  if (options.dynamicGuestCounts && product.priceOptions) {
+    Object.entries(options.dynamicGuestCounts).forEach(([label, count]) => {
+      const priceOption = product.priceOptions?.find(opt => opt.label === label);
+      if (priceOption && count > 0) {
+        subtotal += priceOption.price * count;
+        
+        // Store selected price options for reference
+        const labelLower = label.toLowerCase();
+        if (labelLower.includes('adult')) {
+          selectedPriceOptions.adult = priceOption;
+        } else if (labelLower.includes('child')) {
+          selectedPriceOptions.child = priceOption;
+        } else if (labelLower.includes('infant')) {
+          selectedPriceOptions.infant = priceOption;
+        }
+      }
+    });
   } else {
-    // Fall back to calculated prices based on sessionPrice/basePrice with discounts
-    adultPrice = sessionPrice;
-    childPrice = Math.round(sessionPrice * (1 - config.childDiscountRate));
-    infantPrice = Math.round(sessionPrice * (1 - config.infantDiscountRate));
-  }
+    // Original logic for standard adult/child/infant counts
+    const priceOptionsData = getPricesFromPriceOptions(product);
+    
+    let adultPrice: number;
+    let childPrice: number;
+    let infantPrice: number;
 
-  // Calculate subtotal for main tour
-  const subtotal =
-    options.adults * adultPrice +
-    options.children * childPrice +
-    options.infants * infantPrice;
+    if (priceOptionsData) {
+      // Use actual Rezdy priceOptions data
+      adultPrice = priceOptionsData.adult;
+      childPrice = priceOptionsData.child;
+      infantPrice = priceOptionsData.infant;
+
+      // Get the actual priceOption objects
+      const adultOption = getPriceOptionByGuestType(product, 'adult');
+      const childOption = getPriceOptionByGuestType(product, 'child');
+      const infantOption = getPriceOptionByGuestType(product, 'infant');
+
+      if (adultOption) selectedPriceOptions.adult = adultOption;
+      if (childOption) selectedPriceOptions.child = childOption;
+      if (infantOption) selectedPriceOptions.infant = infantOption;
+    } else {
+      // Fall back to calculated prices based on sessionPrice/basePrice with discounts
+      adultPrice = sessionPrice;
+      childPrice = Math.round(sessionPrice * (1 - config.childDiscountRate));
+      infantPrice = Math.round(sessionPrice * (1 - config.infantDiscountRate));
+    }
+
+    // Calculate subtotal for main tour
+    subtotal =
+      options.adults * adultPrice +
+      options.children * childPrice +
+      options.infants * infantPrice;
+  }
 
   // Calculate extras subtotal
   let extrasSubtotal = 0;
@@ -253,6 +275,16 @@ export function calculatePricing(
   // Calculate total
   const total = totalSubtotal + taxes + serviceFees;
 
+  // Calculate pricing details
+  let adultPrice = sessionPrice;
+  let childPrice = sessionPrice;
+  let infantPrice = 0;
+  
+  // Set adult/child/infant prices based on what was calculated
+  if (selectedPriceOptions.adult) adultPrice = selectedPriceOptions.adult.price;
+  if (selectedPriceOptions.child) childPrice = selectedPriceOptions.child.price;
+  if (selectedPriceOptions.infant) infantPrice = selectedPriceOptions.infant.price;
+  
   // Calculate potential savings
   const fullPriceTotal =
     (options.adults + options.children + options.infants) * adultPrice;

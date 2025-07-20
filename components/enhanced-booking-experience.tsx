@@ -230,11 +230,42 @@ export function EnhancedBookingExperience({
   const [pickupValidationError, setPickupValidationError] = useState<string | null>(null);
   const [pickupValidationWarning, setPickupValidationWarning] = useState<string | null>(null);
   
-  // Simplified guest count - default to minimum required
-  const [guestCounts, setGuestCounts] = useState({
-    adults: preSelectedParticipants?.adults || Math.max(1, product.quantityRequiredMin || 1),
-    children: preSelectedParticipants?.children || 0,
-    infants: preSelectedParticipants?.infants || 0,
+  // Dynamic guest count based on available price options
+  const [guestCounts, setGuestCounts] = useState<Record<string, number>>(() => {
+    const initialCounts: Record<string, number> = {};
+    
+    // Initialize counts based on available price options
+    if (product.priceOptions && product.priceOptions.length > 0) {
+      product.priceOptions.forEach((option) => {
+        initialCounts[option.label] = 0;
+      });
+      
+      // Set the first option to minimum required or 1
+      const firstOption = product.priceOptions[0];
+      initialCounts[firstOption.label] = Math.max(1, product.quantityRequiredMin || 1);
+      
+      // Apply pre-selected participants if available
+      if (preSelectedParticipants) {
+        // Map legacy participant types to actual price option labels
+        product.priceOptions.forEach((option) => {
+          const labelLower = option.label.toLowerCase();
+          if (labelLower.includes('adult') && preSelectedParticipants.adults) {
+            initialCounts[option.label] = preSelectedParticipants.adults;
+          } else if (labelLower.includes('child') && preSelectedParticipants.children) {
+            initialCounts[option.label] = preSelectedParticipants.children;
+          } else if (labelLower.includes('infant') && preSelectedParticipants.infants) {
+            initialCounts[option.label] = preSelectedParticipants.infants;
+          }
+        });
+      }
+    } else {
+      // Fallback to default structure if no price options
+      initialCounts['Adult'] = preSelectedParticipants?.adults || Math.max(1, product.quantityRequiredMin || 1);
+      initialCounts['Child'] = preSelectedParticipants?.children || 0;
+      initialCounts['Infant'] = preSelectedParticipants?.infants || 0;
+    }
+    
+    return initialCounts;
   });
   
   const [selectedExtras, setSelectedExtras] = useState<SelectedExtra[]>(
@@ -367,11 +398,23 @@ export function EnhancedBookingExperience({
       }
     }
 
-    if (preSelectedParticipants) {
-      setGuestCounts({
-        adults: preSelectedParticipants.adults,
-        children: preSelectedParticipants.children || 0,
-        infants: preSelectedParticipants.infants || 0,
+    if (preSelectedParticipants && product.priceOptions) {
+      setGuestCounts(prev => {
+        const newCounts = { ...prev };
+        
+        // Map legacy participant types to actual price option labels
+        product.priceOptions?.forEach((option) => {
+          const labelLower = option.label.toLowerCase();
+          if (labelLower.includes('adult') && preSelectedParticipants.adults) {
+            newCounts[option.label] = preSelectedParticipants.adults;
+          } else if (labelLower.includes('child') && preSelectedParticipants.children) {
+            newCounts[option.label] = preSelectedParticipants.children;
+          } else if (labelLower.includes('infant') && preSelectedParticipants.infants) {
+            newCounts[option.label] = preSelectedParticipants.infants;
+          }
+        });
+        
+        return newCounts;
       });
     }
   }, [preSelectedSession, preSelectedParticipants, preSelectedDate]);
@@ -391,7 +434,25 @@ export function EnhancedBookingExperience({
     product.productCode,
     startDateRange,
     endDateRange,
-    `ADULT:${guestCounts.adults},CHILD:${guestCounts.children},INFANT:${guestCounts.infants}`
+    (() => {
+      // Build quantities string from dynamic guest counts
+      const quantities: string[] = [];
+      Object.entries(guestCounts).forEach(([label, count]) => {
+        if (count > 0) {
+          // Map price option labels to participant types for API
+          const labelLower = label.toLowerCase();
+          let participantType = 'ADULT'; // default
+          if (labelLower.includes('child')) participantType = 'CHILD';
+          else if (labelLower.includes('infant')) participantType = 'INFANT';
+          else if (labelLower.includes('senior')) participantType = 'SENIOR';
+          else if (labelLower.includes('student')) participantType = 'STUDENT';
+          else if (labelLower.includes('concession')) participantType = 'CONCESSION';
+          
+          quantities.push(`${participantType}:${count}`);
+        }
+      });
+      return quantities.length > 0 ? quantities.join(',') : 'ADULT:1';
+    })()
   );
 
   // Use only real availability data from Rezdy API
@@ -545,11 +606,46 @@ export function EnhancedBookingExperience({
 
   // Calculate pricing (simplified without booking options)
   const pricingBreakdown = useMemo((): PricingBreakdown => {
+    // Convert dynamic guest counts to standard format for pricing calculation
+    const standardCounts = {
+      adults: 0,
+      children: 0,
+      infants: 0,
+    };
+    
+    // Map price option counts to standard guest types
+    if (product.priceOptions) {
+      Object.entries(guestCounts).forEach(([label, count]) => {
+        const labelLower = label.toLowerCase();
+        if (labelLower.includes('adult') || labelLower.includes('senior') || 
+            labelLower.includes('concession') || labelLower.includes('student')) {
+          standardCounts.adults += count;
+        } else if (labelLower.includes('child')) {
+          standardCounts.children += count;
+        } else if (labelLower.includes('infant')) {
+          standardCounts.infants += count;
+        } else if (labelLower.includes('family')) {
+          // Family packages typically count as multiple adults
+          standardCounts.adults += count * 2; // Assume family of 4 = 2 adults + 2 children
+          standardCounts.children += count * 2;
+        } else {
+          // Default unknown types to adults
+          standardCounts.adults += count;
+        }
+      });
+    } else {
+      // Use guest counts directly if no price options
+      standardCounts.adults = guestCounts['Adult'] || 0;
+      standardCounts.children = guestCounts['Child'] || 0;
+      standardCounts.infants = guestCounts['Infant'] || 0;
+    }
+    
     return calculatePricing(product, selectedSession, {
-      adults: guestCounts.adults,
-      children: guestCounts.children,
-      infants: guestCounts.infants,
+      adults: standardCounts.adults,
+      children: standardCounts.children,
+      infants: standardCounts.infants,
       extras: selectedExtras,
+      dynamicGuestCounts: guestCounts,
     });
   }, [
     product,
@@ -764,23 +860,31 @@ export function EnhancedBookingExperience({
   };
 
   // Guest count management functions
-  const updateGuestCount = (type: 'adults' | 'children' | 'infants', delta: number) => {
+  const updateGuestCount = (optionLabel: string, delta: number) => {
     setGuestCounts(prev => {
       const newCounts = { ...prev };
-      const newValue = prev[type] + delta;
+      const currentValue = prev[optionLabel] || 0;
+      const newValue = currentValue + delta;
+      
+      // Get the price option for this label
+      const priceOption = product.priceOptions?.find(opt => opt.label === optionLabel);
+      const seatsUsed = priceOption?.seatsUsed || 1;
+      
+      // Check if this is the primary/first option (must have at least 1)
+      const isPrimaryOption = product.priceOptions?.[0]?.label === optionLabel;
+      const minValue = isPrimaryOption ? 1 : 0;
       
       // Apply constraints
-      if (type === 'adults') {
-        // Adults minimum is 1, maximum from product or 50
-        newCounts.adults = Math.max(1, Math.min(newValue, product.quantityRequiredMax || 50));
-      } else {
-        // Children and infants minimum is 0
-        newCounts[type] = Math.max(0, Math.min(newValue, (product.quantityRequiredMax || 50) - newCounts.adults));
-      }
+      newCounts[optionLabel] = Math.max(minValue, Math.min(newValue, product.quantityRequiredMax || 50));
       
-      // Ensure total doesn't exceed maximum
-      const total = newCounts.adults + newCounts.children + newCounts.infants;
-      if (product.quantityRequiredMax && total > product.quantityRequiredMax) {
+      // Calculate total seats used
+      const totalSeatsUsed = Object.entries(newCounts).reduce((total, [label, count]) => {
+        const option = product.priceOptions?.find(opt => opt.label === label);
+        return total + (count * (option?.seatsUsed || 1));
+      }, 0);
+      
+      // Ensure total seats don't exceed maximum
+      if (product.quantityRequiredMax && totalSeatsUsed > product.quantityRequiredMax) {
         return prev; // Don't update if it would exceed maximum
       }
       
@@ -788,27 +892,40 @@ export function EnhancedBookingExperience({
     });
   };
 
-  const incrementGuests = (type: 'adults' | 'children' | 'infants') => {
-    updateGuestCount(type, 1);
+  const incrementGuests = (optionLabel: string) => {
+    updateGuestCount(optionLabel, 1);
   };
 
-  const decrementGuests = (type: 'adults' | 'children' | 'infants') => {
-    updateGuestCount(type, -1);
+  const decrementGuests = (optionLabel: string) => {
+    updateGuestCount(optionLabel, -1);
   };
 
   // Check if we can add more guests of a specific type
-  const canIncrement = (_type: 'adults' | 'children' | 'infants'): boolean => {
-    const total = guestCounts.adults + guestCounts.children + guestCounts.infants;
+  const canIncrement = (optionLabel: string): boolean => {
+    const priceOption = product.priceOptions?.find(opt => opt.label === optionLabel);
+    const seatsForThisOption = priceOption?.seatsUsed || 1;
+    
+    // Calculate current total seats used
+    const totalSeatsUsed = Object.entries(guestCounts).reduce((total, [label, count]) => {
+      const option = product.priceOptions?.find(opt => opt.label === label);
+      return total + (count * (option?.seatsUsed || 1));
+    }, 0);
+    
     const maxAllowed = product.quantityRequiredMax || 50;
-    return total < maxAllowed;
+    return (totalSeatsUsed + seatsForThisOption) <= maxAllowed;
   };
 
   // Check if we can remove guests of a specific type
-  const canDecrement = (type: 'adults' | 'children' | 'infants'): boolean => {
-    if (type === 'adults') {
-      return guestCounts.adults > 1; // Must have at least 1 adult
+  const canDecrement = (optionLabel: string): boolean => {
+    const currentCount = guestCounts[optionLabel] || 0;
+    
+    // Check if this is the primary/first option (must have at least 1)
+    const isPrimaryOption = product.priceOptions?.[0]?.label === optionLabel;
+    
+    if (isPrimaryOption) {
+      return currentCount > 1; // Must have at least 1 of the primary option
     }
-    return guestCounts[type] > 0;
+    return currentCount > 0;
   };
 
   const handleProceedToPayment = async () => {
@@ -851,10 +968,11 @@ export function EnhancedBookingExperience({
         extras: selectedExtras.map((selectedExtra) => {
           let totalPrice = selectedExtra.extra.price * selectedExtra.quantity;
           if (selectedExtra.extra.priceType === "PER_PERSON") {
+            const totalGuests = Object.values(guestCounts).reduce((sum, count) => sum + count, 0);
             totalPrice =
               selectedExtra.extra.price *
               selectedExtra.quantity *
-              (guestCounts.adults + guestCounts.children + guestCounts.infants);
+              totalGuests;
           }
 
           return {
@@ -1349,105 +1467,140 @@ export function EnhancedBookingExperience({
                   Choose the number of guests for your booking
                 </p>
               </CardHeader>
-              <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                {/* Adults */}
-                <div className="flex flex-col p-4 bg-muted/30 rounded-lg">
-                  <div className="text-center mb-3">
-                    <div className="font-medium">Adults</div>
-                    <div className="text-sm text-muted-foreground">Ages 18+</div>
-                  </div>
-                  <div className="flex items-center justify-center gap-3">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => decrementGuests('adults')}
-                      disabled={!canDecrement('adults')}
-                      className="h-8 w-8 p-0"
-                    >
-                      <Minus className="h-4 w-4" />
-                    </Button>
-                    <span className="w-8 text-center font-medium">{guestCounts.adults}</span>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => incrementGuests('adults')}
-                      disabled={!canIncrement('adults')}
-                      className="h-8 w-8 p-0"
-                    >
-                      <Plus className="h-4 w-4" />
-                    </Button>
-                  </div>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {/* Dynamic guest types based on price options */}
+                  {product.priceOptions && product.priceOptions.length > 0 ? (
+                    product.priceOptions.map((option) => (
+                      <div key={option.id} className="flex flex-col p-4 bg-muted/30 rounded-lg">
+                        <div className="text-center mb-3">
+                          <div className="font-medium">{option.label}</div>
+                          <div className="text-sm text-muted-foreground">
+                            {formatCurrency(option.price)}
+                            {option.seatsUsed > 1 && ` (${option.seatsUsed} seats)`}
+                          </div>
+                        </div>
+                        <div className="flex items-center justify-center gap-3">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => decrementGuests(option.label)}
+                            disabled={!canDecrement(option.label)}
+                            className="h-8 w-8 p-0"
+                          >
+                            <Minus className="h-4 w-4" />
+                          </Button>
+                          <span className="w-12 text-center font-medium">{guestCounts[option.label] || 0}</span>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => incrementGuests(option.label)}
+                            disabled={!canIncrement(option.label)}
+                            className="h-8 w-8 p-0"
+                          >
+                            <Plus className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </div>
+                    ))
+                  ) : (
+                    /* Fallback to default guest types if no price options */
+                    <>
+                      <div className="flex flex-col p-4 bg-muted/30 rounded-lg">
+                        <div className="text-center mb-3">
+                          <div className="font-medium">Adults</div>
+                          <div className="text-sm text-muted-foreground">Ages 18+</div>
+                        </div>
+                        <div className="flex items-center justify-center gap-3">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => decrementGuests('Adult')}
+                            disabled={!canDecrement('Adult')}
+                            className="h-8 w-8 p-0"
+                          >
+                            <Minus className="h-4 w-4" />
+                          </Button>
+                          <span className="w-8 text-center font-medium">{guestCounts['Adult'] || 0}</span>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => incrementGuests('Adult')}
+                            disabled={!canIncrement('Adult')}
+                            className="h-8 w-8 p-0"
+                          >
+                            <Plus className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </div>
+                      <div className="flex flex-col p-4 bg-muted/30 rounded-lg">
+                        <div className="text-center mb-3">
+                          <div className="font-medium">Children</div>
+                          <div className="text-sm text-muted-foreground">Ages 3-17</div>
+                        </div>
+                        <div className="flex items-center justify-center gap-3">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => decrementGuests('Child')}
+                            disabled={!canDecrement('Child')}
+                            className="h-8 w-8 p-0"
+                          >
+                            <Minus className="h-4 w-4" />
+                          </Button>
+                          <span className="w-8 text-center font-medium">{guestCounts['Child'] || 0}</span>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => incrementGuests('Child')}
+                            disabled={!canIncrement('Child')}
+                            className="h-8 w-8 p-0"
+                          >
+                            <Plus className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </div>
+                      <div className="flex flex-col p-4 bg-muted/30 rounded-lg">
+                        <div className="text-center mb-3">
+                          <div className="font-medium">Infants</div>
+                          <div className="text-sm text-muted-foreground">Ages 0-2</div>
+                        </div>
+                        <div className="flex items-center justify-center gap-3">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => decrementGuests('Infant')}
+                            disabled={!canDecrement('Infant')}
+                            className="h-8 w-8 p-0"
+                          >
+                            <Minus className="h-4 w-4" />
+                          </Button>
+                          <span className="w-8 text-center font-medium">{guestCounts['Infant'] || 0}</span>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => incrementGuests('Infant')}
+                            disabled={!canIncrement('Infant')}
+                            className="h-8 w-8 p-0"
+                          >
+                            <Plus className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </div>
+                    </>
+                  )}
                 </div>
-
-                {/* Children */}
-                <div className="flex flex-col p-4 bg-muted/30 rounded-lg">
-                  <div className="text-center mb-3">
-                    <div className="font-medium">Children</div>
-                    <div className="text-sm text-muted-foreground">Ages 3-17</div>
-                  </div>
-                  <div className="flex items-center justify-center gap-3">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => decrementGuests('children')}
-                      disabled={!canDecrement('children')}
-                      className="h-8 w-8 p-0"
-                    >
-                      <Minus className="h-4 w-4" />
-                    </Button>
-                    <span className="w-8 text-center font-medium">{guestCounts.children}</span>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => incrementGuests('children')}
-                      disabled={!canIncrement('children')}
-                      className="h-8 w-8 p-0"
-                    >
-                      <Plus className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </div>
-
-                {/* Infants */}
-                <div className="flex flex-col p-4 bg-muted/30 rounded-lg">
-                  <div className="text-center mb-3">
-                    <div className="font-medium">Infants</div>
-                    <div className="text-sm text-muted-foreground">Ages 0-2</div>
-                  </div>
-                  <div className="flex items-center justify-center gap-3">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => decrementGuests('infants')}
-                      disabled={!canDecrement('infants')}
-                      className="h-8 w-8 p-0"
-                    >
-                      <Minus className="h-4 w-4" />
-                    </Button>
-                    <span className="w-8 text-center font-medium">{guestCounts.infants}</span>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => incrementGuests('infants')}
-                      disabled={!canIncrement('infants')}
-                      className="h-8 w-8 p-0"
-                    >
-                      <Plus className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </div>
-
+                
                 {/* Summary and constraints */}
-                <div className="space-y-2">
+                <div className="mt-6 space-y-2">
                   <div className="flex items-center gap-2 text-lg font-medium">
                     <Users className="h-5 w-5 text-brand-accent" />
                     <span>
-                      Total: {guestCounts.adults + guestCounts.children + guestCounts.infants} guests
+                      Total: {Object.values(guestCounts).reduce((sum, count) => sum + count, 0)} guests
                     </span>
                   </div>
                   
-                
-                  <div className="text-sm text-muted-foreground w-full">
+                  <div className="text-sm text-muted-foreground">
                     <Info className="h-4 w-4 inline mr-1" />
                     Guest details will be collected after payment confirmation
                   </div>

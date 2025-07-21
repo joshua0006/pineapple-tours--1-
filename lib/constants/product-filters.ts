@@ -21,12 +21,14 @@ export const PRODUCT_FILTER_CONFIG = {
     'booking fee',
     'processing fee',
     
-    // Custom/Private products
-    'custom tour',
-    'private tour',
-    'bespoke',
-    'tailor made',
-    'tailormade',
+    // Custom/Private products (be more specific to avoid false positives)
+    'custom tour only',
+    'private tour only',
+    'bespoke tour',
+    'tailor made tour',
+    'tailormade tour',
+    'custom booking',
+    'private booking only',
     
     // Industry/Trade products
     'famil',
@@ -49,12 +51,13 @@ export const PRODUCT_FILTER_CONFIG = {
     'non-drinker',
     'fdwt',
     
-    // Other administrative
-    'use',
-    'admin',
-    'internal',
-    'staff',
-    'employee',
+    // Other administrative (be more specific)
+    'admin use only',
+    'internal use',
+    'staff only',
+    'employee only',
+    'do not use',
+    'admin only',
   ],
   
   // Exact product names to exclude (case-insensitive)
@@ -110,7 +113,9 @@ export const PRODUCT_FILTER_CONFIG = {
   
   // Whitelist: Product codes that should always be included, even if they match exclusion rules
   whitelistedProductCodes: [
-    // Add product codes here that should bypass all filters
+    // Hop on Hop off products that should not be filtered
+    'PBRFH9', // Hop on Hop off Winery adventure - Tamborine Mountain - Gold Coast
+    // Add more product codes here that should bypass all filters
   ],
 };
 

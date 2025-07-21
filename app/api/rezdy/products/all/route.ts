@@ -194,9 +194,25 @@ export async function GET(request: NextRequest) {
     console.log(`   Products to filter: ${filterStats.filtered}`);
     console.log(`   Filtered by reason:`, filterStats.byReason);
     
-    // Apply comprehensive product filtering
-    const filteredProducts = ProductFilterService.filterProducts(allProducts);
+    // Check if our target product exists before filtering
+    const targetProduct = allProducts.find(p => p.productCode === 'PBRFH9');
+    if (targetProduct) {
+      console.log(`🎯 Found target product PBRFH9 before filtering: "${targetProduct.name}"`);
+    } else {
+      console.log(`❌ Target product PBRFH9 NOT found in raw products from API`);
+    }
+
+    // Apply comprehensive product filtering with debug logging
+    const filteredProducts = ProductFilterService.filterProducts(allProducts, { debug: true });
     console.log(`✅ Products after filtering: ${filteredProducts.length}`);
+    
+    // Check if our target product survived filtering
+    const targetProductAfter = filteredProducts.find(p => p.productCode === 'PBRFH9');
+    if (targetProductAfter) {
+      console.log(`✅ Target product PBRFH9 SURVIVED filtering: "${targetProductAfter.name}"`);
+    } else {
+      console.log(`❌ Target product PBRFH9 was FILTERED OUT`);
+    }
     
     // Transform products to ensure consistent structure
     const transformedProducts = filteredProducts.map((product, index) => {

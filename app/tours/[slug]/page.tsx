@@ -39,6 +39,7 @@ import { useAllProducts } from "@/hooks/use-all-products";
 import { usePickupCache } from "@/hooks/use-pickup-cache";
 import {
   extractProductCodeFromSlug,
+  findProductBySlug,
   getPrimaryImageUrl,
   getLocationString,
   formatPrice,
@@ -69,6 +70,15 @@ export default function TourDetailPage({
     loading: productsLoading,
     error: productsError,
   } = useAllProducts();
+
+  // Debug logging for slug and product lookup
+  console.log(`🔍 Tour page debugging:`, {
+    slug: resolvedParams.slug,
+    extractedProductCode: productCode,
+    totalProducts: products?.length || 0,
+    productsLoading,
+    productsError
+  });
 
   const [selectedProduct, setSelectedProduct] = useState<RezdyProduct | null>(
     null
@@ -108,9 +118,18 @@ export default function TourDetailPage({
 
   // Find the specific product when products are loaded
   useEffect(() => {
-    if (products && productCode) {
-      const product = products.find((p) => p.productCode === productCode);
+    if (products && products.length > 0) {
+      console.log(`🔍 Looking for product with slug: "${resolvedParams.slug}"`);
+      
+      // Use the improved findProductBySlug function with multiple matching strategies
+      const product = findProductBySlug(products, resolvedParams.slug);
+      
       if (product) {
+        console.log(`✅ Found matching product:`, {
+          productCode: product.productCode,
+          name: product.name,
+          slug: resolvedParams.slug
+        });
         // Add sample extras data for demonstration
         // In a real implementation, this would come from the Rezdy API
         const productWithExtras = {
@@ -183,10 +202,45 @@ export default function TourDetailPage({
         };
         setSelectedProduct(productWithExtras);
       } else {
-        setSelectedProduct(null);
+        console.log(`❌ No product found for slug: "${resolvedParams.slug}"`);
+        console.log(`📊 Available products:`, products.slice(0, 5).map(p => ({
+          productCode: p.productCode,
+          name: p.name
+        })));
+        
+        // Fallback: Try to fetch the product individually by extracting product code
+        const potentialProductCode = extractProductCodeFromSlug(resolvedParams.slug);
+        if (potentialProductCode) {
+          console.log(`🔄 Attempting fallback fetch for product code: ${potentialProductCode}`);
+          fetch(`/api/tours/${potentialProductCode}`)
+            .then(response => response.json())
+            .then(data => {
+              if (data.tour) {
+                console.log(`✅ Fallback fetch successful for ${potentialProductCode}:`, data.tour.name);
+                // Transform the API response to match our expected format
+                const fallbackProduct = {
+                  ...data.tour,
+                  extras: [],
+                  pickupLocations: ['Gold Coast'], // Default since this API doesn't return this info
+                  departsFrom: ['Gold Coast'],
+                  primaryPickupLocation: 'Gold Coast'
+                };
+                setSelectedProduct(fallbackProduct);
+              } else {
+                console.log(`❌ Fallback fetch failed for ${potentialProductCode}`);
+                setSelectedProduct(null);
+              }
+            })
+            .catch(error => {
+              console.error(`❌ Fallback fetch error for ${potentialProductCode}:`, error);
+              setSelectedProduct(null);
+            });
+        } else {
+          setSelectedProduct(null);
+        }
       }
     }
-  }, [products, productCode]);
+  }, [products, resolvedParams.slug]);
 
   // Early returns AFTER all hooks have been called
   if (productsLoading) {
@@ -213,17 +267,53 @@ export default function TourDetailPage({
   }
 
   if (productsError || !selectedProduct) {
+    // Enhanced error handling with better user feedback
+    const isNetworkError = productsError && productsError.includes('fetch');
+    const isNotFoundError = !selectedProduct && !productsError;
+    
+    let errorTitle = "Tour not found";
+    let errorMessage = "The tour you're looking for doesn't exist or has been removed.";
+    
+    if (isNetworkError) {
+      errorTitle = "Connection Error";
+      errorMessage = "Unable to load tour information. Please check your internet connection and try again.";
+    } else if (isNotFoundError && products && products.length > 0) {
+      errorMessage = `We couldn't find a tour matching "${resolvedParams.slug}". This might be due to:
+      • The tour URL has changed
+      • The tour is no longer available
+      • There's a typo in the URL
+      
+      Try browsing our available tours or use the search function.`;
+    }
+    
     return (
       <div className="container py-8 sm:py-12">
         <ErrorState
-          title="Tour not found"
-          message={
-            productsError ||
-            "The tour you're looking for doesn't exist or has been removed."
-          }
+          title={errorTitle}
+          message={errorMessage}
           showRetry={!!productsError}
           onRetry={() => window.location.reload()}
         />
+        
+        {/* Add helpful suggestions */}
+        <div className="mt-8 text-center">
+          <div className="space-y-4">
+            <p className="text-muted-foreground">
+              Looking for tours? Here are some options:
+            </p>
+            <div className="flex flex-wrap justify-center gap-4">
+              <Link href="/tours">
+                <Button variant="outline">Browse All Tours</Button>
+              </Link>
+              <Link href="/">
+                <Button variant="outline">Go to Homepage</Button>
+              </Link>
+              <Link href="/contact">
+                <Button variant="outline">Contact Support</Button>
+              </Link>
+            </div>
+          </div>
+        </div>
       </div>
     );
   }

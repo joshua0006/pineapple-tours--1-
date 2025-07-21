@@ -14,29 +14,98 @@ export function generateProductSlug(product: RezdyProduct): string {
 }
 
 /**
- * Extract product code from a slug
+ * Extract product code from a slug with multiple fallback strategies
  */
 export function extractProductCodeFromSlug(slug: string): string | null {
+  if (!slug || slug.trim() === "") return null;
+  
   const parts = slug.split("-");
   if (parts.length === 0) return null;
 
-  // The product code is typically the first part of the slug
-  return parts[0].toUpperCase();
+  // Strategy 1: First part only (original logic)
+  const firstPart = parts[0].toUpperCase();
+  
+  // Strategy 2: Try first 2 parts combined (e.g., "pzwnnc-premium" -> "PZWNNC-PREMIUM")
+  const firstTwoParts = parts.length >= 2 ? `${parts[0]}-${parts[1]}`.toUpperCase() : null;
+  
+  // Strategy 3: Look for typical product code patterns (6+ alphanumeric chars)
+  const potentialCode = parts.find(part => 
+    part.length >= 6 && /^[A-Z0-9]+$/i.test(part)
+  )?.toUpperCase();
+
+  // Return strategies in order of preference
+  // We'll try all these in the findProductBySlug function
+  console.log(`🔍 Extracting product codes from slug "${slug}":`, {
+    firstPart,
+    firstTwoParts,
+    potentialCode,
+    allParts: parts.map(p => p.toUpperCase())
+  });
+  
+  return firstPart; // Return the primary strategy for backwards compatibility
 }
 
 /**
- * Find a product by slug from a list of products
+ * Find a product by slug from a list of products with multiple matching strategies
  */
 export function findProductBySlug(
   products: RezdyProduct[],
   slug: string
 ): RezdyProduct | null {
-  const productCode = extractProductCodeFromSlug(slug);
-  if (!productCode) return null;
+  if (!slug || products.length === 0) return null;
+  
+  const parts = slug.split("-");
+  if (parts.length === 0) return null;
 
-  return (
-    products.find((product) => product.productCode === productCode) || null
-  );
+  // Strategy 1: Extract and try the primary product code
+  const primaryCode = extractProductCodeFromSlug(slug);
+  if (primaryCode) {
+    const exactMatch = products.find((product) => product.productCode === primaryCode);
+    if (exactMatch) {
+      console.log(`✅ Found product by primary code "${primaryCode}":`, exactMatch.productCode);
+      return exactMatch;
+    }
+  }
+
+  // Strategy 2: Try first two parts combined
+  if (parts.length >= 2) {
+    const firstTwoParts = `${parts[0]}-${parts[1]}`.toUpperCase();
+    const twoPartMatch = products.find((product) => product.productCode === firstTwoParts);
+    if (twoPartMatch) {
+      console.log(`✅ Found product by two-part code "${firstTwoParts}":`, twoPartMatch.productCode);
+      return twoPartMatch;
+    }
+  }
+
+  // Strategy 3: Try case-insensitive partial matching
+  for (const part of parts) {
+    if (part.length >= 6) { // Only try longer parts
+      const partialMatch = products.find((product) => 
+        product.productCode.toLowerCase().includes(part.toLowerCase()) ||
+        part.toLowerCase().includes(product.productCode.toLowerCase())
+      );
+      if (partialMatch) {
+        console.log(`✅ Found product by partial match "${part}" -> "${partialMatch.productCode}":`, partialMatch.productCode);
+        return partialMatch;
+      }
+    }
+  }
+
+  // Strategy 4: Try fuzzy name matching as last resort
+  const slugName = parts.slice(1).join("-").toLowerCase(); // Remove first part (assumed product code)
+  const nameMatch = products.find((product) => {
+    const productName = product.name.toLowerCase().replace(/[^a-z0-9]+/g, "-");
+    return slugName.includes(productName.substring(0, 20)) || productName.includes(slugName.substring(0, 20));
+  });
+  
+  if (nameMatch) {
+    console.log(`✅ Found product by name matching "${slugName}":`, nameMatch.productCode);
+    return nameMatch;
+  }
+
+  console.log(`❌ No product found for slug "${slug}" using any strategy`);
+  console.log(`🔍 Available product codes:`, products.slice(0, 10).map(p => p.productCode));
+  return null;
 }
 
 /**
@@ -537,4 +606,73 @@ function calculateDistance(
       Math.sin(dLon / 2);
   const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
   return R * c;
+}
+
+/**
+ * Select unique images from a collection, avoiding duplicates
+ */
+export function selectUniqueImages(
+  images: RezdyImage[],
+  maxImages: number,
+  excludeImageUrls: Set<string> = new Set()
+): RezdyImage[] {
+  if (!images || images.length === 0) return [];
+  
+  const uniqueImages: RezdyImage[] = [];
+  const usedUrls = new Set(excludeImageUrls);
+  
+  // First pass: select unique images by itemUrl
+  for (const image of images) {
+    if (uniqueImages.length >= maxImages) break;
+    
+    if (!usedUrls.has(image.itemUrl)) {
+      uniqueImages.push(image);
+      usedUrls.add(image.itemUrl);
+    }
+  }
+  
+  // If we don't have enough unique images and we have some images,
+  // we can reuse images but still try to avoid exact duplicates
+  if (uniqueImages.length < maxImages && images.length > 0) {
+    let attempts = 0;
+    const maxAttempts = maxImages * 2; // Prevent infinite loops
+    
+    while (uniqueImages.length < maxImages && attempts < maxAttempts) {
+      const imageIndex = attempts % images.length;
+      const image = images[imageIndex];
+      
+      // Add the image even if it's a duplicate (only if we really need to fill slots)
+      if (!uniqueImages.some(existing => existing.itemUrl === image.itemUrl)) {
+        uniqueImages.push(image);
+      }
+      
+      attempts++;
+    }
+  }
+  
+  return uniqueImages.slice(0, maxImages);
+}
+
+/**
+ * Check if images array contains duplicates by URL
+ */
+export function validateImageUniqueness(images: RezdyImage[]): {
+  isUnique: boolean;
+  duplicates: string[];
+} {
+  const seenUrls = new Set<string>();
+  const duplicates: string[] = [];
+  
+  for (const image of images) {
+    if (seenUrls.has(image.itemUrl)) {
+      duplicates.push(image.itemUrl);
+    } else {
+      seenUrls.add(image.itemUrl);
+    }
+  }
+  
+  return {
+    isUnique: duplicates.length === 0,
+    duplicates
+  };
 }

@@ -57,12 +57,26 @@
 
     const validImages = getValidImages(product);
     
-    // Use 3rd and 4th images for brewery tour products
-    const breweryTourProducts = ['PRVHY0', 'PTS7WT'];
-    const isBreweryTour = breweryTourProducts.includes(product.productCode);
-    const imagesToUse = isBreweryTour && validImages.length >= 4 
-      ? validImages.slice(2, 4) // Use 3rd and 4th images (indices 2-3)
-      : validImages; // Use all valid images for other products
+    // Optional special image selection for specific products (configurable via product metadata)
+    const specialImageConfig = product.customFields?.imageSelection;
+    let imagesToUse = validImages;
+    
+    // Apply special image selection if configured
+    if (specialImageConfig?.startIndex !== undefined && specialImageConfig?.count !== undefined) {
+      const startIndex = specialImageConfig.startIndex;
+      const count = specialImageConfig.count;
+      if (validImages.length >= startIndex + count) {
+        imagesToUse = validImages.slice(startIndex, startIndex + count);
+      }
+    }
+    // Legacy support for brewery tours - remove this block if no longer needed
+    else {
+      const breweryTourProducts = ['PRVHY0', 'PTS7WT'];
+      const isBreweryTour = breweryTourProducts.includes(product.productCode);
+      if (isBreweryTour && validImages.length >= 4) {
+        imagesToUse = validImages.slice(2, 4); // Use 3rd and 4th images (indices 2-3)
+      }
+    }
     
     const slug = generateProductSlug(product);
 

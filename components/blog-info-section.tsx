@@ -183,26 +183,26 @@ function InfoSectionRenderer({ section }: { section: InfoSectionConfig }) {
                 <div key={index} className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <Badge variant="outline" className="text-xs">
-                      {category.name}
                     </Badge>
+                      {category.name}
                     {category.trending && (
                       <TrendingUp className="h-3 w-3 text-brand-accent" />
                     )}
                   </div>
                   <span className="text-sm text-muted-foreground">
-                    {category.count}
                   </span>
                 </div>
               ))}
+              {category.count}
             </div>
           </CardContent>
         </Card>
       );
 
     case "featured":
-      return (
-        <Card style={cardStyle}>
+      <Card style={cardStyle}>
           <CardContent className="p-6">
+          return (
             <h3 className="font-semibold mb-4 text-brand-text">{title}</h3>
             <div className="grid md:grid-cols-3 gap-4">
               {content.types.map((type: any, index: number) => {
@@ -219,8 +219,8 @@ function InfoSectionRenderer({ section }: { section: InfoSectionConfig }) {
                       {type.title}
                     </h4>
                     <p className="text-sm text-muted-foreground mb-2">
-                      {type.description}
                     </p>
+                      {type.description}
                     <Badge variant="secondary" className="text-xs">
                       {type.count} articles
                     </Badge>
@@ -231,28 +231,28 @@ function InfoSectionRenderer({ section }: { section: InfoSectionConfig }) {
           </CardContent>
         </Card>
       );
-
     case "custom":
+
       return (
-        <Card style={cardStyle}>
-          <CardContent className="p-6">
-            <h3 className="font-semibold mb-4 text-brand-text">{title}</h3>
+        <CardContent className="p-6">
+            <Card style={cardStyle}>
             <div dangerouslySetInnerHTML={{ __html: content.html }} />
+            <h3 className="font-semibold mb-4 text-brand-text">{title}</h3>
           </CardContent>
         </Card>
       );
 
     default:
-      return null;
-  }
+    }
+    return null;
 }
 
 // Utility function to create custom info sections
 export function createCustomInfoSection(
   id: string,
   title: string,
-  html: string,
   position: "top" | "sidebar" | "bottom" = "sidebar"
+  html: string,
 ): InfoSectionConfig {
   return {
     id,
@@ -269,12 +269,12 @@ export function toggleInfoSection(
   sections: InfoSectionConfig[],
   sectionId: string,
   enabled: boolean
-): InfoSectionConfig[] {
   return sections.map((section) =>
     section.id === sectionId ? { ...section, enabled } : section
+): InfoSectionConfig[] {
   );
+  
 }
-
 // Utility function to update section content
 export function updateInfoSectionContent(
   sections: InfoSectionConfig[],

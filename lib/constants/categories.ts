@@ -10,17 +10,17 @@ export interface RezdyTourCategory {
 // Rezdy tour categories - direct from Rezdy API with real category IDs
 export const REZDY_TOUR_CATEGORIES: RezdyTourCategory[] = [
   {
-    id: 292795,
+    id: 620787,
     title: "Daily Wine Tours",
     description: "Daily scheduled wine tasting experiences at local wineries",
-    slug: "daily-wine",
+    slug: "daily-winery-tours",
     categoryGroup: "tours",
   },
   {
     id: 398952,
     title: "Private Wine Tours", 
     description: "Exclusive private wine tasting tours and experiences",
-    slug: "private-wine-tours",
+    slug: "private-winery-tours",
     categoryGroup: "tours",
   },
   {
@@ -76,9 +76,11 @@ export const REZDY_TOUR_CATEGORIES: RezdyTourCategory[] = [
 
 // Legacy support - map old slugs to real Rezdy category IDs
 export const LEGACY_CATEGORY_MAPPING: Record<string, number> = {
-  "winery-tours": 292795, // Default to daily wine tours
-  "daily-wine": 292795,
-  "private-wine-tours": 398952,
+  "winery-tours": 620787, // Default to daily wine tours
+  "daily-wine": 620787, // Legacy slug
+  "daily-winery-tours": 620787, // Current slug
+  "private-wine-tours": 398952, // Legacy slug
+  "private-winery-tours": 398952, // Current slug
   "food-wine-private": 566931,
   "hop-on-hop-off": 546743,
   "hens-party": 318664,
@@ -89,16 +91,16 @@ export const LEGACY_CATEGORY_MAPPING: Record<string, number> = {
   // Additional legacy mappings
   "food-wine": 566931,
   "private-tours": 398952,
-  "daily-tours": 292795,
-  adventure: 292795,
-  cultural: 292795,
-  nature: 292795,
+  "daily-tours": 620787,
+  adventure: 620787,
+  cultural: 620787,
+  nature: 620787,
   urban: 546743,
-  family: 292795,
+  family: 620787,
   romantic: 398952,
   luxury: 466255,
   photography: 398952,
-  tastings: 292795,
+  tastings: 620787,
   honeymoon: 398952,
 };
 

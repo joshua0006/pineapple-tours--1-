@@ -55,6 +55,24 @@ const getCategoryHeaderConfig = (categorySlug: string, categoryConfig: any) => {
         { icon: Clock, title: "Full Experience" },
       ],
     },
+    "daily-winery-tours": {
+      backgroundImage:
+        "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?ixlib=rb-4.0.3&auto=format&fit=crop&w=1600&q=80",
+      featureCards: [
+        { icon: Wine, title: "Daily Wine Tours" },
+        { icon: Users, title: "Shared Groups" },
+        { icon: Clock, title: "Scheduled Times" },
+      ],
+    },
+    "private-winery-tours": {
+      backgroundImage:
+        "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?ixlib=rb-4.0.3&auto=format&fit=crop&w=1600&q=80",
+      featureCards: [
+        { icon: Wine, title: "Private Wine Tours" },
+        { icon: Users, title: "Exclusive Groups" },
+        { icon: Sparkles, title: "Premium Experience" },
+      ],
+    },
     "brewery-tours": {
       backgroundImage:
         "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?ixlib=rb-4.0.3&auto=format&fit=crop&w=1600&q=80",

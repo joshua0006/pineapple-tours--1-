@@ -23,13 +23,26 @@ export class ProductFilterService {
       includeInactive?: boolean;
       skipWhitelist?: boolean;
       participants?: number;
+      debug?: boolean;
     }
   ): RezdyProduct[] {
+    if (options?.debug) {
+      console.log(`🔍 Starting product filtering on ${products.length} products`);
+    }
+    
     let filtered = products.filter(product => !this.shouldExcludeProduct(product, options));
     
     // Apply participant filtering if specified
     if (options?.participants !== undefined && options.participants > 0) {
+      const beforeParticipantFilter = filtered.length;
       filtered = this.filterByParticipants(filtered, options.participants);
+      if (options?.debug) {
+        console.log(`🔢 Participant filtering (${options.participants}): ${beforeParticipantFilter} → ${filtered.length} products`);
+      }
+    }
+    
+    if (options?.debug) {
+      console.log(`✅ Product filtering complete: ${products.length} → ${filtered.length} products (${products.length - filtered.length} filtered out)`);
     }
     
     return filtered;
@@ -67,48 +80,78 @@ export class ProductFilterService {
       includeGiftCards?: boolean;
       includeInactive?: boolean;
       skipWhitelist?: boolean;
+      debug?: boolean;
     }
   ): boolean {
+    const debug = options?.debug || false;
+    
     // Check whitelist first (unless skipped)
     if (!options?.skipWhitelist && this.isWhitelisted(product)) {
+      if (debug) {
+        console.log(`✅ Product ${product.productCode} (${product.name}) is WHITELISTED - allowing through all filters`);
+      }
       return false;
     }
 
     // Check product code exclusions
     if (this.isExcludedByProductCode(product)) {
+      if (debug) {
+        console.log(`🚫 Product ${product.productCode} (${product.name}) EXCLUDED by product code`);
+      }
       return true;
     }
 
     // Check product type exclusions
     if (!options?.includeGiftCards && this.isExcludedByType(product)) {
+      if (debug) {
+        console.log(`🚫 Product ${product.productCode} (${product.name}) EXCLUDED by product type: ${product.productType}`);
+      }
       return true;
     }
 
     // Check product name exclusions
     if (this.isExcludedByName(product)) {
+      if (debug) {
+        console.log(`🚫 Product ${product.productCode} (${product.name}) EXCLUDED by product name rules`);
+      }
       return true;
     }
 
     // Check price exclusions
     if (this.isExcludedByPrice(product)) {
+      if (debug) {
+        console.log(`🚫 Product ${product.productCode} (${product.name}) EXCLUDED by price rules: $${product.advertisedPrice}`);
+      }
       return true;
     }
 
     // Check status exclusions
     if (!options?.includeInactive && this.isExcludedByStatus(product)) {
+      if (debug) {
+        console.log(`🚫 Product ${product.productCode} (${product.name}) EXCLUDED by status: ${product.status}`);
+      }
       return true;
     }
 
     // Check category exclusions
     if (this.isExcludedByCategory(product)) {
+      if (debug) {
+        console.log(`🚫 Product ${product.productCode} (${product.name}) EXCLUDED by categories: ${product.categories?.join(', ')}`);
+      }
       return true;
     }
 
     // Check for excluded keywords in name and description
     if (this.containsExcludedContent(product)) {
+      if (debug) {
+        console.log(`🚫 Product ${product.productCode} (${product.name}) EXCLUDED by content keywords`);
+      }
       return true;
     }
 
+    if (debug) {
+      console.log(`✅ Product ${product.productCode} (${product.name}) PASSED all filters`);
+    }
     return false;
   }
 

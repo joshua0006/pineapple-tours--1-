@@ -86,7 +86,7 @@ export function SiteHeader() {
 
     let resizeObserver: ResizeObserver | null = null;
     if (categoryTabRef.current && window.ResizeObserver) {
-      resizeObserver = new ResizeObserver(() => {np
+      resizeObserver = new ResizeObserver(() => {
         clearTimeout(resizeTimeout);
         resizeTimeout = setTimeout(measureCategoryTab, 50);
       });

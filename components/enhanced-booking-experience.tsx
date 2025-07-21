@@ -20,6 +20,7 @@ import {
   ShoppingCart,
   Plus,
   Minus,
+  ChevronDown,
 } from "lucide-react";
 import { format, addDays } from "date-fns";
 
@@ -28,6 +29,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import {
   Popover,
@@ -42,6 +50,7 @@ import { useRezdyAvailability } from "@/hooks/use-rezdy";
 import { fetchAndCacheProduct } from "@/lib/utils/rezdy-product-cache";
 import {
   RezdyProduct,
+  RezdyPriceOption,
   RezdySession,
   RezdyPickupLocation,
   convertLegacyToApiFormat,
@@ -120,8 +129,6 @@ export function EnhancedBookingExperience({
       console.log('✅ Using preloaded pickup locations:', preloadedPickupLocations.length);
       // Track cache hit for analytics
       trackApiRequest(product.productCode, 0, true, true);
-      // Ensure loading state is false when using preloaded data
-      setPickupLocationsLoading(false);
       return;
     }
 
@@ -220,15 +227,19 @@ export function EnhancedBookingExperience({
   const [apiPickupLocations, setApiPickupLocations] = useState<RezdyPickupLocation[]>(
     preloadedPickupLocations || []
   );
-  const [pickupLocationsLoading, setPickupLocationsLoading] = useState(
-    // Only show loading if we don't have preloaded data
-    !(preloadedPickupLocations && preloadedPickupLocations.length > 0)
-  );
+  const [pickupLocationsLoading, setPickupLocationsLoading] = useState(true);
   const [pickupLocationsError, setPickupLocationsError] = useState<string | null>(null);
   
   // Pickup validation state
   const [pickupValidationError, setPickupValidationError] = useState<string | null>(null);
   const [pickupValidationWarning, setPickupValidationWarning] = useState<string | null>(null);
+
+  // Handle loading state based on preloaded data
+  useEffect(() => {
+    if (preloadedPickupLocations && preloadedPickupLocations.length > 0) {
+      setPickupLocationsLoading(false);
+    }
+  }, [preloadedPickupLocations]);
   
   // Dynamic guest count based on available price options
   const [guestCounts, setGuestCounts] = useState<Record<string, number>>(() => {
@@ -267,6 +278,29 @@ export function EnhancedBookingExperience({
     
     return initialCounts;
   });
+
+  // State for tracking selected quantities in group options
+  const [selectedGroupQuantities, setSelectedGroupQuantities] = useState<Record<string, number>>(() => {
+    const initialQuantities: Record<string, number> = {};
+    
+    // Initialize quantities for group options with their seatsUsed value
+    if (product.priceOptions && product.priceOptions.length > 0) {
+      product.priceOptions.forEach((option) => {
+        const isGroupSize = getGuestSelectorContent(product).title === "Group Size";
+        const isMultiSeat = option.seatsUsed > 1;
+        if (isGroupSize || isMultiSeat) {
+          initialQuantities[option.label] = option.seatsUsed;
+        }
+      });
+    }
+    
+    return initialQuantities;
+  });
+
+  // State for guest count input (new flow)
+  const [desiredGuestCount, setDesiredGuestCount] = useState<number>(
+    preSelectedParticipants?.adults || product.quantityRequiredMin || 1
+  );
   
   const [selectedExtras, setSelectedExtras] = useState<SelectedExtra[]>(
     preSelectedExtras || []
@@ -335,7 +369,7 @@ export function EnhancedBookingExperience({
   // };
 
   // Helper to get guest selector content based on pricing pattern
-  const getGuestSelectorContent = (product: RezdyProduct) => {
+  function getGuestSelectorContent(product: RezdyProduct) {
     if (!product.priceOptions || product.priceOptions.length === 0) {
       return {
         title: "Select Guests",
@@ -372,7 +406,56 @@ export function EnhancedBookingExperience({
       title: "Select Options",
       description: "Choose your preferred pricing options"
     };
-  };
+  }
+
+  // Helper to check if we should use the new guest count input flow
+  function shouldUseGuestCountInputFlow(product: RezdyProduct): boolean {
+    if (!product.priceOptions || product.priceOptions.length === 0) {
+      return false;
+    }
+
+    const labels = product.priceOptions.map(opt => opt.label.toLowerCase());
+    
+    // Use new flow for group size bookings
+    if (labels.some(label => label.includes('private') || label.includes('group'))) {
+      return true;
+    }
+    
+    // Use new flow if the product has quantity constraints (min/max)
+    if (product.quantityRequiredMin !== undefined || product.quantityRequiredMax !== undefined) {
+      return true;
+    }
+    
+    return false;
+  }
+
+  // Helper to check if guest count is valid for a specific price option
+  function isValidGuestCount(product: RezdyProduct, guestCount: number, priceOption?: RezdyPriceOption): boolean {
+    if (priceOption) {
+      // Use price option specific constraints if available
+      const minQuantity = priceOption.minQuantity || 1;
+      const maxQuantity = priceOption.maxQuantity || Number.MAX_SAFE_INTEGER;
+      return guestCount >= minQuantity && guestCount <= maxQuantity;
+    }
+    
+    // Fallback to product-level constraints
+    const minQuantity = product.quantityRequiredMin || 1;
+    const maxQuantity = product.quantityRequiredMax || Number.MAX_SAFE_INTEGER;
+    
+    return guestCount >= minQuantity && guestCount <= maxQuantity;
+  }
+
+  // Helper to get available price options for the desired guest count
+  function getAvailablePriceOptions(product: RezdyProduct, guestCount: number) {
+    if (!product.priceOptions || product.priceOptions.length === 0) {
+      return [];
+    }
+
+    // Filter price options based on their individual quantity constraints
+    return product.priceOptions.filter(option => 
+      isValidGuestCount(product, guestCount, option)
+    );
+  }
 
   // Helper function to ensure consistent date formatting across storage and retrieval
   const getConsistentDateString = (input: Date | string): string => {
@@ -458,6 +541,46 @@ export function EnhancedBookingExperience({
       });
     }
   }, [preSelectedSession, preSelectedParticipants, preSelectedDate]);
+
+  // Sync group quantities with guest counts on initial load
+  useEffect(() => {
+    if (product.priceOptions && product.priceOptions.length > 0) {
+      const isGroupSize = getGuestSelectorContent(product).title === "Group Size";
+      let hasGroupOptions = false;
+      
+      const updatedGuestCounts: Record<string, number> = {};
+      
+      product.priceOptions.forEach((option) => {
+        const isMultiSeat = option.seatsUsed > 1;
+        if (isGroupSize || isMultiSeat) {
+          hasGroupOptions = true;
+          const selectedQuantity = selectedGroupQuantities[option.label] || option.seatsUsed;
+          updatedGuestCounts[option.label] = 0; // Initialize as unselected
+        } else {
+          // Keep existing counts for non-group options
+          updatedGuestCounts[option.label] = guestCounts[option.label] || 0;
+        }
+      });
+      
+      // Only update if there are group options and guest counts need adjustment
+      if (hasGroupOptions && Object.keys(updatedGuestCounts).length > 0) {
+        // Set the first group option as selected by default if no option is currently selected
+        const hasAnySelected = Object.values(guestCounts).some(count => count > 0);
+        if (!hasAnySelected) {
+          const firstGroupOption = product.priceOptions.find(option => {
+            const isMultiSeat = option.seatsUsed > 1;
+            return isGroupSize || isMultiSeat;
+          });
+          if (firstGroupOption) {
+            const selectedQuantity = selectedGroupQuantities[firstGroupOption.label] || firstGroupOption.seatsUsed;
+            updatedGuestCounts[firstGroupOption.label] = selectedQuantity;
+          }
+        }
+        
+        setGuestCounts(updatedGuestCounts);
+      }
+    }
+  }, [product.priceOptions, selectedGroupQuantities]);
 
   // Date range for availability
   const today = new Date();
@@ -1070,7 +1193,9 @@ export function EnhancedBookingExperience({
         extras: selectedExtras.map((selectedExtra) => {
           let totalPrice = selectedExtra.extra.price * selectedExtra.quantity;
           if (selectedExtra.extra.priceType === "PER_PERSON") {
-            const totalGuests = Object.values(guestCounts).reduce((sum, count) => sum + count, 0);
+            const totalGuests = shouldUseGuestCountInputFlow(product) 
+              ? desiredGuestCount
+              : Object.values(guestCounts).reduce((sum, count) => sum + count, 0);
             totalPrice =
               selectedExtra.extra.price *
               selectedExtra.quantity *
@@ -1570,41 +1695,332 @@ export function EnhancedBookingExperience({
                 </p>
               </CardHeader>
               <CardContent>
+                {/* New guest count input flow */}
+                {shouldUseGuestCountInputFlow(product) && (
+                  <div className="mb-6 p-4 bg-muted/30 rounded-lg">
+                    <Label htmlFor="guestCount" className="text-base font-medium mb-3 block">
+                      How many guests will be joining?
+                    </Label>
+                    <div className="flex items-center gap-3">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          const availableOptions = getAvailablePriceOptions(product, desiredGuestCount - 1);
+                          const minQuantity = Math.min(
+                            product.quantityRequiredMin || 1,
+                            ...availableOptions.map(opt => opt.minQuantity || 1)
+                          );
+                          const newCount = Math.max(minQuantity, desiredGuestCount - 1);
+                          setDesiredGuestCount(newCount);
+                        }}
+                        disabled={(() => {
+                          const availableOptions = getAvailablePriceOptions(product, desiredGuestCount - 1);
+                          const minQuantity = Math.min(
+                            product.quantityRequiredMin || 1,
+                            ...availableOptions.map(opt => opt.minQuantity || 1)
+                          );
+                          return desiredGuestCount <= minQuantity;
+                        })()}
+                        className="h-10 w-10 p-0"
+                      >
+                        <Minus className="h-4 w-4" />
+                      </Button>
+                      <div className="flex-1 max-w-[120px]">
+                        <Input
+                          id="guestCount"
+                          type="number"
+                          min={(() => {
+                            const availableOptions = product.priceOptions || [];
+                            const minQuantity = Math.min(
+                              product.quantityRequiredMin || 1,
+                              ...availableOptions.map(opt => opt.minQuantity || 1)
+                            );
+                            return minQuantity;
+                          })()}
+                          max={(() => {
+                            const availableOptions = product.priceOptions || [];
+                            const maxQuantity = Math.max(
+                              product.quantityRequiredMax || 50,
+                              ...availableOptions.map(opt => opt.maxQuantity || 50)
+                            );
+                            return maxQuantity;
+                          })()}
+                          value={desiredGuestCount}
+                          onChange={(e) => {
+                            const value = parseInt(e.target.value) || 1;
+                            const availableOptions = getAvailablePriceOptions(product, value);
+                            if (availableOptions.length > 0) {
+                              setDesiredGuestCount(value);
+                            }
+                          }}
+                          className="text-center text-lg font-medium h-10"
+                        />
+                      </div>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          const availableOptions = getAvailablePriceOptions(product, desiredGuestCount + 1);
+                          const maxQuantity = Math.max(
+                            product.quantityRequiredMax || 50,
+                            ...availableOptions.map(opt => opt.maxQuantity || 50)
+                          );
+                          const newCount = Math.min(maxQuantity, desiredGuestCount + 1);
+                          setDesiredGuestCount(newCount);
+                        }}
+                        disabled={(() => {
+                          const availableOptions = getAvailablePriceOptions(product, desiredGuestCount + 1);
+                          const maxQuantity = Math.max(
+                            product.quantityRequiredMax || 50,
+                            ...availableOptions.map(opt => opt.maxQuantity || 50)
+                          );
+                          return desiredGuestCount >= maxQuantity;
+                        })()}
+                        className="h-10 w-10 p-0"
+                      >
+                        <Plus className="h-4 w-4" />
+                      </Button>
+                    </div>
+                    <div className="mt-2 text-sm text-muted-foreground">
+                      {product.quantityRequiredMin && product.quantityRequiredMax
+                        ? `Minimum ${product.quantityRequiredMin}, maximum ${product.quantityRequiredMax} guests`
+                        : product.quantityRequiredMin
+                        ? `Minimum ${product.quantityRequiredMin} guests`
+                        : product.quantityRequiredMax
+                        ? `Maximum ${product.quantityRequiredMax} guests`
+                        : null}
+                    </div>
+                  </div>
+                )}
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                   {/* Dynamic guest types based on price options */}
                   {product.priceOptions && product.priceOptions.length > 0 ? (
-                    product.priceOptions.map((option) => (
-                      <div key={option.id} className="flex flex-col p-4 bg-muted/30 rounded-lg">
-                        <div className="text-center mb-3">
-                          <div className="font-medium">{option.label}</div>
-                          <div className="text-sm text-muted-foreground">
-                            {formatCurrency(option.price)}
-                            {option.seatsUsed > 1 && ` (${option.seatsUsed} seats)`}
+                    (() => {
+                      // Use the new guest count input flow if applicable
+                      if (shouldUseGuestCountInputFlow(product)) {
+                        const availableOptions = getAvailablePriceOptions(product, desiredGuestCount);
+                        
+                        if (availableOptions.length === 0) {
+                          return (
+                            <div className="col-span-full text-center p-4 text-muted-foreground">
+                              No pricing options available for {desiredGuestCount} guests.
+                              {product.quantityRequiredMin && desiredGuestCount < product.quantityRequiredMin && (
+                                <span> Minimum {product.quantityRequiredMin} guests required.</span>
+                              )}
+                              {product.quantityRequiredMax && desiredGuestCount > product.quantityRequiredMax && (
+                                <span> Maximum {product.quantityRequiredMax} guests allowed.</span>
+                              )}
+                            </div>
+                          );
+                        }
+
+                        return availableOptions.map((option) => {
+                          const isSelected = guestCounts[option.label] > 0;
+                          const totalPrice = option.price * desiredGuestCount;
+                          
+                          return (
+                            <div
+                              key={option.id}
+                              className={cn(
+                                "transition-all duration-200 border cursor-pointer rounded-lg p-4",
+                                isSelected
+                                  ? "border-2 border-brand-accent bg-brand-accent/15 shadow-lg ring-2 ring-brand-accent/80"
+                                  : "border border-gray-200 bg-muted/20 hover:border-brand-accent/40 hover:shadow-md"
+                              )}
+                              onClick={() => {
+                                // Set this option as selected and clear others for group selection
+                                setGuestCounts(prev => {
+                                  const newCounts: Record<string, number> = {};
+                                  // Clear all other counts for group selection
+                                  Object.keys(prev).forEach(key => {
+                                    newCounts[key] = 0;
+                                  });
+                                  // Set the selected option to the desired guest count
+                                  newCounts[option.label] = desiredGuestCount;
+                                  return newCounts;
+                                });
+                              }}
+                            >
+                              <div className="space-y-3">
+                                {/* Header with selection */}
+                                <div className="text-center">
+                                  <div className="font-medium text-lg mb-2">{option.label}</div>
+                                  <div className="text-sm text-muted-foreground mb-2">
+                                    {formatCurrency(option.price)} per person
+                                  </div>
+                                  {isSelected && (
+                                    <div className="inline-flex items-center gap-1 px-2 py-1 bg-brand-accent text-white text-xs rounded-full mb-2">
+                                      <span>Selected</span>
+                                    </div>
+                                  )}
+                                </div>
+                                
+                                {/* Guest count display */}
+                                <div className="text-center p-2 bg-muted/20 rounded">
+                                  <div className="text-sm text-muted-foreground">Number of guests:</div>
+                                  <div className="text-lg font-semibold">{desiredGuestCount}</div>
+                                </div>
+                                
+                                {/* Total price display */}
+                                <div className="text-center pt-2 border-t">
+                                  <div className="text-lg font-semibold text-brand-accent">
+                                    Total: {formatCurrency(totalPrice)}
+                                  </div>
+                                  <div className="text-xs text-muted-foreground">
+                                    {desiredGuestCount} × {formatCurrency(option.price)}
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        });
+                      }
+
+                      // Original logic for traditional flows
+                      return product.priceOptions!.map((option) => {
+                        const isGroupSize = getGuestSelectorContent(product).title === "Group Size";
+                        const isMultiSeat = option.seatsUsed > 1;
+                        const shouldUseCardInterface = isGroupSize || isMultiSeat;
+                        const isSelected = guestCounts[option.label] > 0;
+                      
+                      if (shouldUseCardInterface) {
+                        // Clickable card interface for group size and multi-seat options
+                        const selectedQuantity = selectedGroupQuantities[option.label] || option.seatsUsed;
+                        const minQuantity = option.minQuantity || product.quantityRequiredMin || 1;
+                        const maxQuantity = option.maxQuantity || product.quantityRequiredMax || option.seatsUsed || 10;
+                        const totalPrice = option.price * selectedQuantity;
+                        
+                        // Generate range options for dropdown
+                        const quantityOptions = Array.from(
+                          { length: maxQuantity - minQuantity + 1 },
+                          (_, i) => minQuantity + i
+                        );
+                        
+                        return (
+                          <div
+                            key={option.id}
+                            className={cn(
+                              "transition-all duration-200 border rounded-lg p-4",
+                              isSelected
+                                ? "border-2 border-brand-accent bg-brand-accent/15 shadow-lg ring-2 ring-brand-accent/80"
+                                : "border border-gray-200 bg-muted/20 hover:border-brand-accent/40 hover:shadow-md"
+                            )}
+                          >
+                            <div className="space-y-3">
+                              {/* Header with selection */}
+                              <div 
+                                className="cursor-pointer text-center"
+                                onClick={() => {
+                                  // Set this option as selected and clear others for group selection
+                                  setGuestCounts(prev => {
+                                    const newCounts: Record<string, number> = {};
+                                    // Clear all other counts for group selection
+                                    Object.keys(prev).forEach(key => {
+                                      newCounts[key] = 0;
+                                    });
+                                    // Set the selected option to the current selected quantity
+                                    newCounts[option.label] = selectedQuantity;
+                                    return newCounts;
+                                  });
+                                }}
+                              >
+                                <div className="font-medium text-lg mb-2">{option.label}</div>
+                                <div className="text-sm text-muted-foreground mb-2">
+                                  {formatCurrency(option.price)} per person
+                                </div>
+                                {isSelected && (
+                                  <div className="inline-flex items-center gap-1 px-2 py-1 bg-brand-accent text-white text-xs rounded-full mb-2">
+                                    <span>Selected</span>
+                                  </div>
+                                )}
+                              </div>
+                              
+                              {/* Dropdown for quantity selection */}
+                              {(isSelected || quantityOptions.length > 1) && (
+                                <div className="space-y-2">
+                                  <Label className="text-sm font-medium">Number of guests:</Label>
+                                  <Select
+                                    value={selectedQuantity.toString()}
+                                    onValueChange={(value) => {
+                                      const newQuantity = parseInt(value);
+                                      setSelectedGroupQuantities(prev => ({
+                                        ...prev,
+                                        [option.label]: newQuantity
+                                      }));
+                                      
+                                      // Update guest counts if this option is selected
+                                      if (isSelected) {
+                                        setGuestCounts(prev => ({
+                                          ...prev,
+                                          [option.label]: newQuantity
+                                        }));
+                                      }
+                                    }}
+                                  >
+                                    <SelectTrigger className="w-full">
+                                      <SelectValue placeholder="Select quantity" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                      {quantityOptions.map((qty) => (
+                                        <SelectItem key={qty} value={qty.toString()}>
+                                          {qty} {qty === 1 ? 'guest' : 'guests'}
+                                        </SelectItem>
+                                      ))}
+                                    </SelectContent>
+                                  </Select>
+                                </div>
+                              )}
+                              
+                              {/* Total price display */}
+                              <div className="text-center pt-2 border-t">
+                                <div className="text-lg font-semibold text-brand-accent">
+                                  Total: {formatCurrency(totalPrice)}
+                                </div>
+                                <div className="text-xs text-muted-foreground">
+                                  {selectedQuantity} × {formatCurrency(option.price)}
+                                </div>
+                              </div>
+                            </div>
                           </div>
-                        </div>
-                        <div className="flex items-center justify-center gap-3">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => decrementGuests(option.label)}
-                            disabled={!canDecrement(option.label)}
-                            className="h-8 w-8 p-0"
-                          >
-                            <Minus className="h-4 w-4" />
-                          </Button>
-                          <span className="w-12 text-center font-medium">{guestCounts[option.label] || 0}</span>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => incrementGuests(option.label)}
-                            disabled={!canIncrement(option.label)}
-                            className="h-8 w-8 p-0"
-                          >
-                            <Plus className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </div>
-                    ))
+                        );
+                      } else {
+                        // Traditional +/- interface for individual guest types
+                        return (
+                          <div key={option.id} className="flex flex-col p-4 bg-muted/30 rounded-lg">
+                            <div className="text-center mb-3">
+                              <div className="font-medium">{option.label}</div>
+                              <div className="text-sm text-muted-foreground">
+                                {formatCurrency(option.price)}
+                                {option.seatsUsed > 1 && ` (${option.seatsUsed} seats)`}
+                              </div>
+                            </div>
+                            <div className="flex items-center justify-center gap-3">
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => decrementGuests(option.label)}
+                                disabled={!canDecrement(option.label)}
+                                className="h-8 w-8 p-0"
+                              >
+                                <Minus className="h-4 w-4" />
+                              </Button>
+                              <span className="w-12 text-center font-medium">{guestCounts[option.label] || 0}</span>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => incrementGuests(option.label)}
+                                disabled={!canIncrement(option.label)}
+                                className="h-8 w-8 p-0"
+                              >
+                                <Plus className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          </div>
+                        );
+                      }
+                      });
+                    })()
                   ) : (
                     /* Fallback to default guest types if no price options */
                     <>
@@ -1698,7 +2114,10 @@ export function EnhancedBookingExperience({
                   <div className="flex items-center gap-2 text-lg font-medium">
                     <Users className="h-5 w-5 text-brand-accent" />
                     <span>
-                      Total: {Object.values(guestCounts).reduce((sum, count) => sum + count, 0)} guests
+                      Total: {shouldUseGuestCountInputFlow(product) 
+                        ? `${desiredGuestCount} guests`
+                        : `${Object.values(guestCounts).reduce((sum, count) => sum + count, 0)} guests`
+                      }
                     </span>
                   </div>
                   
@@ -1972,8 +2391,10 @@ export function EnhancedBookingExperience({
                       <div className="flex items-center gap-2">
                         <Users className="h-4 w-4 text-muted-foreground" />
                         <span>
-                          {Object.values(guestCounts).reduce((sum, count) => sum + count, 0)}{" "}
-                          guests
+                          {shouldUseGuestCountInputFlow(product) 
+                            ? `${desiredGuestCount} guests`
+                            : `${Object.values(guestCounts).reduce((sum, count) => sum + count, 0)} guests`
+                          }
                         </span>
                       </div>
                       {selectedPickupLocation && (
@@ -2017,7 +2438,9 @@ export function EnhancedBookingExperience({
                   selectedExtras={selectedExtras}
                   onExtrasChange={setSelectedExtras}
                   guestCount={
-                    Object.values(guestCounts).reduce((sum, count) => sum + count, 0)
+                    shouldUseGuestCountInputFlow(product) 
+                      ? desiredGuestCount
+                      : Object.values(guestCounts).reduce((sum, count) => sum + count, 0)
                   }
                 />
               )}

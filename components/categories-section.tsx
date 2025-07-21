@@ -50,7 +50,7 @@ const TOP_LEVEL_CATEGORIES = [
     subcategories: ["daily-wine", "private-wine-tours", "food-wine-private", "barefoot-luxury"] as string[],
     hasSubOptions: true,
     subOptions: [
-      { name: "Daily Tours", icon: Calendar, categoryId: 292795 },
+      { name: "Daily Tours", icon: Calendar, categoryId: 620787 },
       { name: "Private Tours", icon: Sparkles, categoryId: 398952 },
     ],
   },
@@ -79,7 +79,7 @@ const TOP_LEVEL_CATEGORIES = [
     icon: Calendar,
     image:
       "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
-    categoryId: 292795,
+    categoryId: 620787,
   },
   {
     id: "bus-charter",

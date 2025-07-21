@@ -59,6 +59,8 @@ export interface RezdyPriceOption {
   id: number;
   seatsUsed: number;
   productCode?: string;
+  minQuantity?: number;
+  maxQuantity?: number;
 }
 
 export interface RezdyExtra {

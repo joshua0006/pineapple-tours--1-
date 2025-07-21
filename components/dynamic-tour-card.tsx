@@ -30,25 +30,28 @@
   }: DynamicTourCardProps) {
     if (loading) {
       return (
-        <Card className="relative h-80 w-full overflow-hidden shadow-lg">
+        <Card className="relative h-96 w-full overflow-hidden shadow-xl rounded-2xl">
           {/* Animated background skeleton */}
           <div className="absolute inset-0 bg-gradient-to-br from-gray-200 via-gray-300 to-gray-200 animate-pulse" />
           
-          {/* Gradient overlay to match the actual design */}
-          <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
+          {/* Premium gradient overlay to match the actual design */}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-black/10" />
+          
+          {/* Premium Inner Border */}
+          <div className="absolute inset-0 rounded-2xl ring-1 ring-white/10" />
           
           {/* Content skeleton at bottom */}
-          <div className="absolute bottom-0 left-0 right-0 p-6 space-y-4">
-            {/* Tour name skeleton - 2 lines to match line-clamp-2 */}
-            <div className="space-y-2">
-              <div className="h-7 bg-white/20 rounded animate-pulse" />
-              <div className="h-7 bg-white/20 rounded w-3/4 animate-pulse" />
+          <div className="absolute bottom-0 left-0 right-0 p-6 space-y-5">
+            {/* Tour name skeleton - 2 lines to match line-clamp-2 with premium spacing */}
+            <div className="space-y-3">
+              <div className="h-8 bg-white/25 rounded-lg animate-pulse backdrop-blur-sm" />
+              <div className="h-8 bg-white/25 rounded-lg w-3/4 animate-pulse backdrop-blur-sm" />
             </div>
             
-            {/* Button skeletons */}
+            {/* Premium button skeletons */}
             <div className="flex gap-3">
-              <div className="h-12 bg-white/10 rounded flex-1 animate-pulse border-2 border-white/20" />
-              <div className="h-12 bg-white/20 rounded flex-1 animate-pulse" />
+              <div className="h-14 bg-white/15 rounded-xl flex-1 animate-pulse border-2 border-white/20 backdrop-blur-md" />
+              <div className="h-14 bg-white/25 rounded-xl flex-1 animate-pulse backdrop-blur-md" />
             </div>
           </div>
         </Card>
@@ -57,12 +60,26 @@
 
     const validImages = getValidImages(product);
     
-    // Use 3rd and 4th images for brewery tour products
-    const breweryTourProducts = ['PRVHY0', 'PTS7WT'];
-    const isBreweryTour = breweryTourProducts.includes(product.productCode);
-    const imagesToUse = isBreweryTour && validImages.length >= 4 
-      ? validImages.slice(2, 4) // Use 3rd and 4th images (indices 2-3)
-      : validImages; // Use all valid images for other products
+    // Optional special image selection for specific products (configurable via product metadata)
+    const specialImageConfig = product.customFields?.imageSelection;
+    let imagesToUse = validImages;
+    
+    // Apply special image selection if configured
+    if (specialImageConfig?.startIndex !== undefined && specialImageConfig?.count !== undefined) {
+      const startIndex = specialImageConfig.startIndex;
+      const count = specialImageConfig.count;
+      if (validImages.length >= startIndex + count) {
+        imagesToUse = validImages.slice(startIndex, startIndex + count);
+      }
+    }
+    // Legacy support for brewery tours - remove this block if no longer needed
+    else {
+      const breweryTourProducts = ['PRVHY0', 'PTS7WT'];
+      const isBreweryTour = breweryTourProducts.includes(product.productCode);
+      if (isBreweryTour && validImages.length >= 4) {
+        imagesToUse = validImages.slice(2, 4); // Use 3rd and 4th images (indices 2-3)
+      }
+    }
     
     const slug = generateProductSlug(product);
 
@@ -103,14 +120,14 @@
     };
 
     return (
-      <Card className="relative h-80 w-full overflow-hidden group hover:shadow-2xl transition-all duration-300 border-0 shadow-lg cursor-pointer">
+      <Card className="relative h-96 w-full overflow-hidden group hover:shadow-2xl transition-all duration-500 border-0 shadow-xl cursor-pointer rounded-2xl">
         {/* Background Image - Full Height */}
         <div className="absolute inset-0">
           <ResponsiveImage
             images={imagesToUse}
             alt={`${product.name} tour`}
             aspectRatio="landscape"
-            className="transition-transform duration-700 group-hover:scale-110 object-cover w-full h-full"
+            className="transition-transform duration-700 group-hover:scale-105 object-cover w-full h-full"
             showNavigation={false}
             sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
             priority
@@ -122,23 +139,29 @@
           />
         </div>
 
-        {/* Gradient Overlay */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent group-hover:from-black/80 transition-all duration-300" />
+        {/* Premium Gradient Overlay */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-black/10 group-hover:from-black/85 group-hover:via-black/45 transition-all duration-500" />
+        
+        {/* Premium Inner Border */}
+        <div className="absolute inset-0 rounded-2xl ring-1 ring-white/10 group-hover:ring-white/20 transition-all duration-300" />
 
-        {/* Content */}
+        {/* Premium Glassmorphism Content Container */}
         <div className="absolute bottom-0 left-0 right-0 p-6 text-white">
-          <div className="space-y-4">
-            {/* Tour Name */}
-            <h3 className="text-2xl font-bold leading-tight line-clamp-2 drop-shadow-lg group-hover:text-white/95 transition-colors duration-200">
+          <div className="space-y-5">
+            {/* Premium Tour Name with Enhanced Typography */}
+            <h3 className="font-barlow text-3xl font-semibold leading-[1.1] line-clamp-2 text-white tracking-tight transition-all duration-300">
               {product.name}
             </h3>
 
-            {/* Action Buttons */}
+            {/* Premium Action Buttons */}
             <div className="flex gap-3 w-full">
               <Link href={buildTourDetailsUrl()} className="flex-1">
                 <Button
                   variant="outline"
-                  className="w-full border-2 border-white/80 text-white bg-white/10 hover:bg-white hover:text-gray-900 backdrop-blur-sm transition-all duration-300 py-3 font-semibold text-base shadow-lg hover:shadow-xl transform hover:-translate-y-1"
+                  className="w-full border-2 border-white/90 text-white bg-white/15 hover:bg-white hover:text-gray-900 
+                           backdrop-blur-md transition-all duration-300 py-3.5 font-semibold text-base 
+                           shadow-xl hover:shadow-2xl transform hover:-translate-y-1 hover:scale-[1.02]
+                           rounded-xl ring-1 ring-white/20 hover:ring-white/40"
                   aria-label={`View details for ${product.name} tour`}
                 >
                   View Details
@@ -146,7 +169,11 @@
               </Link>
               <Link href={buildDirectBookingUrl()} className="flex-1">
                 <Button
-                  className="w-full bg-brand-accent text-brand-secondary hover:bg-brand-accent/90 backdrop-blur-sm transition-all duration-300 py-3 font-semibold text-base shadow-lg hover:shadow-xl transform hover:-translate-y-1 border-2 border-brand-accent"
+                  className="w-full bg-brand-accent text-brand-secondary hover:bg-coral-600 
+                           backdrop-blur-md transition-all duration-300 py-3.5 font-semibold text-base 
+                           shadow-xl hover:shadow-2xl transform hover:-translate-y-1 hover:scale-[1.02]
+                           border-2 border-brand-accent hover:border-coral-600 rounded-xl
+                           hover:shadow-coral-500/25"
                   aria-label={`Book ${product.name} tour now`}
                 >
                   Book Now
@@ -155,6 +182,10 @@
             </div>
           </div>
         </div>
+
+        {/* Premium Hover Glow Effect */}
+        <div className="absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 
+                        bg-gradient-to-t from-transparent via-transparent to-white/5 pointer-events-none" />
       </Card>
     );
   }

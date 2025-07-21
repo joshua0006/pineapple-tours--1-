@@ -13,6 +13,7 @@ import {
   getRezdyImageUrl,
   type ImageOptimizationOptions 
 } from "@/lib/utils/image-optimization"
+import { selectUniqueImages, validateImageUniqueness } from "@/lib/utils/product-utils"
 
 interface ResponsiveImageProps {
   images: RezdyImage[]
@@ -172,8 +173,17 @@ export function ImageGallery({
   const [modalOpen, setModalOpen] = useState(false)
   const [modalImageIndex, setModalImageIndex] = useState(0)
   
-  const displayImages = images.slice(0, maxImages)
+  // Use unique image selection to prevent duplicates
+  const displayImages = selectUniqueImages(images, maxImages)
   const remainingCount = Math.max(0, images.length - maxImages)
+  
+  // Validate uniqueness in development
+  if (process.env.NODE_ENV === 'development') {
+    const uniquenessCheck = validateImageUniqueness(displayImages)
+    if (!uniquenessCheck.isUnique) {
+      console.warn('Image duplication detected in gallery:', uniquenessCheck.duplicates)
+    }
+  }
 
   const handleImageClick = (imageIndex: number) => {
     if (enableModal) {
@@ -204,9 +214,9 @@ export function ImageGallery({
             {/* Three smaller images in a row - mobile */}
             <div className="grid grid-cols-3 gap-2">
               {Array.from({ length: 3 }).map((_, index) => {
-                // Use images starting from index 1, or cycle through available images
-                const imageIndex = displayImages.length > 1 ? ((index % Math.max(1, displayImages.length - 1)) + 1) : 0;
-                const image = displayImages[imageIndex] || displayImages[0];
+                // Since displayImages is already unique, just access by index + 1
+                const imageIndex = (index + 1) < displayImages.length ? index + 1 : (index % displayImages.length);
+                const image = displayImages[imageIndex];
                 
                 if (!image) return null;
                 
@@ -271,8 +281,8 @@ export function ImageGallery({
           
             {/* Smaller gallery images - desktop (always showing exactly 4 small images) */}
             {Array.from({ length: 4 }).map((_, index) => {
-              // Cycle through available images starting from index 1, or use first image if only one available
-              const imageIndex = displayImages.length > 1 ? ((index % (displayImages.length - 1)) + 1) : 0;
+              // Since displayImages is already unique, just access by index + 1
+              const imageIndex = (index + 1) < displayImages.length ? index + 1 : (index % displayImages.length);
               const image = displayImages[imageIndex];
               
               if (!image) return null;

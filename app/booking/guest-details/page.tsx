@@ -23,10 +23,9 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { GuestManager, type GuestInfo, type PriceOptionConfig } from "@/components/ui/guest-manager";
+import { GuestManager, type GuestInfo } from "@/components/ui/guest-manager";
+import { bookingDataStore } from "@/lib/services/booking-data-store";
 import { BookingFormData } from "@/lib/utils/booking-transform";
-import { createPriceOptionConfigs, generateGuestInstancesFromCounts, convertDynamicGuestCountsToStandard } from "@/lib/utils/guest-type-mapping";
-import { RezdyPriceOption } from "@/lib/types/rezdy";
 
 
 
@@ -35,13 +34,6 @@ export default function GuestDetailsPage() {
   const searchParams = useSearchParams();
   const orderNumber = searchParams.get("orderNumber");
   const sessionId = searchParams.get("session_id");
-  
-  console.log("🎯 Guest Details Page Loaded:", {
-    orderNumber: orderNumber,
-    sessionId: sessionId,
-    sessionIdType: sessionId?.startsWith('cs_') ? 'checkout_session' : sessionId?.startsWith('pi_') ? 'payment_intent' : 'unknown',
-    timestamp: new Date().toISOString()
-  });
 
   const [bookingData, setBookingData] = useState<BookingFormData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -51,8 +43,6 @@ export default function GuestDetailsPage() {
 
   // Guest state
   const [guests, setGuests] = useState<GuestInfo[]>([]);
-  const [priceOptionConfigs, setPriceOptionConfigs] = useState<PriceOptionConfig[]>([]);
-  const [useDynamicTypes, setUseDynamicTypes] = useState(false);
 
 
   // Load booking data on mount
@@ -65,244 +55,76 @@ export default function GuestDetailsPage() {
 
     const loadBookingData = async () => {
       try {
+        // First try to get booking data from session storage (client-side)
         let data: BookingFormData | null = null;
         
-        // First, try to get booking data from sessionStorage (most reliable)
-        console.log("🔍 Attempting to retrieve booking data for order:", orderNumber);
-        console.log("📊 Current URL parameters:", { orderNumber, sessionId });
-        
-        // Check sessionStorage first as it's more reliable
-        if (orderNumber && typeof window !== "undefined") {
-          try {
-            const storageKey = `booking_${orderNumber}`;
-            console.log("🔑 Checking sessionStorage with key:", storageKey);
-            
-            const cached = sessionStorage.getItem(storageKey);
-            if (cached) {
-              data = JSON.parse(cached);
-              console.log("✅ Retrieved booking data from sessionStorage:", {
-                hasPayment: !!data?.payment,
-                paymentType: data?.payment?.type,
-                paymentMethod: data?.payment?.method,
-                productName: data?.product?.name,
-                orderNumber: orderNumber
-              });
-              
-              // Ensure payment data exists
-              if (!data.payment || !data.payment.type) {
-                console.warn("⚠️ Payment data missing in sessionStorage, adding default");
-                data.payment = {
-                  method: sessionId ? "stripe" : "credit_card",
-                  type: "CREDITCARD" as const
-                };
-              }
+        if (typeof window !== 'undefined') {
+          const sessionData = sessionStorage.getItem(`booking_${orderNumber}`);
+          if (sessionData) {
+            try {
+              data = JSON.parse(sessionData);
+              console.log("✅ Retrieved booking data from session storage");
+            } catch (parseError) {
+              console.warn("Failed to parse session storage data:", parseError);
             }
-          } catch (storageErr) {
-            console.error("💥 Failed to parse booking data from sessionStorage:", storageErr);
           }
         }
         
-        // If not found in sessionStorage, try API as fallback
+        // If session storage failed, try the server-side booking data store
         if (!data) {
-          console.log("📡 SessionStorage empty, trying API endpoint...");
-          try {
-            const response = await fetch(`/api/bookings/${orderNumber}`);
-            const result = await response.json();
-            
-            if (response.ok && result.success && result.data) {
-              data = result.data;
-              console.log("✅ Retrieved booking data from API:", {
-                hasPayment: !!data?.payment,
-                paymentType: data?.payment?.type,
-                paymentMethod: data?.payment?.method,
-                orderNumber: orderNumber
-              });
-              
-              // Store in sessionStorage for consistency
-              if (orderNumber && typeof window !== "undefined") {
-                sessionStorage.setItem(`booking_${orderNumber}`, JSON.stringify(data));
-                console.log("💾 Cached API data to sessionStorage");
-              }
-            } else {
-              console.error("❌ No booking data found in API:", {
-                status: response.status,
-                result: result
-              });
-            }
-          } catch (apiError) {
-            console.error("💥 Failed to retrieve from API:", apiError);
-          }
+          data = await bookingDataStore.retrieve(orderNumber);
+          console.log("✅ Retrieved booking data from server store");
         }
         
-
         if (!data) {
-          console.error("❌ CRITICAL: No booking data found after all fallback attempts");
-          console.error("🔍 Debug info:", {
-            orderNumber: orderNumber,
-            sessionId: sessionId,
-            url: window.location.href,
-            sessionStorageKeys: Object.keys(sessionStorage),
-            bookingKeys: Object.keys(sessionStorage).filter(k => k.includes('booking'))
-          });
-          
-          setError("Booking data not found. This may occur if the booking session has expired or the order number is invalid. Please contact support with your order number: " + orderNumber);
+          setError("Booking data not found. Please contact support.");
           setLoading(false);
           return;
         }
 
-        // Ensure payment data has proper type field
-        if (data.payment && !data.payment.type) {
-          data.payment.type = data.payment.method === 'cash' ? 'CASH' : 'CREDITCARD';
-          console.log("✅ Added payment type to booking data:", data.payment.type);
-        }
-        
         setBookingData(data);
 
-        // Determine if we need to use dynamic pricing based on booking data
-        const hasDynamicGuestCounts = data.guestCounts && !('adults' in data.guestCounts);
-        const hasSelectedPriceOptions = data.selectedPriceOptions && Object.keys(data.selectedPriceOptions).length > 0;
-        const shouldUseDynamicTypes = hasDynamicGuestCounts || hasSelectedPriceOptions;
-        
-        setUseDynamicTypes(shouldUseDynamicTypes);
-
-        // Initialize guests based on guest counts and pricing structure
+        // Initialize guests based on guest counts
         if (data.guestCounts) {
-          let initialGuests: GuestInfo[] = [];
-          
-          if (shouldUseDynamicTypes && hasDynamicGuestCounts) {
-            // Handle dynamic guest counts (e.g., {"Adult": 2, "Child": 1, "Senior": 1})
-            console.log("🔄 Using dynamic guest type initialization");
-            
-            // Try to extract price options from selected options or reconstruct them
-            let priceOptions: RezdyPriceOption[] = [];
-            
-            if (data.selectedPriceOptions) {
-              // Reconstruct price options from selected options
-              Object.entries(data.selectedPriceOptions).forEach(([type, option]) => {
-                if (option) {
-                  priceOptions.push({
-                    id: option.id,
-                    label: option.label,
-                    price: option.price,
-                    seatsUsed: 1 // Default value
-                  });
-                }
-              });
-            } else {
-              // Create mock price options based on guest count keys
-              Object.keys(data.guestCounts as Record<string, number>).forEach((label, index) => {
-                priceOptions.push({
-                  id: 1000 + index, // Temporary ID
-                  label: label,
-                  price: 0, // Will be filled from booking data
-                  seatsUsed: 1
-                });
-              });
-            }
-            
-            // Create configurations for dynamic pricing
-            const configs = createPriceOptionConfigs(priceOptions);
-            setPriceOptionConfigs(configs);
-            
-            // Generate guests from dynamic counts
-            initialGuests = generateGuestInstancesFromCounts(
-              data.guestCounts as Record<string, number>,
-              configs
-            );
-            
-            // Set first guest info from contact data
-            if (initialGuests.length > 0) {
-              initialGuests[0].firstName = data.contact.firstName;
-              initialGuests[0].lastName = data.contact.lastName;
-            }
-            
-          } else {
-            // Handle standard guest counts (legacy format)
-            console.log("🔄 Using standard guest type initialization");
-            
-            const standardCounts = data.guestCounts as { adults: number; children: number; infants: number };
-            let guestId = 1;
+          const initialGuests: GuestInfo[] = [];
+          let guestId = 1;
 
-            // Add adults
-            for (let i = 0; i < standardCounts.adults; i++) {
-              const isFirstGuest = i === 0;
-              initialGuests.push({
-                id: guestId.toString(),
-                firstName: isFirstGuest ? data.contact.firstName : "",
-                lastName: isFirstGuest ? data.contact.lastName : "",
-                age: 25,
-                type: "ADULT",
-                priceOptionId: data.selectedPriceOptions?.adult?.id,
-                priceOptionLabel: data.selectedPriceOptions?.adult?.label,
-                customFieldValues: {}
-              });
-              guestId++;
-            }
+          // Add adults
+          for (let i = 0; i < data.guestCounts.adults; i++) {
+            // For the first guest, use contact information from pre-payment
+            const isFirstGuest = i === 0;
+            initialGuests.push({
+              id: guestId.toString(),
+              firstName: isFirstGuest ? data.contact.firstName : "",
+              lastName: isFirstGuest ? data.contact.lastName : "",
+              age: 25,
+              type: "ADULT",
+            });
+            guestId++;
+          }
 
-            // Add children
-            for (let i = 0; i < standardCounts.children; i++) {
-              initialGuests.push({
-                id: guestId.toString(),
-                firstName: "",
-                lastName: "",
-                age: 12,
-                type: "CHILD",
-                priceOptionId: data.selectedPriceOptions?.child?.id,
-                priceOptionLabel: data.selectedPriceOptions?.child?.label,
-                customFieldValues: {}
-              });
-              guestId++;
-            }
+          // Add children
+          for (let i = 0; i < data.guestCounts.children; i++) {
+            initialGuests.push({
+              id: guestId.toString(),
+              firstName: "",
+              lastName: "",
+              age: 12,
+              type: "CHILD",
+            });
+            guestId++;
+          }
 
-            // Add infants
-            for (let i = 0; i < standardCounts.infants; i++) {
-              initialGuests.push({
-                id: guestId.toString(),
-                firstName: "",
-                lastName: "",
-                age: 1,
-                type: "INFANT",
-                priceOptionId: data.selectedPriceOptions?.infant?.id,
-                priceOptionLabel: data.selectedPriceOptions?.infant?.label,
-                customFieldValues: {}
-              });
-              guestId++;
-            }
-            
-            // Create standard price option configs for consistency
-            if (data.selectedPriceOptions) {
-              const standardPriceOptions: RezdyPriceOption[] = [];
-              
-              if (data.selectedPriceOptions.adult) {
-                standardPriceOptions.push({
-                  id: data.selectedPriceOptions.adult.id,
-                  label: data.selectedPriceOptions.adult.label,
-                  price: data.selectedPriceOptions.adult.price,
-                  seatsUsed: 1
-                });
-              }
-              
-              if (data.selectedPriceOptions.child) {
-                standardPriceOptions.push({
-                  id: data.selectedPriceOptions.child.id,
-                  label: data.selectedPriceOptions.child.label,
-                  price: data.selectedPriceOptions.child.price,
-                  seatsUsed: 1
-                });
-              }
-              
-              if (data.selectedPriceOptions.infant) {
-                standardPriceOptions.push({
-                  id: data.selectedPriceOptions.infant.id,
-                  label: data.selectedPriceOptions.infant.label,
-                  price: data.selectedPriceOptions.infant.price,
-                  seatsUsed: 1
-                });
-              }
-              
-              const configs = createPriceOptionConfigs(standardPriceOptions);
-              setPriceOptionConfigs(configs);
-            }
+          // Add infants
+          for (let i = 0; i < data.guestCounts.infants; i++) {
+            initialGuests.push({
+              id: guestId.toString(),
+              firstName: "",
+              lastName: "",
+              age: 1,
+              type: "INFANT",
+            });
+            guestId++;
           }
 
           setGuests(initialGuests);
@@ -336,31 +158,7 @@ export default function GuestDetailsPage() {
     setSubmitErrors([]);
 
     try {
-      // Validate and ensure payment data exists
-      let paymentData = bookingData.payment;
-      
-      // If payment data is missing, determine it based on context
-      if (!paymentData || !paymentData.type) {
-        console.warn("⚠️ Payment data missing, determining from context:", {
-          hasSessionId: !!sessionId,
-          originalPayment: bookingData.payment
-        });
-        
-        // For Stripe payments (when sessionId exists), always use CREDITCARD
-        // This ensures Rezdy API requirements are met
-        paymentData = {
-          method: sessionId ? "stripe" : "credit_card",
-          type: "CREDITCARD" as const
-        };
-      }
-      
-      // Validate payment type is valid
-      if (paymentData.type !== "CASH" && paymentData.type !== "CREDITCARD") {
-        console.error("❌ Invalid payment type detected:", paymentData.type);
-        paymentData.type = "CREDITCARD" as const;
-      }
-
-      // Update booking data with guest information and validated payment details
+      // Update booking data with guest information and additional details
       const updatedBookingData: BookingFormData = {
         ...bookingData,
         guests: guests.filter((g) => g.firstName.trim() && g.lastName.trim()),
@@ -369,72 +167,28 @@ export default function GuestDetailsPage() {
           // Preserve original contact information from pre-payment
           country: bookingData.contact.country || "Australia",
         },
-        // Use validated payment data
-        payment: paymentData
+        // Explicitly preserve payment data to ensure it's sent to Rezdy
+        // For Stripe payments (when sessionId exists), always use CREDIT_CARD type
+        payment: sessionId ? {
+          method: bookingData.payment?.method || "stripe",
+          type: "CREDIT_CARD" as const
+        } : (bookingData.payment || {
+          method: "credit_card",
+          type: "CREDIT_CARD" as const
+        })
       };
 
-      // Debug: Log the complete payload being sent to the booking registration API
-      console.group("🚀 COMPLETE BOOKING - Frontend Request Structure");
-      console.log("📤 Full API Request Payload:", {
-        endpoint: "/api/bookings/register",
-        method: "POST",
-        payload: {
-          bookingData: updatedBookingData,
-          orderNumber,
-          sessionId
-        }
-      });
-      
-      console.log("📋 Booking Data Structure:", {
-        product: {
-          code: updatedBookingData.product.code,
-          name: updatedBookingData.product.name
-        },
-        session: {
-          id: updatedBookingData.session.id,
-          startTime: updatedBookingData.session.startTime,
-          endTime: updatedBookingData.session.endTime,
-          hasPickupLocation: !!updatedBookingData.session.pickupLocation,
-          pickupLocation: updatedBookingData.session.pickupLocation
-        },
-        guests: {
-          count: updatedBookingData.guests.length,
-          details: updatedBookingData.guests.map(g => ({
-            name: `${g.firstName} ${g.lastName}`,
-            type: g.type,
-            age: g.age
-          }))
-        },
+      // Debug: Log the payload being sent to the booking registration API
+      console.log("🚀 Sending booking registration request:", {
+        orderNumber,
+        sessionId,
+        guestCount: updatedBookingData.guests.length,
         guestCounts: updatedBookingData.guestCounts,
-        contact: {
-          name: `${updatedBookingData.contact.firstName} ${updatedBookingData.contact.lastName}`,
-          email: updatedBookingData.contact.email,
-          phone: updatedBookingData.contact.phone,
-          country: updatedBookingData.contact.country
-        },
-        pricing: updatedBookingData.pricing,
-        payment: {
-          method: updatedBookingData.payment.method,
-          type: updatedBookingData.payment.type,
-          isValidType: updatedBookingData.payment.type === "CASH" || updatedBookingData.payment.type === "CREDITCARD"
-        },
-        selectedPriceOptions: updatedBookingData.selectedPriceOptions,
-        extras: updatedBookingData.extras || []
+        totalAmount: updatedBookingData.pricing.total,
+        firstGuest: updatedBookingData.guests[0],
+        payment: updatedBookingData.payment,
+        originalPayment: bookingData.payment
       });
-      
-      console.log("🔍 Payment Context:", {
-        sessionId: sessionId,
-        sessionIdType: sessionId?.startsWith('cs_') ? 'checkout_session' : sessionId?.startsWith('pi_') ? 'payment_intent' : 'unknown',
-        originalPayment: bookingData.payment,
-        finalPayment: updatedBookingData.payment,
-        paymentValidation: {
-          hasMethod: !!updatedBookingData.payment.method,
-          hasType: !!updatedBookingData.payment.type,
-          isValidType: updatedBookingData.payment.type === "CASH" || updatedBookingData.payment.type === "CREDITCARD"
-        }
-      });
-      
-      console.groupEnd();
 
       // Submit to Rezdy API
       const response = await fetch("/api/bookings/register", {
@@ -451,49 +205,25 @@ export default function GuestDetailsPage() {
 
       const result = await response.json();
 
-      // For successful payments, always redirect to thank you page
-      // Payment has already been processed, so user should see confirmation
-      if (response.ok || (sessionId && response.status >= 400)) {
-        // Use whichever transaction identifier we can reliably obtain.
-        const transactionIdSafe =
-          (result && (result.transactionId || result.bookingId)) ||
-          sessionId ||
-          orderNumber;
-
-        // Build redirect URL (avoid appending "undefined"/empty values)
-        let redirectUrl = `/booking/confirmation?orderNumber=${orderNumber}`;
-        if (transactionIdSafe) {
-          redirectUrl += `&transactionId=${transactionIdSafe}`;
+      if (result.success) {
+        // Clear the stored booking data from both server and session storage
+        if (orderNumber) {
+          await bookingDataStore.remove(orderNumber);
+          
+          // Also clear session storage
+          if (typeof window !== 'undefined') {
+            sessionStorage.removeItem(`booking_${orderNumber}`);
+          }
         }
-
-        // Log Rezdy registration errors for monitoring, but don't block user flow
-        if (!response.ok) {
-          console.warn("⚠️ Rezdy registration failed but redirecting user (payment successful):", {
-            orderNumber,
-            error: result.error,
-            status: response.status,
-            sessionId: sessionId
-          });
-        }
-
-        // Clear session storage once we know the payment went through
-        if (orderNumber && typeof window !== "undefined") {
-          sessionStorage.removeItem(`booking_${orderNumber}`);
-        }
-
-        router.push(redirectUrl);
-        return; // exit early so we don't run the error branch below
-      }
-
-      // Only show error to user if payment wasn't successful (no sessionId)
-      if (!sessionId) {
+        
+        // Redirect to confirmation page
+        router.push(
+          `/booking/confirmation?orderNumber=${orderNumber}&transactionId=${result.transactionId || sessionId}`
+        );
+      } else {
         setSubmitErrors([
           result.error || "Failed to complete booking. Please try again.",
         ]);
-      } else {
-        // Payment was successful, but we couldn't register - redirect anyway
-        console.warn("⚠️ Payment successful but booking registration failed, redirecting user");
-        router.push(`/booking/confirmation?orderNumber=${orderNumber}&transactionId=${sessionId}`);
       }
     } catch (error) {
       console.error("Error submitting guest details:", error);
@@ -565,7 +295,7 @@ export default function GuestDetailsPage() {
             <p className="text-lg text-muted-foreground">
               Please provide guest details to complete your booking
             </p>
-          </div>
+          </div>  
         </div>
 
         {/* Error Display */}
@@ -603,29 +333,10 @@ export default function GuestDetailsPage() {
               minGuests={guests.length}
               requireAdult={true}
               autoManageGuests={false}
-              priceOptionConfigs={priceOptionConfigs}
-              enableDynamicTypes={useDynamicTypes}
-              customValidation={(guestList) => {
-                const errors: string[] = [];
-                
-                // Ensure we have the right number of guests for each price option
-                if (useDynamicTypes && bookingData?.guestCounts && typeof bookingData.guestCounts === 'object' && !('adults' in bookingData.guestCounts)) {
-                  const expectedCounts = bookingData.guestCounts as Record<string, number>;
-                  
-                  Object.entries(expectedCounts).forEach(([optionLabel, expectedCount]) => {
-                    const actualCount = guestList.filter(g => g.priceOptionLabel === optionLabel).length;
-                    if (actualCount !== expectedCount) {
-                      errors.push(`Expected ${expectedCount} guests for ${optionLabel}, but found ${actualCount}`);
-                    }
-                  });
-                }
-                
-                return errors;
-              }}
             />
           </CardContent>
         </Card>
-
+/
          {/* Booking Summary */}
          <Card>
           <CardHeader>
@@ -665,48 +376,29 @@ export default function GuestDetailsPage() {
                   <div className="flex items-center gap-2">
                     <Users className="h-4 w-4 text-muted-foreground" />
                     <span>
-                      {useDynamicTypes && typeof bookingData.guestCounts === 'object' && !('adults' in bookingData.guestCounts) ? 
-                        Object.values(bookingData.guestCounts as Record<string, number>).reduce((sum, count) => sum + count, 0) :
-                        ((bookingData.guestCounts as any).adults || 0) + 
-                        ((bookingData.guestCounts as any).children || 0) + 
-                        ((bookingData.guestCounts as any).infants || 0)
-                      }{" "}
+                      {bookingData.guestCounts.adults +
+                        bookingData.guestCounts.children +
+                        bookingData.guestCounts.infants}{" "}
                       guests
                     </span>
                   </div>
                 )}
-                {bookingData.guestCounts && (
+                {bookingData.selectedPriceOptions && bookingData.guestCounts && (
                   <div className="space-y-1 pt-2">
-                    {useDynamicTypes && typeof bookingData.guestCounts === 'object' && !('adults' in bookingData.guestCounts) ? (
-                      // Display dynamic guest counts
-                      Object.entries(bookingData.guestCounts as Record<string, number>).map(([label, count]) => (
-                        count > 0 && (
-                          <div key={label} className="text-sm text-muted-foreground">
-                            {count} × {label}
-                          </div>
-                        )
-                      ))
-                    ) : (
-                      // Display standard guest counts with price options
-                      bookingData.selectedPriceOptions && (
-                        <>
-                          {(bookingData.guestCounts as any).adults > 0 && bookingData.selectedPriceOptions.adult && (
-                            <div className="text-sm text-muted-foreground">
-                              {(bookingData.guestCounts as any).adults} × {bookingData.selectedPriceOptions.adult.label}
-                            </div>
-                          )}
-                          {(bookingData.guestCounts as any).children > 0 && bookingData.selectedPriceOptions.child && (
-                            <div className="text-sm text-muted-foreground">
-                              {(bookingData.guestCounts as any).children} × {bookingData.selectedPriceOptions.child.label}
-                            </div>
-                          )}
-                          {(bookingData.guestCounts as any).infants > 0 && bookingData.selectedPriceOptions.infant && (
-                            <div className="text-sm text-muted-foreground">
-                              {(bookingData.guestCounts as any).infants} × {bookingData.selectedPriceOptions.infant.label}
-                            </div>
-                          )}
-                        </>
-                      )
+                    {bookingData.guestCounts.adults > 0 && bookingData.selectedPriceOptions.adult && (
+                      <div className="text-sm text-muted-foreground">
+                        {bookingData.guestCounts.adults} × {bookingData.selectedPriceOptions.adult.label}
+                      </div>
+                    )}
+                    {bookingData.guestCounts.children > 0 && bookingData.selectedPriceOptions.child && (
+                      <div className="text-sm text-muted-foreground">
+                        {bookingData.guestCounts.children} × {bookingData.selectedPriceOptions.child.label}
+                      </div>
+                    )}
+                    {bookingData.guestCounts.infants > 0 && bookingData.selectedPriceOptions.infant && (
+                      <div className="text-sm text-muted-foreground">
+                        {bookingData.guestCounts.infants} × {bookingData.selectedPriceOptions.infant.label}
+                      </div>
                     )}
                   </div>
                 )}

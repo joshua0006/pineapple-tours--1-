@@ -378,7 +378,7 @@ export default function ToursPage() {
       {/* Main Content - 2 Column Layout */}
       <section className="py-8">
         <div className="container">
-          <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+          <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
             {/* Left Sidebar - Filters */}
             <div className="lg:col-span-1">
               <div className="sticky top-24 space-y-6">
@@ -603,7 +603,7 @@ export default function ToursPage() {
             </div>
 
             {/* Right Content Area */}
-            <div className="lg:col-span-3">
+            <div className="lg:col-span-4">
               {/* Results count and status */}
               <div className="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <div className="flex items-center gap-2">
@@ -626,7 +626,7 @@ export default function ToursPage() {
                 <>
                   {hasResults ? (
                     <>
-                      <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
+                      <div className="grid gap-8 sm:grid-cols-1 lg:grid-cols-2 xl:grid-cols-2 2xl:grid-cols-3">
                         {filteredProducts.map((product: RezdyProduct) => (
                           <DynamicTourCard
                             key={product.productCode}

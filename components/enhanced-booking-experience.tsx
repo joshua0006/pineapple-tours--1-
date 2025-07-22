@@ -1729,23 +1729,8 @@ export function EnhancedBookingExperience({
                       <div className="flex-1 max-w-[120px]">
                         <Input
                           id="guestCount"
-                          type="number"
-                          min={(() => {
-                            const availableOptions = product.priceOptions || [];
-                            const minQuantity = Math.min(
-                              product.quantityRequiredMin || 1,
-                              ...availableOptions.map(opt => opt.minQuantity || 1)
-                            );
-                            return minQuantity;
-                          })()}
-                          max={(() => {
-                            const availableOptions = product.priceOptions || [];
-                            const maxQuantity = Math.max(
-                              product.quantityRequiredMax || 50,
-                              ...availableOptions.map(opt => opt.maxQuantity || 50)
-                            );
-                            return maxQuantity;
-                          })()}
+                          type="text"
+                          inputMode="numeric"
                           value={desiredGuestCount}
                           onChange={(e) => {
                             const value = parseInt(e.target.value) || 1;
@@ -1754,7 +1739,7 @@ export function EnhancedBookingExperience({
                               setDesiredGuestCount(value);
                             }
                           }}
-                          className="text-center text-lg font-medium h-10"
+                          className="text-center text-lg font-medium h-10 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                         />
                       </div>
                       <Button

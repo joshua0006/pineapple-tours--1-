@@ -11,6 +11,12 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import {
   type PricingBreakdown,
   formatCurrency,
   getTaxBreakdown,
@@ -25,6 +31,42 @@ interface PricingDisplayProps {
   showDetails?: boolean;
   compact?: boolean;
   className?: string;
+}
+
+// Helper to shorten long price option labels for display
+function shortenPriceLabel(label: string, maxLength: number = 20): string {
+  // Priority patterns that should always be applied for UI consistency
+  const priorityPatterns = [
+    { regex: /^Group\s+from\s+(\d+)\s+to\s+(\d+)$/i, replacement: 'Group ($1-$2)' },
+    { regex: /^(\d+)\s+Group\s+from\s+(\d+)\s+to\s+(\d+)$/i, replacement: '$1 Group ($2-$3)' },
+    { regex: /^Private\s+tour\s+pricing\s+for\s+your\s+group.*$/i, replacement: 'Private Group' },
+  ];
+  
+  // Apply priority patterns first (regardless of length)
+  for (const pattern of priorityPatterns) {
+    if (pattern.regex.test(label)) {
+      return label.replace(pattern.regex, pattern.replacement);
+    }
+  }
+  
+  // If already short enough, return as-is
+  if (label.length <= maxLength) return label;
+  
+  // Handle other patterns only if too long
+  const otherPatterns = [
+    { regex: /^(Adult|Child|Infant)\s*\([^)]+\)/i, replacement: '$1' },
+    { regex: /^(\w+)\s+\([^)]+\)/i, replacement: '$1' },
+  ];
+  
+  for (const pattern of otherPatterns) {
+    if (pattern.regex.test(label)) {
+      const shortened = label.replace(pattern.regex, pattern.replacement);
+      if (shortened.length <= maxLength) return shortened;
+    }
+  }
+  
+  // Fallback: truncate with ellipsis
+  return label.substring(0, maxLength - 3) + '...';
 }
 
 // Helper to detect pricing pattern
@@ -214,13 +256,30 @@ export function PricingDisplay({
               return null;
             }
             
+            // Transform label for display - replace "Quantity" with "Guest"
+            const displayLabel = label.toLowerCase() === 'quantity' ? 'Guest' : label;
+            
+            const shortLabel = shortenPriceLabel(displayLabel);
+            const needsTooltip = shortLabel !== displayLabel;
+            
             return (
               <div key={label} className="flex justify-between">
-                <span>
-                  {count} {label}{count > 1 ? "s" : ""} ×{" "}
-                  {formatCurrency(priceOption.price)}
-                </span>
-                <span>
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <span className="truncate">
+                        {count} {shortLabel}{count > 1 ? "s" : ""} ×{" "}
+                        {formatCurrency(priceOption.price)}
+                      </span>
+                    </TooltipTrigger>
+                    {needsTooltip && (
+                      <TooltipContent>
+                        <p>{count} {displayLabel}{count > 1 ? "s" : ""} × {formatCurrency(priceOption.price)}</p>
+                      </TooltipContent>
+                    )}
+                  </Tooltip>
+                </TooltipProvider>
+                <span className="font-medium">
                   {formatCurrency(count * priceOption.price)}
                 </span>
               </div>
@@ -232,7 +291,7 @@ export function PricingDisplay({
             {breakdown.adults > 0 && (
               <div className="flex justify-between">
                 <span>
-                  {breakdown.adults} Adult{breakdown.adults > 1 ? "s" : ""} ×{" "}
+                  {breakdown.adults} Adult{breakdown.adults > 1 ? "s" : ""} 
                   {formatCurrency(breakdown.adultPrice)}
                 </span>
                 <span>
@@ -335,11 +394,15 @@ export function PricingDisplay({
           <span>{formatCurrency(breakdown.serviceFees)}</span>
         </div>
 
-        <Separator />
+        <Separator className="my-4" />
 
-        <div className="flex justify-between text-lg font-bold">
-          <span>Total</span>
-          <span>{formatCurrency(breakdown.total)}</span>
+        <div className="bg-gradient-to-r from-coral-50 to-orange-50 dark:from-coral-950/20 dark:to-orange-950/20 rounded-lg p-4 border border-coral-200 dark:border-coral-800/30">
+          <div className="flex justify-between items-center">
+            <span className="text-lg font-semibold text-brand-primary dark:text-brand-secondary">Total</span>
+            <span className="text-2xl font-bold text-brand-accent dark:text-coral-400">
+              {formatCurrency(breakdown.total)}
+            </span>
+          </div>
         </div>
 
        

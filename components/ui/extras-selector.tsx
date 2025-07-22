@@ -15,12 +15,8 @@ import {
   DialogClose,
 } from "@/components/ui/dialog";
 import {
-  Plus,
-  Minus,
   ShoppingBag,
   Info,
-  Eye,
-  X,
   Star,
   Clock,
   Tag,
@@ -43,7 +39,7 @@ interface ExtraDetailModalProps {
   extra: RezdyExtra;
   guestCount: number;
   selectedQuantity: number;
-  onQuantityChange: (quantity: number) => void;
+  onToggle: () => void;
   calculatePrice: (extra: RezdyExtra, quantity: number) => number;
   getPriceDisplayText: (extra: RezdyExtra) => string;
 }
@@ -52,19 +48,11 @@ function ExtraDetailModal({
   extra,
   guestCount,
   selectedQuantity,
-  onQuantityChange,
+  onToggle,
   calculatePrice,
   getPriceDisplayText,
 }: ExtraDetailModalProps) {
-  const [localQuantity, setLocalQuantity] = useState(selectedQuantity);
-  const maxQuantity = extra.maxQuantity || 10;
-  const minQuantity = extra.minQuantity || 0;
-  const totalPrice = calculatePrice(extra, localQuantity);
-
-  // Reset local quantity when modal opens with different selectedQuantity
-  useEffect(() => {
-    setLocalQuantity(selectedQuantity);
-  }, [selectedQuantity]);
+  const totalPrice = calculatePrice(extra, selectedQuantity);
 
   return (
     <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
@@ -150,65 +138,32 @@ function ExtraDetailModal({
           </div>
         </div>
 
-        {/* Quantity and Limits */}
+        {/* Selection Status */}
         <div className="bg-blue-50 rounded-lg p-4 space-y-3">
           <h4 className="font-semibold flex items-center gap-2">
             <Clock className="h-4 w-4" />
-            Quantity & Availability
+            Selection Status
           </h4>
-          <div className="space-y-2">
-            {(extra.maxQuantity || extra.minQuantity) && (
-              <div className="text-sm text-gray-600">
-                {extra.minQuantity && extra.maxQuantity
-                  ? `Allowed quantity: ${extra.minQuantity} - ${extra.maxQuantity}`
-                  : extra.maxQuantity
-                  ? `Maximum quantity: ${extra.maxQuantity}`
-                  : `Minimum quantity: ${extra.minQuantity}`}
+          <div className="flex items-center justify-between bg-white rounded-lg p-3 border">
+            <div className="flex items-center gap-3">
+              <div className="text-center">
+                <div className="font-medium text-lg">
+                  {selectedQuantity > 0 ? "Added" : "Not Added"}
+                </div>
+                <div className="text-xs text-gray-500">
+                  {selectedQuantity > 0 ? "included in booking" : "click to add"}
+                </div>
+              </div>
+            </div>
+
+            {selectedQuantity > 0 && (
+              <div className="text-right">
+                <div className="text-sm text-gray-600">Total Cost:</div>
+                <div className="font-bold text-lg text-brand-accent">
+                  {formatCurrency(totalPrice)}
+                </div>
               </div>
             )}
-
-            {/* Quantity Controls */}
-            <div className="flex items-center justify-between bg-white rounded-lg p-3 border">
-              <div className="flex items-center gap-3">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() =>
-                    setLocalQuantity(Math.max(minQuantity, localQuantity - 1))
-                  }
-                  disabled={localQuantity <= minQuantity}
-                  className="h-8 w-8 p-0"
-                >
-                  <Minus className="h-4 w-4" />
-                </Button>
-
-                <div className="text-center">
-                  <div className="font-medium text-lg">{localQuantity}</div>
-                  <div className="text-xs text-gray-500">selected</div>
-                </div>
-
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() =>
-                    setLocalQuantity(Math.min(maxQuantity, localQuantity + 1))
-                  }
-                  disabled={localQuantity >= maxQuantity}
-                  className="h-8 w-8 p-0"
-                >
-                  <Plus className="h-4 w-4" />
-                </Button>
-              </div>
-
-              {localQuantity > 0 && (
-                <div className="text-right">
-                  <div className="text-sm text-gray-600">Total Cost:</div>
-                  <div className="font-bold text-lg text-brand-accent">
-                    {formatCurrency(totalPrice)}
-                  </div>
-                </div>
-              )}
-            </div>
           </div>
         </div>
 
@@ -230,16 +185,16 @@ function ExtraDetailModal({
         <DialogClose asChild>
           <Button variant="outline">Close</Button>
         </DialogClose>
-        {localQuantity > 0 && (
-          <DialogClose asChild>
-            <Button
-              className="bg-brand-accent hover:bg-brand-accent/90"
-              onClick={() => onQuantityChange(localQuantity)}
-            >
-              Add to Booking • {formatCurrency(totalPrice)}
-            </Button>
-          </DialogClose>
-        )}
+        <DialogClose asChild>
+          <Button
+            className={selectedQuantity > 0 ? "bg-red-500 hover:bg-red-600" : "bg-brand-accent hover:bg-brand-accent/90"}
+            onClick={onToggle}
+          >
+            {selectedQuantity > 0 
+              ? `Remove from Booking • ${formatCurrency(totalPrice)}` 
+              : `Add to Booking • ${formatCurrency(totalPrice)}`}
+          </Button>
+        </DialogClose>
       </div>
     </DialogContent>
   );
@@ -285,45 +240,6 @@ export function ExtrasSelector({
     }
   }, [localSelectedExtras, onExtrasChange, selectedExtras, getSafeExtraId]);
 
-  const handleQuantityChange = useCallback(
-    (extra: RezdyExtra, newQuantity: number) => {
-      const maxQuantity = extra.maxQuantity || 10;
-      const minQuantity = extra.minQuantity || 0;
-
-      const extraKey = getSafeExtraId(extra);
-
-      // Ensure quantity is within bounds
-      const quantity = Math.max(
-        minQuantity,
-        Math.min(maxQuantity, newQuantity)
-      );
-
-      setLocalSelectedExtras((prevExtras) => {
-        const updatedExtras = [...prevExtras];
-        const existingIndex = updatedExtras.findIndex(
-          (item) => getSafeExtraId(item.extra) === extraKey
-        );
-
-        if (quantity === 0) {
-          // Remove the extra if quantity is 0
-          if (existingIndex !== -1) {
-            updatedExtras.splice(existingIndex, 1);
-          }
-        } else {
-          // Add or update the extra
-          if (existingIndex !== -1) {
-            updatedExtras[existingIndex] = { extra, quantity };
-          } else {
-            updatedExtras.push({ extra, quantity });
-          }
-        }
-
-        return updatedExtras;
-      });
-    },
-    [onExtrasChange, getSafeExtraId]
-  );
-
   const getSelectedQuantity = useCallback(
     (extra: RezdyExtra): number => {
       const extraKey = getSafeExtraId(extra);
@@ -333,6 +249,38 @@ export function ExtrasSelector({
       return selected ? selected.quantity : 0;
     },
     [localSelectedExtras, getSafeExtraId]
+  );
+
+  const handleToggleExtra = useCallback(
+    (extra: RezdyExtra) => {
+      const extraKey = getSafeExtraId(extra);
+      const currentQuantity = getSelectedQuantity(extra);
+      const newQuantity = currentQuantity === 0 ? 1 : 0;
+
+      setLocalSelectedExtras((prevExtras) => {
+        const updatedExtras = [...prevExtras];
+        const existingIndex = updatedExtras.findIndex(
+          (item) => getSafeExtraId(item.extra) === extraKey
+        );
+
+        if (newQuantity === 0) {
+          // Remove the extra if quantity is 0
+          if (existingIndex !== -1) {
+            updatedExtras.splice(existingIndex, 1);
+          }
+        } else {
+          // Add or update the extra
+          if (existingIndex !== -1) {
+            updatedExtras[existingIndex] = { extra, quantity: 1 };
+          } else {
+            updatedExtras.push({ extra, quantity: 1 });
+          }
+        }
+
+        return updatedExtras;
+      });
+    },
+    [getSafeExtraId, getSelectedQuantity]
   );
 
   const calculateExtraPrice = (extra: RezdyExtra, quantity: number): number => {
@@ -390,19 +338,17 @@ export function ExtrasSelector({
         <Fragment>
           {availableExtras.map((extra, index) => {
             const selectedQuantity = getSelectedQuantity(extra);
-            const totalPrice = calculateExtraPrice(extra, selectedQuantity);
-            const maxQuantity = extra.maxQuantity || 10;
-            const minQuantity = extra.minQuantity || 0;
 
             return (
               <div key={`extra-card-${extra.id && extra.id !== "undefined" ? extra.id : "noid"}-${index}`}>
                 <Card
                   className={cn(
-                    "transition-all duration-200 hover:shadow-md",
+                    "transition-all duration-200 hover:shadow-md cursor-pointer",
                     selectedQuantity > 0
                       ? "ring-2 ring-brand-accent bg-brand-accent/5 border-brand-accent/20"
                       : "hover:bg-gray-50 border-gray-200"
                   )}
+                  onClick={() => handleToggleExtra(extra)}
                 >
                   <CardContent className="p-3">
                     <div className="flex items-center gap-3">
@@ -444,8 +390,8 @@ export function ExtrasSelector({
                                 {getPriceDisplayText(extra)}
                               </span>
                               {selectedQuantity > 0 && (
-                                <Badge variant="outline" className="text-xs px-1 py-0">
-                                  {selectedQuantity}x
+                                <Badge variant="outline" className="text-xs px-1 py-0 bg-brand-accent text-white">
+                                  Added
                                 </Badge>
                               )}
                             </div>
@@ -455,40 +401,12 @@ export function ExtrasSelector({
                       </div>
                     </div>
 
-                    {/* Quantity Controls */}
+                    {/* Action Area */}
                     <div className="flex items-center justify-between mt-3 pt-2 border-t border-gray-100">
-                      <div className="flex items-center gap-3">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={(e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            handleQuantityChange(extra, selectedQuantity - 1);
-                          }}
-                          disabled={selectedQuantity <= minQuantity}
-                          className="h-8 w-8 p-0"
-                        >
-                          <Minus className="h-4 w-4" />
-                        </Button>
-
-                        <span className="text-sm font-medium min-w-[2rem] text-center">
-                          {selectedQuantity}
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm text-gray-600">
+                          {selectedQuantity > 0 ? "Added to booking" : "Click to add"}
                         </span>
-
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={(e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            handleQuantityChange(extra, selectedQuantity + 1);
-                          }}
-                          disabled={selectedQuantity >= maxQuantity}
-                          className="h-8 w-8 p-0"
-                        >
-                          <Plus className="h-4 w-4" />
-                        </Button>
                       </div>
                       <Dialog>
                         <DialogTrigger asChild>
@@ -496,8 +414,10 @@ export function ExtrasSelector({
                             variant="ghost"
                             size="sm"
                             className="text-xs text-brand-accent hover:text-brand-accent/80 hover:bg-brand-accent/10 px-2 py-1"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                            }}
                           >
-                          
                             Click for more details
                           </Button>
                         </DialogTrigger>
@@ -505,9 +425,7 @@ export function ExtrasSelector({
                           extra={extra}
                           guestCount={guestCount}
                           selectedQuantity={selectedQuantity}
-                          onQuantityChange={(quantity) =>
-                            handleQuantityChange(extra, quantity)
-                          }
+                          onToggle={() => handleToggleExtra(extra)}
                           calculatePrice={calculateExtraPrice}
                           getPriceDisplayText={getPriceDisplayText}
                         />

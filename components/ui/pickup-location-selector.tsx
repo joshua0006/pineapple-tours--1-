@@ -6,7 +6,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
 import {
   RezdyPickupLocation,
   RezdyBookingOption,
@@ -30,10 +29,6 @@ interface PickupLocationSelectorProps {
   showPricing?: boolean;
 }
 
-// Extended pickup location type with city for grouping
-interface PickupLocationWithCity extends RezdyPickupLocation {
-  city?: string;
-}
 
 const PickupLocationSelectorComponent = ({
   pickupLocations,
@@ -141,15 +136,63 @@ const PickupLocationSelectorComponent = ({
     return 'Unknown';
   }, []);
 
-  // Simplified pickup time formatting - uses minutesPrior or generic city-based times
+  // Hardcoded pickup location times mapping
+  const hardcodedPickupTimes = useMemo(() => {
+    const timeMap = new Map<string, string>();
+    
+    // Brisbane locations
+    timeMap.set('brisbane marriott', '8:45am');
+    timeMap.set('1 howard st brisbane city', '8:45am');
+    timeMap.set('royal on the park', '9:00am');
+    timeMap.set('152 alice st, brisbane city qld 4000', '9:00am');
+    timeMap.set('emporium southbank', '9:10am');
+    timeMap.set('267 grey st, south brisbane qld 4101', '9:10am');
+    
+    // Gold Coast locations
+    timeMap.set('the star casino', '8:45am');
+    timeMap.set('1 casino dr, broadbeach qld 4218', '8:45am');
+    timeMap.set('voco gold coast', '9:00am');
+    timeMap.set('31 hamilton ave, surfers paradise qld 4217', '9:00am');
+    timeMap.set('jw marriott', '9:10am');
+    timeMap.set('sheraton grand mirage', '9:15am');
+    timeMap.set('71 seaworld dr, main beach qld 4217', '9:15am');
+    
+    // Brisbane City Loop locations
+    timeMap.set('inner city hotel', '7:15am');
+    timeMap.set('southbank', '8:00am');
+    timeMap.set('267 grey st, south brisbane', '8:00am');
+    timeMap.set('petrie terrace', '8:10am');
+    timeMap.set('cnr sexton st and roma st', '8:10am');
+    timeMap.set('no1 anzac square', '8:20am');
+    timeMap.set('295 ann st, brisbane city', '8:20am');
+    timeMap.set('howard smith wharves', '8:25am');
+    timeMap.set('7 boundary st, brisbane city', '8:25am');
+    timeMap.set('kangaroo point cliffs', '8:30am');
+    timeMap.set('66 river terrace, kangaroo point qld 4169', '8:30am');
+    
+    return timeMap;
+  }, []);
+
+  // Pickup time formatting - prioritizes hardcoded exact times over relative times
   const getPickupTimeForLocation = useCallback((location: RezdyPickupLocation): string | null => {
-    // First try to use the minutesPrior field if available
+    // First try to match against hardcoded pickup times (exact times)
+    const locationName = location.locationName.toLowerCase();
+    const address = formatAddress(location.address).toLowerCase();
+    
+    // Check location name first
+    for (const [key, time] of Array.from(hardcodedPickupTimes.entries())) {
+      if (locationName.includes(key) || address.includes(key)) {
+        return time;
+      }
+    }
+    
+    // Fallback to minutesPrior if no hardcoded match and it exists
     const priorTime = formatPickupTime(location.minutesPrior);
     if (priorTime) {
       return priorTime;
     }
     
-    // Fallback to generic city-based pickup times
+    // Final fallback to generic city-based pickup times
     const city = getLocationCity(location);
     switch (city) {
       case 'Brisbane':
@@ -163,7 +206,7 @@ const PickupLocationSelectorComponent = ({
       default:
         return 'Check details';
     }
-  }, [formatPickupTime, getLocationCity]);
+  }, [formatPickupTime, getLocationCity, hardcodedPickupTimes, formatAddress]);
 
   // Memoize directions URL generation
   const getDirectionsUrl = useCallback((location: RezdyPickupLocation): string => {
@@ -222,20 +265,6 @@ const PickupLocationSelectorComponent = ({
     }, {} as Record<string, Record<string, RezdyPickupLocation[]>>);
   }, [bookingOptions, getLocationCity]);
 
-  // Memoize simple pickup locations grouped by city for the simple interface
-  const groupedSimpleLocations = useMemo(() => {
-    if (!pickupLocations) return {};
-    
-    return pickupLocations.reduce(
-      (acc, location) => {
-        const city = getLocationCity(location);
-        if (!acc[city]) acc[city] = [];
-        acc[city].push(location);
-        return acc;
-      },
-      {} as Record<string, RezdyPickupLocation[]>
-    );
-  }, [pickupLocations, getLocationCity]);
 
   // Render booking options interface
   if (hasBookingOptions) {
@@ -503,20 +532,7 @@ const PickupLocationSelectorComponent = ({
                       </div>
                     )} */}
 
-                    {showDirections && (
-                      <Button
-                        variant="link"
-                        size="sm"
-                        className="h-auto p-0 mt-2 text-blue-600 hover:text-blue-700"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          window.open(getDirectionsUrl(location), "_blank");
-                        }}
-                      >
-                        <Navigation className="h-3 w-3 mr-1" />
-                        Get Directions
-                      </Button>
-                    )}
+                   
                   </div>
                 </div>
               </CardContent>

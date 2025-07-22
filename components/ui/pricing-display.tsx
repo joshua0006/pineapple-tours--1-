@@ -138,9 +138,125 @@ export function PricingDisplay({
 
   if (compact) {
     return (
-      <div className={`space-y-2 ${className}`}>
-        <div className="flex justify-between items-center">
-          <span className="text-sm text-muted-foreground">Total</span>
+      <div className={`space-y-3 ${className}`}>
+        {/* Compact Guest Breakdown */}
+        <div className="space-y-1">
+          {/* Dynamic guest breakdown based on actual price options */}
+          {breakdown.dynamicGuestCounts && product?.priceOptions ? (
+            // Show dynamic price option breakdown
+            Object.entries(breakdown.dynamicGuestCounts).map(([label, count]) => {
+              if (count === 0) return null;
+              
+              // Enhanced label matching - try exact match first, then case-insensitive, then partial match
+              let priceOption = product.priceOptions?.find(opt => opt.label === label);
+              
+              if (!priceOption) {
+                // Try case-insensitive match
+                priceOption = product.priceOptions?.find(opt => 
+                  opt.label.toLowerCase() === label.toLowerCase()
+                );
+              }
+              
+              if (!priceOption) {
+                // Try partial match (for cases like "Adult" matching "Adult (18+)")
+                priceOption = product.priceOptions?.find(opt => 
+                  opt.label.toLowerCase().includes(label.toLowerCase()) ||
+                  label.toLowerCase().includes(opt.label.toLowerCase())
+                );
+              }
+              
+              // If still no match, use fallback
+              if (!priceOption) {
+                if (breakdown.selectedPriceOptions) {
+                  const fallbackOption = Object.values(breakdown.selectedPriceOptions).find(opt => 
+                    opt && (opt.label === label || opt.label.toLowerCase() === label.toLowerCase())
+                  );
+                  if (fallbackOption) {
+                    priceOption = fallbackOption;
+                  }
+                }
+              }
+              
+              // If we still don't have a price option, skip this entry
+              if (!priceOption) {
+                return null;
+              }
+              
+              // Transform label for display - replace "Quantity" with "Guest"
+              const displayLabel = label.toLowerCase() === 'quantity' ? 'Guest' : label;
+              const shortLabel = shortenPriceLabel(displayLabel);
+              
+              return (
+                <div key={label} className="flex justify-between">
+                  <div className="flex flex-col">
+                    <span className="text-xs font-medium">
+                      {count} Guest{count > 1 ? "s" : ""}
+                    </span>
+                    <span className="text-xs text-muted-foreground">
+                      {shortLabel} × {formatCurrency(priceOption.price)}
+                    </span>
+                  </div>
+                  <span className="text-xs font-medium">
+                    {formatCurrency(count * priceOption.price)}
+                  </span>
+                </div>
+              );
+            }).filter(Boolean) // Remove null entries
+          ) : (
+            // Fallback to standard guest type breakdown
+            <>
+              {breakdown.adults > 0 && (
+                <div className="flex justify-between">
+                  <div className="flex flex-col">
+                    <span className="text-xs font-medium">
+                      {breakdown.adults} Adult{breakdown.adults > 1 ? "s" : ""}
+                    </span>
+                    <span className="text-xs text-muted-foreground">
+                      × {formatCurrency(breakdown.adultPrice)}
+                    </span>
+                  </div>
+                  <span className="text-xs font-medium">
+                    {formatCurrency(breakdown.adults * breakdown.adultPrice)}
+                  </span>
+                </div>
+              )}
+              {breakdown.children > 0 && (
+                <div className="flex justify-between">
+                  <div className="flex flex-col">
+                    <span className="text-xs font-medium">
+                      {breakdown.children} Child{breakdown.children > 1 ? "ren" : ""}
+                    </span>
+                    <span className="text-xs text-muted-foreground">
+                      × {formatCurrency(breakdown.childPrice)}
+                    </span>
+                  </div>
+                  <span className="text-xs font-medium">
+                    {formatCurrency(breakdown.children * breakdown.childPrice)}
+                  </span>
+                </div>
+              )}
+              {breakdown.infants > 0 && (
+                <div className="flex justify-between">
+                  <div className="flex flex-col">
+                    <span className="text-xs font-medium">
+                      {breakdown.infants} Infant{breakdown.infants > 1 ? "s" : ""}
+                    </span>
+                    <span className="text-xs text-muted-foreground">
+                      × {formatCurrency(breakdown.infantPrice)}
+                    </span>
+                  </div>
+                  <span className="text-xs font-medium">
+                    {formatCurrency(breakdown.infants * breakdown.infantPrice)}
+                  </span>
+                </div>
+              )}
+            </>
+          )}
+        </div>
+
+        {/* Compact Total */}
+        <div className="flex justify-between items-center pt-2 border-t">
+          <span className="text-sm font-medium text-muted-foreground">Total</span>
           <span className="text-lg font-bold">
             {formatCurrency(breakdown.total)}
           </span>
@@ -267,14 +383,19 @@ export function PricingDisplay({
                 <TooltipProvider>
                   <Tooltip>
                     <TooltipTrigger asChild>
-                      <span className="truncate">
-                        {count} {shortLabel}{count > 1 ? "s" : ""} ×{" "}
-                        {formatCurrency(priceOption.price)}
-                      </span>
+                      <div className="flex flex-col">
+                        <span className="text-sm font-medium">
+                          {count} Guest{count > 1 ? "s" : ""}
+                        </span>
+                        <span className="text-sm text-muted-foreground">
+                          {shortLabel} × {formatCurrency(priceOption.price)}
+                        </span>
+                      </div>
                     </TooltipTrigger>
                     {needsTooltip && (
                       <TooltipContent>
-                        <p>{count} {displayLabel}{count > 1 ? "s" : ""} × {formatCurrency(priceOption.price)}</p>
+                        <p>{count} Guest{count > 1 ? "s" : ""}</p>
+                        <p>{displayLabel} × {formatCurrency(priceOption.price)}</p>
                       </TooltipContent>
                     )}
                   </Tooltip>
@@ -290,33 +411,45 @@ export function PricingDisplay({
           <>
             {breakdown.adults > 0 && (
               <div className="flex justify-between">
-                <span>
-                  {breakdown.adults} Adult{breakdown.adults > 1 ? "s" : ""} 
-                  {formatCurrency(breakdown.adultPrice)}
-                </span>
-                <span>
+                <div className="flex flex-col">
+                  <span className="text-sm font-medium">
+                    {breakdown.adults} Adult{breakdown.adults > 1 ? "s" : ""}
+                  </span>
+                  <span className="text-sm text-muted-foreground">
+                    × {formatCurrency(breakdown.adultPrice)}
+                  </span>
+                </div>
+                <span className="font-medium">
                   {formatCurrency(breakdown.adults * breakdown.adultPrice)}
                 </span>
               </div>
             )}
             {breakdown.children > 0 && (
               <div className="flex justify-between">
-                <span>
-                  {breakdown.children} Child{breakdown.children > 1 ? "ren" : ""} ×{" "}
-                  {formatCurrency(breakdown.childPrice)}
-                </span>
-                <span>
+                <div className="flex flex-col">
+                  <span className="text-sm font-medium">
+                    {breakdown.children} Child{breakdown.children > 1 ? "ren" : ""}
+                  </span>
+                  <span className="text-sm text-muted-foreground">
+                    × {formatCurrency(breakdown.childPrice)}
+                  </span>
+                </div>
+                <span className="font-medium">
                   {formatCurrency(breakdown.children * breakdown.childPrice)}
                 </span>
               </div>
             )}
             {breakdown.infants > 0 && (
               <div className="flex justify-between">
-                <span>
-                  {breakdown.infants} Infant{breakdown.infants > 1 ? "s" : ""} ×{" "}
-                  {formatCurrency(breakdown.infantPrice)}
-                </span>
-                <span>
+                <div className="flex flex-col">
+                  <span className="text-sm font-medium">
+                    {breakdown.infants} Infant{breakdown.infants > 1 ? "s" : ""}
+                  </span>
+                  <span className="text-sm text-muted-foreground">
+                    × {formatCurrency(breakdown.infantPrice)}
+                  </span>
+                </div>
+                <span className="font-medium">
                   {formatCurrency(breakdown.infants * breakdown.infantPrice)}
                 </span>
               </div>

@@ -676,3 +676,40 @@ export function validateImageUniqueness(images: RezdyImage[]): {
     duplicates
   };
 }
+
+/**
+ * Simple hash function to convert string to number for deterministic randomization
+ */
+function hashStringToNumber(str: string): number {
+  let hash = 0;
+  if (str.length === 0) return hash;
+  for (let i = 0; i < str.length; i++) {
+    const char = str.charCodeAt(i);
+    hash = ((hash << 5) - hash) + char;
+    hash = hash & hash; // Convert to 32-bit integer
+  }
+  return Math.abs(hash);
+}
+
+/**
+ * Select a random image from the valid images array using product code as seed
+ * This ensures consistent selection per product while varying across different products
+ */
+export function selectRandomImageForProduct(
+  product: RezdyProduct, 
+  validImages: RezdyImage[]
+): RezdyImage[] {
+  if (!validImages || validImages.length === 0) return [];
+  if (validImages.length === 1) return validImages;
+  
+  // Use product code as seed for deterministic randomization
+  const seed = hashStringToNumber(product.productCode);
+  const randomIndex = seed % validImages.length;
+  
+  // Return the selected image at the front, followed by the rest
+  // This maintains compatibility with existing ResponsiveImage behavior
+  const selectedImage = validImages[randomIndex];
+  const remainingImages = validImages.filter((_, index) => index !== randomIndex);
+  
+  return [selectedImage, ...remainingImages];
+}

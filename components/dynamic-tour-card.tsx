@@ -11,6 +11,7 @@
   import {
     getValidImages,
     generateProductSlug,
+    selectRandomImageForProduct,
   } from "@/lib/utils/product-utils";
 
   interface DynamicTourCardProps {
@@ -40,15 +41,16 @@
           {/* Premium Inner Border */}
           <div className="absolute inset-0 rounded-2xl ring-1 ring-white/10" />
           
-          {/* Content skeleton at bottom */}
-          <div className="absolute bottom-0 left-0 right-0 p-6 space-y-5">
-            {/* Tour name skeleton - 2 lines to match line-clamp-2 with premium spacing */}
+          {/* Tour name skeleton at top */}
+          <div className="absolute top-0 left-0 right-0 p-6">
             <div className="space-y-3">
               <div className="h-8 bg-white/25 rounded-lg animate-pulse backdrop-blur-sm" />
               <div className="h-8 bg-white/25 rounded-lg w-3/4 animate-pulse backdrop-blur-sm" />
             </div>
-            
-            {/* Premium button skeletons */}
+          </div>
+          
+          {/* Button skeletons at bottom */}
+          <div className="absolute bottom-0 left-0 right-0 p-6">
             <div className="flex gap-3">
               <div className="h-14 bg-white/15 rounded-xl flex-1 animate-pulse border-2 border-white/20 backdrop-blur-md" />
               <div className="h-14 bg-white/25 rounded-xl flex-1 animate-pulse backdrop-blur-md" />
@@ -69,7 +71,9 @@
       const startIndex = specialImageConfig.startIndex;
       const count = specialImageConfig.count;
       if (validImages.length >= startIndex + count) {
-        imagesToUse = validImages.slice(startIndex, startIndex + count);
+        const specialImages = validImages.slice(startIndex, startIndex + count);
+        // Use random selection even for special image configurations
+        imagesToUse = selectRandomImageForProduct(product, specialImages);
       }
     }
     // Legacy support for brewery tours - remove this block if no longer needed
@@ -77,7 +81,12 @@
       const breweryTourProducts = ['PRVHY0', 'PTS7WT'];
       const isBreweryTour = breweryTourProducts.includes(product.productCode);
       if (isBreweryTour && validImages.length >= 4) {
-        imagesToUse = validImages.slice(2, 4); // Use 3rd and 4th images (indices 2-3)
+        const breweryImages = validImages.slice(2, 4); // Get 3rd and 4th images (indices 2-3)
+        // Use random selection within the brewery images
+        imagesToUse = selectRandomImageForProduct(product, breweryImages);
+      } else {
+        // Use random selection for all other products
+        imagesToUse = selectRandomImageForProduct(product, validImages);
       }
     }
     
@@ -145,41 +154,40 @@
         {/* Premium Inner Border */}
         <div className="absolute inset-0 rounded-2xl ring-1 ring-white/10 group-hover:ring-white/20 transition-all duration-300" />
 
-        {/* Premium Glassmorphism Content Container */}
-        <div className="absolute bottom-0 left-0 right-0 p-6 text-white">
-          <div className="space-y-5">
-            {/* Premium Tour Name with Enhanced Typography */}
-            <h3 className="font-barlow text-3xl font-semibold leading-[1.1] line-clamp-2 text-white tracking-tight transition-all duration-300">
-              {product.name}
-            </h3>
+        {/* Premium Tour Name at Top */}
+        <div className="absolute top-0 left-0 right-0 p-6 text-white">
+          <h3 className="font-barlow text-3xl font-semibold leading-[1.1] text-white tracking-tight transition-all duration-300" style={{ textShadow: '0 1px 3px rgba(0, 0, 0, 0.5)' }}>
+            {product.name}
+          </h3>
+        </div>
 
-            {/* Premium Action Buttons */}
-            <div className="flex gap-3 w-full">
-              <Link href={buildTourDetailsUrl()} className="flex-1">
-                <Button
-                  variant="outline"
-                  className="w-full border-2 border-white/90 text-white bg-white/15 hover:bg-white hover:text-gray-900 
-                           backdrop-blur-md transition-all duration-300 py-3.5 font-semibold text-base 
-                           shadow-xl hover:shadow-2xl transform hover:-translate-y-1 hover:scale-[1.02]
-                           rounded-xl ring-1 ring-white/20 hover:ring-white/40"
-                  aria-label={`View details for ${product.name} tour`}
-                >
-                  View Details
-                </Button>
-              </Link>
-              <Link href={buildDirectBookingUrl()} className="flex-1">
-                <Button
-                  className="w-full bg-brand-accent text-brand-secondary hover:bg-coral-600 
-                           backdrop-blur-md transition-all duration-300 py-3.5 font-semibold text-base 
-                           shadow-xl hover:shadow-2xl transform hover:-translate-y-1 hover:scale-[1.02]
-                           border-2 border-brand-accent hover:border-coral-600 rounded-xl
-                           hover:shadow-coral-500/25"
-                  aria-label={`Book ${product.name} tour now`}
-                >
-                  Book Now
-                </Button>
-              </Link>
-            </div>
+        {/* Premium Action Buttons at Bottom */}
+        <div className="absolute bottom-0 left-0 right-0 p-6 text-white">
+          <div className="flex gap-3 w-full">
+            <Link href={buildTourDetailsUrl()} className="flex-1">
+              <Button
+                variant="outline"
+                className="w-full border-2 border-white/90 text-white bg-white/15 hover:bg-white hover:text-gray-900 
+                         backdrop-blur-md transition-all duration-300 py-3.5 font-semibold text-base 
+                         shadow-xl hover:shadow-2xl transform hover:-translate-y-1 hover:scale-[1.02]
+                         rounded-xl ring-1 ring-white/20 hover:ring-white/40"
+                aria-label={`View details for ${product.name} tour`}
+              >
+                View Details
+              </Button>
+            </Link>
+            <Link href={buildDirectBookingUrl()} className="flex-1">
+              <Button
+                className="w-full bg-brand-accent text-brand-secondary hover:bg-coral-600 
+                         backdrop-blur-md transition-all duration-300 py-3.5 font-semibold text-base 
+                         shadow-xl hover:shadow-2xl transform hover:-translate-y-1 hover:scale-[1.02]
+                         border-2 border-brand-accent hover:border-coral-600 rounded-xl
+                         hover:shadow-coral-500/25"
+                aria-label={`Book ${product.name} tour now`}
+              >
+                Book Now
+              </Button>
+            </Link>
           </div>
         </div>
 

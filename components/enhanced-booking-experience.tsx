@@ -1084,6 +1084,14 @@ export function EnhancedBookingExperience({
 
 
   const handlePickupLocationSelect = (location: RezdyPickupLocation) => {
+    console.log('📍 Pickup location selected:', {
+      locationName: location.locationName,
+      locationId: location.id,
+      address: location.address,
+      minutesPrior: location.minutesPrior,
+      productCode: product.productCode
+    });
+    
     setSelectedPickupLocation(location);
     
     // Track pickup location selection
@@ -1095,6 +1103,16 @@ export function EnhancedBookingExperience({
   const handleProceedToPayment = async () => {
     setIsProcessingPayment(true);
     setBookingErrors([]);
+
+    // Log pickup location before payment
+    console.log('💳 Proceeding to payment with pickup location:', {
+      hasPickupLocation: !!selectedPickupLocation,
+      pickupLocation: selectedPickupLocation ? {
+        locationName: selectedPickupLocation.locationName,
+        locationId: selectedPickupLocation.id,
+        address: selectedPickupLocation.address
+      } : null
+    });
 
     try {
       // Prepare minimal booking data for payment processing
@@ -1182,6 +1200,18 @@ export function EnhancedBookingExperience({
 
       // Store booking data in session storage for payment page
       sessionStorage.setItem(`booking_${generatedOrderNumber}`, JSON.stringify(formData));
+      
+      // Log what was stored in session storage
+      console.log('💾 Booking data stored in session storage:', {
+        orderNumber: generatedOrderNumber,
+        hasPickupLocation: !!formData.session.pickupLocation,
+        pickupLocation: formData.session.pickupLocation ? {
+          locationName: formData.session.pickupLocation.locationName,
+          locationId: formData.session.pickupLocation.id
+        } : null,
+        sessionId: formData.session.id,
+        startTime: formData.session.startTime
+      });
 
       // Also store in server-side store as backup (will be done by payment intent API)
       // The payment intent creation API will handle server-side storage

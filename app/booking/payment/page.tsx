@@ -121,7 +121,16 @@ function PaymentPageContent() {
       if (bookingDataStr) {
         bookingDataObj = JSON.parse(bookingDataStr);
         setBookingData(bookingDataObj);
-        console.log("✅ Booking data retrieved from session storage");
+        console.log("✅ Booking data retrieved from session storage", {
+          hasPickupLocation: !!bookingDataObj?.session?.pickupLocation,
+          pickupLocation: bookingDataObj?.session?.pickupLocation ? {
+            locationName: bookingDataObj.session.pickupLocation.locationName,
+            locationId: bookingDataObj.session.pickupLocation.id,
+            address: bookingDataObj.session.pickupLocation.address
+          } : null,
+          sessionId: bookingDataObj?.session?.id,
+          orderNumber: orderNumber
+        });
       } else {
         // Fallback: construct minimal booking data from URL params
         console.error("❌ Booking session expired or missing");
@@ -501,68 +510,131 @@ function PaymentPageContent() {
                 <div className="space-y-4">
                   <div>
                     <h3 className="font-semibold text-slate-900 text-lg">
-                      {productName || bookingData?.product?.name}
+                      {productName || bookingData?.product?.name || 'Tour Booking'}
                     </h3>
                     <p className="text-sm text-slate-600 mt-1">
-                      Order #{orderNumber}
+                      Order #{orderNumber || 'N/A'}
                     </p>
                   </div>
 
                   {/* Booking Details */}
-                  {bookingData && (
-                    <div className="space-y-3">
-                      {bookingData.session?.startTime && (
-                        <div className="flex items-center gap-3">
-                          <Calendar className="h-4 w-4 text-slate-500" />
-                          <div>
-                            <div className="font-medium text-slate-900">
-                              {formatDate(bookingData.session.startTime)}
-                            </div>
-                            <div className="text-sm text-slate-600">
-                              {formatTime(bookingData.session.startTime)}
-                              {bookingData.session.endTime && 
-                                ` - ${formatTime(bookingData.session.endTime)}`
+                  <div className="space-y-3">
+                    {bookingData?.session?.startTime ? (
+                      <div className="flex items-center gap-3">
+                        <Calendar className="h-4 w-4 text-slate-500" />
+                        <div>
+                          <div className="font-medium text-slate-900">
+                            {formatDate(bookingData.session.startTime)}
+                          </div>
+                          <div className="text-sm text-slate-600">
+                            {formatTime(bookingData.session.startTime)}
+                            {bookingData.session.endTime && 
+                              ` - ${formatTime(bookingData.session.endTime)}`
+                            }
+                          </div>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-3">
+                        <Calendar className="h-4 w-4 text-slate-400" />
+                        <div>
+                          <div className="font-medium text-slate-600">
+                            Date & Time
+                          </div>
+                          <div className="text-sm text-slate-500">
+                            To be confirmed
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {bookingData?.guestCounts ? (
+                      <div className="flex items-center gap-3">
+                        <Users className="h-4 w-4 text-slate-500" />
+                        <div>
+                          <div className="font-medium text-slate-900">
+                            {(() => {
+                              // Calculate total guests from either standard or dynamic format
+                              if (typeof bookingData.guestCounts.adults === 'number') {
+                                return (bookingData.guestCounts.adults || 0) +
+                                       (bookingData.guestCounts.children || 0) +
+                                       (bookingData.guestCounts.infants || 0);
+                              } else {
+                                // Dynamic format - sum all counts
+                                return Object.values(bookingData.guestCounts).reduce((sum: number, count: any) => 
+                                  sum + (typeof count === 'number' && count > 0 ? count : 0), 0
+                                );
                               }
-                            </div>
+                            })()} Guests
+                          </div>
+                          <div className="text-sm text-slate-600">
+                            {(() => {
+                              // Handle both standard and dynamic guest count formats for breakdown
+                              if (typeof bookingData.guestCounts.adults === 'number') {
+                                // Standard format
+                                const parts = [];
+                                if (bookingData.guestCounts.adults > 0) parts.push(`${bookingData.guestCounts.adults} Adults`);
+                                if (bookingData.guestCounts.children > 0) parts.push(`${bookingData.guestCounts.children} Children`);
+                                if (bookingData.guestCounts.infants > 0) parts.push(`${bookingData.guestCounts.infants} Infants`);
+                                return parts.join(', ');
+                              } else {
+                                // Dynamic format - show price option labels
+                                return Object.entries(bookingData.guestCounts)
+                                  .filter(([_, count]) => typeof count === 'number' && count > 0)
+                                  .map(([label, count]) => `${count} ${label}`)
+                                  .join(', ');
+                              }
+                            })()}
                           </div>
                         </div>
-                      )}
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-3">
+                        <Users className="h-4 w-4 text-slate-400" />
+                        <div>
+                          <div className="font-medium text-slate-600">
+                            Guests
+                          </div>
+                          <div className="text-sm text-slate-500">
+                            Details to be confirmed
+                          </div>
+                        </div>
+                      </div>
+                    )}
 
-                      {bookingData.guestCounts && (
-                        <div className="flex items-center gap-3">
-                          <Users className="h-4 w-4 text-slate-500" />
-                          <div>
-                            <div className="font-medium text-slate-900">
-                              {(bookingData.guestCounts.adults || 0) +
-                               (bookingData.guestCounts.children || 0) +
-                               (bookingData.guestCounts.infants || 0)} Guests
-                            </div>
+                    {bookingData?.session?.pickupLocation ? (
+                      <div className="flex items-start gap-3">
+                        <MapPin className="h-4 w-4 text-slate-500 mt-0.5" />
+                        <div>
+                          <div className="font-medium text-slate-900">
+                            {bookingData.session.pickupLocation.name || 'Pickup Location'}
+                          </div>
+                          {bookingData.session.pickupLocation.pickupTime && (
                             <div className="text-sm text-slate-600">
-                              {bookingData.guestCounts.adults > 0 && `${bookingData.guestCounts.adults} Adults`}
-                              {bookingData.guestCounts.children > 0 && `, ${bookingData.guestCounts.children} Children`}
-                              {bookingData.guestCounts.infants > 0 && `, ${bookingData.guestCounts.infants} Infants`}
+                              Pickup: {bookingData.session.pickupLocation.pickupTime}
                             </div>
+                          )}
+                          {bookingData.session.pickupLocation.address && (
+                            <div className="text-sm text-slate-500 mt-1">
+                              {bookingData.session.pickupLocation.address}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="flex items-start gap-3">
+                        <MapPin className="h-4 w-4 text-slate-400 mt-0.5" />
+                        <div>
+                          <div className="font-medium text-slate-600">
+                            Pickup Location
+                          </div>
+                          <div className="text-sm text-slate-500">
+                            To be arranged
                           </div>
                         </div>
-                      )}
-
-                      {bookingData.session?.pickupLocation && (
-                        <div className="flex items-start gap-3">
-                          <MapPin className="h-4 w-4 text-slate-500 mt-0.5" />
-                          <div>
-                            <div className="font-medium text-slate-900">
-                              {bookingData.session.pickupLocation.name}
-                            </div>
-                            {bookingData.session.pickupLocation.pickupTime && (
-                              <div className="text-sm text-slate-600">
-                                Pickup: {bookingData.session.pickupLocation.pickupTime}
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  )}
+                      </div>
+                    )}
+                  </div>
                 </div>
 
                 <Separator />

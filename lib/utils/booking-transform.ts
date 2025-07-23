@@ -511,13 +511,29 @@ export function transformBookingDataToDirectRezdy(
 
   // Add pickup information to the booking item instead of as separate item
   if (bookingData.session.pickupLocation) {
+    console.log("📍 Processing pickup location for Rezdy:", {
+      hasPickupLocation: true,
+      pickupLocationData: bookingData.session.pickupLocation,
+      locationName: bookingData.session.pickupLocation.locationName || bookingData.session.pickupLocation.name,
+      locationId: bookingData.session.pickupLocation.id,
+      address: bookingData.session.pickupLocation.address,
+      minutesPrior: bookingData.session.pickupLocation.minutesPrior
+    });
+    
     // Use pickup location ID if available, otherwise create a descriptive ID
     bookingItem.pickupId = bookingData.session.pickupLocation.id || 
-                          `pickup_${bookingData.session.pickupLocation.name?.replace(/\s+/g, '_').toLowerCase()}`;
+                          `pickup_${(bookingData.session.pickupLocation.locationName || bookingData.session.pickupLocation.name)?.replace(/\s+/g, '_').toLowerCase()}`;
+    
     console.log("📍 Added pickup info to booking item:", {
       pickupId: bookingItem.pickupId,
-      locationName: bookingData.session.pickupLocation.name || bookingData.session.pickupLocation.locationName
+      locationName: bookingData.session.pickupLocation.locationName || bookingData.session.pickupLocation.name,
+      bookingItemWithPickup: {
+        productCode: bookingItem.productCode,
+        pickupId: bookingItem.pickupId
+      }
     });
+  } else {
+    console.log("📍 No pickup location in booking data");
   }
 
   // Map payment method to Rezdy payment type
@@ -895,14 +911,26 @@ export function transformBookingDataToRezdy(
   // Handle pickup location according to Rezdy API specification
   // The pickup location should be a separate item in the items array
   if (bookingData.session.pickupLocation) {
+    console.log("📍 Processing pickup location for legacy Rezdy format:", {
+      hasPickupLocation: true,
+      pickupLocationData: bookingData.session.pickupLocation,
+      locationName: bookingData.session.pickupLocation.locationName || bookingData.session.pickupLocation.name,
+      locationId: bookingData.session.pickupLocation.id
+    });
+    
     const pickupItem: any = {
       pickupLocation: {
-        locationName: bookingData.session.pickupLocation.name || bookingData.session.pickupLocation.locationName || ""
+        locationName: bookingData.session.pickupLocation.locationName || bookingData.session.pickupLocation.name || ""
       }
     };
     // Add pickup location as a separate item in the items array
     rezdyBooking.items.push(pickupItem);
-    console.log("📍 Added pickup location as separate item:", pickupItem);
+    console.log("📍 Added pickup location as separate item:", {
+      pickupItem: pickupItem,
+      totalItems: rezdyBooking.items.length
+    });
+  } else {
+    console.log("📍 No pickup location in booking data (legacy format)");
   }
 
   // Add fields array with all special requirements and additional information

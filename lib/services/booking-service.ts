@@ -574,6 +574,18 @@ export class BookingService {
         timestamp: new Date().toISOString()
       });
       
+      // Extract pickup information for detailed logging
+      const bookingItem = bookingRequest.items.find(item => 'productCode' in item);
+      const pickupInfo = bookingItem && 'pickupId' in bookingItem ? {
+        hasPickupId: true,
+        pickupId: (bookingItem as any).pickupId
+      } : {
+        hasPickupId: false,
+        pickupId: null
+      };
+      
+      console.log('📍 PICKUP LOCATION IN PAYLOAD:', pickupInfo);
+      
       console.log('📋 EXACT REZDY PAYLOAD (1:1 Structure):', JSON.stringify(bookingRequest, null, 2));
       
       console.groupEnd();

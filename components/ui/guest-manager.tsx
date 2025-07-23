@@ -295,7 +295,6 @@ export function GuestManager({
         {/* Single Seat Guests (seatsUsed = 1) with +/- controls */}
         {groupedGuests.singleSeatGuests.length > 0 && (
           <div className="space-y-4">
-            <h4 className="text-md font-medium text-muted-foreground">Individual Guests</h4>
             {groupedGuests.singleSeatGuests.map((guest, index) => {
               const config = priceOptionConfigs.find(c => c.id === guest.priceOptionId);
               const guestsOfSameType = groupedGuests.singleSeatGuests.filter(g => g.priceOptionId === guest.priceOptionId);
@@ -307,7 +306,7 @@ export function GuestManager({
                     <div className="flex items-center gap-2">
                       <UserCheck className="h-4 w-4 text-coral-500" />
                       <span className="font-medium">
-                        {guest.priceOptionLabel || guest.type} {guestsOfSameType.length > 1 ? `#${guestsOfSameType.findIndex(g => g.id === guest.id) + 1}` : ''}
+                        Guest #{index + 1}
                       </span>
                     </div>
                     <div className="flex items-center gap-2">
@@ -367,33 +366,6 @@ export function GuestManager({
                         className={!guest.lastName.trim() ? "border-red-300" : ""}
                       />
                     </div>
-                    
-                    <div>
-                      <Label htmlFor={`age-${guest.id}`}>Age *</Label>
-                      <Input
-                        id={`age-${guest.id}`}
-                        type="number"
-                        value={guest.age}
-                        onChange={(e) =>
-                          updateGuest(guest.id, { age: parseInt(e.target.value) || 0 })
-                        }
-                        placeholder="Enter age"
-                        required
-                        min={0}
-                        max={120}
-                        className={guest.age <= 0 ? "border-red-300" : ""}
-                      />
-                    </div>
-                    
-                    <div>
-                      <Label>Guest Type</Label>
-                      <div className="p-2 bg-muted rounded text-sm">
-                        {guest.priceOptionLabel || guest.type}
-                        {guest.priceOptionLabel && guest.priceOptionLabel !== guest.type && (
-                          <span className="text-muted-foreground ml-1">({guest.type})</span>
-                        )}
-                      </div>
-                    </div>
                   </div>
                   
                   {/* Certification fields for guests that require it */}
@@ -440,18 +412,6 @@ export function GuestManager({
                       </div>
                     </div>
                   )}
-                  
-                  <div className="mt-4">
-                    <Label htmlFor={`specialRequests-${guest.id}`}>Special Requests</Label>
-                    <Input
-                      id={`specialRequests-${guest.id}`}
-                      value={guest.specialRequests || ""}
-                      onChange={(e) =>
-                        updateGuest(guest.id, { specialRequests: e.target.value })
-                      }
-                      placeholder="Any special requests or requirements"
-                    />
-                  </div>
                 </Card>
               );
             })}
@@ -507,28 +467,6 @@ export function GuestManager({
                             className={!guest.lastName.trim() ? "border-red-300" : ""}
                           />
                         </div>
-                        <div>
-                          <Label htmlFor={`age-${guest.id}`}>Age *</Label>
-                          <Input
-                            id={`age-${guest.id}`}
-                            type="number"
-                            value={guest.age}
-                            onChange={(e) =>
-                              updateGuest(guest.id, { age: parseInt(e.target.value) || 0 })
-                            }
-                            placeholder="Enter age"
-                            required
-                            min={0}
-                            max={120}
-                            className={guest.age <= 0 ? "border-red-300" : ""}
-                          />
-                        </div>
-                        <div>
-                          <Label>Guest #{guestIndex + 1}</Label>
-                          <div className="p-2 bg-background rounded text-sm border">
-                            {config.label}
-                          </div>
-                        </div>
                       </div>
                       
                       {/* Certification fields for group guests that require it */}
@@ -575,18 +513,6 @@ export function GuestManager({
                           </div>
                         </div>
                       )}
-                      
-                      <div className="mt-3">
-                        <Label htmlFor={`specialRequests-${guest.id}`}>Special Requests</Label>
-                        <Input
-                          id={`specialRequests-${guest.id}`}
-                          value={guest.specialRequests || ""}
-                          onChange={(e) =>
-                            updateGuest(guest.id, { specialRequests: e.target.value })
-                          }
-                          placeholder="Any special requests or requirements"
-                        />
-                      </div>
                     </div>
                   ))}
                 </div>

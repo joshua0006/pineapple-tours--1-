@@ -82,6 +82,18 @@ export default function GuestDetailsPage() {
           return;
         }
 
+        // Log booking data to verify pickup location is preserved
+        console.log("📋 Loaded booking data in guest details:", {
+          orderNumber: orderNumber,
+          hasPickupLocation: !!data?.session?.pickupLocation,
+          pickupLocation: data?.session?.pickupLocation ? {
+            locationName: data.session.pickupLocation.locationName,
+            locationId: data.session.pickupLocation.id,
+            address: data.session.pickupLocation.address
+          } : null,
+          sessionId: data?.session?.id
+        });
+
         setBookingData(data);
 
         // Initialize guests based on guest counts
@@ -89,8 +101,51 @@ export default function GuestDetailsPage() {
           const initialGuests: GuestInfo[] = [];
           let guestId = 1;
 
+          // Helper function to convert dynamic guest counts to standard format
+          const convertToStandardGuestCounts = (guestCounts: any): { adults: number; children: number; infants: number } => {
+            // If already in standard format, return as is
+            if (typeof guestCounts.adults === 'number') {
+              return {
+                adults: guestCounts.adults || 0,
+                children: guestCounts.children || 0,
+                infants: guestCounts.infants || 0
+              };
+            }
+
+            // Convert dynamic price option format to standard format
+            const standardCounts = { adults: 0, children: 0, infants: 0 };
+            
+            Object.entries(guestCounts).forEach(([label, count]) => {
+              if (typeof count !== 'number' || count <= 0) return;
+              
+              const labelLower = label.toLowerCase();
+              if (labelLower.includes('adult') || labelLower.includes('senior') || 
+                  labelLower.includes('concession') || labelLower.includes('student')) {
+                standardCounts.adults += count;
+              } else if (labelLower.includes('child')) {
+                standardCounts.children += count;
+              } else if (labelLower.includes('infant') || labelLower.includes('baby')) {
+                standardCounts.infants += count;
+              } else {
+                // Default unknown types to adults but log for debugging
+                console.warn(`Unknown guest type "${label}" defaulting to adult`, { label, count });
+                standardCounts.adults += count;
+              }
+            });
+
+            console.log('🔄 Converted dynamic guest counts:', {
+              original: guestCounts,
+              converted: standardCounts
+            });
+
+            return standardCounts;
+          };
+
+          // Convert guest counts to standard format
+          const standardGuestCounts = convertToStandardGuestCounts(data.guestCounts);
+
           // Add adults
-          for (let i = 0; i < data.guestCounts.adults; i++) {
+          for (let i = 0; i < standardGuestCounts.adults; i++) {
             // For the first guest, use contact information from pre-payment
             const isFirstGuest = i === 0;
             initialGuests.push({
@@ -104,7 +159,7 @@ export default function GuestDetailsPage() {
           }
 
           // Add children
-          for (let i = 0; i < data.guestCounts.children; i++) {
+          for (let i = 0; i < standardGuestCounts.children; i++) {
             initialGuests.push({
               id: guestId.toString(),
               firstName: "",
@@ -116,7 +171,7 @@ export default function GuestDetailsPage() {
           }
 
           // Add infants
-          for (let i = 0; i < data.guestCounts.infants; i++) {
+          for (let i = 0; i < standardGuestCounts.infants; i++) {
             initialGuests.push({
               id: guestId.toString(),
               firstName: "",
@@ -126,6 +181,12 @@ export default function GuestDetailsPage() {
             });
             guestId++;
           }
+
+          console.log('✅ Initialized guests from converted counts:', {
+            standardGuestCounts,
+            totalGuests: initialGuests.length,
+            guestTypes: initialGuests.map(g => g.type)
+          });
 
           setGuests(initialGuests);
         }
@@ -336,7 +397,7 @@ export default function GuestDetailsPage() {
             />
           </CardContent>
         </Card>
-/
+
          {/* Booking Summary */}
          <Card>
           <CardHeader>
@@ -376,30 +437,62 @@ export default function GuestDetailsPage() {
                   <div className="flex items-center gap-2">
                     <Users className="h-4 w-4 text-muted-foreground" />
                     <span>
-                      {bookingData.guestCounts.adults +
-                        bookingData.guestCounts.children +
-                        bookingData.guestCounts.infants}{" "}
-                      guests
+                      {(() => {
+                        // Calculate total guests from either standard or dynamic format
+                        if (typeof bookingData.guestCounts.adults === 'number') {
+                          // Standard format
+                          return bookingData.guestCounts.adults +
+                                 bookingData.guestCounts.children +
+                                 bookingData.guestCounts.infants;
+                        } else {
+                          // Dynamic format - sum all counts
+                          return Object.values(bookingData.guestCounts).reduce((sum: number, count: any) => 
+                            sum + (typeof count === 'number' ? count : 0), 0
+                          );
+                        }
+                      })()} guests
                     </span>
                   </div>
                 )}
-                {bookingData.selectedPriceOptions && bookingData.guestCounts && (
+                {bookingData.guestCounts && (
                   <div className="space-y-1 pt-2">
-                    {bookingData.guestCounts.adults > 0 && bookingData.selectedPriceOptions.adult && (
-                      <div className="text-sm text-muted-foreground">
-                        {bookingData.guestCounts.adults} × {bookingData.selectedPriceOptions.adult.label}
-                      </div>
-                    )}
-                    {bookingData.guestCounts.children > 0 && bookingData.selectedPriceOptions.child && (
-                      <div className="text-sm text-muted-foreground">
-                        {bookingData.guestCounts.children} × {bookingData.selectedPriceOptions.child.label}
-                      </div>
-                    )}
-                    {bookingData.guestCounts.infants > 0 && bookingData.selectedPriceOptions.infant && (
-                      <div className="text-sm text-muted-foreground">
-                        {bookingData.guestCounts.infants} × {bookingData.selectedPriceOptions.infant.label}
-                      </div>
-                    )}
+                    {(() => {
+                      // Handle both standard and dynamic guest count formats
+                      if (typeof bookingData.guestCounts.adults === 'number') {
+                        // Standard format with selectedPriceOptions
+                        return (
+                          <>
+                            {bookingData.guestCounts.adults > 0 && bookingData.selectedPriceOptions?.adult && (
+                              <div className="text-sm text-muted-foreground">
+                                {bookingData.guestCounts.adults} × {bookingData.selectedPriceOptions.adult.label}
+                              </div>
+                            )}
+                            {bookingData.guestCounts.children > 0 && bookingData.selectedPriceOptions?.child && (
+                              <div className="text-sm text-muted-foreground">
+                                {bookingData.guestCounts.children} × {bookingData.selectedPriceOptions.child.label}
+                              </div>
+                            )}
+                            {bookingData.guestCounts.infants > 0 && bookingData.selectedPriceOptions?.infant && (
+                              <div className="text-sm text-muted-foreground">
+                                {bookingData.guestCounts.infants} × {bookingData.selectedPriceOptions.infant.label}
+                              </div>
+                            )}
+                          </>
+                        );
+                      } else {
+                        // Dynamic format - display each price option count
+                        return Object.entries(bookingData.guestCounts).map(([label, count]) => {
+                          if (typeof count === 'number' && count > 0) {
+                            return (
+                              <div key={label} className="text-sm text-muted-foreground">
+                                {count} × {label}
+                              </div>
+                            );
+                          }
+                          return null;
+                        });
+                      }
+                    })()}
                   </div>
                 )}
                 {bookingData.session.pickupLocation && (
@@ -407,7 +500,7 @@ export default function GuestDetailsPage() {
                     <MapPin className="h-4 w-4 mt-0.5 text-muted-foreground" />
                     <div>
                       <div className="font-medium">
-                        {bookingData.session.pickupLocation.name}
+                        {bookingData.session.pickupLocation.locationName || bookingData.session.pickupLocation.name}
                       </div>
                       {bookingData.session.pickupLocation.pickupTime && (
                         <div className="text-muted-foreground">

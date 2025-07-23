@@ -41,18 +41,22 @@ import {
 // Top-level categories with static images and real Rezdy category IDs
 const TOP_LEVEL_CATEGORIES = [
   {
-    id: "winery-tours",
-    title: "Winery Tours",
-    description: "Wine tasting experiences at local wineries and vineyards",
-    icon: Wine,
+    id: "daily-winery-tours",
+    title: "Daily Winery Tours",
+    description: "Scheduled group wine tasting experiences at local wineries",
+    icon: Calendar,
     image:
       "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
-    subcategories: ["daily-wine", "private-wine-tours", "food-wine-private", "barefoot-luxury"] as string[],
-    hasSubOptions: true,
-    subOptions: [
-      { name: "Daily Tours", icon: Calendar, categoryId: 620787 },
-      { name: "Private Tours", icon: Sparkles, categoryId: 398952 },
-    ],
+    categoryId: 620787,
+  },
+  {
+    id: "private-winery-tours",
+    title: "Private Winery Tours",
+    description: "Exclusive personalized wine tasting tours and experiences",
+    icon: Sparkles,
+    image:
+      "https://images.unsplash.com/photo-1540979388789-6cee28a1cdc9?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
+    categoryId: 398952,
   },
   {
     id: "brewery-tours", 
@@ -71,15 +75,6 @@ const TOP_LEVEL_CATEGORIES = [
     image:
       "https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
     categoryId: 546743,
-  },
-  {
-    id: "day-tours",
-    title: "Day Tours",
-    description: "Full-day adventures and sightseeing experiences",
-    icon: Calendar,
-    image:
-      "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
-    categoryId: 620787,
   },
   {
     id: "bus-charter",
@@ -157,7 +152,7 @@ export function CategoriesSection() {
       limit: 100,
       offset: 0,
       enableProgressiveLoading: true,
-      preloadCategories: ["winery-tours", "brewery-tours", "day-tours"],
+      preloadCategories: ["daily-winery-tours", "private-winery-tours", "brewery-tours"],
     }),
     []
   );
@@ -244,116 +239,6 @@ export function CategoriesSection() {
             {TOP_LEVEL_CATEGORIES.map((category) => {
               const Icon = category.icon;
 
-              // Special handling for winery tours with animated split layout
-              if (category.id === "winery-tours" && category.hasSubOptions) {
-                return (
-                  <div
-                    key={category.id}
-                    className="group relative overflow-hidden rounded-2xl transition-all duration-500 hover:scale-[1.02] hover:shadow-2xl hover:shadow-[#FF585D]/30 h-full min-h-[280px] sm:min-h-[320px] flex flex-col bg-white/5 backdrop-blur-sm border border-white/10 hover:border-[#FF585D]/50"
-                  >
-                    {/* Background Image */}
-                    <div
-                      className="absolute inset-0 bg-cover bg-center transition-transform duration-700 group-hover:scale-110 opacity-60 group-hover:opacity-80"
-                      style={{
-                        backgroundImage: `url(${category.image})`,
-                      }}
-                    />
-
-                    {/* Gradient overlay */}
-                    <div className="absolute inset-0 bg-gradient-to-br from-black/60 via-black/40 to-transparent" />
-
-                    {/* Hover gradient overlay */}
-                    <div className="absolute inset-0 bg-gradient-to-br from-[#FF585D]/20 via-[#FF585D]/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-
-                    {/* Icon */}
-                    <div className="relative z-10 p-6 sm:p-8 group-hover:opacity-0 transition-opacity duration-500">
-                      <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-2xl bg-white/10 backdrop-blur-md group-hover:bg-[#FF585D]/20 flex items-center justify-center transition-all duration-500 group-hover:scale-110 group-hover:rotate-3 border border-white/20 group-hover:border-[#FF585D]/50">
-                        <Icon className="h-6 w-6 sm:h-8 sm:w-8 text-white group-hover:text-[#FF585D] transition-colors duration-500" />
-                      </div>
-                    </div>
-
-                    {/* Content positioned to match other cards */}
-                    <div className="relative z-10 p-6 sm:p-8 pt-0 h-full flex flex-col justify-end">
-                      <div className="space-y-3 sm:space-y-4">
-                        {/* Title */}
-                        <h3 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-white mb-2 font-['Barlow'] drop-shadow-lg group-hover:text-[#FF585D] transition-all duration-300 group-hover:-translate-y-20 group-hover:opacity-0">
-                          {category.title}
-                        </h3>
-
-                        {/* Description - visible by default */}
-                        <p className="text-sm sm:text-base text-white/90 font-['Work_Sans'] line-clamp-3 drop-shadow-md leading-relaxed h-[4.5rem] sm:h-[5.25rem] group-hover:opacity-0 transition-opacity duration-300">
-                          {category.description}
-                        </p>
-
-                        {/* Animated Split Layout - hidden by default, shows on hover */}
-                        <div className="absolute top-[-100px] md:top-[-120px] lg:top-[-140px] inset-0 p-4 sm:p-6 opacity-0 group-hover:opacity-100 transition-all duration-500 delay-100">
-                          <div className="h-full flex flex-col gap-3 sm:gap-4">
-                            {/* Daily Tours Section - Top 50% */}
-                            <Link
-                              href={`/tours/category/daily-winery-tours`}
-                              className="flex-1 relative group/daily overflow-hidden rounded-xl sm:rounded-2xl bg-white/10 backdrop-blur-sm border border-white/20 hover:border-[#FF585D]/70 hover:shadow-lg hover:shadow-[#FF585D]/20 transition-all duration-500 hover:scale-[1.02] hover:bg-white/15 min-h-[120px] sm:min-h-[140px] md:min-h-[150px] lg:min-h-[160px]"
-                            >
-                              {/* Enhanced background gradient overlays */}
-                              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent opacity-0 group-hover/daily:opacity-100 transition-opacity duration-500" />
-                              <div className="absolute inset-0 bg-gradient-to-br from-[#FF585D]/10 via-[#FF585D]/5 to-transparent opacity-0 group-hover/daily:opacity-100 transition-opacity duration-500" />
-                              
-                              {/* Ripple effect */}
-                              <div className="absolute inset-0 rounded-xl sm:rounded-2xl bg-[#FF585D]/20 opacity-0 group-hover/daily:opacity-100 transition-all duration-700" />
-                              
-                              <div className="h-full flex flex-col items-center justify-center p-4 sm:p-6 md:p-8 transform translate-y-8 group-hover:translate-y-0 transition-all duration-500 text-center">
-                                <span className="text-lg sm:text-xl md:text-2xl font-semibold text-white group-hover/daily:text-[#FF585D] transition-all duration-500 font-['Barlow'] group-hover/daily:scale-105 mb-2">
-                                  Daily Wine Tours
-                                </span>
-                                <p className="text-sm sm:text-base md:text-lg text-white/80 group-hover/daily:text-white/90 font-['Work_Sans'] transition-all duration-500">
-                                  Scheduled group experiences
-                                </p>
-                              </div>
-                            </Link>
-
-                            {/* Private Tours Section - Bottom 50% */}
-                            <Link
-                              href={`/tours/category/private-winery-tours`}
-                              className="flex-1 relative group/private overflow-hidden rounded-xl sm:rounded-2xl bg-white/10 backdrop-blur-sm border border-white/20 hover:border-[#FF585D]/70 hover:shadow-lg hover:shadow-[#FF585D]/20 transition-all duration-500 hover:scale-[1.02] hover:bg-white/15 min-h-[120px] sm:min-h-[140px] md:min-h-[150px] lg:min-h-[160px] block"
-                            >
-                              {/* Enhanced background gradient overlays */}
-                              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent opacity-0 group-hover/private:opacity-100 transition-opacity duration-500" />
-                              <div className="absolute inset-0 bg-gradient-to-br from-[#FF585D]/10 via-[#FF585D]/5 to-transparent opacity-0 group-hover/private:opacity-100 transition-opacity duration-500" />
-                              
-                              {/* Ripple effect */}
-                              <div className="absolute inset-0 rounded-xl sm:rounded-2xl bg-[#FF585D]/20 opacity-0 group-hover/private:opacity-100 transition-all duration-700" />
-                              
-                              <div className="h-full flex flex-col items-center justify-center p-4 sm:p-6 md:p-8 transition-all duration-500 delay-75 text-center">
-                                <span className="text-lg sm:text-xl md:text-2xl font-semibold text-white group-hover/private:text-[#FF585D] transition-all duration-500 font-['Barlow'] group-hover/private:scale-105 mb-2">
-                                  Private Wine Tours
-                                </span>
-                                <p className="text-sm sm:text-base md:text-lg text-white/80 group-hover/private:text-white/90 font-['Work_Sans'] transition-all duration-500">
-                                  Exclusive personalized experiences
-                                </p>
-                              </div>
-                            </Link>
-                          </div>
-                        </div>
-
-                        {/* Call to action - positioned like other cards */}
-                        <div className="flex items-center justify-between w-full pt-2 group-hover:opacity-0 transition-opacity duration-300">
-                          <div className="flex items-center gap-2">
-                            <span className="text-sm font-medium text-white/80 group-hover:text-white transition-colors duration-300 font-['Work_Sans']">
-                              View Options
-                            </span>
-                            <div className="w-8 h-8 rounded-full bg-white/10 backdrop-blur-sm group-hover:bg-[#FF585D] flex items-center justify-center transition-all duration-300 group-hover:scale-110 group-hover:translate-x-1">
-                              <ChevronRight className="h-4 w-4 text-white transition-all duration-300" />
-                            </div>
-                          </div>
-                          <div className="flex items-center gap-1 text-xs text-white/60">
-                            <span>2 options</span>
-                            <ChevronRight className="w-3 h-3" />
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                );
-              }
 
               // Default card layout for other categories
               return (

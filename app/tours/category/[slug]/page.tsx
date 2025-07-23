@@ -40,7 +40,7 @@ import { ErrorState } from "@/components/error-state";
 import { useCategoryProducts } from "@/hooks/use-category-products";
 import { RezdyProduct } from "@/lib/types/rezdy";
 import {
-  getCategoryBySlug,
+  getCategoryById,
 } from "@/lib/constants/categories";
 
 // Category-specific configurations for PageHeader
@@ -182,7 +182,7 @@ export default function CategoryPage({
   const [searchQuery, setSearchQuery] = useState("");
 
   // Get category configuration
-  const categoryConfig = getCategoryBySlug(categorySlug);
+  const categoryConfig = getCategoryById(categorySlug);
 
   // Use direct category products API
   const { data: categoryProducts, loading, error } = useCategoryProducts(

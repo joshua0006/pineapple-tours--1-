@@ -8,7 +8,6 @@ import {
   Heart,
   Sparkles,
   Calendar,
-  Wine,
   Beer,
   Bus,
   Building,
@@ -27,25 +26,18 @@ interface Category {
 // Updated categories based on user requirements
 const tourCategories: Category[] = [
   {
-    id: "winery-tours",
-    name: "Winery Tours",
-    icon: <Wine className="w-4 h-4" />,
-    href: "/tours/category/winery-tours",
+    id: "daily-winery-tours",
+    name: "Daily Winery Tours",
+    icon: <Calendar className="w-4 h-4" />,
+    href: "/tours/category/daily-winery-tours",
     featured: true,
-    subcategories: [
-      {
-        id: "daily-winery-tours",
-        name: "Daily Winery Tours",
-        icon: <Calendar className="w-4 h-4" />,
-        href: "/tours/category/winery-tours?type=daily",
-      },
-      {
-        id: "private-winery-tours",
-        name: "Private Winery Tours",
-        icon: <Sparkles className="w-4 h-4" />,
-        href: "/tours/category/winery-tours?type=private",
-      },
-    ],
+  },
+  {
+    id: "private-winery-tours",
+    name: "Private Winery Tours",
+    icon: <Sparkles className="w-4 h-4" />,
+    href: "/tours/category/private-winery-tours",
+    featured: true,
   },
   {
     id: "brewery-tours",
@@ -66,13 +58,6 @@ const tourCategories: Category[] = [
     name: "Bus Charter",
     icon: <Bus className="w-4 h-4" />,
     href: "/tours/category/bus-charter",
-  },
-  {
-    id: "day-tours",
-    name: "Day Tours",
-    icon: <Calendar className="w-4 h-4" />,
-    href: "/tours/category/day-tours",
-    featured: true,
   },
   {
     id: "corporate-tours",
@@ -258,7 +243,7 @@ export function TourCategoriesDropdown({
       </button>
 
       {isOpen && (
-        <div className="absolute top-full left-0 mt-2 w-[420px] bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl shadow-xl z-50 overflow-hidden animate-dropdown-in">
+        <div className="absolute top-full left-0 mt-2 w-[450px] bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl shadow-xl z-50 overflow-hidden animate-dropdown-in">
           <div className="p-2">
             <div className="px-3 py-2 mb-1">
               <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100">

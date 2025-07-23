@@ -1025,48 +1025,7 @@ export default function TourDetailPage({
                         )}
                       </div>
 
-                      {/* Enhanced Pickup Information */}
-                      {hasPickupLocations && pickupLocations.length > 0 && (
-                        <div className="pt-2 border-t border-gray-100">
-                         
-                          <p className="text-xs text-gray-600 mb-2">
-                            {pickupLocations.length} pickup location{pickupLocations.length > 1 ? "s" : ""} available
-                          </p>
-                          {pickupLoading && (
-                            <div className="text-xs text-gray-500 animate-pulse">
-                              Loading pickup locations...
-                            </div>
-                          )}
-                          {pickupError && (
-                            <div className="text-xs text-red-600">
-                              Unable to load pickup locations
-                            </div>
-                          )}
-                          {pickupLocations.slice(0, 3).map((location, index) => (
-                            <div key={index} className="text-xs text-gray-600 mb-1">
-                              📍 {location.locationName}
-                            </div>
-                          ))}
-                          {pickupLocations.length > 3 && (
-                            <div className="text-xs text-gray-500 italic">
-                              +{pickupLocations.length - 3} more locations
-                            </div>
-                          )}
-                        </div>
-                      )}
-                      {!hasPickupLocations && !pickupLoading && (
-                        <div className="pt-2 border-t border-gray-100">
-                          <div className="flex items-center gap-2 mb-1">
-                            <div className="w-2 h-2 bg-gray-400 rounded-full"></div>
-                            <span className="text-xs font-medium text-gray-700">
-                              Meet at Location
-                            </span>
-                          </div>
-                          <p className="text-xs text-gray-600">
-                            Please arrive at the meeting point
-                          </p>
-                        </div>
-                      )}
+          
 
                       <Button
                         variant="outline"

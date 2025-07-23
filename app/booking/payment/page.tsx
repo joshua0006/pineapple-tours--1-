@@ -121,7 +121,16 @@ function PaymentPageContent() {
       if (bookingDataStr) {
         bookingDataObj = JSON.parse(bookingDataStr);
         setBookingData(bookingDataObj);
-        console.log("✅ Booking data retrieved from session storage");
+        console.log("✅ Booking data retrieved from session storage", {
+          hasPickupLocation: !!bookingDataObj?.session?.pickupLocation,
+          pickupLocation: bookingDataObj?.session?.pickupLocation ? {
+            locationName: bookingDataObj.session.pickupLocation.locationName,
+            locationId: bookingDataObj.session.pickupLocation.id,
+            address: bookingDataObj.session.pickupLocation.address
+          } : null,
+          sessionId: bookingDataObj?.session?.id,
+          orderNumber: orderNumber
+        });
       } else {
         // Fallback: construct minimal booking data from URL params
         console.error("❌ Booking session expired or missing");

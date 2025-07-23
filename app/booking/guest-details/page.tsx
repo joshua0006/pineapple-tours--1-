@@ -82,6 +82,18 @@ export default function GuestDetailsPage() {
           return;
         }
 
+        // Log booking data to verify pickup location is preserved
+        console.log("📋 Loaded booking data in guest details:", {
+          orderNumber: orderNumber,
+          hasPickupLocation: !!data?.session?.pickupLocation,
+          pickupLocation: data?.session?.pickupLocation ? {
+            locationName: data.session.pickupLocation.locationName,
+            locationId: data.session.pickupLocation.id,
+            address: data.session.pickupLocation.address
+          } : null,
+          sessionId: data?.session?.id
+        });
+
         setBookingData(data);
 
         // Initialize guests based on guest counts
@@ -488,7 +500,7 @@ export default function GuestDetailsPage() {
                     <MapPin className="h-4 w-4 mt-0.5 text-muted-foreground" />
                     <div>
                       <div className="font-medium">
-                        {bookingData.session.pickupLocation.name}
+                        {bookingData.session.pickupLocation.locationName || bookingData.session.pickupLocation.name}
                       </div>
                       {bookingData.session.pickupLocation.pickupTime && (
                         <div className="text-muted-foreground">

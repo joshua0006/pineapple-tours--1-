@@ -212,6 +212,7 @@ export interface RezdyDirectBookingRequest {
 
 // Pickup location as a separate item in the items array
 export interface RezdyPickupLocationItem {
+  productCode: string;
   pickupLocation: {
     locationName: string;
   };
@@ -224,7 +225,10 @@ export interface RezdyCustomer {
   phone: string;
 }
 
-export interface RezdyBookingItem {
+/**
+ * Main booking item with product details
+ */
+export interface RezdyProductBookingItem {
   productCode: string;
   startTimeLocal: string;
   quantities: RezdyQuantity[];
@@ -235,6 +239,14 @@ export interface RezdyBookingItem {
   pickupId?: string;
 
   /**
+   * Optional pickup location information included within the main booking item
+   * as per official Rezdy API documentation
+   */
+  pickupLocation?: {
+    locationName: string;
+  };
+
+  /**
    * Optional extras array. Extras are supported by Rezdy but are not always utilised in every
    * product. Including the field here prevents TypeScript errors when we log or attach extras
    * data during the booking/validation phases.
@@ -242,6 +254,21 @@ export interface RezdyBookingItem {
   extras?: RezdyBookingExtra[];
   participants: RezdyBookingParticipant[];
 }
+
+/**
+ * Pickup location item (separate item in items array)
+ */
+export interface RezdyPickupLocationItem {
+  productCode: string;
+  pickupLocation: {
+    locationName: string;
+  };
+}
+
+/**
+ * Union type for all possible items in the Rezdy booking items array
+ */
+export type RezdyBookingItem = RezdyProductBookingItem | RezdyPickupLocationItem;
 
 export interface RezdyBookingExtra {
   extraId?: string;

@@ -16,6 +16,7 @@ import {
   Clock,
   MapPin,
   Home,
+  Bug,
 } from "lucide-react";
 import { format } from "date-fns";
 
@@ -25,7 +26,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { GuestManager, type GuestInfo } from "@/components/ui/guest-manager";
 import { bookingDataStore } from "@/lib/services/booking-data-store";
-import { BookingFormData } from "@/lib/utils/booking-transform";
+import { BookingFormData, transformBookingDataToDirectRezdy } from "@/lib/utils/booking-transform";
 
 
 
@@ -101,15 +102,30 @@ export default function GuestDetailsPage() {
           const initialGuests: GuestInfo[] = [];
           let guestId = 1;
 
-          // Helper function to convert dynamic guest counts to standard format
+          // Helper function to convert dynamic guest counts to standard format with validation
           const convertToStandardGuestCounts = (guestCounts: any): { adults: number; children: number; infants: number } => {
+            // Safety check for null/undefined input
+            if (!guestCounts || typeof guestCounts !== 'object') {
+              console.warn('⚠️ Invalid guest counts data, using fallback', guestCounts);
+              return { adults: 1, children: 0, infants: 0 }; // Fallback to 1 adult
+            }
+
             // If already in standard format, return as is
             if (typeof guestCounts.adults === 'number') {
-              return {
-                adults: guestCounts.adults || 0,
-                children: guestCounts.children || 0,
-                infants: guestCounts.infants || 0
+              const result = {
+                adults: Math.max(0, guestCounts.adults || 0),
+                children: Math.max(0, guestCounts.children || 0),
+                infants: Math.max(0, guestCounts.infants || 0)
               };
+              
+              // Validate at least one guest
+              const total = result.adults + result.children + result.infants;
+              if (total === 0) {
+                console.warn('⚠️ No guests found in standard format, adding fallback adult');
+                result.adults = 1;
+              }
+              
+              return result;
             }
 
             // Convert dynamic price option format to standard format
@@ -133,9 +149,17 @@ export default function GuestDetailsPage() {
               }
             });
 
+            // Validate at least one guest after conversion
+            const total = standardCounts.adults + standardCounts.children + standardCounts.infants;
+            if (total === 0) {
+              console.warn('⚠️ No guests found after dynamic conversion, adding fallback adult');
+              standardCounts.adults = 1;
+            }
+
             console.log('🔄 Converted dynamic guest counts:', {
               original: guestCounts,
-              converted: standardCounts
+              converted: standardCounts,
+              totalGuests: total
             });
 
             return standardCounts;
@@ -229,13 +253,13 @@ export default function GuestDetailsPage() {
           country: bookingData.contact.country || "Australia",
         },
         // Explicitly preserve payment data to ensure it's sent to Rezdy
-        // For Stripe payments (when sessionId exists), always use CREDIT_CARD type
+        // For Stripe payments (when sessionId exists), always use CREDITCARD type (Rezdy format)
         payment: sessionId ? {
           method: bookingData.payment?.method || "stripe",
-          type: "CREDIT_CARD" as const
+          type: "CREDITCARD" as const
         } : (bookingData.payment || {
           method: "credit_card",
-          type: "CREDIT_CARD" as const
+          type: "CREDITCARD" as const
         })
       };
 
@@ -294,6 +318,134 @@ export default function GuestDetailsPage() {
     } finally {
       setSubmitting(false);
     }
+  };
+
+  // Debug function to log complete booking data structure
+  const handleDebugLog = () => {
+    if (!bookingData) {
+      console.log("❌ No booking data available for debug");
+      return;
+    }
+
+    // Create the same updated booking data structure used in handleSubmit
+    const updatedBookingData: BookingFormData = {
+      ...bookingData,
+      guests: guests.filter((g) => g.firstName.trim() && g.lastName.trim()),
+      contact: {
+        ...bookingData.contact,
+        country: bookingData.contact.country || "Australia",
+      },
+      payment: sessionId ? {
+        method: bookingData.payment?.method || "stripe",
+        type: "CREDITCARD" as const
+      } : (bookingData.payment || {
+        method: "credit_card",
+        type: "CREDITCARD" as const
+      })
+    };
+
+    console.group("🔍 DEBUG: Complete Booking Data Structure for Rezdy");
+    
+    // Log original booking form data
+    console.group("📋 1. Original BookingFormData Structure");
+    console.log("Product:", {
+      code: updatedBookingData.product.code,
+      name: updatedBookingData.product.name,
+      description: updatedBookingData.product.description
+    });
+    
+    console.log("Session:", {
+      id: updatedBookingData.session.id,
+      startTime: updatedBookingData.session.startTime,
+      endTime: updatedBookingData.session.endTime,
+      pickupLocation: updatedBookingData.session.pickupLocation ? {
+        id: updatedBookingData.session.pickupLocation.id,
+        locationName: updatedBookingData.session.pickupLocation.locationName || updatedBookingData.session.pickupLocation.name,
+        address: updatedBookingData.session.pickupLocation.address,
+        pickupTime: updatedBookingData.session.pickupLocation.pickupTime
+      } : null
+    });
+    
+    console.log("Guests:", updatedBookingData.guests.map(g => ({
+      id: g.id,
+      name: `${g.firstName} ${g.lastName}`,
+      age: g.age,
+      type: g.type
+    })));
+    
+    console.log("Guest Counts:", updatedBookingData.guestCounts);
+    console.log("Selected Price Options:", updatedBookingData.selectedPriceOptions);
+    
+    console.log("Contact:", {
+      name: `${updatedBookingData.contact.firstName} ${updatedBookingData.contact.lastName}`,
+      email: updatedBookingData.contact.email,
+      phone: updatedBookingData.contact.phone,
+      country: updatedBookingData.contact.country,
+      emergencyContact: updatedBookingData.contact.emergencyContact,
+      emergencyPhone: updatedBookingData.contact.emergencyPhone,
+      specialRequests: updatedBookingData.contact.specialRequests,
+      dietaryRequirements: updatedBookingData.contact.dietaryRequirements,
+      accessibilityNeeds: updatedBookingData.contact.accessibilityNeeds
+    });
+    
+    console.log("Pricing:", updatedBookingData.pricing);
+    console.log("Payment:", updatedBookingData.payment);
+    console.log("Extras:", updatedBookingData.extras);
+    console.groupEnd();
+
+    // Transform to Rezdy format and log
+    try {
+      const mockStripePaymentId = sessionId || `pi_mock_${orderNumber}`;
+      const rezdyRequest = transformBookingDataToDirectRezdy(updatedBookingData, mockStripePaymentId);
+      
+      console.group("🚀 2. Transformed Rezdy Direct Booking Request");
+      console.log("Reseller Reference (Stripe Payment ID):", rezdyRequest.resellerReference);
+      console.log("Reseller Comments:", rezdyRequest.resellerComments);
+      
+      console.log("Customer:", rezdyRequest.customer);
+      
+      console.log("Items:", rezdyRequest.items.map(item => ({
+        productCode: item.productCode,
+        startTimeLocal: item.startTimeLocal,
+        pickupId: item.pickupId,
+        quantities: item.quantities,
+        participants: item.participants?.map(p => ({
+          fieldsCount: p.fields?.length || 0,
+          sampleFields: p.fields?.slice(0, 3) || []
+        })),
+        extras: item.extras
+      })));
+      
+      console.log("Fields:", rezdyRequest.fields);
+      console.log("Payments:", rezdyRequest.payments);
+      console.groupEnd();
+
+      console.group("📊 3. Data Analysis Summary");
+      console.log("Total Guests:", updatedBookingData.guests.length);
+      console.log("Total Quantity:", rezdyRequest.items[0]?.quantities?.reduce((sum, q) => sum + q.value, 0) || 0);
+      console.log("Payment Amount Match:", {
+        bookingTotal: updatedBookingData.pricing.total,
+        paymentAmount: rezdyRequest.payments[0]?.amount,
+        matches: Math.abs(updatedBookingData.pricing.total - (rezdyRequest.payments[0]?.amount || 0)) <= 0.01
+      });
+      console.log("Has Pickup Location:", !!rezdyRequest.items[0]?.pickupId);
+      console.log("Pickup ID:", rezdyRequest.items[0]?.pickupId);
+      console.log("Payment Type:", rezdyRequest.payments[0]?.type);
+      console.groupEnd();
+
+      // Log the complete structures for copy-paste debugging
+      console.group("📄 4. Complete Data Structures (Copy-Paste Ready)");
+      console.log("Complete BookingFormData:", JSON.stringify(updatedBookingData, null, 2));
+      console.log("Complete RezdyDirectBookingRequest:", JSON.stringify(rezdyRequest, null, 2));
+      console.groupEnd();
+
+    } catch (error) {
+      console.error("❌ Error transforming to Rezdy format:", error);
+      console.log("Original booking data that caused error:", updatedBookingData);
+    }
+
+    console.groupEnd();
+    console.log("✅ Debug logging complete - check console groups above for details");
   };
 
   if (loading) {
@@ -527,7 +679,7 @@ export default function GuestDetailsPage() {
         </Card>
       
         {/* Submit Button */}
-        <div className="flex justify-center pt-6">
+        <div className="flex justify-center items-center gap-4 pt-6">
           <Button
             onClick={handleSubmit}
             disabled={!canSubmit() || submitting}
@@ -546,6 +698,19 @@ export default function GuestDetailsPage() {
               </>
             )}
           </Button>
+          
+          {/* Debug Button - only show in development or with debug flag */}
+          {(process.env.NODE_ENV === 'development' || typeof window !== 'undefined' && window.location.search.includes('debug=true')) && (
+            <Button
+              onClick={handleDebugLog}
+              variant="outline"
+              className="flex items-center gap-2"
+              size="lg"
+            >
+              <Bug className="h-4 w-4" />
+              Debug Data
+            </Button>
+          )}
         </div>
 
         {/* Help Info */}

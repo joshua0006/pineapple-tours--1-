@@ -1,4 +1,4 @@
-import { RezdyBooking, RezdyBookingItem, RezdyCustomer, RezdyProduct, RezdyDirectBookingRequest } from '@/lib/types/rezdy'
+import { RezdyBooking, RezdyBookingItem, RezdyProductBookingItem, RezdyPickupLocationItem, RezdyCustomer, RezdyProduct, RezdyDirectBookingRequest } from '@/lib/types/rezdy'
 import { transformBookingDataToRezdy, transformBookingDataToDirectRezdy, validateBookingDataForRezdy, BookingFormData } from '@/lib/utils/booking-transform'
 import { fetchAndCacheProduct, rezdyProductCache } from '@/lib/utils/rezdy-product-cache'
 
@@ -452,8 +452,9 @@ export class BookingService {
       let hasBookingItem = false;
       bookingRequest.items.forEach((item, index) => {
         if ('productCode' in item) {
+          // This is a product booking item
           hasBookingItem = true;
-          const bookingItem = item as RezdyBookingItem;
+          const bookingItem = item as RezdyProductBookingItem;
           
           if (!bookingItem.productCode || bookingItem.productCode.trim() === '') {
             errors.push(`Item ${index}: Product code is required`)
@@ -486,6 +487,16 @@ export class BookingService {
           if (!bookingItem.participants) {
             errors.push(`Item ${index}: Participants array is required (can be empty)`)
           }
+        } else if ('pickupLocation' in item) {
+          // This is a pickup location item
+          const pickupItem = item as RezdyPickupLocationItem;
+          
+          if (!pickupItem.pickupLocation || !pickupItem.pickupLocation.locationName || pickupItem.pickupLocation.locationName.trim() === '') {
+            errors.push(`Item ${index}: Pickup location name is required`)
+          }
+        } else {
+          // Unknown item type
+          errors.push(`Item ${index}: Invalid item type - must be either a booking item with productCode or pickup location item`)
         }
       });
       
@@ -587,6 +598,35 @@ export class BookingService {
       console.log('📍 PICKUP LOCATION IN PAYLOAD:', pickupInfo);
       
       console.log('📋 EXACT REZDY PAYLOAD (1:1 Structure):', JSON.stringify(bookingRequest, null, 2));
+      
+      // Additional payload validation logging
+      console.group('🔍 PAYLOAD VALIDATION SUMMARY');
+      console.log('✅ Validation Status:', {
+        hasResellerReference: !!bookingRequest.resellerReference,
+        hasCustomer: !!bookingRequest.customer,
+        customerValid: !!(bookingRequest.customer?.firstName && bookingRequest.customer?.lastName && bookingRequest.customer?.email),
+        hasItems: !!(bookingRequest.items && bookingRequest.items.length > 0),
+        hasBookingItem: bookingRequest.items.some(item => 'productCode' in item),
+        hasPayments: !!(bookingRequest.payments && bookingRequest.payments.length > 0),
+        paymentTypesValid: bookingRequest.payments?.every(p => p.type === "CASH" || p.type === "CREDITCARD") || false,
+        hasValidQuantities: bookingRequest.items.some(item => 'quantities' in item && item.quantities && item.quantities.length > 0)
+      });
+      
+      // Log critical fields for debugging
+      const mainItem = bookingRequest.items.find(item => 'productCode' in item);
+      if (mainItem) {
+        console.log('🎯 MAIN BOOKING ITEM ANALYSIS:', {
+          productCode: mainItem.productCode,
+          startTime: mainItem.startTimeLocal,
+          quantities: mainItem.quantities,
+          totalQuantity: mainItem.quantities?.reduce((sum, q) => sum + q.value, 0) || 0,
+          hasParticipants: !!(mainItem.participants && mainItem.participants.length >= 0),
+          participantCount: mainItem.participants?.length || 0,
+          hasPickupId: !!(mainItem as any).pickupId,
+          pickupId: (mainItem as any).pickupId
+        });
+      }
+      console.groupEnd();
       
       console.groupEnd();
 

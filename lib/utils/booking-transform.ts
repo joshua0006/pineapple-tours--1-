@@ -485,11 +485,6 @@ export function transformBookingDataToDirectRezdy(
     startTimeLocal: bookingData.session.startTime,
     quantities,
     participants: [], // Will be populated below
-    // Properly map pickup location to pickupId field - prioritize id, fallback to locationName or name
-    pickupId: bookingData.session.pickupLocation?.id || 
-              bookingData.session.pickupLocation?.locationName || 
-              bookingData.session.pickupLocation?.name || 
-              undefined,
   };
 
   // Add pickup location to the main booking item if present (as per official Rezdy API specification)
@@ -504,7 +499,6 @@ export function transformBookingDataToDirectRezdy(
     };
     
     console.log("📍 Added pickup location to main booking item:", {
-      pickupId: bookingItem.pickupId,
       pickupLocationName: locationName,
       originalLocationName: bookingData.session.pickupLocation.locationName,
       originalName: bookingData.session.pickupLocation.name,
@@ -761,11 +755,6 @@ export function transformBookingDataToRezdy(
     startTimeLocal: bookingData.session.startTime,
     quantities,
     participants: [], // Will be populated below
-    // Properly map pickup location to pickupId field - prioritize id, fallback to locationName or name
-    pickupId: bookingData.session.pickupLocation?.id || 
-              bookingData.session.pickupLocation?.locationName || 
-              bookingData.session.pickupLocation?.name || 
-              undefined,
   };
 
   // Add pickup location to the main booking item if present (as per official Rezdy API specification)
@@ -780,7 +769,6 @@ export function transformBookingDataToRezdy(
     };
     
     console.log("📍 Added pickup location to legacy main booking item:", {
-      pickupId: legacyBookingItem.pickupId,
       pickupLocationName: locationName,
       originalLocationName: bookingData.session.pickupLocation.locationName,
       originalName: bookingData.session.pickupLocation.name,
@@ -819,7 +807,6 @@ export function transformBookingDataToRezdy(
     quantityCount: quantities.length,
     totalQuantity: quantities.reduce((sum, q) => sum + q.value, 0),
     quantities: quantities,
-    pickupId: legacyBookingItem.pickupId,
   });
 
   // Transform customer
@@ -1102,8 +1089,7 @@ export function transformBookingDataToRezdy(
     totalQuantity: finalTotalQuantity,
     hasValidPayments: !!(rezdyBooking.payments && rezdyBooking.payments.length > 0),
     paymentTypesValid: rezdyBooking.payments?.every(p => p.type === "CASH" || p.type === "CREDITCARD") || false,
-    hasRequiredArrays: !!(Array.isArray(rezdyBooking.fields) && typeof rezdyBooking.comments === 'string'),
-    pickupIdPresent: !!legacyBookingItem.pickupId
+    hasRequiredArrays: !!(Array.isArray(rezdyBooking.fields) && typeof rezdyBooking.comments === 'string')
   });
   
   console.groupEnd();

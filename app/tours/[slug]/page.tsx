@@ -654,7 +654,7 @@ export default function TourDetailPage({
 
                 {/* Redesigned Tabs - 2 Tab Layout */}
                 <Tabs defaultValue="overview" className="w-full">
-                  <TabsList className="grid w-full grid-cols-2 bg-gray-50 border border-gray-200 rounded-lg">
+                  <TabsList className="sticky top-16 sm:top-18 lg:top-20 z-30 grid w-full grid-cols-2 bg-white/95 backdrop-blur-sm border border-gray-200 rounded-lg shadow-sm">
                     <TabsTrigger
                       value="overview"
                       className="data-[state=active]:bg-white data-[state=active]:text-brand-accent data-[state=active]:border-brand-accent/20 data-[state=active]:shadow-sm rounded-md mx-1 my-1"
@@ -991,71 +991,6 @@ export default function TourDetailPage({
                   </CardContent>
                 </Card>
 
-                {/* Location Card */}
-                <Card className="border border-gray-200 bg-white">
-                  <CardContent className="p-4">
-                    <div className="flex items-center gap-3 mb-3">
-                      <div className="w-8 h-8 bg-coral-100 rounded-lg flex items-center justify-center">
-                        <MapPin className="h-4 w-4 text-coral-600" />
-                      </div>
-                      <h3 className="font-semibold text-gray-900">Location</h3>
-                    </div>
-
-                    <div className="space-y-2">
-                      <div className="text-sm text-gray-700">
-                        {typeof selectedProduct.locationAddress === "string" ? (
-                          selectedProduct.locationAddress
-                        ) : (
-                          <div>
-                            {selectedProduct.locationAddress?.addressLine && (
-                              <div>
-                                {selectedProduct.locationAddress.addressLine}
-                              </div>
-                            )}
-                            <div>
-                              {[
-                                selectedProduct.locationAddress?.city,
-                                selectedProduct.locationAddress?.state,
-                                selectedProduct.locationAddress?.postCode,
-                              ]
-                                .filter(Boolean)
-                                .join(", ")}
-                            </div>
-                          </div>
-                        )}
-                      </div>
-
-          
-
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="w-full mt-3 text-xs border-gray-300 text-gray-700 hover:bg-gray-50"
-                        onClick={() => {
-                          // Create Google Maps URL with the location
-                          const address =
-                            typeof selectedProduct.locationAddress === "string"
-                              ? selectedProduct.locationAddress
-                              : [
-                                  selectedProduct.locationAddress?.addressLine,
-                                  selectedProduct.locationAddress?.city,
-                                  selectedProduct.locationAddress?.state,
-                                  selectedProduct.locationAddress?.postCode,
-                                ]
-                                  .filter(Boolean)
-                                  .join(", ");
-
-                          const googleMapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
-                            address
-                          )}`;
-                          window.open(googleMapsUrl, "_blank");
-                        }}
-                      >
-                        View on Map
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
               </div>
             </div>
 

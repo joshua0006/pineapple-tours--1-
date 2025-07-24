@@ -2,7 +2,6 @@
 
 import { useEffect, useRef, useState } from "react"
 import { MapPin, Navigation, ExternalLink, AlertCircle, RefreshCw } from "lucide-react"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Alert, AlertDescription } from "@/components/ui/alert"
@@ -382,14 +381,8 @@ export function GoogleMaps({ address, pickupLocations = [], tourName, className 
   // API Key not configured
   if (!process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY === 'your_google_maps_api_key_here') {
     return (
-      <Card className={className}>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <MapPin className="h-5 w-5 text-coral-500" />
-            Location & Map
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
+      <div className={className}>
+        <div className="space-y-4">
           <Alert>
             <AlertCircle className="h-4 w-4" />
             <AlertDescription>
@@ -401,7 +394,7 @@ export function GoogleMaps({ address, pickupLocations = [], tourName, className 
           {displayInfo.hasAnyLocationData && (
             <div className="space-y-3">
               {displayInfo.mainAddressString && (
-                <div className="flex items-start gap-3 p-3 bg-coral-50 rounded-lg border border-coral-200">
+                <div className="flex items-start gap-3 p-3 bg-coral-50 rounded-lg">
                   <MapPin className="h-5 w-5 text-coral-600 flex-shrink-0 mt-0.5" />
                   <div className="flex-1">
                     <div className="font-medium text-coral-900">Main Location</div>
@@ -429,7 +422,7 @@ export function GoogleMaps({ address, pickupLocations = [], tourName, className 
                     </Badge>
                   </div>
                   {displayInfo.pickupAddresses.map((pickup, index) => (
-                    <div key={index} className="flex items-start gap-3 p-3 bg-blue-50 rounded-lg border border-blue-200">
+                    <div key={index} className="flex items-start gap-3 p-3 bg-blue-50 rounded-lg">
                       <MapPin className="h-4 w-4 text-blue-600 flex-shrink-0 mt-0.5" />
                       <div className="flex-1">
                         <div className="font-medium text-blue-900">{pickup.name}</div>
@@ -451,22 +444,16 @@ export function GoogleMaps({ address, pickupLocations = [], tourName, className 
               )}
             </div>
           )}
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     )
   }
 
   // Loading or error states
   if (error || geocodingError) {
     return (
-      <Card className={className}>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <MapPin className="h-5 w-5 text-coral-500" />
-            Location & Map
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
+      <div className={className}>
+        <div className="space-y-4">
           <Alert variant="destructive">
             <AlertCircle className="h-4 w-4" />
             <AlertDescription>
@@ -509,41 +496,27 @@ export function GoogleMaps({ address, pickupLocations = [], tourName, className 
               )}
             </div>
           )}
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     )
   }
 
   // No location data available
   if (!displayInfo.hasAnyLocationData) {
     return (
-      <Card className={className}>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <MapPin className="h-5 w-5 text-coral-500" />
-            Location & Map
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="text-center py-8 text-muted-foreground">
-            <MapPin className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-            <p>No location information available for this tour</p>
-            <p className="text-sm mt-2">Location details will be provided upon booking confirmation</p>
-          </div>
-        </CardContent>
-      </Card>
+      <div className={className}>
+        <div className="text-center py-8 text-muted-foreground">
+          <MapPin className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+          <p>No location information available for this tour</p>
+          <p className="text-sm mt-2">Location details will be provided upon booking confirmation</p>
+        </div>
+      </div>
     )
   }
 
   return (
-    <Card className={className}>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <MapPin className="h-5 w-5 text-coral-500" />
-          Location & Map
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-4">
+    <div className={className}>
+      <div className="space-y-4">
         {/* Map Container */}
         <div className="relative">
           <div 
@@ -566,7 +539,7 @@ export function GoogleMaps({ address, pickupLocations = [], tourName, className 
         {/* Location Details */}
         <div className="space-y-3">
           {locations.filter(loc => loc.type === 'main').map((mainLocation, index) => (
-            <div key={index} className="flex items-start gap-3 p-3 bg-coral-50 rounded-lg border border-coral-200">
+            <div key={index} className="flex items-start gap-3 p-3 bg-coral-50 rounded-lg">
               <MapPin className="h-5 w-5 text-coral-600 flex-shrink-0 mt-0.5" />
               <div className="flex-1">
                 <div className="font-medium text-coral-900">Main Location</div>
@@ -594,7 +567,7 @@ export function GoogleMaps({ address, pickupLocations = [], tourName, className 
                 </Badge>
               </div>
               {locations.filter(loc => loc.type === 'pickup').map((pickup, index) => (
-                <div key={index} className="flex items-start gap-3 p-3 bg-blue-50 rounded-lg border border-blue-200">
+                <div key={index} className="flex items-start gap-3 p-3 bg-blue-50 rounded-lg">
                   <MapPin className="h-4 w-4 text-blue-600 flex-shrink-0 mt-0.5" />
                   <div className="flex-1">
                     <div className="font-medium text-blue-900">{pickup.title}</div>
@@ -619,7 +592,7 @@ export function GoogleMaps({ address, pickupLocations = [], tourName, className 
 
           {/* Show non-geocoded locations as text */}
           {displayInfo.mainAddressString && !locations.some(loc => loc.type === 'main') && (
-            <div className="flex items-start gap-3 p-3 bg-gray-50 rounded-lg border border-gray-200">
+            <div className="flex items-start gap-3 p-3 bg-gray-50 rounded-lg">
               <MapPin className="h-5 w-5 text-gray-600 flex-shrink-0 mt-0.5" />
               <div className="flex-1">
                 <div className="font-medium text-gray-900">Main Location</div>
@@ -639,8 +612,8 @@ export function GoogleMaps({ address, pickupLocations = [], tourName, className 
             </div>
           )}
         </div>
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   )
 }
 

@@ -637,18 +637,11 @@ function PaymentPageContent() {
                   </div>
                 </div>
 
-                <Separator />
 
                 {/* Pricing Breakdown */}
                 <div className="space-y-3">
                   {bookingData?.pricing && (
                     <>
-                      <div className="flex justify-between text-sm">
-                        <span className="text-slate-600">Subtotal</span>
-                        <span className="text-slate-900">
-                          {formatAmount(bookingData.pricing.subtotal || 0)}
-                        </span>
-                      </div>
                       
                       {bookingData.pricing.taxes > 0 && (
                         <div className="flex justify-between text-sm">

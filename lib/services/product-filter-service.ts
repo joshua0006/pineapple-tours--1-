@@ -7,6 +7,7 @@ import {
   containsExcludedKeyword,
   isExcludedProductName,
   shouldExcludeByPrice,
+  hasRepeatedQuantityLabels,
 } from '@/lib/constants/product-filters';
 
 export class ProductFilterService {
@@ -149,6 +150,14 @@ export class ProductFilterService {
       return true;
     }
 
+    // Check for rental products with repeated quantity labels
+    if (this.isRentalWithRepeatedLabels(product)) {
+      if (debug) {
+        console.log(`🚫 Product ${product.productCode} (${product.name}) EXCLUDED as rental with repeated quantity labels`);
+      }
+      return true;
+    }
+
     if (debug) {
       console.log(`✅ Product ${product.productCode} (${product.name}) PASSED all filters`);
     }
@@ -279,6 +288,19 @@ export class ProductFilterService {
   }
 
   /**
+   * Check if a rental product has repeated quantity labels
+   */
+  private static isRentalWithRepeatedLabels(product: RezdyProduct): boolean {
+    // Only check rental products
+    if (product.productType !== 'RENTAL') {
+      return false;
+    }
+
+    // Check if the product has repeated quantity labels in price options
+    return hasRepeatedQuantityLabels(product.priceOptions || []);
+  }
+
+  /**
    * Get statistics about filtered products
    * @param products - Original array of products
    * @returns Statistics about what was filtered
@@ -301,6 +323,7 @@ export class ProductFilterService {
         status: 0,
         category: 0,
         keywords: 0,
+        rentalRepeatedLabels: 0,
       },
     };
 
@@ -320,6 +343,7 @@ export class ProductFilterService {
         if (this.isExcludedByStatus(product)) stats.byReason.status++;
         if (this.isExcludedByCategory(product)) stats.byReason.category++;
         if (this.containsExcludedContent(product)) stats.byReason.keywords++;
+        if (this.isRentalWithRepeatedLabels(product)) stats.byReason.rentalRepeatedLabels++;
       }
     });
 
@@ -345,6 +369,7 @@ export class ProductFilterService {
       if (this.isExcludedByStatus(product)) reasons.push('status');
       if (this.isExcludedByCategory(product)) reasons.push('category');
       if (this.containsExcludedContent(product)) reasons.push('keywords');
+      if (this.isRentalWithRepeatedLabels(product)) reasons.push('rental repeated labels');
       
       console.log(`- ${product.productCode}: ${product.name} (Reasons: ${reasons.join(', ')})`);
     });

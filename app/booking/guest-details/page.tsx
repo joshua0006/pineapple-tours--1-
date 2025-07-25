@@ -25,7 +25,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { GuestManager, type GuestInfo } from "@/components/ui/guest-manager";
 import { bookingDataStore } from "@/lib/services/booking-data-store";
-import { BookingFormData } from "@/lib/utils/booking-transform";
+import { BookingFormData, transformBookingDataToDirectRezdy } from "@/lib/utils/booking-transform";
 
 
 
@@ -101,15 +101,30 @@ export default function GuestDetailsPage() {
           const initialGuests: GuestInfo[] = [];
           let guestId = 1;
 
-          // Helper function to convert dynamic guest counts to standard format
+          // Helper function to convert dynamic guest counts to standard format with validation
           const convertToStandardGuestCounts = (guestCounts: any): { adults: number; children: number; infants: number } => {
+            // Safety check for null/undefined input
+            if (!guestCounts || typeof guestCounts !== 'object') {
+              console.warn('⚠️ Invalid guest counts data, using fallback', guestCounts);
+              return { adults: 1, children: 0, infants: 0 }; // Fallback to 1 adult
+            }
+
             // If already in standard format, return as is
             if (typeof guestCounts.adults === 'number') {
-              return {
-                adults: guestCounts.adults || 0,
-                children: guestCounts.children || 0,
-                infants: guestCounts.infants || 0
+              const result = {
+                adults: Math.max(0, guestCounts.adults || 0),
+                children: Math.max(0, guestCounts.children || 0),
+                infants: Math.max(0, guestCounts.infants || 0)
               };
+              
+              // Validate at least one guest
+              const total = result.adults + result.children + result.infants;
+              if (total === 0) {
+                console.warn('⚠️ No guests found in standard format, adding fallback adult');
+                result.adults = 1;
+              }
+              
+              return result;
             }
 
             // Convert dynamic price option format to standard format
@@ -133,9 +148,17 @@ export default function GuestDetailsPage() {
               }
             });
 
+            // Validate at least one guest after conversion
+            const total = standardCounts.adults + standardCounts.children + standardCounts.infants;
+            if (total === 0) {
+              console.warn('⚠️ No guests found after dynamic conversion, adding fallback adult');
+              standardCounts.adults = 1;
+            }
+
             console.log('🔄 Converted dynamic guest counts:', {
               original: guestCounts,
-              converted: standardCounts
+              converted: standardCounts,
+              totalGuests: total
             });
 
             return standardCounts;
@@ -229,13 +252,13 @@ export default function GuestDetailsPage() {
           country: bookingData.contact.country || "Australia",
         },
         // Explicitly preserve payment data to ensure it's sent to Rezdy
-        // For Stripe payments (when sessionId exists), always use CREDIT_CARD type
+        // For Stripe payments (when sessionId exists), always use CREDITCARD type (Rezdy format)
         payment: sessionId ? {
           method: bookingData.payment?.method || "stripe",
-          type: "CREDIT_CARD" as const
+          type: "CREDITCARD" as const
         } : (bookingData.payment || {
           method: "credit_card",
-          type: "CREDIT_CARD" as const
+          type: "CREDITCARD" as const
         })
       };
 
@@ -295,6 +318,7 @@ export default function GuestDetailsPage() {
       setSubmitting(false);
     }
   };
+
 
   if (loading) {
     return (
@@ -527,7 +551,7 @@ export default function GuestDetailsPage() {
         </Card>
       
         {/* Submit Button */}
-        <div className="flex justify-center pt-6">
+        <div className="flex justify-center items-center pt-6">
           <Button
             onClick={handleSubmit}
             disabled={!canSubmit() || submitting}

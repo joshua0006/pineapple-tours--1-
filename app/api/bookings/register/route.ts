@@ -1,8 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { validateBookingDataForRezdy, BookingFormData } from "@/lib/utils/booking-transform";
 import { BookingService, PaymentConfirmation } from "@/lib/services/booking-service";
+import { enhancedBookingService } from "@/lib/services/enhanced-booking-service";
 import { bookingDataStore } from "@/lib/services/booking-data-store";
 import { RezdyDirectBookingRequest } from "@/lib/types/rezdy";
+import { bookingLogger } from "@/lib/utils/booking-debug-logger";
 
 // Helper function to check if request is in direct Rezdy format
 function isDirectRezdyFormat(body: unknown): body is RezdyDirectBookingRequest {
@@ -18,6 +20,14 @@ function isDirectRezdyFormat(body: unknown): body is RezdyDirectBookingRequest {
 
 export async function POST(request: NextRequest) {
   try {
+    // Initialize booking logging session
+    const loggingSessionId = bookingLogger.startSession('booking_attempt');
+    bookingLogger.log('info', 'api', 'route_start', 'Booking registration route started', {
+      url: request.url,
+      method: request.method,
+      timestamp: new Date().toISOString()
+    });
+
     const body = await request.json();
 
     // Check if this is a direct Rezdy format request
@@ -30,9 +40,8 @@ export async function POST(request: NextRequest) {
         timestamp: new Date().toISOString()
       });
 
-      // For direct Rezdy format, submit directly to the API
-      const bookingService = new BookingService();
-      const result = await bookingService.submitDirectRezdyBooking(body);
+      // For direct Rezdy format, submit directly to the API using enhanced service
+      const result = await enhancedBookingService.submitDirectRezdyBooking(body);
 
       if (result.success) {
         console.log("✅ Direct booking registration successful:", {
@@ -40,6 +49,7 @@ export async function POST(request: NextRequest) {
           resellerReference: body.resellerReference
         });
         
+        bookingLogger.endSession('completed', `Direct booking successful: ${result.orderNumber}`);
         return NextResponse.json({
           success: true,
           bookingId: result.orderNumber,
@@ -51,6 +61,7 @@ export async function POST(request: NextRequest) {
           resellerReference: body.resellerReference
         });
         
+        bookingLogger.endSession('failed', `Direct booking failed: ${result.error}`);
         return NextResponse.json(
           { error: result.error || "Failed to create booking" },
           { status: 500 }
@@ -269,9 +280,8 @@ export async function POST(request: NextRequest) {
         }
       }
 
-      // Use the existing BookingService to register the booking
-      const bookingService = new BookingService();
-      const bookingRequest = BookingService.createBookingRequest(formData, paymentConfirmation);
+      // Use the enhanced BookingService to register the booking with full logging
+      const bookingRequest = enhancedBookingService.createBookingRequest(formData, paymentConfirmation);
 
       console.group("📤 BOOKING REGISTRATION ROUTE - Creating Rezdy Request");
       console.log("🎯 Route Processing Summary:", {
@@ -327,7 +337,7 @@ export async function POST(request: NextRequest) {
       console.groupEnd();
 
       console.log("🚀 Submitting booking request to Rezdy...");
-      const bookingResult = await bookingService.registerBooking(bookingRequest);
+      const bookingResult = await enhancedBookingService.registerBooking(bookingRequest);
 
       if (bookingResult.success) {
         console.log("✅ Booking registration successful:", {
@@ -339,6 +349,7 @@ export async function POST(request: NextRequest) {
         await bookingDataStore.remove(orderNumber);
         console.log("🧹 Cleared booking data from server store for order:", orderNumber);
         
+        bookingLogger.endSession('completed', `Legacy booking successful: ${bookingResult.orderNumber}`);
         return NextResponse.json({
           success: true,
           bookingId: bookingResult.orderNumber,
@@ -352,33 +363,34 @@ export async function POST(request: NextRequest) {
           transactionId: paymentConfirmation.transactionId
         });
         
-        // Check if it's a critical payment validation error
-        const isCriticalError = bookingResult.error?.includes("Payment validation failed") || 
-                               bookingResult.error?.includes("Payment type cannot be empty") ||
-                               bookingResult.error?.includes("Amount mismatch") ||
-                               !sessionId; // No payment session means payment didn't happen
+        // All Rezdy registration failures should be reported as errors
+        // This ensures proper debugging and prevents silent failures
+        console.error("❌ Rezdy registration failed - returning error to user:", {
+          orderNumber,
+          sessionId,
+          error: bookingResult.error,
+          paymentSuccessful: !!sessionId
+        });
         
-        // For Rezdy registration failures with successful payment, return success with warning
-        if (!isCriticalError && sessionId) {
-          console.warn("⚠️ Rezdy registration failed but payment successful, allowing user flow:", {
-            orderNumber,
-            sessionId,
-            error: bookingResult.error
-          });
-          
-          return NextResponse.json({
-            success: true,
-            bookingId: orderNumber, // Use order number as fallback
-            transactionId: paymentConfirmation.transactionId,
-            message: "Booking completed successfully",
-            warning: "Booking registration encountered issues but payment was successful"
-          });
-        }
+        // Determine error status based on error type
+        const isValidationError = bookingResult.error?.includes("validation failed") || 
+                                 bookingResult.error?.includes("Payment type cannot be empty") ||
+                                 bookingResult.error?.includes("Amount mismatch") ||
+                                 bookingResult.error?.includes("is required") ||
+                                 bookingResult.error?.includes("Invalid");
         
-        // For critical errors, return error response
+        bookingLogger.endSession('failed', `Legacy booking failed: ${bookingResult.error}`);
         return NextResponse.json(
-          { error: bookingResult.error || "Failed to create booking" },
-          { status: isCriticalError ? 400 : 500 }
+          { 
+            error: bookingResult.error || "Failed to create booking",
+            // Include payment info for customer service follow-up if payment was successful
+            paymentInfo: sessionId ? {
+              transactionId: paymentConfirmation.transactionId,
+              orderNumber: orderNumber,
+              message: "Payment was processed successfully. Please contact support with this information."
+            } : undefined
+          },
+          { status: isValidationError ? 400 : 500 }
         );
       }
     } catch (rezdyError) {
@@ -391,30 +403,31 @@ export async function POST(request: NextRequest) {
                                errorMessage.includes("is required") ||
                                errorMessage.includes("Invalid");
       
-      // If payment was successful (sessionId exists), allow user flow to continue
-      if (sessionId) {
-        console.warn("⚠️ Exception during Rezdy registration but payment successful, allowing user flow:", {
-          orderNumber,
-          sessionId,
-          error: errorMessage
-        });
-        
-        return NextResponse.json({
-          success: true,
-          bookingId: orderNumber, // Use order number as fallback
-          transactionId: sessionId,
-          message: "Booking completed successfully",
-          warning: "Booking registration encountered technical issues but payment was successful"
-        });
-      }
+      // Report all exceptions as errors - no more success masking
+      console.error("❌ Exception during Rezdy registration - returning error to user:", {
+        orderNumber,
+        sessionId,
+        error: errorMessage,
+        paymentSuccessful: !!sessionId
+      });
       
+      bookingLogger.endSession('failed', `Exception during booking: ${errorMessage}`);
       return NextResponse.json(
-        { error: errorMessage },
+        { 
+          error: errorMessage,
+          // Include payment info for customer service follow-up if payment was successful
+          paymentInfo: sessionId ? {
+            transactionId: sessionId,
+            orderNumber: orderNumber,
+            message: "Payment was processed successfully. Please contact support with this information."
+          } : undefined
+        },
         { status: isValidationError ? 400 : 500 }
       );
     }
   } catch (error) {
     console.error("Booking registration error:", error);
+    bookingLogger.endSession('failed', `Internal server error: ${error instanceof Error ? error.message : String(error)}`);
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }
@@ -519,13 +532,16 @@ export async function GET() {
       ]
     };
 
-    // Note: pickup information is included in the booking item as pickupId
+    // Note: pickup information is included in the booking item as per official Rezdy API documentation
     const sampleWithPickup = {
       ...sampleDirectRezdyFormat,
       items: [
         {
           ...sampleDirectRezdyFormat.items[0],
-          pickupId: "divers_hotel_pickup"  // Pickup information included in booking item
+          pickupId: "divers_hotel_pickup",  // Optional pickup ID for reference
+          pickupLocation: {
+            locationName: "Divers hotel"    // Pickup location info within main booking item
+          }
         }
       ]
     };

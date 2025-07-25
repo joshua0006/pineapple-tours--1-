@@ -1,6 +1,8 @@
 import {
   RezdyBooking,
   RezdyBookingItem,
+  RezdyProductBookingItem,
+  RezdyPickupLocationItem,
   RezdyParticipant,
   RezdyBookingExtra,
   RezdyCustomer,
@@ -129,9 +131,10 @@ export function createRezdyQuantities(
     };
 
     if (guestCounts && 'adults' in guestCounts) {
-      counts.adults = (guestCounts as BookingFormData["guestCounts"]).adults;
-      counts.children = (guestCounts as BookingFormData["guestCounts"]).children;
-      counts.infants = (guestCounts as BookingFormData["guestCounts"]).infants;
+      const standardGuestCounts = guestCounts as BookingFormData["guestCounts"];
+      counts.adults = standardGuestCounts?.adults || 0;
+      counts.children = standardGuestCounts?.children || 0;
+      counts.infants = standardGuestCounts?.infants || 0;
     } else if (guests) {
       guests.forEach(guest => {
         if (guest.type === "ADULT") counts.adults++;
@@ -476,13 +479,32 @@ export function transformBookingDataToDirectRezdy(
   // Transform customer data from pre-payment page
   const customer = transformContactToCustomer(bookingData.contact);
 
-  // Create booking item with quantities 
-  const bookingItem: RezdyBookingItem = {
+  // Create main booking item with quantities and pickup location
+  const bookingItem: RezdyProductBookingItem = {
     productCode: bookingData.product.code,
     startTimeLocal: bookingData.session.startTime,
     quantities,
     participants: [], // Will be populated below
   };
+
+  // Add pickup location to the main booking item if present (as per official Rezdy API specification)
+  if (bookingData.session.pickupLocation) {
+    const locationName = bookingData.session.pickupLocation.locationName || 
+                        bookingData.session.pickupLocation.name || 
+                        bookingData.session.pickupLocation.id || 
+                        "Pickup Location";
+    
+    bookingItem.pickupLocation = {
+      locationName: locationName
+    };
+    
+    console.log("📍 Added pickup location to main booking item:", {
+      pickupLocationName: locationName,
+      originalLocationName: bookingData.session.pickupLocation.locationName,
+      originalName: bookingData.session.pickupLocation.name,
+      originalLocationId: bookingData.session.pickupLocation.id
+    });
+  }
 
   // Create participants array with detailed fields for each guest
   if (bookingData.guests && bookingData.guests.length > 0) {
@@ -509,32 +531,7 @@ export function transformBookingDataToDirectRezdy(
     }));
   }
 
-  // Add pickup information to the booking item instead of as separate item
-  if (bookingData.session.pickupLocation) {
-    console.log("📍 Processing pickup location for Rezdy:", {
-      hasPickupLocation: true,
-      pickupLocationData: bookingData.session.pickupLocation,
-      locationName: bookingData.session.pickupLocation.locationName || bookingData.session.pickupLocation.name,
-      locationId: bookingData.session.pickupLocation.id,
-      address: bookingData.session.pickupLocation.address,
-      minutesPrior: bookingData.session.pickupLocation.minutesPrior
-    });
-    
-    // Use pickup location ID if available, otherwise create a descriptive ID
-    bookingItem.pickupId = bookingData.session.pickupLocation.id || 
-                          `pickup_${(bookingData.session.pickupLocation.locationName || bookingData.session.pickupLocation.name)?.replace(/\s+/g, '_').toLowerCase()}`;
-    
-    console.log("📍 Added pickup info to booking item:", {
-      pickupId: bookingItem.pickupId,
-      locationName: bookingData.session.pickupLocation.locationName || bookingData.session.pickupLocation.name,
-      bookingItemWithPickup: {
-        productCode: bookingItem.productCode,
-        pickupId: bookingItem.pickupId
-      }
-    });
-  } else {
-    console.log("📍 No pickup location in booking data");
-  }
+  // Pickup location will be handled as a separate item in the items array below
 
   // Map payment method to Rezdy payment type
   const mapPaymentMethodToRezdy = (paymentData?: BookingFormData["payment"]): "CASH" | "CREDITCARD" => {
@@ -594,7 +591,7 @@ export function transformBookingDataToDirectRezdy(
     finalPaymentObject: payment
   });
 
-  // Create items array with only the booking item (pickup location now part of booking item)
+  // Create items array with only the main booking item (pickup location is now included within it)
   const items: RezdyBookingItem[] = [bookingItem];
 
   // Create direct Rezdy booking request with specified field mappings
@@ -634,6 +631,28 @@ export function transformBookingDataToDirectRezdy(
     console.error("❌ CRITICAL: No payments in request!");
     throw new Error("Payment is required");
   }
+
+  // Final payload debugging summary
+  console.group("🔍 FINAL PAYLOAD DEBUG SUMMARY");
+  console.log("📊 Payload Statistics:", {
+    resellerReferenceLength: rezdyDirectRequest.resellerReference?.length || 0,
+    customerEmailValid: rezdyDirectRequest.customer?.email?.includes('@') || false,
+    totalItemsCount: rezdyDirectRequest.items?.length || 0,
+    totalPaymentsCount: rezdyDirectRequest.payments?.length || 0,
+    totalFieldsCount: rezdyDirectRequest.fields?.length || 0,
+    mainItemQuantityCount: ('quantities' in rezdyDirectRequest.items[0] ? rezdyDirectRequest.items[0]?.quantities?.length : 0) || 0,
+    mainItemTotalQuantity: ('quantities' in rezdyDirectRequest.items[0] ? rezdyDirectRequest.items[0]?.quantities?.reduce((sum: number, q: RezdyQuantity) => sum + q.value, 0) : 0) || 0
+  });
+  
+  console.log("🚨 Critical Validation Checks:", {
+    allPaymentTypesValid: rezdyDirectRequest.payments?.every(p => p.type === "CASH" || p.type === "CREDITCARD"),
+    allQuantitiesPositive: ('quantities' in rezdyDirectRequest.items[0] ? rezdyDirectRequest.items[0]?.quantities?.every((q: RezdyQuantity) => q.value > 0) : true),
+    allQuantityLabelsPresent: ('quantities' in rezdyDirectRequest.items[0] ? rezdyDirectRequest.items[0]?.quantities?.every((q: RezdyQuantity) => q.optionLabel?.trim()) : true),
+    hasRequiredCustomerFields: !!(rezdyDirectRequest.customer?.firstName && rezdyDirectRequest.customer?.lastName && rezdyDirectRequest.customer?.email),
+    hasValidStartTime: !!('startTimeLocal' in rezdyDirectRequest.items[0] ? rezdyDirectRequest.items[0]?.startTimeLocal : false),
+    hasValidProductCode: !!('productCode' in rezdyDirectRequest.items[0] ? rezdyDirectRequest.items[0]?.productCode : false)
+  });
+  console.groupEnd();
 
   console.log("✅ Direct Rezdy request validation passed");
   console.groupEnd();
@@ -729,18 +748,38 @@ export function transformBookingDataToRezdy(
     }
   }
 
-  // Create booking item with quantities 
-  const bookingItem: RezdyBookingItem = {
+
+  // Create main booking item with quantities and pickup location for legacy function
+  const legacyBookingItem: RezdyProductBookingItem = {
     productCode: bookingData.product.code,
     startTimeLocal: bookingData.session.startTime,
     quantities,
     participants: [], // Will be populated below
   };
 
+  // Add pickup location to the main booking item if present (as per official Rezdy API specification)
+  if (bookingData.session.pickupLocation) {
+    const locationName = bookingData.session.pickupLocation.locationName || 
+                        bookingData.session.pickupLocation.name || 
+                        bookingData.session.pickupLocation.id || 
+                        "Pickup Location";
+    
+    legacyBookingItem.pickupLocation = {
+      locationName: locationName
+    };
+    
+    console.log("📍 Added pickup location to legacy main booking item:", {
+      pickupLocationName: locationName,
+      originalLocationName: bookingData.session.pickupLocation.locationName,
+      originalName: bookingData.session.pickupLocation.name,
+      originalLocationId: bookingData.session.pickupLocation.id
+    });
+  }
+
   // Create participants array with detailed fields for each guest
   // This matches the exact structure from the Rezdy API specification
   if (bookingData.guests && bookingData.guests.length > 0) {
-    bookingItem.participants = bookingData.guests.map(guest => ({
+    legacyBookingItem.participants = bookingData.guests.map(guest => ({
       fields: [
         { label: "First Name", value: guest.firstName },
         { label: "Last Name", value: guest.lastName },
@@ -752,19 +791,19 @@ export function transformBookingDataToRezdy(
     }));
   } else {
     // Ensure participants array exists even if empty to match API structure
-    bookingItem.participants = [];
+    legacyBookingItem.participants = [];
   }
 
   // Add extras if available
   if (bookingData.extras && bookingData.extras.length > 0) {
-    bookingItem.extras = bookingData.extras.map(extra => ({
+    legacyBookingItem.extras = bookingData.extras.map(extra => ({
       name: extra.name,
       quantity: extra.quantity
     }));
   }
   
-  console.log("📋 Created booking item:", {
-    productCode: bookingItem.productCode,
+  console.log("📋 Created legacy booking item:", {
+    productCode: legacyBookingItem.productCode,
     quantityCount: quantities.length,
     totalQuantity: quantities.reduce((sum, q) => sum + q.value, 0),
     quantities: quantities,
@@ -898,40 +937,19 @@ export function transformBookingDataToRezdy(
     payment.label = payment.type === "CASH" ? "Cash Payment" : "Credit Card Payment";
   }
 
+  // Create items array with only the main booking item (pickup location is now included within it)
+  const legacyItems: RezdyBookingItem[] = [legacyBookingItem];
+
   // Create Rezdy booking - must match official API structure exactly
   const rezdyBooking: RezdyBooking = {
     status: "CONFIRMED", // Required field: booking status
     customer,
-    items: [bookingItem],
+    items: legacyItems,
     payments: [payment],
     comments: "",
     fields: []
   };
   
-  // Handle pickup location according to Rezdy API specification
-  // The pickup location should be a separate item in the items array
-  if (bookingData.session.pickupLocation) {
-    console.log("📍 Processing pickup location for legacy Rezdy format:", {
-      hasPickupLocation: true,
-      pickupLocationData: bookingData.session.pickupLocation,
-      locationName: bookingData.session.pickupLocation.locationName || bookingData.session.pickupLocation.name,
-      locationId: bookingData.session.pickupLocation.id
-    });
-    
-    const pickupItem: any = {
-      pickupLocation: {
-        locationName: bookingData.session.pickupLocation.locationName || bookingData.session.pickupLocation.name || ""
-      }
-    };
-    // Add pickup location as a separate item in the items array
-    rezdyBooking.items.push(pickupItem);
-    console.log("📍 Added pickup location as separate item:", {
-      pickupItem: pickupItem,
-      totalItems: rezdyBooking.items.length
-    });
-  } else {
-    console.log("📍 No pickup location in booking data (legacy format)");
-  }
 
   // Add fields array with all special requirements and additional information
   const fields: RezdyBookingField[] = [];
@@ -997,17 +1015,17 @@ export function transformBookingDataToRezdy(
     customerName: `${customer.firstName} ${customer.lastName}`,
     customerPhone: customer.phone,
     customerEmail: customer.email,
-    productCode: bookingItem.productCode,
-    startTime: bookingItem.startTimeLocal,
+    productCode: legacyBookingItem.productCode,
+    startTime: legacyBookingItem.startTimeLocal,
     quantityCount: quantities.length,
     totalQuantity: quantities.reduce((sum, q) => sum + q.value, 0),
     quantities: quantities,
     paymentsCount: rezdyBooking.payments.length,
     paymentAmount: rezdyBooking.payments[0]?.amount,
     paymentType: rezdyBooking.payments[0]?.type,
-    hasPickupLocation: !!rezdyBooking.pickupLocation,
+    pickupId: legacyBookingItem.pickupId,
     hasFields: rezdyBooking.fields.length > 0,
-    hasParticipants: bookingItem.participants.length > 0,
+    hasParticipants: legacyBookingItem.participants.length > 0,
     commentsLength: rezdyBooking.comments.length
   });
 
@@ -1055,7 +1073,7 @@ export function transformBookingDataToRezdy(
   const finalTotalQuantity = quantities.reduce((sum, q) => sum + q.value, 0);
   if (finalTotalQuantity === 0) {
     console.error("❌ CRITICAL: Total quantity is 0 in final booking!", {
-      quantities: rezdyBooking.items[0]?.quantities
+      quantities: ('quantities' in rezdyBooking.items[0] ? rezdyBooking.items[0]?.quantities : undefined)
     });
     throw new Error("Booking transformation failed: Total quantity must be greater than 0");
   }
@@ -1067,12 +1085,11 @@ export function transformBookingDataToRezdy(
     hasValidStatus: !!rezdyBooking.status && (rezdyBooking.status === "CONFIRMED" || rezdyBooking.status === "PROCESSING"),
     hasValidCustomer: !!(rezdyBooking.customer?.firstName && rezdyBooking.customer?.lastName && rezdyBooking.customer?.email && rezdyBooking.customer?.phone),
     hasValidItems: !!(rezdyBooking.items && rezdyBooking.items.length > 0),
-    hasValidQuantities: !!(rezdyBooking.items?.[0]?.quantities && rezdyBooking.items[0].quantities.length > 0),
+    hasValidQuantities: !!(rezdyBooking.items?.[0] && 'quantities' in rezdyBooking.items[0] && rezdyBooking.items[0].quantities && rezdyBooking.items[0].quantities.length > 0),
     totalQuantity: finalTotalQuantity,
     hasValidPayments: !!(rezdyBooking.payments && rezdyBooking.payments.length > 0),
     paymentTypesValid: rezdyBooking.payments?.every(p => p.type === "CASH" || p.type === "CREDITCARD") || false,
-    hasRequiredArrays: !!(Array.isArray(rezdyBooking.fields) && typeof rezdyBooking.comments === 'string'),
-    pickupLocationPresent: !!rezdyBooking.pickupLocation
+    hasRequiredArrays: !!(Array.isArray(rezdyBooking.fields) && typeof rezdyBooking.comments === 'string')
   });
   
   console.groupEnd();

@@ -14,7 +14,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 import { useRezdyProducts } from '@/hooks/use-rezdy';
 import { RezdyProductCard } from '@/components/rezdy-product-card';
-import { getCategoryBySlug } from '@/lib/constants/categories';
+import { getCategoryById } from '@/lib/constants/categories';
 import { filterProductsByCategory } from '@/lib/utils/category-filters';
 import { RezdyProduct } from '@/lib/types/rezdy';
 
@@ -26,7 +26,7 @@ export default function DayToursRezdyPage() {
   const { data: allProducts, loading, error } = useRezdyProducts(1000, 0);
   
   // Get category configuration
-  const categoryConfig = getCategoryBySlug('day-tours');
+  const categoryConfig = getCategoryById('day-tours');
   
   // Filter products for this category
   const categoryProducts = useMemo(() => {

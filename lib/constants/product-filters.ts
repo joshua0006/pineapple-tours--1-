@@ -67,6 +67,7 @@ export const PRODUCT_FILTER_CONFIG = {
     'Gift Certificate',
     'E-Gift Card',
     'Physical Gift Card',
+    'Custom Tour',
   ],
   
   // Product codes to exclude (exact match)
@@ -81,6 +82,7 @@ export const PRODUCT_FILTER_CONFIG = {
     'MERCHANDISE',
     'TRANSFER',
     'CHARTER',
+    // Note: RENTAL removed - now handled with more sophisticated logic
   ],
   
   // Price-related filters
@@ -111,6 +113,14 @@ export const PRODUCT_FILTER_CONFIG = {
     'demo',
   ],
   
+  // Rental product filters
+  rentalFilters: {
+    // Exclude rental products with repeated price option labels
+    excludeRepeatedQuantityLabels: true,
+    // Minimum number of repeated labels to trigger exclusion
+    repeatedLabelThreshold: 2,
+  },
+
   // Whitelist: Product codes that should always be included, even if they match exclusion rules
   whitelistedProductCodes: [
     // Hop on Hop off products that should not be filtered
@@ -163,4 +173,32 @@ export function shouldExcludeByPrice(price: number | null | undefined): boolean 
   }
   
   return false;
+}
+
+// Helper function to check if a rental product has repeated quantity labels
+export function hasRepeatedQuantityLabels(priceOptions: any[]): boolean {
+  if (!priceOptions || priceOptions.length < 2) {
+    return false;
+  }
+  
+  const { rentalFilters } = PRODUCT_FILTER_CONFIG;
+  if (!rentalFilters.excludeRepeatedQuantityLabels) {
+    return false;
+  }
+  
+  // Count occurrences of each label
+  const labelCounts: Record<string, number> = {};
+  
+  priceOptions.forEach(option => {
+    if (option.label) {
+      const label = option.label.toLowerCase().trim();
+      labelCounts[label] = (labelCounts[label] || 0) + 1;
+    }
+  });
+  
+  // Check if any label appears multiple times, meeting the threshold
+  const quantityLabel = 'quantity';
+  const quantityCount = labelCounts[quantityLabel] || 0;
+  
+  return quantityCount >= rentalFilters.repeatedLabelThreshold;
 }

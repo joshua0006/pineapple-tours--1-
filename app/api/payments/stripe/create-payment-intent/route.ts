@@ -4,8 +4,26 @@ import { BookingFormData } from "@/lib/utils/booking-transform";
 import { bookingDataStore } from "@/lib/services/booking-data-store";
 
 export async function POST(request: NextRequest) {
+  const requestId = `req-${Date.now()}`;
+  console.log(`📨 [${requestId}] Payment intent creation request received:`, {
+    method: request.method,
+    url: request.url,
+    headers: {
+      'content-type': request.headers.get('content-type'),
+      'user-agent': request.headers.get('user-agent')?.substring(0, 100),
+      'origin': request.headers.get('origin')
+    },
+    timestamp: new Date().toISOString()
+  });
+
   try {
     const body = await request.json();
+    console.log(`📋 [${requestId}] Request body structure:`, {
+      hasBookingData: !!body.bookingData,
+      hasOrderNumber: !!body.orderNumber,
+      orderNumber: body.orderNumber,
+      bodyKeys: Object.keys(body)
+    });
 
     // Validate required fields
     if (!body.bookingData || !body.orderNumber) {

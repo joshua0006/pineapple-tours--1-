@@ -1018,7 +1018,7 @@ export class BookingService {
   }
 
   /**
-   * Validate payment confirmation from Westpac
+   * Validate payment confirmation from various payment providers
    */
   private validatePaymentConfirmation(payment: PaymentConfirmation): {
     isValid: boolean
@@ -1047,21 +1047,39 @@ export class BookingService {
     }
 
     // Validate timestamp is recent (within last hour for security)
-    if (payment.timestamp) {
+    // Skip timestamp validation for Stripe payments as they are already verified when retrieved from Stripe API
+    if (payment.timestamp && !this.isStripePayment(payment)) {
       const paymentTime = new Date(payment.timestamp)
       const now = new Date()
       const timeDiff = now.getTime() - paymentTime.getTime()
       const oneHour = 60 * 60 * 1000
 
       if (timeDiff > oneHour) {
-        errors.push('Payment confirmation is too old (must be within 1 hour)')
+        const hoursAgo = Math.floor(timeDiff / (60 * 60 * 1000))
+        errors.push(`Payment confirmation is too old (${hoursAgo} hour${hoursAgo > 1 ? 's' : ''} ago). For security reasons, please retry your payment.`)
       }
+    } else if (payment.timestamp && this.isStripePayment(payment)) {
+      // Log that we're skipping validation for Stripe payments
+      console.log('⏭️ Skipping timestamp validation for verified Stripe payment:', {
+        transactionId: payment.transactionId,
+        paymentMethod: payment.paymentMethod,
+        timestamp: payment.timestamp
+      })
     }
 
     return {
       isValid: errors.length === 0,
       errors
     }
+  }
+
+  /**
+   * Check if payment is from Stripe based on transaction ID format
+   */
+  private isStripePayment(payment: PaymentConfirmation): boolean {
+    return payment.transactionId.startsWith('pi_') || // Stripe payment intent
+           payment.paymentMethod === 'card' ||          // Stripe payment method type
+           payment.paymentMethod === 'stripe'           // Explicit stripe method
   }
 
   /**

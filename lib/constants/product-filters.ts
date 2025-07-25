@@ -67,6 +67,7 @@ export const PRODUCT_FILTER_CONFIG = {
     'Gift Certificate',
     'E-Gift Card',
     'Physical Gift Card',
+    'Custom Tour',
   ],
   
   // Product codes to exclude (exact match)

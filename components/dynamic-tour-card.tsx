@@ -12,6 +12,7 @@
     getValidImages,
     generateProductSlug,
     selectRandomImageForProduct,
+    isHopOnHopOffProduct,
   } from "@/lib/utils/product-utils";
 
   interface DynamicTourCardProps {
@@ -85,8 +86,15 @@
         // Use random selection within the brewery images
         imagesToUse = selectRandomImageForProduct(product, breweryImages);
       } else {
-        // Use random selection for all other products
-        imagesToUse = selectRandomImageForProduct(product, validImages);
+        // Check if this is a hop-on hop-off product
+        const isHopOnHopOff = isHopOnHopOffProduct(product);
+        if (isHopOnHopOff) {
+          // Use random selection for hop-on hop-off products
+          imagesToUse = selectRandomImageForProduct(product, validImages);
+        } else {
+          // Use first image for all other products
+          imagesToUse = validImages;
+        }
       }
     }
     

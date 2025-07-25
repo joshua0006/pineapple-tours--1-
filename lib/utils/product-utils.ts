@@ -1,4 +1,5 @@
 import { RezdyProduct, RezdyImage } from "@/lib/types/rezdy";
+import { getCategoryMatchConfidence } from "@/lib/utils/category-filters";
 
 /**
  * Generate a URL-friendly slug from a Rezdy product
@@ -712,4 +713,14 @@ export function selectRandomImageForProduct(
   const remainingImages = validImages.filter((_, index) => index !== randomIndex);
   
   return [selectedImage, ...remainingImages];
+}
+
+/**
+ * Check if a product is categorized as hop-on hop-off
+ * @param product - The product to check
+ * @returns true if the product is hop-on hop-off, false otherwise
+ */
+export function isHopOnHopOffProduct(product: RezdyProduct): boolean {
+  const confidence = getCategoryMatchConfidence(product, "hop-on-hop-off");
+  return confidence > 0;
 }

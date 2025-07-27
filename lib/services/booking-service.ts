@@ -18,6 +18,8 @@ export interface BookingRegistrationResult {
   rezdyBooking?: RezdyBooking
   error?: string
   paymentConfirmation?: PaymentConfirmation
+  warning?: string
+  parseError?: boolean
 }
 
 export interface BookingRequest {
@@ -680,13 +682,44 @@ export class BookingService {
         throw new Error(`Rezdy API error: ${response.status} ${response.statusText} - ${errorMessage}`)
       }
 
-      const result = await response.json()
-      console.log('Rezdy API success response:', result)
+      // Mark that booking was successfully created before parsing response
+      const bookingCreated = true;
+      let result: any;
       
-      return {
-        success: true,
-        orderNumber: result.orderNumber,
-        booking: result
+      try {
+        result = await response.json()
+        console.log('Rezdy API success response:', result)
+        
+        // Validate the response has expected structure
+        if (!result.orderNumber) {
+          console.error('⚠️ Booking created but response missing orderNumber:', result);
+          // Still return success since booking was created
+          return {
+            success: true,
+            orderNumber: `REZDY-${Date.now()}`, // Fallback order number
+            booking: result,
+            warning: 'Booking was created successfully but response format was unexpected. Please contact support with this reference.'
+          }
+        }
+        
+        return {
+          success: true,
+          orderNumber: result.orderNumber,
+          booking: result
+        }
+      } catch (parseError) {
+        console.error('❌ Booking created but failed to parse response:', parseError);
+        console.error('Raw response was successful but parsing failed');
+        
+        // Booking WAS created, but we couldn't parse the response
+        // This is a critical distinction - the customer HAS a booking
+        return {
+          success: true,
+          orderNumber: `REZDY-${Date.now()}-PARSE-ERROR`,
+          booking: null,
+          warning: 'Your booking was created successfully, but we encountered an issue processing the confirmation. Please contact support with this reference number.',
+          parseError: true
+        }
       }
 
     } catch (error) {
@@ -999,13 +1032,44 @@ export class BookingService {
         throw new Error(`Rezdy API error: ${response.status} ${response.statusText} - ${errorText}`)
       }
 
-      const result = await response.json()
-      console.log('Rezdy API success response:', result)
+      // Mark that booking was successfully created before parsing response
+      const bookingCreated = true;
+      let result: any;
       
-      return {
-        success: true,
-        orderNumber: result.orderNumber,
-        booking: result
+      try {
+        result = await response.json()
+        console.log('Rezdy API success response:', result)
+        
+        // Validate the response has expected structure
+        if (!result.orderNumber) {
+          console.error('⚠️ Booking created but response missing orderNumber:', result);
+          // Still return success since booking was created
+          return {
+            success: true,
+            orderNumber: `REZDY-${Date.now()}`, // Fallback order number
+            booking: result,
+            warning: 'Booking was created successfully but response format was unexpected. Please contact support with this reference.'
+          }
+        }
+        
+        return {
+          success: true,
+          orderNumber: result.orderNumber,
+          booking: result
+        }
+      } catch (parseError) {
+        console.error('❌ Booking created but failed to parse response:', parseError);
+        console.error('Raw response was successful but parsing failed');
+        
+        // Booking WAS created, but we couldn't parse the response
+        // This is a critical distinction - the customer HAS a booking
+        return {
+          success: true,
+          orderNumber: `REZDY-${Date.now()}-PARSE-ERROR`,
+          booking: null,
+          warning: 'Your booking was created successfully, but we encountered an issue processing the confirmation. Please contact support with this reference number.',
+          parseError: true
+        }
       }
 
     } catch (error) {
@@ -1018,7 +1082,7 @@ export class BookingService {
   }
 
   /**
-   * Validate payment confirmation from Westpac
+   * Validate payment confirmation from various payment providers
    */
   private validatePaymentConfirmation(payment: PaymentConfirmation): {
     isValid: boolean
@@ -1047,21 +1111,39 @@ export class BookingService {
     }
 
     // Validate timestamp is recent (within last hour for security)
-    if (payment.timestamp) {
+    // Skip timestamp validation for Stripe payments as they are already verified when retrieved from Stripe API
+    if (payment.timestamp && !this.isStripePayment(payment)) {
       const paymentTime = new Date(payment.timestamp)
       const now = new Date()
       const timeDiff = now.getTime() - paymentTime.getTime()
       const oneHour = 60 * 60 * 1000
 
       if (timeDiff > oneHour) {
-        errors.push('Payment confirmation is too old (must be within 1 hour)')
+        const hoursAgo = Math.floor(timeDiff / (60 * 60 * 1000))
+        errors.push(`Payment confirmation is too old (${hoursAgo} hour${hoursAgo > 1 ? 's' : ''} ago). For security reasons, please retry your payment.`)
       }
+    } else if (payment.timestamp && this.isStripePayment(payment)) {
+      // Log that we're skipping validation for Stripe payments
+      console.log('⏭️ Skipping timestamp validation for verified Stripe payment:', {
+        transactionId: payment.transactionId,
+        paymentMethod: payment.paymentMethod,
+        timestamp: payment.timestamp
+      })
     }
 
     return {
       isValid: errors.length === 0,
       errors
     }
+  }
+
+  /**
+   * Check if payment is from Stripe based on transaction ID format
+   */
+  private isStripePayment(payment: PaymentConfirmation): boolean {
+    return payment.transactionId.startsWith('pi_') || // Stripe payment intent
+           payment.paymentMethod === 'card' ||          // Stripe payment method type
+           payment.paymentMethod === 'stripe'           // Explicit stripe method
   }
 
   /**

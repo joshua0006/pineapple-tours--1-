@@ -48,9 +48,21 @@ export class StripePaymentService {
   static async createPaymentIntent(
     paymentRequest: StripePaymentRequest
   ): Promise<StripePaymentResult> {
+    const debugId = `${paymentRequest.orderNumber}-${Date.now()}`;
+    
+    console.log(`🚀 [${debugId}] Starting Stripe payment intent creation:`, {
+      orderNumber: paymentRequest.orderNumber,
+      amount: paymentRequest.amount,
+      currency: paymentRequest.currency,
+      customerEmail: paymentRequest.customerInfo.email,
+      hasMetadata: !!paymentRequest.metadata,
+      timestamp: new Date().toISOString()
+    });
+
     try {
       // Validate amount
       if (paymentRequest.amount <= 0) {
+        console.error(`❌ [${debugId}] Invalid payment amount:`, paymentRequest.amount);
         return {
           success: false,
           error: "Invalid payment amount",
@@ -60,6 +72,7 @@ export class StripePaymentService {
       // Create customer if email is provided
       let customerId: string | undefined;
       if (paymentRequest.customerInfo.email) {
+        console.log(`👤 [${debugId}] Creating Stripe customer...`);
         try {
           const customer = await stripe.customers.create({
             email: paymentRequest.customerInfo.email,
@@ -70,15 +83,24 @@ export class StripePaymentService {
             },
           });
           customerId = customer.id;
+          console.log(`✅ [${debugId}] Customer created successfully:`, customerId);
         } catch (customerError) {
-          console.warn(
-            "Failed to create customer, continuing without:",
-            customerError
-          );
+          console.warn(`⚠️ [${debugId}] Failed to create customer, continuing without:`, {
+            error: customerError instanceof Error ? customerError.message : customerError,
+            stack: customerError instanceof Error ? customerError.stack?.substring(0, 200) : undefined
+          });
         }
       }
 
       // Create payment intent
+      console.log(`💳 [${debugId}] Creating Stripe payment intent with params:`, {
+        amount: paymentRequest.amount,
+        currency: paymentRequest.currency.toLowerCase(),
+        customerId: customerId || 'none',
+        hasAutomaticPaymentMethods: true,
+        allowRedirects: 'never'
+      });
+
       const paymentIntent = await stripe.paymentIntents.create({
         amount: paymentRequest.amount,
         currency: paymentRequest.currency.toLowerCase(),
@@ -98,15 +120,39 @@ export class StripePaymentService {
         receipt_email: paymentRequest.customerInfo.email,
       });
 
+      console.log(`✅ [${debugId}] Payment intent created successfully:`, {
+        id: paymentIntent.id,
+        status: paymentIntent.status,
+        amount: paymentIntent.amount,
+        currency: paymentIntent.currency,
+        hasClientSecret: !!paymentIntent.client_secret,
+        clientSecretPrefix: paymentIntent.client_secret?.substring(0, 20) + '...'
+      });
+
       return {
         success: true,
         paymentIntent,
         clientSecret: paymentIntent.client_secret!,
       };
     } catch (error: unknown) {
-      console.error("Stripe payment intent creation error:", error);
+      console.error(`💥 [${debugId}] Stripe payment intent creation error:`, {
+        error: error instanceof Error ? error.message : error,
+        stack: error instanceof Error ? error.stack?.substring(0, 500) : undefined,
+        timestamp: new Date().toISOString()
+      });
 
       if (error instanceof Stripe.errors.StripeError) {
+        console.error(`🔥 [${debugId}] Stripe-specific error:`, {
+          type: error.type,
+          code: error.code,
+          statusCode: error.statusCode,
+          message: error.message,
+          requestId: error.request_id,
+          charge: error.charge,
+          decline_code: error.decline_code,
+          payment_intent: error.payment_intent
+        });
+
         return {
           success: false,
           error: error.message,

@@ -4,7 +4,7 @@
  */
 
 export interface StripeErrorDetails {
-  errorType: 'initialization' | 'payment_intent' | 'payment_confirmation' | 'element_loading' | 'api_error';
+  errorType: 'initialization' | 'payment_intent' | 'payment_confirmation' | 'element_loading' | 'api_error' | 'network_error' | 'retry_exhausted';
   errorCode?: string;
   errorMessage: string;
   context: {
@@ -16,9 +16,20 @@ export interface StripeErrorDetails {
       userAgent: string;
       language: string;
       platform: string;
+      cookieEnabled: boolean;
+      onLine: boolean;
+      connection?: {
+        effectiveType?: string;
+        downlink?: number;
+        rtt?: number;
+      };
     };
     timestamp: string;
     url: string;
+    sessionId?: string;
+    paymentIntentId?: string;
+    retryCount?: number;
+    isRetry?: boolean;
   };
   additionalData?: Record<string, any>;
 }
@@ -46,6 +57,13 @@ export class StripeErrorMonitor {
           userAgent: navigator.userAgent,
           language: navigator.language,
           platform: navigator.platform,
+          cookieEnabled: navigator.cookieEnabled,
+          onLine: navigator.onLine,
+          connection: (navigator as any).connection ? {
+            effectiveType: (navigator as any).connection.effectiveType,
+            downlink: (navigator as any).connection.downlink,
+            rtt: (navigator as any).connection.rtt,
+          } : undefined,
         } : undefined,
         ...errorDetails.context,
       },
@@ -77,6 +95,8 @@ export class StripeErrorMonitor {
       payment_confirmation: '❌',
       element_loading: '⚠️',
       api_error: '🔥',
+      network_error: '📡',
+      retry_exhausted: '💀',
     };
     return emojiMap[errorType] || '💥';
   }
@@ -165,6 +185,24 @@ export const logStripeError = {
       errorType: 'api_error',
       errorMessage: message,
       errorCode,
+      additionalData,
+    });
+  },
+
+  networkError: (message: string, orderNumber?: string, retryCount?: number, additionalData?: Record<string, any>) => {
+    StripeErrorMonitor.getInstance().logError({
+      errorType: 'network_error',
+      errorMessage: message,
+      context: { orderNumber, retryCount, isRetry: (retryCount || 0) > 0 },
+      additionalData,
+    });
+  },
+
+  retryExhausted: (message: string, orderNumber?: string, maxRetries?: number, additionalData?: Record<string, any>) => {
+    StripeErrorMonitor.getInstance().logError({
+      errorType: 'retry_exhausted',
+      errorMessage: message,
+      context: { orderNumber, retryCount: maxRetries },
       additionalData,
     });
   },

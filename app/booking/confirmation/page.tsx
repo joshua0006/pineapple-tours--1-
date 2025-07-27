@@ -28,6 +28,8 @@ export default function BookingConfirmationPage() {
   const orderNumber = searchParams.get("orderNumber");
   // transactionId is optional – fall back to empty string if not provided
   const transactionId = searchParams.get("transactionId") || "";
+  const warning = searchParams.get("warning");
+  const bookingId = searchParams.get("bookingId");
 
   const [bookingDetails, setBookingDetails] = useState<BookingDetails | null>(
     null
@@ -264,6 +266,33 @@ export default function BookingConfirmationPage() {
             🎉 Congratulations! Your adventure awaits. We've sent your booking confirmation to your email.
           </p>
         </motion.div>
+
+        {/* Warning Message if present */}
+        {warning && (
+          <motion.div 
+            className="mt-6 mb-8 mx-auto max-w-2xl"
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.5, delay: 0.5 }}
+          >
+            <Card className="bg-yellow-50 border-yellow-200">
+              <CardContent className="pt-4">
+                <div className="flex items-start gap-3">
+                  <AlertCircle className="h-5 w-5 text-yellow-600 mt-0.5 flex-shrink-0" />
+                  <div className="text-sm">
+                    <p className="text-yellow-800 font-medium mb-1">Important Note:</p>
+                    <p className="text-yellow-700">{decodeURIComponent(warning)}</p>
+                    {bookingId && (
+                      <p className="text-yellow-700 mt-2">
+                        <span className="font-medium">Reference Number:</span> {bookingId}
+                      </p>
+                    )}
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </motion.div>
+        )}
 
    
 

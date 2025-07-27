@@ -300,14 +300,36 @@ export default function GuestDetailsPage() {
           }
         }
         
-        // Redirect to confirmation page
-        router.push(
-          `/booking/confirmation?orderNumber=${orderNumber}&transactionId=${result.transactionId || sessionId}`
-        );
+        // Check if there's a warning (booking created but with issues)
+        if (result.warning) {
+          console.warn("⚠️ Booking created with warning:", result.message);
+          // Still redirect to confirmation, but the confirmation page should show the warning
+          router.push(
+            `/booking/confirmation?orderNumber=${orderNumber}&transactionId=${result.transactionId || sessionId}&warning=${encodeURIComponent(result.message)}&bookingId=${result.bookingId}`
+          );
+        } else {
+          // Normal success - redirect to confirmation page
+          router.push(
+            `/booking/confirmation?orderNumber=${orderNumber}&transactionId=${result.transactionId || sessionId}`
+          );
+        }
       } else {
-        setSubmitErrors([
-          result.error || "Failed to complete booking. Please try again.",
-        ]);
+        // Check if payment was successful but booking failed
+        if (result.paymentInfo) {
+          setSubmitErrors([
+            result.error || "Failed to complete booking.",
+            "",
+            "IMPORTANT: Your payment was processed successfully.",
+            `Transaction ID: ${result.paymentInfo.transactionId}`,
+            `Order Number: ${result.paymentInfo.orderNumber}`,
+            "",
+            result.paymentInfo.message || "Please contact support with the above information."
+          ]);
+        } else {
+          setSubmitErrors([
+            result.error || "Failed to complete booking. Please try again.",
+          ]);
+        }
       }
     } catch (error) {
       console.error("Error submitting guest details:", error);

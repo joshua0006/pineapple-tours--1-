@@ -35,15 +35,16 @@ export function ProductCardSkeleton() {
         {/* Image skeleton */}
         <BreathingSkeleton className="absolute inset-0" />
 
-        {/* Content skeleton */}
-        <div className="absolute bottom-0 left-0 right-0 p-4 sm:p-6 bg-gradient-to-t from-black/90 to-transparent">
-          {/* Title skeleton */}
-          <div className="mb-3 sm:mb-4 space-y-2">
-            <Skeleton className="h-5 sm:h-6 w-3/4 bg-gray-600/50" />
-            <Skeleton className="h-4 sm:h-5 w-1/2 bg-gray-600/50" />
+        {/* Title skeleton at top */}
+        <div className="absolute top-0 left-0 right-0 p-4 sm:p-6">
+          <div className="space-y-2">
+            <Skeleton className="h-5 sm:h-6 w-3/4 bg-white/25" />
+            <Skeleton className="h-4 sm:h-5 w-1/2 bg-white/25" />
           </div>
+        </div>
 
-          {/* Price and button skeleton */}
+        {/* Price and button skeleton at bottom */}
+        <div className="absolute bottom-0 left-0 right-0 p-4 sm:p-6 bg-gradient-to-t from-black/90 to-transparent">
           <div className="flex items-end justify-between gap-3">
             <div className="flex flex-col space-y-2">
               <Skeleton className="h-3 w-20 bg-gray-600/50" />
@@ -226,7 +227,7 @@ export function CategoriesSectionSkeleton() {
         </div>
 
         {/* Category Grid Skeleton */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6 lg:gap-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-4 sm:gap-6 lg:gap-8">
           {Array.from({ length: 8 }).map((_, index) => (
             <CategoryCardSkeleton key={index} />
           ))}

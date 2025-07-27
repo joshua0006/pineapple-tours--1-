@@ -6,17 +6,13 @@ import {
   Search,
   Filter,
   MapPin,
-  Star,
   X,
   ArrowLeft,
-  RefreshCw,
-  Calendar,
   ChevronLeft,
   ChevronRight,
   Heart,
   Globe,
   Award,
-  Clock,
   Users,
   CalendarDays,
 } from "lucide-react";
@@ -31,9 +27,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Alert, AlertDescription } from "@/components/ui/alert";
 import { DatePicker } from "@/components/ui/date-picker";
 import { Label } from "@/components/ui/label";
 import { ProductFilterService } from "@/lib/services/product-filter-service";
@@ -95,16 +89,12 @@ export default function ToursPage() {
   // Fetch the entire catalogue (cached) once; we will paginate client-side
   const { products, loading, error, refreshProducts } = useAllProducts();
 
-  // State for filtering
-  const [isFiltering, setIsFiltering] = useState(false);
 
   // Enhanced client-side filtering using city-based filtering
   const {
     filteredProducts,
-    totalFilteredCount,
     currentPage,
     totalPages,
-    hasMore,
   } = useMemo(() => {
     let filtered = [...products];
 
@@ -163,14 +153,11 @@ export default function ToursPage() {
     const paginated = filtered.slice(offset, offset + limit);
 
     const totalPages = Math.max(1, Math.ceil(filtered.length / limit));
-    const hasMore = currentPage < totalPages;
 
     return {
       filteredProducts: paginated,
-      totalFilteredCount: paginated.length,
       currentPage,
       totalPages,
-      hasMore,
     };
   }, [products, filters]);
 
@@ -358,10 +345,10 @@ export default function ToursPage() {
             <div className="relative max-w-2xl mx-auto">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
-                placeholder="Search tours, locations, activities..."
+                placeholder="Search tours..."
                 value={localQuery}
                 onChange={(e) => setLocalQuery(e.target.value)}
-                className="pl-10 pr-20 h-12 text-base"
+                className="pl-10 pr-20 h-10 md:h-12"
               />
               <Button
                 type="submit"
@@ -376,8 +363,8 @@ export default function ToursPage() {
       </section>
 
       {/* Main Content - 2 Column Layout */}
-      <section className="py-8">
-        <div className="container">
+      <section className="py-8 my-6">
+        <div className="container-full">
           <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
             {/* Left Sidebar - Filters */}
             <div className="lg:col-span-1">
@@ -626,7 +613,7 @@ export default function ToursPage() {
                 <>
                   {hasResults ? (
                     <>
-                      <div className="grid gap-8 sm:grid-cols-1 lg:grid-cols-2 xl:grid-cols-2 2xl:grid-cols-3">
+                      <div className="grid gap-8 sm:grid-cols-1 lg:grid-cols-2 2xl:grid-cols-3 ">
                         {filteredProducts.map((product: RezdyProduct) => (
                           <DynamicTourCard
                             key={product.productCode}

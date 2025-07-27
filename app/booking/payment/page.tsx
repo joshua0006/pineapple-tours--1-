@@ -64,6 +64,40 @@ const initializeStripe = () => {
 
 const stripePromise = initializeStripe();
 
+// Helper function to determine if an error is retryable
+const isRetryableError = (error: any): boolean => {
+  // Network errors
+  if (error?.name === 'TypeError' && error?.message?.includes('fetch')) {
+    return true;
+  }
+  
+  // Network timeout errors
+  if (error?.name === 'AbortError' || error?.message?.includes('timeout')) {
+    return true;
+  }
+  
+  // Temporary server errors (5xx)
+  if (error?.status >= 500 && error?.status < 600) {
+    return true;
+  }
+  
+  // Specific Stripe errors that might be temporary
+  if (error?.code === 'api_connection_error' || 
+      error?.code === 'rate_limit' ||
+      error?.type === 'api_connection_error') {
+    return true;
+  }
+  
+  // DNS or connection errors
+  if (error?.message?.includes('ENOTFOUND') || 
+      error?.message?.includes('ECONNREFUSED') ||
+      error?.message?.includes('ECONNRESET')) {
+    return true;
+  }
+  
+  return false;
+};
+
 function PaymentPageContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -95,21 +129,26 @@ function PaymentPageContent() {
     createPaymentIntent();
   }, [orderNumber, amount, isCreatingPaymentIntent, clientSecret]);
 
-  const createPaymentIntent = async () => {
+  const createPaymentIntent = async (retryCount = 0, maxRetries = 3) => {
     // Prevent multiple concurrent calls
-    if (isCreatingPaymentIntent) {
+    if (isCreatingPaymentIntent && retryCount === 0) {
       console.log("🔄 Payment intent creation already in progress, skipping...");
       return;
     }
 
     setIsCreatingPaymentIntent(true);
     setIsLoadingPaymentIntent(true);
-    setError("");
+    
+    // Only clear error on first attempt, keep it for retries to show user what's happening
+    if (retryCount === 0) {
+      setError("");
+    }
 
-    console.log("🔄 Creating payment intent:", {
+    console.log(`🔄 Creating payment intent (attempt ${retryCount + 1}/${maxRetries + 1}):`, {
       orderNumber,
       amount,
       productName,
+      retryCount,
       timestamp: new Date().toISOString()
     });
 
@@ -191,6 +230,8 @@ function PaymentPageContent() {
         }
         
         setClientSecret(result.clientSecret);
+        setIsLoadingPaymentIntent(false);
+        setIsCreatingPaymentIntent(false);
         console.log("✅ Payment intent created successfully");
       } else {
         const errorMsg = result.error || "Failed to initialize payment. Please try again.";
@@ -199,20 +240,63 @@ function PaymentPageContent() {
         setError(errorMsg);
       }
     } catch (error: any) {
-      console.error("💥 Payment intent creation exception:", {
+      console.error(`💥 Payment intent creation exception (attempt ${retryCount + 1}):`, {
         name: error?.name,
         message: error?.message,
-        stack: error?.stack?.substring(0, 500)
+        stack: error?.stack?.substring(0, 500),
+        retryCount,
+        willRetry: retryCount < maxRetries
       });
+      
       logStripeError.apiError(
-        `Payment intent creation failed: ${error?.message}`,
+        `Payment intent creation failed (attempt ${retryCount + 1}): ${error?.message}`,
         error?.code,
-        { orderNumber: orderNumber || "unknown", amount, errorName: error?.name }
+        { 
+          orderNumber: orderNumber || "unknown", 
+          amount, 
+          errorName: error?.name,
+          retryCount,
+          willRetry: retryCount < maxRetries
+        }
       );
-      setError("Failed to initialize payment. Please try again.");
+
+      // Retry logic for recoverable errors
+      if (retryCount < maxRetries && isRetryableError(error)) {
+        logStripeError.networkError(
+          `Network error during payment intent creation, retrying...`,
+          orderNumber || "unknown",
+          retryCount,
+          { error: error?.message, willRetry: true }
+        );
+        
+        console.log(`🔄 Retrying payment intent creation in ${(retryCount + 1) * 1000}ms...`);
+        setTimeout(() => {
+          createPaymentIntent(retryCount + 1, maxRetries);
+        }, (retryCount + 1) * 1000); // Exponential backoff: 1s, 2s, 3s
+        return;
+      }
+
+      // Final error after all retries
+      if (retryCount >= maxRetries) {
+        logStripeError.retryExhausted(
+          `Payment intent creation failed after ${maxRetries + 1} attempts`,
+          orderNumber || "unknown",
+          maxRetries,
+          { finalError: error?.message, errorType: error?.name }
+        );
+      }
+
+      const errorMessage = retryCount >= maxRetries 
+        ? `Failed to initialize payment after ${maxRetries + 1} attempts. Please check your connection and try again.`
+        : "Failed to initialize payment. Please try again.";
+      
+      setError(errorMessage);
     } finally {
-      setIsLoadingPaymentIntent(false);
-      setIsCreatingPaymentIntent(false);
+      // Only set loading states to false if we're not retrying
+      if (retryCount >= maxRetries || clientSecret) {
+        setIsLoadingPaymentIntent(false);
+        setIsCreatingPaymentIntent(false);
+      }
     }
   };
 
@@ -300,7 +384,7 @@ function PaymentPageContent() {
                   <ArrowLeft className="h-4 w-4 mr-2" />
                   Back to Booking
                 </Button>
-                <Button onClick={createPaymentIntent}>
+                <Button onClick={() => createPaymentIntent()}>
                   Try Again
                 </Button>
               </div>

@@ -230,6 +230,8 @@ function PaymentPageContent() {
         }
         
         setClientSecret(result.clientSecret);
+        setIsLoadingPaymentIntent(false);
+        setIsCreatingPaymentIntent(false);
         console.log("✅ Payment intent created successfully");
       } else {
         const errorMsg = result.error || "Failed to initialize payment. Please try again.";

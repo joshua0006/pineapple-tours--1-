@@ -18,15 +18,16 @@ export function TourGridSkeleton({ count = 6 }: TourGridSkeletonProps) {
           {/* Inner border */}
           <div className="absolute inset-0 rounded-2xl ring-1 ring-white/10" />
           
-          {/* Content skeleton at bottom */}
-          <div className="absolute bottom-0 left-0 right-0 p-6 space-y-5">
-            {/* Title skeleton - 2 lines */}
+          {/* Title skeleton at top */}
+          <div className="absolute top-0 left-0 right-0 p-6">
             <div className="space-y-3">
               <div className="h-8 bg-white/25 rounded-lg backdrop-blur-sm" />
               <div className="h-8 bg-white/25 rounded-lg w-3/4 backdrop-blur-sm" />
             </div>
-            
-            {/* Button skeletons */}
+          </div>
+          
+          {/* Button skeletons at bottom */}
+          <div className="absolute bottom-0 left-0 right-0 p-6">
             <div className="flex gap-3">
               <div className="h-14 bg-white/15 rounded-xl flex-1 border-2 border-white/20 backdrop-blur-md" />
               <div className="h-14 bg-white/25 rounded-xl flex-1 backdrop-blur-md" />

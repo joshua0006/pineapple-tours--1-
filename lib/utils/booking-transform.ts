@@ -4,6 +4,7 @@ import {
   RezdyProductBookingItem,
   RezdyPickupLocationItem,
   RezdyParticipant,
+  RezdyParticipantField,
   RezdyBookingExtra,
   RezdyCustomer,
   RezdyQuantity,
@@ -331,6 +332,57 @@ export function aggregateParticipants(
 }
 
 /**
+ * Creates properly structured participant fields for Rezdy API
+ * Filters out empty fields to ensure clean data structure
+ */
+export function createRezdyParticipantFields(
+  guest: BookingFormData["guests"][0]
+): RezdyParticipantField[] {
+  const fields: RezdyParticipantField[] = [];
+  
+  // Always include required name fields
+  if (guest.firstName && guest.firstName.trim()) {
+    fields.push({ label: "First Name", value: guest.firstName.trim() });
+  }
+  
+  if (guest.lastName && guest.lastName.trim()) {
+    fields.push({ label: "Last Name", value: guest.lastName.trim() });
+  }
+  
+  // Only include certification fields if they have values
+  if (guest.certificationLevel && guest.certificationLevel.trim()) {
+    fields.push({ label: "Certification level", value: guest.certificationLevel.trim() });
+  }
+  
+  if (guest.certificationNumber && guest.certificationNumber.trim()) {
+    fields.push({ label: "Certification number", value: guest.certificationNumber.trim() });
+  }
+  
+  if (guest.certificationAgency && guest.certificationAgency.trim()) {
+    fields.push({ label: "Certification agency", value: guest.certificationAgency.trim() });
+  }
+  
+  // Only include barcode if it has a value
+  if (guest.barcode && guest.barcode.trim()) {
+    fields.push({ label: "Barcode", value: guest.barcode.trim() });
+  }
+  
+  // Include any custom field values that have content
+  if (guest.customFieldValues) {
+    Object.entries(guest.customFieldValues).forEach(([key, value]) => {
+      if (value && typeof value === 'string' && value.trim()) {
+        fields.push({ label: key, value: value.trim() });
+      }
+    });
+  }
+  
+  console.log(`Created ${fields.length} participant fields for ${guest.firstName} ${guest.lastName}:`, 
+    fields.map(f => `${f.label}: ${f.value}`));
+  
+  return fields;
+}
+
+/**
  * Transforms selected extras to Rezdy booking extras format
  */
 export function transformExtrasToRezdy(
@@ -507,20 +559,31 @@ export function transformBookingDataToDirectRezdy(
   }
 
   // Create participants array with detailed fields for each guest
+  // Only include fields that have actual values to ensure proper Rezdy display
   if (bookingData.guests && bookingData.guests.length > 0) {
-    bookingItem.participants = bookingData.guests.map(guest => ({
-      fields: [
-        { label: "First Name", value: guest.firstName },
-        { label: "Last Name", value: guest.lastName },
-        { label: "Certification level", value: guest.certificationLevel || "" },
-        { label: "Certification number", value: guest.certificationNumber || "" },
-        { label: "Certification agency", value: guest.certificationAgency || "" },
-        { label: "Barcode", value: guest.barcode || "" }
-      ]
-    }));
+    bookingItem.participants = bookingData.guests.map(guest => {
+      const fields = createRezdyParticipantFields(guest);
+      
+      // Ensure we have at least name fields for valid participant
+      if (fields.length === 0 || !fields.some(f => f.label === "First Name") || !fields.some(f => f.label === "Last Name")) {
+        console.warn(`Participant ${guest.firstName} ${guest.lastName} missing required fields, creating minimal participant`);
+        return {
+          fields: [
+            { label: "First Name", value: guest.firstName || "Guest" },
+            { label: "Last Name", value: guest.lastName || "Unknown" }
+          ]
+        };
+      }
+      
+      return { fields };
+    });
+    
+    console.log(`Created ${bookingItem.participants.length} participants with field counts:`, 
+      bookingItem.participants.map((p, i) => `Participant ${i + 1}: ${p.fields.length} fields`));
   } else {
     // Ensure participants array exists even if empty to match API structure
     bookingItem.participants = [];
+    console.log('No individual guests provided, participants array is empty');
   }
 
   // Add extras if available
@@ -778,20 +841,31 @@ export function transformBookingDataToRezdy(
 
   // Create participants array with detailed fields for each guest
   // This matches the exact structure from the Rezdy API specification
+  // Only include fields that have actual values to ensure proper Rezdy display
   if (bookingData.guests && bookingData.guests.length > 0) {
-    legacyBookingItem.participants = bookingData.guests.map(guest => ({
-      fields: [
-        { label: "First Name", value: guest.firstName },
-        { label: "Last Name", value: guest.lastName },
-        { label: "Certification level", value: guest.certificationLevel || "" },
-        { label: "Certification number", value: guest.certificationNumber || "" },
-        { label: "Certification agency", value: guest.certificationAgency || "" },
-        { label: "Barcode", value: guest.barcode || "" }
-      ]
-    }));
+    legacyBookingItem.participants = bookingData.guests.map(guest => {
+      const fields = createRezdyParticipantFields(guest);
+      
+      // Ensure we have at least name fields for valid participant
+      if (fields.length === 0 || !fields.some(f => f.label === "First Name") || !fields.some(f => f.label === "Last Name")) {
+        console.warn(`Legacy participant ${guest.firstName} ${guest.lastName} missing required fields, creating minimal participant`);
+        return {
+          fields: [
+            { label: "First Name", value: guest.firstName || "Guest" },
+            { label: "Last Name", value: guest.lastName || "Unknown" }
+          ]
+        };
+      }
+      
+      return { fields };
+    });
+    
+    console.log(`Created ${legacyBookingItem.participants.length} legacy participants with field counts:`, 
+      legacyBookingItem.participants.map((p, i) => `Participant ${i + 1}: ${p.fields.length} fields`));
   } else {
     // Ensure participants array exists even if empty to match API structure
     legacyBookingItem.participants = [];
+    console.log('No individual guests provided for legacy booking, participants array is empty');
   }
 
   // Add extras if available

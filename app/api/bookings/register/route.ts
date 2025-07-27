@@ -6,6 +6,24 @@ import { bookingDataStore } from "@/lib/services/booking-data-store";
 import { RezdyDirectBookingRequest } from "@/lib/types/rezdy";
 import { bookingLogger } from "@/lib/utils/booking-debug-logger";
 
+// Simple in-memory store to track recent booking attempts
+// In production, this should be Redis or similar
+const recentBookingAttempts = new Map<string, {
+  timestamp: number;
+  bookingId?: string;
+  status: 'pending' | 'completed' | 'failed';
+}>();
+
+// Clean up old entries every hour
+setInterval(() => {
+  const oneHourAgo = Date.now() - (60 * 60 * 1000);
+  for (const [key, value] of recentBookingAttempts.entries()) {
+    if (value.timestamp < oneHourAgo) {
+      recentBookingAttempts.delete(key);
+    }
+  }
+}, 60 * 60 * 1000);
+
 // Helper function to check if request is in direct Rezdy format
 function isDirectRezdyFormat(body: unknown): body is RezdyDirectBookingRequest {
   const obj = body as Record<string, unknown>;
@@ -19,6 +37,8 @@ function isDirectRezdyFormat(body: unknown): body is RezdyDirectBookingRequest {
 }
 
 export async function POST(request: NextRequest) {
+  let attemptKey: string | undefined;
+  
   try {
     // Initialize booking logging session
     const loggingSessionId = bookingLogger.startSession('booking_attempt');
@@ -46,8 +66,24 @@ export async function POST(request: NextRequest) {
       if (result.success) {
         console.log("✅ Direct booking registration successful:", {
           bookingId: result.orderNumber,
-          resellerReference: body.resellerReference
+          resellerReference: body.resellerReference,
+          hasWarning: !!result.warning,
+          parseError: result.parseError
         });
+        
+        // Check if there's a warning (post-creation issue)
+        if (result.warning) {
+          console.warn("⚠️ Direct booking created with warning:", result.warning);
+          bookingLogger.endSession('completed', `Direct booking successful with warning: ${result.orderNumber}`);
+          
+          return NextResponse.json({
+            success: true,
+            bookingId: result.orderNumber,
+            message: result.warning,
+            warning: true,
+            requiresSupport: result.parseError
+          });
+        }
         
         bookingLogger.endSession('completed', `Direct booking successful: ${result.orderNumber}`);
         return NextResponse.json({
@@ -89,6 +125,50 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       );
     }
+
+    // Check for duplicate booking attempts
+    const attemptKey = `${orderNumber}-${sessionId || 'no-session'}`;
+    const existingAttempt = recentBookingAttempts.get(attemptKey);
+    
+    if (existingAttempt) {
+      const timeSinceAttempt = Date.now() - existingAttempt.timestamp;
+      
+      // If booking was completed within last 5 minutes, return the existing booking
+      if (existingAttempt.status === 'completed' && timeSinceAttempt < 5 * 60 * 1000) {
+        console.log("🔁 Duplicate booking attempt detected, returning existing booking:", {
+          orderNumber,
+          bookingId: existingAttempt.bookingId,
+          timeSinceAttempt: Math.round(timeSinceAttempt / 1000) + 's'
+        });
+        
+        return NextResponse.json({
+          success: true,
+          bookingId: existingAttempt.bookingId || orderNumber,
+          transactionId: sessionId,
+          message: "Booking already completed successfully",
+          duplicate: true
+        });
+      }
+      
+      // If booking is still pending and it's been less than 30 seconds, reject
+      if (existingAttempt.status === 'pending' && timeSinceAttempt < 30 * 1000) {
+        console.log("⏳ Booking still in progress, rejecting duplicate:", {
+          orderNumber,
+          timeSinceAttempt: Math.round(timeSinceAttempt / 1000) + 's'
+        });
+        
+        return NextResponse.json(
+          { error: "Booking is already being processed. Please wait a moment and check your email for confirmation." },
+          { status: 409 }
+        );
+      }
+    }
+    
+    // Mark this attempt as pending
+    recentBookingAttempts.set(attemptKey, {
+      timestamp: Date.now(),
+      status: 'pending'
+    });
 
     const formData: BookingFormData = bookingData;
 
@@ -342,12 +422,36 @@ export async function POST(request: NextRequest) {
       if (bookingResult.success) {
         console.log("✅ Booking registration successful:", {
           bookingId: bookingResult.orderNumber,
-          transactionId: paymentConfirmation.transactionId
+          transactionId: paymentConfirmation.transactionId,
+          hasWarning: !!bookingResult.warning,
+          parseError: bookingResult.parseError
         });
         
         // Clear booking data from server store after successful registration
         await bookingDataStore.remove(orderNumber);
         console.log("🧹 Cleared booking data from server store for order:", orderNumber);
+        
+        // Update attempt status to completed
+        recentBookingAttempts.set(attemptKey, {
+          timestamp: Date.now(),
+          status: 'completed',
+          bookingId: bookingResult.orderNumber
+        });
+        
+        // Check if there's a warning (post-creation issue)
+        if (bookingResult.warning) {
+          console.warn("⚠️ Booking created with warning:", bookingResult.warning);
+          bookingLogger.endSession('completed', `Legacy booking successful with warning: ${bookingResult.orderNumber}`);
+          
+          return NextResponse.json({
+            success: true,
+            bookingId: bookingResult.orderNumber,
+            transactionId: paymentConfirmation.transactionId,
+            message: bookingResult.warning,
+            warning: true,
+            requiresSupport: bookingResult.parseError
+          });
+        }
         
         bookingLogger.endSession('completed', `Legacy booking successful: ${bookingResult.orderNumber}`);
         return NextResponse.json({
@@ -378,6 +482,12 @@ export async function POST(request: NextRequest) {
                                  bookingResult.error?.includes("Amount mismatch") ||
                                  bookingResult.error?.includes("is required") ||
                                  bookingResult.error?.includes("Invalid");
+        
+        // Update attempt status to failed
+        recentBookingAttempts.set(attemptKey, {
+          timestamp: Date.now(),
+          status: 'failed'
+        });
         
         bookingLogger.endSession('failed', `Legacy booking failed: ${bookingResult.error}`);
         return NextResponse.json(
@@ -411,6 +521,12 @@ export async function POST(request: NextRequest) {
         paymentSuccessful: !!sessionId
       });
       
+      // Update attempt status to failed
+      recentBookingAttempts.set(attemptKey, {
+        timestamp: Date.now(),
+        status: 'failed'
+      });
+      
       bookingLogger.endSession('failed', `Exception during booking: ${errorMessage}`);
       return NextResponse.json(
         { 
@@ -427,6 +543,15 @@ export async function POST(request: NextRequest) {
     }
   } catch (error) {
     console.error("Booking registration error:", error);
+    
+    // Update attempt status to failed if we have an attemptKey
+    if (typeof attemptKey !== 'undefined') {
+      recentBookingAttempts.set(attemptKey, {
+        timestamp: Date.now(),
+        status: 'failed'
+      });
+    }
+    
     bookingLogger.endSession('failed', `Internal server error: ${error instanceof Error ? error.message : String(error)}`);
     return NextResponse.json(
       { error: "Internal server error" },

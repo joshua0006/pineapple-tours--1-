@@ -18,6 +18,8 @@ export interface BookingRegistrationResult {
   rezdyBooking?: RezdyBooking
   error?: string
   paymentConfirmation?: PaymentConfirmation
+  warning?: string
+  parseError?: boolean
 }
 
 export interface BookingRequest {
@@ -680,13 +682,44 @@ export class BookingService {
         throw new Error(`Rezdy API error: ${response.status} ${response.statusText} - ${errorMessage}`)
       }
 
-      const result = await response.json()
-      console.log('Rezdy API success response:', result)
+      // Mark that booking was successfully created before parsing response
+      const bookingCreated = true;
+      let result: any;
       
-      return {
-        success: true,
-        orderNumber: result.orderNumber,
-        booking: result
+      try {
+        result = await response.json()
+        console.log('Rezdy API success response:', result)
+        
+        // Validate the response has expected structure
+        if (!result.orderNumber) {
+          console.error('⚠️ Booking created but response missing orderNumber:', result);
+          // Still return success since booking was created
+          return {
+            success: true,
+            orderNumber: `REZDY-${Date.now()}`, // Fallback order number
+            booking: result,
+            warning: 'Booking was created successfully but response format was unexpected. Please contact support with this reference.'
+          }
+        }
+        
+        return {
+          success: true,
+          orderNumber: result.orderNumber,
+          booking: result
+        }
+      } catch (parseError) {
+        console.error('❌ Booking created but failed to parse response:', parseError);
+        console.error('Raw response was successful but parsing failed');
+        
+        // Booking WAS created, but we couldn't parse the response
+        // This is a critical distinction - the customer HAS a booking
+        return {
+          success: true,
+          orderNumber: `REZDY-${Date.now()}-PARSE-ERROR`,
+          booking: null,
+          warning: 'Your booking was created successfully, but we encountered an issue processing the confirmation. Please contact support with this reference number.',
+          parseError: true
+        }
       }
 
     } catch (error) {
@@ -999,13 +1032,44 @@ export class BookingService {
         throw new Error(`Rezdy API error: ${response.status} ${response.statusText} - ${errorText}`)
       }
 
-      const result = await response.json()
-      console.log('Rezdy API success response:', result)
+      // Mark that booking was successfully created before parsing response
+      const bookingCreated = true;
+      let result: any;
       
-      return {
-        success: true,
-        orderNumber: result.orderNumber,
-        booking: result
+      try {
+        result = await response.json()
+        console.log('Rezdy API success response:', result)
+        
+        // Validate the response has expected structure
+        if (!result.orderNumber) {
+          console.error('⚠️ Booking created but response missing orderNumber:', result);
+          // Still return success since booking was created
+          return {
+            success: true,
+            orderNumber: `REZDY-${Date.now()}`, // Fallback order number
+            booking: result,
+            warning: 'Booking was created successfully but response format was unexpected. Please contact support with this reference.'
+          }
+        }
+        
+        return {
+          success: true,
+          orderNumber: result.orderNumber,
+          booking: result
+        }
+      } catch (parseError) {
+        console.error('❌ Booking created but failed to parse response:', parseError);
+        console.error('Raw response was successful but parsing failed');
+        
+        // Booking WAS created, but we couldn't parse the response
+        // This is a critical distinction - the customer HAS a booking
+        return {
+          success: true,
+          orderNumber: `REZDY-${Date.now()}-PARSE-ERROR`,
+          booking: null,
+          warning: 'Your booking was created successfully, but we encountered an issue processing the confirmation. Please contact support with this reference number.',
+          parseError: true
+        }
       }
 
     } catch (error) {

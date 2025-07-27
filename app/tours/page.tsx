@@ -358,10 +358,10 @@ export default function ToursPage() {
             <div className="relative max-w-2xl mx-auto">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
-                placeholder="Search tours, locations, activities..."
+                placeholder="Search tours..."
                 value={localQuery}
                 onChange={(e) => setLocalQuery(e.target.value)}
-                className="pl-10 pr-20 h-12 text-base"
+                className="pl-10 pr-20 h-10 md:h-12"
               />
               <Button
                 type="submit"

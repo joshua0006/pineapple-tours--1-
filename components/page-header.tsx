@@ -201,7 +201,7 @@ export function PageHeader({
       {/* Back Button */}
       <BackButtonComponent />
 
-      <div className="container mx-auto px-4 relative z-10">
+      <div className={cn("container mx-auto px-4 relative z-10", backButton ? "pt-12" : "")}>
         <div className="max-w-4xl mx-auto text-center">
           <h1
             className={cn(
@@ -233,12 +233,12 @@ export function PageHeader({
           {/* Feature Cards */}
           {featureCards && featureCards.length > 0 && (
             <div className="mt-6 relative z-10">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-3 lg:gap-4 max-w-4xl mx-auto">
+              <div className="grid grid-cols-3 gap-3 lg:gap-4 max-w-4xl mx-auto">
                 {featureCards.map((card, index) => (
                   <div key={index} className="cursor-default">
                     {/* Content */}
                     <div className="p-4 lg:p-5">
-                      <div className="flex items-center space-x-3">
+                      <div className="flex flex-col items-center space-y-3 md:flex-row md:items-center md:space-y-0 md:space-x-3">
                         {/* Icon container */}
                         <div
                           className={cn(

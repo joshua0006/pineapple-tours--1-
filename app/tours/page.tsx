@@ -581,12 +581,12 @@ export default function ToursPage() {
                           <SelectItem 
                             key={option.value} 
                             value={option.value}
-                            className="py-3 md:py-2 px-3 md:px-4"
+                            className="h-auto py-3 md:py-2 px-3 md:px-4"
                           >
-                            <div className="flex flex-col gap-1 min-w-0">
-                              <span className="text-sm md:text-base font-medium truncate">{option.label}</span>
+                            <div className="flex flex-col gap-1 min-w-0 min-h-[2.5rem] md:min-h-[2rem] justify-center">
+                              <span className="text-sm leading-tight font-medium truncate">{option.label}</span>
                               {option.description && (
-                                <span className="text-xs md:text-sm text-muted-foreground line-clamp-2">
+                                <span className="text-[11px] text-muted-foreground leading-tight line-clamp-2">
                                   {option.description}
                                 </span>
                               )}

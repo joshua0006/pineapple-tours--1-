@@ -340,11 +340,11 @@ export function SearchForm({
                   </SelectTrigger>
                   <SelectContent>
                     {REGION_OPTIONS.map((option) => (
-                      <SelectItem key={option.value} value={option.value}>
-                        <div className="flex flex-col text-start">
-                          <span>{option.label}</span>
+                      <SelectItem key={option.value} value={option.value} className="h-auto py-2">
+                        <div className="flex flex-col text-start min-h-[2rem] justify-center">
+                          <span className="text-sm leading-tight">{option.label}</span>
                           {option.description && (
-                            <span className="text-xs text-muted-foreground">
+                            <span className="text-[11px] text-muted-foreground leading-tight">
                               {option.description}
                             </span>
                           )}

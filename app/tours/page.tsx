@@ -31,14 +31,14 @@ import { Badge } from "@/components/ui/badge";
 import { DatePicker } from "@/components/ui/date-picker";
 import { Label } from "@/components/ui/label";
 import { ProductFilterService } from "@/lib/services/product-filter-service";
-import { filterProductsByCity } from "@/lib/utils/product-utils";
+import { RegionFilterService } from "@/lib/services/region-filter-service";
+import { REGION_OPTIONS, PickupRegion } from "@/lib/constants/pickup-regions";
 
 import { PageHeader } from "@/components/page-header";
 import { DynamicTourCard } from "@/components/dynamic-tour-card";
 import { TourGridSkeleton } from "@/components/tour-grid-skeleton";
 import { ErrorState } from "@/components/error-state";
 import { useAllProducts } from "@/hooks/use-all-products";
-import { useCityProducts } from "@/hooks/use-city-products";
 import { useBookingPrompt } from "@/hooks/use-booking-prompt";
 import { RezdyProduct } from "@/lib/types/rezdy";
 
@@ -47,8 +47,7 @@ interface Filters {
   participants: string;
   checkIn: string;
   checkOut: string;
-  city: string;
-  location: string;
+  region: string;
   limit: string;
   offset: string;
   tourDate: string;
@@ -58,8 +57,6 @@ export default function ToursPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  // Get city data for the dropdown
-  const { cities, loading: citiesLoading } = useCityProducts();
 
   // Local filter state
   const [filters, setFilters] = useState<Filters>({
@@ -67,8 +64,7 @@ export default function ToursPage() {
     participants: searchParams.get("participants") || "2",
     checkIn: searchParams.get("checkIn") || "",
     checkOut: searchParams.get("checkOut") || "",
-    city: searchParams.get("city") || searchParams.get("location") || "",
-    location: searchParams.get("location") || "",
+    region: searchParams.get("region") || searchParams.get("location") || searchParams.get("city") || "",
     limit: searchParams.get("limit") || "100",
     offset: searchParams.get("offset") || "0",
     tourDate: searchParams.get("tourDate") || searchParams.get("checkIn") || "",
@@ -90,7 +86,7 @@ export default function ToursPage() {
   const { products, loading, error, refreshProducts } = useAllProducts();
 
 
-  // Enhanced client-side filtering using city-based filtering
+  // Enhanced client-side filtering using region-based filtering
   const {
     filteredProducts,
     currentPage,
@@ -112,14 +108,14 @@ export default function ToursPage() {
       );
     }
 
-    // City-based location filter
-    if (filters.city && filters.city !== "all") {
-      filtered = filterProductsByCity(filtered, filters.city);
-    }
-
-    // Legacy location filter fallback
-    if (!filters.city && (filters.location && filters.location !== "all")) {
-      filtered = filterProductsByCity(filtered, filters.location);
+    // Region-based location filter
+    if (filters.region && filters.region !== PickupRegion.ALL) {
+      const regionResult = RegionFilterService.filterProductsByRegion(
+        filtered, 
+        filters.region,
+        { fallbackToCity: true }
+      );
+      filtered = regionResult.filteredProducts;
     }
 
     // Tour Date filter - check if product has availability on selected date
@@ -170,6 +166,7 @@ export default function ToursPage() {
       checkOut: searchParams.get("checkOut") || "",
       city: searchParams.get("city") || searchParams.get("location") || "",
       location: searchParams.get("location") || "",
+      region: searchParams.get("region") || "",
       limit: searchParams.get("limit") || "100",
       offset: searchParams.get("offset") || "0",
       tourDate: searchParams.get("tourDate") || searchParams.get("checkIn") || "",
@@ -215,6 +212,7 @@ export default function ToursPage() {
       checkOut: "",
       city: "",
       location: "",
+      region: "",
       limit: "100",
       offset: "0",
       tourDate: "",
@@ -228,8 +226,7 @@ export default function ToursPage() {
       participants: "2",
       checkIn: "",
       checkOut: "",
-      city: "",
-      location: "",
+      region: "",
       limit: "100",
       offset: "0",
       tourDate: "",
@@ -251,8 +248,7 @@ export default function ToursPage() {
     filters.query !== "" ||
     filters.checkIn !== "" ||
     filters.checkOut !== "" ||
-    filters.city !== "" ||
-    filters.location !== "" ||
+    filters.region !== "" ||
     filters.tourDate !== "";
 
   const hasResults = filteredProducts.length > 0;
@@ -265,7 +261,7 @@ export default function ToursPage() {
       if (
         value &&
         value !== "" &&
-        value !== "all" &&
+        value !== PickupRegion.ALL &&
         value !== "any" &&
         value !== "2" &&
         !(key === "limit" && value === "100") &&
@@ -393,7 +389,7 @@ export default function ToursPage() {
                             return (
                               value &&
                               value !== "" &&
-                              value !== "all" &&
+                              value !== PickupRegion.ALL &&
                               value !== "2"
                             ); // Default participants
                           }).length
@@ -548,42 +544,108 @@ export default function ToursPage() {
                     </div>
                   </div>
 
-                  {/* Location Filter - Updated to use city-based filtering */}
+                  {/* Location/Region Filter - Enhanced with region-based filtering */}
                   <div className="space-y-2">
                     <Label className="text-sm font-medium text-muted-foreground">
-                      Location
+                      Pickup Location
                     </Label>
-                    <Select
-                      value={filters.city || "all"}
-                      onValueChange={(value) =>
-                        updateFilter("city", value === "all" ? "" : value)
-                      }
-                    >
-                      <SelectTrigger className="w-full h-10">
-                        <div className="flex items-center gap-2">
-                          <MapPin className="h-4 w-4 text-muted-foreground" />
-                          <SelectValue 
-                            placeholder={
-                              citiesLoading 
-                                ? "Loading..." 
-                                : "Select location"
-                            }
-                          />
-                        </div>
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="all">
-                          All Locations
-                        </SelectItem>
-                        
-                        {/* Cities from locationAddress.city data */}
-                        {cities.map((city) => (
-                          <SelectItem key={city} value={city}>
-                            {city}
+                    
+                    {/* Primary region-based filter */}
+                    {!filters.city || filters.region ? (
+                      <Select
+                        value={filters.region || PickupRegion.ALL}
+                        onValueChange={(value) => {
+                          if (value === PickupRegion.ALL) {
+                            updateFilter("region", "");
+                            updateFilter("city", "");
+                          } else {
+                            updateFilter("region", value);
+                            updateFilter("city", ""); // Clear city when region is selected
+                          }
+                        }}
+                      >
+                        <SelectTrigger className="w-full h-10">
+                          <div className="flex items-center gap-2">
+                            <MapPin className="h-4 w-4 text-muted-foreground" />
+                            <SelectValue 
+                              placeholder="Select pickup region"
+                            />
+                          </div>
+                        </SelectTrigger>
+                        <SelectContent>
+                          {REGION_OPTIONS.map((option) => (
+                            <SelectItem key={option.value} value={option.value}>
+                              <div className="flex flex-col">
+                                <span>{option.label}</span>
+                                {option.description && (
+                                  <span className="text-xs text-muted-foreground">
+                                    {option.description}
+                                  </span>
+                                )}
+                              </div>
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    ) : (
+                      // Fallback city-based filter
+                      <Select
+                        value={filters.city || "all"}
+                        onValueChange={(value) => {
+                          if (value === "all") {
+                            updateFilter("city", "");
+                            updateFilter("region", "");
+                          } else {
+                            updateFilter("city", value);
+                            updateFilter("region", ""); // Clear region when city is selected
+                          }
+                        }}
+                      >
+                        <SelectTrigger className="w-full h-10">
+                          <div className="flex items-center gap-2">
+                            <MapPin className="h-4 w-4 text-muted-foreground" />
+                            <SelectValue 
+                              placeholder={
+                                citiesLoading 
+                                  ? "Loading..." 
+                                  : "Select city"
+                              }
+                            />
+                          </div>
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">
+                            All Cities
                           </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                          
+                          {/* Cities from locationAddress.city data */}
+                          {cities.map((city) => (
+                            <SelectItem key={city} value={city}>
+                              {city}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    )}
+                    
+                    {/* Filter type toggle */}
+                    <div className="flex items-center gap-2 text-xs">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (filters.region) {
+                            // Switch to city view
+                            updateFilter("region", "");
+                          } else {
+                            // Switch to region view
+                            updateFilter("city", "");
+                          }
+                        }}
+                        className="text-muted-foreground hover:text-foreground underline"
+                      >
+                        Switch to {filters.region || (!filters.city && !filters.region) ? 'city' : 'region'} view
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -620,7 +682,7 @@ export default function ToursPage() {
                             product={product}
                             selectedDate={filters.tourDate}
                             participants={filters.participants}
-                            selectedLocation={filters.city || filters.location}
+                            selectedLocation={filters.region || filters.city || filters.location}
                           />
                         ))}
                       </div>

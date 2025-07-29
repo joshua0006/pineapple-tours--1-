@@ -76,7 +76,7 @@ export default function BookingConfirmationPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-coral-50 py-8">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="max-w-8xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Success Header */}
         <div className="text-center mb-12">
           <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-brand-primary to-brand-accent bg-clip-text text-transparent mb-4">
@@ -104,7 +104,7 @@ export default function BookingConfirmationPage() {
                 </p>
               </CardHeader>
               
-              <CardContent className="px-6 pb-6">
+              <CardContent className="px-8 pb-6">
                 <HorizontalScrollableProductCard
                   products={filteredProducts}
                   selectedProducts={selectedProducts}

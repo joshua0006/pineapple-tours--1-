@@ -105,7 +105,7 @@ export function HorizontalScrollableProductCard({
 
   const scroll = (direction: 'left' | 'right') => {
     if (scrollContainerRef.current) {
-      const scrollAmount = 320; // Width of one card plus gap
+      const scrollAmount = 400; // Width of one card plus gap
       const newScrollLeft = scrollContainerRef.current.scrollLeft + 
         (direction === 'left' ? -scrollAmount : scrollAmount);
       
@@ -217,7 +217,7 @@ export function HorizontalScrollableProductCard({
               initial={{ opacity: 0, x: 50 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.4, delay: index * 0.1 }}
-              className="flex-shrink-0 w-80 h-96"
+              className="flex-shrink-0 w-96 lg:w-[400px] h-96"
               style={{ scrollSnapAlign: 'start' }}
             >
               <div className={`group relative h-full overflow-hidden rounded-xl transition-all duration-300 hover:shadow-xl hover:-translate-y-1 ${

@@ -93,9 +93,7 @@ export default function BookingConfirmationPage() {
             <Card className="bg-gradient-to-br from-blue-50 via-white to-purple-50 border-blue-200 shadow-lg">
               <CardHeader className="text-center pb-6">
                 <CardTitle className="flex items-center justify-center gap-3 text-2xl">
-                  <div className="p-2 bg-gradient-to-br from-brand-accent to-purple-500 rounded-lg">
-                    <Sparkles className="h-6 w-6 text-white" />
-                  </div>
+              
                   <span className="bg-gradient-to-r from-brand-primary to-brand-accent bg-clip-text text-transparent">
                     Enhance Your Adventure
                   </span>

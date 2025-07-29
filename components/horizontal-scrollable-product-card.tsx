@@ -10,7 +10,6 @@ import {
   Star,
   ChevronLeft,
   ChevronRight,
-  DollarSign,
   Eye
 } from "lucide-react";
 import {
@@ -247,34 +246,20 @@ export function HorizontalScrollableProductCard({
 
                 {/* Content Overlay */}
                 <div className="relative h-full flex flex-col justify-between p-6">
-                  {/* Top section with title and price */}
+                  {/* Top section with title */}
                   <div className="text-center">
-                    <h3 className="font-bold text-xl text-white drop-shadow-lg mb-2">
+                    <h3 className="font-bold text-xl text-white drop-shadow-lg mb-2" style={{ textShadow: '2px 2px 4px rgba(0, 0, 0, 0.8), 0px 0px 8px rgba(0, 0, 0, 0.4)' }}>
                       {product.name}
                     </h3>
-                    {product.advertisedPrice && (
-                      <div className="flex items-center justify-center gap-1 text-white/90 text-sm">
-                        <DollarSign className="w-4 h-4" />
-                        <span className="font-semibold">{formatPrice(product.advertisedPrice)}</span>
-                      </div>
-                    )}
                   </div>
 
-                  {/* Middle section with description (if available) */}
-                  {product.shortDescription && (
-                    <div className="flex-1 flex items-center">
-                      <p className="text-white/80 text-sm text-center line-clamp-3 drop-shadow">
-                        {product.shortDescription}
-                      </p>
-                    </div>
-                  )}
 
                   {/* Bottom section with buttons */}
-                  <div className="flex gap-2">
+                  <div className="flex gap-2 justify-center">
                     <Button
                       onClick={() => handleModalOpen(product)}
                       variant="outline"
-                      className="flex items-center gap-2 transition-all duration-300 px-4 py-3 bg-white/90 hover:bg-white border-white/50 text-gray-700 hover:text-gray-900"
+                      className="flex items-center justify-center gap-2 transition-all duration-300 px-3 py-2 flex-1 bg-white/90 hover:bg-white border-white/50 text-gray-700 hover:text-gray-900 text-sm"
                     >
                       <Eye className="w-4 h-4" />
                       View Details
@@ -282,7 +267,7 @@ export function HorizontalScrollableProductCard({
                     {showAddToCart && (
                       <Button
                         onClick={() => handleBookNow(product)}
-                        className={`flex items-center gap-2 transition-all duration-300 px-6 py-3 flex-1 ${
+                        className={`flex items-center justify-center gap-2 transition-all duration-300 px-3 py-2 flex-1 text-sm ${
                           selected 
                             ? 'bg-green-600 hover:bg-green-700 text-white' 
                             : 'bg-brand-accent hover:bg-brand-accent/90 text-white'
@@ -423,7 +408,7 @@ export function HorizontalScrollableProductCard({
                     <div className="bg-gray-50 p-4 rounded-lg">
                       <h3 className="font-semibold text-lg mb-2">Pricing</h3>
                       <div className="flex items-center gap-2">
-                        <span className="text-2xl font-bold text-green-600">
+                        <span className="text-2xl font-bold text-accent">
                           {formatPrice(selectedProductForDetails.advertisedPrice)}
                         </span>
                       </div>

@@ -278,6 +278,42 @@ export function EnhancedBookingExperience({
     
     return initialCounts;
   });
+  
+  // Update guest counts when prefill data is available
+  useEffect(() => {
+    if (prefillData?.guests && product.priceOptions) {
+      const prefillCounts: Record<string, number> = {};
+      
+      // Initialize all options to 0
+      product.priceOptions.forEach(option => {
+        prefillCounts[option.label] = 0;
+      });
+      
+      // Count guests by type from prefill data
+      const guestTypeCounts = prefillData.guests.reduce((acc, guest) => {
+        const type = guest.type.toLowerCase();
+        acc[type] = (acc[type] || 0) + 1;
+        return acc;
+      }, {} as Record<string, number>);
+      
+      // Map guest types to price option labels
+      product.priceOptions.forEach(option => {
+        const labelLower = option.label.toLowerCase();
+        if (labelLower.includes('adult') && guestTypeCounts.adult) {
+          prefillCounts[option.label] = guestTypeCounts.adult;
+        } else if (labelLower.includes('child') && guestTypeCounts.child) {
+          prefillCounts[option.label] = guestTypeCounts.child;
+        } else if (labelLower.includes('infant') && guestTypeCounts.infant) {
+          prefillCounts[option.label] = guestTypeCounts.infant;
+        } else if (labelLower.includes('senior') && guestTypeCounts.senior) {
+          prefillCounts[option.label] = guestTypeCounts.senior;
+        }
+      });
+      
+      setGuestCounts(prefillCounts);
+      console.log('👥 Guest counts pre-filled from stored details:', prefillCounts);
+    }
+  }, [prefillData, product.priceOptions]);
 
 
   // State for guest count input (new flow)

@@ -20,6 +20,8 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
+import { GuestDetailsReusePopup } from "@/components/guest-details-reuse-popup";
+import { useGuestDetails, encodeGuestDetailsForUrl } from "@/hooks/use-guest-details";
 
 interface SelectedProduct {
   product: MarketplaceProduct;
@@ -48,11 +50,54 @@ export function HorizontalScrollableProductCard({
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [selectedProductForDetails, setSelectedProductForDetails] = useState<MarketplaceProduct | null>(null);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [showGuestDetailsPopup, setShowGuestDetailsPopup] = useState(false);
+  const [selectedProductForBooking, setSelectedProductForBooking] = useState<MarketplaceProduct | null>(null);
+  
+  // Guest details hook
+  const { hasStoredDetails, storedDetails, clearStoredDetails } = useGuestDetails();
 
   const handleBookNow = (product: MarketplaceProduct) => {
-    if (onProductSelect) {
-      onProductSelect(product, 1);
+    // Check if we have stored guest details
+    if (hasStoredDetails && storedDetails) {
+      // Show popup to ask if user wants to reuse details
+      setSelectedProductForBooking(product);
+      setShowGuestDetailsPopup(true);
+    } else {
+      // No stored details, proceed with normal booking
+      navigateToBooking(product);
     }
+  };
+
+  const navigateToBooking = (product: MarketplaceProduct, useStoredDetails = false) => {
+    let bookingUrl = `/booking/${product.productCode}`;
+    
+    if (useStoredDetails && storedDetails) {
+      // Encode guest details for URL
+      const encodedDetails = encodeGuestDetailsForUrl(storedDetails);
+      if (encodedDetails) {
+        bookingUrl += `?guestDetails=${encodeURIComponent(encodedDetails)}&prefill=true`;
+      }
+    }
+    
+    // Navigate to booking page
+    window.location.href = bookingUrl;
+  };
+
+  const handleUseStoredDetails = () => {
+    if (selectedProductForBooking) {
+      navigateToBooking(selectedProductForBooking, true);
+    }
+  };
+
+  const handleEnterNewDetails = () => {
+    if (selectedProductForBooking) {
+      navigateToBooking(selectedProductForBooking, false);
+    }
+  };
+
+  const handleCloseGuestDetailsPopup = () => {
+    setShowGuestDetailsPopup(false);
+    setSelectedProductForBooking(null);
   };
 
   const isSelected = (productCode: string): boolean => {
@@ -378,7 +423,6 @@ export function HorizontalScrollableProductCard({
                     <div className="bg-gray-50 p-4 rounded-lg">
                       <h3 className="font-semibold text-lg mb-2">Pricing</h3>
                       <div className="flex items-center gap-2">
-                        <DollarSign className="w-5 h-5 text-green-600" />
                         <span className="text-2xl font-bold text-green-600">
                           {formatPrice(selectedProductForDetails.advertisedPrice)}
                         </span>
@@ -386,15 +430,6 @@ export function HorizontalScrollableProductCard({
                     </div>
                   )}
 
-                  {/* Product Type */}
-                  {selectedProductForDetails.productType && (
-                    <div>
-                      <h3 className="font-semibold text-lg mb-2">Product Type</h3>
-                      <span className="inline-block bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm">
-                        {selectedProductForDetails.productType}
-                      </span>
-                    </div>
-                  )}
 
                   {/* Status */}
                   {selectedProductForDetails.status && (
@@ -460,6 +495,18 @@ export function HorizontalScrollableProductCard({
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Guest Details Reuse Popup */}
+      {showGuestDetailsPopup && storedDetails && (
+        <GuestDetailsReusePopup
+          isOpen={showGuestDetailsPopup}
+          onClose={handleCloseGuestDetailsPopup}
+          onUseStoredDetails={handleUseStoredDetails}
+          onEnterNewDetails={handleEnterNewDetails}
+          onClearStoredDetails={clearStoredDetails}
+          storedDetails={storedDetails}
+        />
+      )}
     </div>
   );
 }

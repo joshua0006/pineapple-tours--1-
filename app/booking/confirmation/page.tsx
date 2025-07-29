@@ -2,73 +2,76 @@
 
 import { useState, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
-import { HorizontalScrollableAddonCard } from "@/components/horizontal-scrollable-addon-card";
-import { RezdyExtra } from "@/lib/types/rezdy";
+import { HorizontalScrollableProductCard } from "@/components/horizontal-scrollable-product-card";
+import { MarketplaceProduct, MarketplaceProductsResponse } from "@/lib/types/rezdy";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Sparkles } from "lucide-react";
 
-interface SelectedAddon {
-  addon: RezdyExtra;
+interface SelectedProduct {
+  product: MarketplaceProduct;
   quantity: number;
 }
 
 export default function BookingConfirmationPage() {
   const searchParams = useSearchParams();
   const orderNumber = searchParams.get("orderNumber");
-  const [addons, setAddons] = useState<RezdyExtra[]>([]);
-  const [selectedAddons, setSelectedAddons] = useState<SelectedAddon[]>([]);
+  const [products, setProducts] = useState<MarketplaceProduct[]>([]);
+  const [selectedProducts, setSelectedProducts] = useState<SelectedProduct[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Fetch marketplace addons from Rezdy API
+  // Fetch marketplace products from Rezdy API
   useEffect(() => {
-    const fetchMarketplaceAddons = async () => {
+    const fetchMarketplaceProducts = async () => {
       try {
         setLoading(true);
         setError(null);
         
-        const response = await fetch('/api/rezdy/marketplace/addons?search=skywalk');
+        const response = await fetch('/api/rezdy/marketplace/products?search=skywalk');
         
         if (!response.ok) {
-          throw new Error(`Failed to fetch addons: ${response.status} ${response.statusText}`);
+          throw new Error(`Failed to fetch products: ${response.status} ${response.statusText}`);
         }
         
-        const data = await response.json();
+        const data: MarketplaceProductsResponse = await response.json();
         
         if (data.error) {
           throw new Error(data.error);
         }
         
-        setAddons(data.addons || []);
+        setProducts(data.products || []);
       } catch (error) {
-        console.error('Error fetching marketplace addons:', error);
+        console.error('Error fetching marketplace products:', error);
         setError(error instanceof Error ? error.message : 'Failed to load additional experiences');
-        setAddons([]); // Clear addons on error
+        setProducts([]); // Clear products on error
       } finally {
         setLoading(false);
       }
     };
 
-    fetchMarketplaceAddons();
+    fetchMarketplaceProducts();
   }, []);
 
-  const handleAddonSelect = (addon: RezdyExtra, quantity: number) => {
-    setSelectedAddons(prev => {
-      const existing = prev.find(item => item.addon.id === addon.id);
+  // Filter out products without images
+  const filteredProducts = products.filter(product => product.images && product.images.length > 0);
+
+  const handleProductSelect = (product: MarketplaceProduct, quantity: number) => {
+    setSelectedProducts(prev => {
+      const existing = prev.find(item => item.product.productCode === product.productCode);
       if (existing) {
         return prev.map(item => 
-          item.addon.id === addon.id 
+          item.product.productCode === product.productCode 
             ? { ...item, quantity }
             : item
         );
       } else {
-        return [...prev, { addon, quantity }];
+        return [...prev, { product, quantity }];
       }
     });
   };
 
-  const handleAddonRemove = (addonId: string) => {
-    setSelectedAddons(prev => prev.filter(item => item.addon.id !== addonId));
+  const handleProductRemove = (productCode: string) => {
+    setSelectedProducts(prev => prev.filter(item => item.product.productCode !== productCode));
   };
 
   return (
@@ -84,8 +87,8 @@ export default function BookingConfirmationPage() {
           </p>
         </div>
 
-        {/* Marketplace Addons Section */}
-        {!loading && addons.length > 0 && (
+        {/* Marketplace Products Section */}
+        {!loading && filteredProducts.length > 0 && (
           <div className="mt-16">
             <Card className="bg-gradient-to-br from-blue-50 via-white to-purple-50 border-blue-200 shadow-lg">
               <CardHeader className="text-center pb-6">
@@ -104,11 +107,11 @@ export default function BookingConfirmationPage() {
               </CardHeader>
               
               <CardContent className="px-6 pb-6">
-                <HorizontalScrollableAddonCard
-                  addons={addons}
-                  selectedAddons={selectedAddons}
-                  onAddonSelect={handleAddonSelect}
-                  onAddonRemove={handleAddonRemove}
+                <HorizontalScrollableProductCard
+                  products={filteredProducts}
+                  selectedProducts={selectedProducts}
+                  onProductSelect={handleProductSelect}
+                  onProductRemove={handleProductRemove}
                   guestCount={2}
                   showAddToCart={true}
                   maxQuantity={10}

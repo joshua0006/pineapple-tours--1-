@@ -720,6 +720,20 @@ export interface MarketplaceAddonsResponse {
   };
 }
 
+export interface MarketplaceProductsResponse {
+  products: MarketplaceProduct[];
+  totalCount: number;
+  cached: boolean;
+  region: string;
+  searchTerm: string;
+  lastUpdated: string;
+  fetchStats?: {
+    totalProducts: number;
+    filteredProducts: number;
+    fetchTime: string;
+  };
+}
+
 export interface BookingAddonRequest {
   originalOrderNumber: string;
   customerEmail: string;

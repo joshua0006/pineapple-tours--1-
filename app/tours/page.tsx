@@ -571,10 +571,12 @@ export default function ToursPage() {
                       <SelectTrigger className="w-full h-12 md:h-11 px-3 md:px-4">
                         <div className="flex items-center text-start gap-2 min-w-0 flex-1">
                           <MapPin className="h-4 w-4 text-muted-foreground flex-shrink-0" />
-                          <SelectValue 
-                            placeholder="Select pickup region"
-                            className="text-sm md:text-base truncate"
-                          />
+                          <span className="text-sm md:text-base truncate">
+                            {filters.region && filters.region !== PickupRegion.ALL
+                              ? REGION_OPTIONS.find(opt => opt.value === filters.region)?.label || filters.region
+                              : "Select pickup region"
+                            }
+                          </span>
                         </div>
                       </SelectTrigger>
                       <SelectContent className="min-w-[280px] md:min-w-[320px] max-w-[90vw]">

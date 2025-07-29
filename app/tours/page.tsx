@@ -24,6 +24,7 @@ import {
   Select,
   SelectContent,
   SelectItem,
+  SelectItemNoCheck,
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
@@ -578,7 +579,7 @@ export default function ToursPage() {
                       </SelectTrigger>
                       <SelectContent className="min-w-[280px] md:min-w-[320px] max-w-[90vw]">
                         {REGION_OPTIONS.map((option) => (
-                          <SelectItem 
+                          <SelectItemNoCheck 
                             key={option.value} 
                             value={option.value}
                             className="h-auto min-h-[3rem] py-3 md:py-2.5 px-3 md:px-4"
@@ -591,7 +592,7 @@ export default function ToursPage() {
                                 </span>
                               )}
                             </div>
-                          </SelectItem>
+                          </SelectItemNoCheck>
                         ))}
                       </SelectContent>
                     </Select>

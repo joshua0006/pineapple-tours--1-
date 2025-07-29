@@ -16,8 +16,19 @@ import {
   normalizeRegion 
 } from '@/lib/constants/pickup-regions';
 import { CityFilterService } from './city-filter';
+import { PickupLocationService } from './pickup-location-service';
 
 export class RegionFilterService {
+  // Mapping between PickupRegion enum values and PickupLocationService supported locations
+  private static readonly REGION_TO_LOCATION_MAP: Record<PickupRegion, string[]> = {
+    [PickupRegion.BRISBANE]: ['Brisbane'],
+    [PickupRegion.YOUR_HOTEL_ACCOMMODATION]: ['Brisbane', 'Gold Coast', 'Brisbane Loop'], // Hotel pickup available in all regions
+    [PickupRegion.BRISBANE_CITY_LOOP]: ['Brisbane Loop'],
+    [PickupRegion.GOLD_COAST]: ['Gold Coast'],
+    [PickupRegion.TAMBORINE_MOUNTAIN]: [], // Will use city fallback for Tamborine Mountain
+    [PickupRegion.ALL]: []
+  };
+
   /**
    * Filter products by pickup region
    */
@@ -54,55 +65,55 @@ export class RegionFilterService {
     const matchedPickupIds: (number | string)[] = [];
     const filteredProducts: RezdyProduct[] = [];
 
-    // Filter products by pickup locations that match the region
+    // Filter products using PickupLocationService for text-based location matching
     products.forEach(product => {
       let isMatched = false;
+      const productPickupLocations = PickupLocationService.extractPickupLocations(product);
 
-      // Check if product has pickup locations
-      if (product.pickupLocations && product.pickupLocations.length > 0) {
-        // Check each pickup location against target region
-        for (const pickupLocation of product.pickupLocations) {
-          // Try to extract pickup ID from the pickup location string
-          const pickupId = this.extractPickupIdFromLocation(pickupLocation);
-          if (pickupId && isPickupIdInRegion(pickupId, targetRegion)) {
+      // Check if any of the product's pickup locations match the target region
+      if (productPickupLocations.length > 0) {
+        const targetLocations = this.REGION_TO_LOCATION_MAP[targetRegion] || [];
+        
+        // Check for direct location matches
+        for (const productLocation of productPickupLocations) {
+          if (targetLocations.includes(productLocation)) {
             isMatched = true;
-            if (!matchedPickupIds.includes(pickupId)) {
-              matchedPickupIds.push(pickupId);
+            // Track the location that matched for stats
+            if (!matchedPickupIds.includes(productLocation)) {
+              matchedPickupIds.push(productLocation);
             }
             break;
           }
         }
       }
 
-      // Check primary pickup location
-      if (!isMatched && product.primaryPickupLocation) {
-        const pickupId = this.extractPickupIdFromLocation(product.primaryPickupLocation);
-        if (pickupId && isPickupIdInRegion(pickupId, targetRegion)) {
+      // For YOUR_HOTEL_ACCOMMODATION region, be more inclusive since it can service multiple areas
+      if (!isMatched && targetRegion === PickupRegion.YOUR_HOTEL_ACCOMMODATION) {
+        // If the product has any supported pickup location, it likely offers hotel pickup
+        if (productPickupLocations.length > 0) {
           isMatched = true;
-          if (!matchedPickupIds.includes(pickupId)) {
-            matchedPickupIds.push(pickupId);
+          if (!matchedPickupIds.includes('hotel_pickup')) {
+            matchedPickupIds.push('hotel_pickup');
           }
         }
       }
 
-      // Check departsFrom locations
-      if (!isMatched && product.departsFrom && product.departsFrom.length > 0) {
-        for (const departLocation of product.departsFrom) {
-          const pickupId = this.extractPickupIdFromLocation(departLocation);
-          if (pickupId && isPickupIdInRegion(pickupId, targetRegion)) {
-            isMatched = true;
-            if (!matchedPickupIds.includes(pickupId)) {
-              matchedPickupIds.push(pickupId);
-            }
-            break;
-          }
-        }
-      }
-
-      // Fallback to city-based filtering if no pickup ID match and fallback is enabled
+      // Fallback to city-based filtering if no location match and fallback is enabled
       if (!isMatched && fallbackToCity) {
         const cityMatch = this.matchesCityForRegion(product, targetRegion);
         if (cityMatch) {
+          isMatched = true;
+        }
+      }
+
+      // For products with no pickup locations detected, include them for broader regions
+      if (!isMatched && productPickupLocations.length === 0) {
+        // Include products without clear pickup locations for hotel pickup regions
+        if (targetRegion === PickupRegion.YOUR_HOTEL_ACCOMMODATION) {
+          isMatched = true;
+        }
+        // Or if city fallback found a match based on location address
+        else if (fallbackToCity && this.matchesCityForRegion(product, targetRegion)) {
           isMatched = true;
         }
       }
@@ -121,7 +132,7 @@ export class RegionFilterService {
         totalProducts: products.length,
         filteredCount: filteredProducts.length,
         region: PICKUP_REGIONS[targetRegion]?.displayName || region,
-        filteringMethod: matchedPickupIds.length > 0 ? 'region_based' : (fallbackToCity ? 'city_fallback' : 'region_based'),
+        filteringMethod: matchedPickupIds.length > 0 ? 'location_based' : (fallbackToCity ? 'city_fallback' : 'location_based'),
         accuracy,
         matchedPickupIds,
         unmatchedProducts
@@ -135,25 +146,27 @@ export class RegionFilterService {
   static hasProductFromRegion(
     product: RezdyProduct,
     region: string
-  ): { hasRegion: boolean; method: 'pickup_id' | 'city_fallback' | 'none'; confidence: 'high' | 'medium' | 'low' } {
+  ): { hasRegion: boolean; method: 'location_match' | 'city_fallback' | 'none'; confidence: 'high' | 'medium' | 'low' } {
     const targetRegion = normalizeRegion(region);
     
     if (targetRegion === PickupRegion.ALL) {
-      return { hasRegion: true, method: 'pickup_id', confidence: 'high' };
+      return { hasRegion: true, method: 'location_match', confidence: 'high' };
     }
 
-    // Check pickup locations for matching pickup IDs
-    const pickupLocations = [
-      ...(product.pickupLocations || []),
-      ...(product.departsFrom || []),
-      ...(product.primaryPickupLocation ? [product.primaryPickupLocation] : [])
-    ];
+    // Use PickupLocationService to extract pickup locations
+    const productPickupLocations = PickupLocationService.extractPickupLocations(product);
+    const targetLocations = this.REGION_TO_LOCATION_MAP[targetRegion] || [];
 
-    for (const location of pickupLocations) {
-      const pickupId = this.extractPickupIdFromLocation(location);
-      if (pickupId && isPickupIdInRegion(pickupId, targetRegion)) {
-        return { hasRegion: true, method: 'pickup_id', confidence: 'high' };
+    // Check for direct location matches
+    for (const productLocation of productPickupLocations) {
+      if (targetLocations.includes(productLocation)) {
+        return { hasRegion: true, method: 'location_match', confidence: 'high' };
       }
+    }
+
+    // Special case for hotel accommodation
+    if (targetRegion === PickupRegion.YOUR_HOTEL_ACCOMMODATION && productPickupLocations.length > 0) {
+      return { hasRegion: true, method: 'location_match', confidence: 'high' };
     }
 
     // Fallback to city-based matching
@@ -200,7 +213,7 @@ export class RegionFilterService {
           if (result.hasRegion) {
             const stats = regionStats.get(region)!;
             stats.productCount++;
-            if (result.method === 'pickup_id') {
+            if (result.method === 'location_match') {
               stats.directMappings++;
             } else {
               stats.fallbackMappings++;
@@ -339,40 +352,12 @@ export class RegionFilterService {
    */
 
   /**
-   * Extract pickup ID from location string
-   * This method attempts to find pickup IDs in various formats within location strings
+   * Extract pickup locations using PickupLocationService
+   * @deprecated - Use PickupLocationService.extractPickupLocations() directly instead
    */
   private static extractPickupIdFromLocation(location: string): number | string | null {
-    if (!location) return null;
-
-    // Common patterns for pickup IDs in location strings
-    const patterns = [
-      /pickup[_\s]*id[:\s]*(\d+)/i,
-      /id[:\s]*(\d+)/i,
-      /\b(\d{4,5})\b/, // 4-5 digit numbers (common pickup ID format)
-      /#(\d+)/,
-      /\((\d+)\)/,
-    ];
-
-    for (const pattern of patterns) {
-      const match = location.match(pattern);
-      if (match && match[1]) {
-        const id = parseInt(match[1]);
-        // Validate that this is a known pickup ID
-        if (PICKUP_ID_TO_REGION[id]) {
-          return id;
-        }
-      }
-    }
-
-    // Check for string-based pickup IDs (like "5885/5884/5886")
-    const stringIds = ['5885/5884/5886', '2114/26037'];
-    for (const stringId of stringIds) {
-      if (location.includes(stringId) || location.includes(stringId.replace('/', '-'))) {
-        return stringId;
-      }
-    }
-
+    // This method is deprecated in favor of PickupLocationService
+    // Keeping for backward compatibility but it now returns null
     return null;
   }
 

@@ -26,6 +26,8 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { GuestManager, type GuestInfo } from "@/components/ui/guest-manager";
 import { bookingDataStore } from "@/lib/services/booking-data-store";
 import { BookingFormData, transformBookingDataToDirectRezdy } from "@/lib/utils/booking-transform";
+import { useGuestDetails } from "@/hooks/use-guest-details";
+import { StoredContactInfo } from "@/lib/types/guest-details";
 
 
 
@@ -43,6 +45,9 @@ export default function GuestDetailsPage() {
 
   // Guest state
   const [guests, setGuests] = useState<GuestInfo[]>([]);
+  
+  // Guest details hook for saving details after successful booking
+  const { saveGuestDetails } = useGuestDetails();
 
 
   // Load booking data on mount
@@ -290,6 +295,35 @@ export default function GuestDetailsPage() {
       const result = await response.json();
 
       if (result.success) {
+        // Save guest details for future use before cleaning up
+        try {
+          if (updatedBookingData.contact && guests.length > 0) {
+            const contactInfo: StoredContactInfo = {
+              firstName: updatedBookingData.contact.firstName,
+              lastName: updatedBookingData.contact.lastName,
+              email: updatedBookingData.contact.email,
+              phone: updatedBookingData.contact.phone || '',
+              country: updatedBookingData.contact.country || 'Australia',
+              emergencyContact: updatedBookingData.contact.emergencyContact,
+              emergencyPhone: updatedBookingData.contact.emergencyPhone,
+              dietaryRequirements: updatedBookingData.contact.dietaryRequirements,
+              accessibilityNeeds: updatedBookingData.contact.accessibilityNeeds,
+              specialRequests: updatedBookingData.contact.specialRequests,
+            };
+            
+            await saveGuestDetails(contactInfo, guests, {
+              bookingId: result.bookingId || orderNumber || 'unknown',
+              productName: updatedBookingData.product?.name,
+              overwrite: true // Always save the latest successful booking
+            });
+            
+            console.log('✅ Guest details saved for future bookings');
+          }
+        } catch (saveError) {
+          // Don't fail the booking if guest details save fails
+          console.warn('⚠️ Failed to save guest details for future use:', saveError);
+        }
+        
         // Clear the stored booking data from both server and session storage
         if (orderNumber) {
           await bookingDataStore.remove(orderNumber);

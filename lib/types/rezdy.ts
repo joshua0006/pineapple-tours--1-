@@ -134,9 +134,10 @@ export interface RezdyBookingOption {
   currency?: string;
   pickupType:
     | "brisbane"
-    | "gold-coast"
+    | "your-hotel-accommodation"
     | "brisbane-city-loop"
-    | "tamborine-direct";
+    | "gold-coast"
+    | "tamborine-mountain";
   pickupLocations: RezdyPickupLocation[];
   maxParticipants?: number;
   availability: number;
@@ -163,7 +164,7 @@ export interface RezdyPickupLocationLegacy {
   address?: string | RezdyAddress;
   latitude?: number;
   longitude?: number;
-  region?: "brisbane" | "gold-coast" | "tamborine";
+  region?: "brisbane" | "your-hotel-accommodation" | "brisbane-city-loop" | "gold-coast" | "tamborine-mountain";
   facilityType?: "hotel" | "casino" | "landmark" | "transport-hub";
   isPreferred?: boolean;
 }
@@ -652,4 +653,96 @@ export interface RefreshOptions {
   force?: boolean;
   include_analytics?: boolean;
   data_types?: ("products" | "bookings" | "availability" | "customers")[];
+}
+
+// Region-Based Filtering Types
+export interface RegionFilterOptions {
+  region?: string;
+  includeAllRegions?: boolean;
+  exactMatch?: boolean;
+  fallbackToCity?: boolean;
+}
+
+export interface RegionFilterResult {
+  filteredProducts: RezdyProduct[];
+  filterStats: {
+    totalProducts: number;
+    filteredCount: number;
+    region: string;
+    filteringMethod: 'region_based' | 'pickup_id' | 'city_fallback';
+    accuracy: 'high' | 'medium' | 'low';
+    matchedPickupIds: (number | string)[];
+    unmatchedProducts: number;
+  };
+}
+
+export interface PickupRegionMapping {
+  pickupId: number | string;
+  region: string;
+  displayName: string;
+  locations: PickupLocationDetails[];
+}
+
+export interface PickupLocationDetails {
+  time: string;
+  location: string;
+  address: string;
+  status: string;
+  productCount: string;
+}
+
+// Marketplace-specific types
+export interface MarketplaceProduct extends RezdyProduct {
+  agentPaymentType?: string;
+  maxCommissionPercent?: number;
+  maxCommissionNetRate?: number;
+  marketplaceRate?: boolean;
+  commissionIncludesExtras?: boolean;
+}
+
+export interface MarketplaceExtra extends RezdyExtra {
+  marketplaceEligible?: boolean;
+  commissionRate?: number;
+  region?: string;
+  targetAudience?: 'families' | 'adults' | 'couples' | 'solo' | 'groups';
+}
+
+export interface MarketplaceAddonsResponse {
+  addons: RezdyExtra[];
+  totalCount: number;
+  cached: boolean;
+  region: string;
+  lastUpdated: string;
+  fetchStats?: {
+    totalProducts: number;
+    filteredAddons: number;
+    fetchTime: string;
+  };
+}
+
+export interface MarketplaceProductsResponse {
+  products: MarketplaceProduct[];
+  totalCount: number;
+  cached: boolean;
+  region: string;
+  searchTerm: string;
+  lastUpdated: string;
+  fetchStats?: {
+    totalProducts: number;
+    filteredProducts: number;
+    fetchTime: string;
+  };
+}
+
+export interface BookingAddonRequest {
+  originalOrderNumber: string;
+  customerEmail: string;
+  selectedAddons: {
+    addonId: string;
+    quantity: number;
+    unitPrice: number;
+    totalPrice: number;
+  }[];
+  totalAddonPrice: number;
+  paymentMethod?: 'existing_card' | 'new_payment';
 }

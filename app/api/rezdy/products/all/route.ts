@@ -51,6 +51,26 @@ interface RezdyProduct {
   tags?: string[];
   categories?: string[];
   taxes?: RezdyTax[];
+  extras?: Array<{
+    id?: string;
+    name: string;
+    description?: string;
+    price?: number;
+    currency?: string;
+    priceType?: "PER_PERSON" | "PER_BOOKING" | "PER_DAY";
+    maxQuantity?: number;
+    minQuantity?: number;
+    isRequired?: boolean;
+    isAvailable?: boolean;
+    category?: string;
+    image?: {
+      itemUrl: string;
+      thumbnailUrl?: string;
+      mediumSizeUrl?: string;
+      largeSizeUrl?: string;
+      caption?: string;
+    };
+  }>;
 }
 
 interface RezdyApiResponse {
@@ -243,7 +263,28 @@ export async function GET(request: NextRequest) {
         customFields: {},
         status: 'ACTIVE',
         categories: product.categories || [],
-        extras: [],
+        extras: product.extras?.map((extra, extraIndex) => ({
+          id: extra.id || `${product.productCode}-extra-${extraIndex}`,
+          name: extra.name,
+          description: extra.description,
+          price: extra.price || 0,
+          currency: extra.currency || 'USD',
+          priceType: extra.priceType || 'PER_BOOKING',
+          maxQuantity: extra.maxQuantity,
+          minQuantity: extra.minQuantity,
+          isRequired: extra.isRequired || false,
+          isAvailable: extra.isAvailable !== false,
+          category: extra.category,
+          image: extra.image ? {
+            id: extraIndex + 1,
+            itemUrl: extra.image.itemUrl,
+            thumbnailUrl: extra.image.thumbnailUrl || extra.image.itemUrl,
+            mediumSizeUrl: extra.image.mediumSizeUrl || extra.image.itemUrl,
+            largeSizeUrl: extra.image.largeSizeUrl || extra.image.itemUrl,
+            caption: extra.image.caption,
+            isPrimary: false,
+          } : undefined,
+        })) || [],
         taxes: product.taxes || [],
         // Add pickup location data
         pickupLocations,

@@ -24,6 +24,7 @@ import {
   Select,
   SelectContent,
   SelectItem,
+  SelectItemNoCheck,
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
@@ -31,14 +32,14 @@ import { Badge } from "@/components/ui/badge";
 import { DatePicker } from "@/components/ui/date-picker";
 import { Label } from "@/components/ui/label";
 import { ProductFilterService } from "@/lib/services/product-filter-service";
-import { filterProductsByCity } from "@/lib/utils/product-utils";
+import { RegionFilterService } from "@/lib/services/region-filter-service";
+import { REGION_OPTIONS, PickupRegion } from "@/lib/constants/pickup-regions";
 
 import { PageHeader } from "@/components/page-header";
 import { DynamicTourCard } from "@/components/dynamic-tour-card";
 import { TourGridSkeleton } from "@/components/tour-grid-skeleton";
 import { ErrorState } from "@/components/error-state";
 import { useAllProducts } from "@/hooks/use-all-products";
-import { useCityProducts } from "@/hooks/use-city-products";
 import { useBookingPrompt } from "@/hooks/use-booking-prompt";
 import { RezdyProduct } from "@/lib/types/rezdy";
 
@@ -47,8 +48,7 @@ interface Filters {
   participants: string;
   checkIn: string;
   checkOut: string;
-  city: string;
-  location: string;
+  region: string;
   limit: string;
   offset: string;
   tourDate: string;
@@ -58,8 +58,6 @@ export default function ToursPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  // Get city data for the dropdown
-  const { cities, loading: citiesLoading } = useCityProducts();
 
   // Local filter state
   const [filters, setFilters] = useState<Filters>({
@@ -67,8 +65,7 @@ export default function ToursPage() {
     participants: searchParams.get("participants") || "2",
     checkIn: searchParams.get("checkIn") || "",
     checkOut: searchParams.get("checkOut") || "",
-    city: searchParams.get("city") || searchParams.get("location") || "",
-    location: searchParams.get("location") || "",
+    region: searchParams.get("region") || searchParams.get("location") || searchParams.get("city") || "",
     limit: searchParams.get("limit") || "100",
     offset: searchParams.get("offset") || "0",
     tourDate: searchParams.get("tourDate") || searchParams.get("checkIn") || "",
@@ -90,7 +87,7 @@ export default function ToursPage() {
   const { products, loading, error, refreshProducts } = useAllProducts();
 
 
-  // Enhanced client-side filtering using city-based filtering
+  // Enhanced client-side filtering using region-based filtering
   const {
     filteredProducts,
     currentPage,
@@ -112,14 +109,14 @@ export default function ToursPage() {
       );
     }
 
-    // City-based location filter
-    if (filters.city && filters.city !== "all") {
-      filtered = filterProductsByCity(filtered, filters.city);
-    }
-
-    // Legacy location filter fallback
-    if (!filters.city && (filters.location && filters.location !== "all")) {
-      filtered = filterProductsByCity(filtered, filters.location);
+    // Region-based location filter
+    if (filters.region && filters.region !== PickupRegion.ALL) {
+      const regionResult = RegionFilterService.filterProductsByRegion(
+        filtered, 
+        filters.region,
+        { fallbackToCity: true }
+      );
+      filtered = regionResult.filteredProducts;
     }
 
     // Tour Date filter - check if product has availability on selected date
@@ -168,8 +165,7 @@ export default function ToursPage() {
       participants: searchParams.get("participants") || "2",
       checkIn: searchParams.get("checkIn") || "",
       checkOut: searchParams.get("checkOut") || "",
-      city: searchParams.get("city") || searchParams.get("location") || "",
-      location: searchParams.get("location") || "",
+      region: searchParams.get("region") || searchParams.get("location") || searchParams.get("city") || "",
       limit: searchParams.get("limit") || "100",
       offset: searchParams.get("offset") || "0",
       tourDate: searchParams.get("tourDate") || searchParams.get("checkIn") || "",
@@ -213,8 +209,7 @@ export default function ToursPage() {
       participants: "2",
       checkIn: "",
       checkOut: "",
-      city: "",
-      location: "",
+      region: "",
       limit: "100",
       offset: "0",
       tourDate: "",
@@ -228,8 +223,7 @@ export default function ToursPage() {
       participants: "2",
       checkIn: "",
       checkOut: "",
-      city: "",
-      location: "",
+      region: "",
       limit: "100",
       offset: "0",
       tourDate: "",
@@ -251,8 +245,7 @@ export default function ToursPage() {
     filters.query !== "" ||
     filters.checkIn !== "" ||
     filters.checkOut !== "" ||
-    filters.city !== "" ||
-    filters.location !== "" ||
+    filters.region !== "" ||
     filters.tourDate !== "";
 
   const hasResults = filteredProducts.length > 0;
@@ -265,7 +258,7 @@ export default function ToursPage() {
       if (
         value &&
         value !== "" &&
-        value !== "all" &&
+        value !== PickupRegion.ALL &&
         value !== "any" &&
         value !== "2" &&
         !(key === "limit" && value === "100") &&
@@ -393,7 +386,7 @@ export default function ToursPage() {
                             return (
                               value &&
                               value !== "" &&
-                              value !== "all" &&
+                              value !== PickupRegion.ALL &&
                               value !== "2"
                             ); // Default participants
                           }).length
@@ -419,32 +412,34 @@ export default function ToursPage() {
                     {filters.query && (
                       <Badge
                         variant="secondary"
-                        className="flex items-center gap-1 px-3 py-1 rounded-full"
+                        className="flex items-center gap-1 px-3 py-1.5 md:py-1 rounded-full text-xs md:text-sm"
                       >
-                        <span>Search: "{filters.query}"</span>
+                        <span className="truncate max-w-[120px] md:max-w-none">Search: "{filters.query}"</span>
                         <button
                           onClick={() => {
                             clearFilter("query");
                             setLocalQuery("");
                           }}
-                          className="ml-1 hover:text-destructive"
+                          className="ml-1 hover:text-destructive flex-shrink-0"
                         >
                           <X className="h-3 w-3" />
                         </button>
                       </Badge>
                     )}
-                    {filters.city && filters.city !== "all" && (
+                    {filters.region && filters.region !== PickupRegion.ALL && (
                       <Badge
                         variant="secondary"
-                        className="flex items-center gap-1 px-3 py-1 rounded-full"
+                        className="flex items-center gap-1 px-3 py-1.5 md:py-1 rounded-full text-xs md:text-sm"
                       >
                         <span className="flex items-center gap-1">
-                          <MapPin className="h-3 w-3" />
-                          {filters.city}
+                          <MapPin className="h-3 w-3 flex-shrink-0" />
+                          <span className="truncate max-w-[120px] md:max-w-none">
+                            {REGION_OPTIONS.find(opt => opt.value === filters.region)?.label || filters.region}
+                          </span>
                         </span>
                         <button
-                          onClick={() => clearFilter("city")}
-                          className="ml-1 hover:text-destructive"
+                          onClick={() => clearFilter("region")}
+                          className="ml-1 hover:text-destructive flex-shrink-0"
                         >
                           <X className="h-3 w-3" />
                         </button>
@@ -453,15 +448,15 @@ export default function ToursPage() {
                     {filters.participants !== "2" && (
                       <Badge
                         variant="secondary"
-                        className="flex items-center gap-1 px-3 py-1 rounded-full"
+                        className="flex items-center gap-1 px-3 py-1.5 md:py-1 rounded-full text-xs md:text-sm"
                       >
                         <span className="flex items-center gap-1">
-                          <Users className="h-3 w-3" />
-                          {filters.participants} participants
+                          <Users className="h-3 w-3 flex-shrink-0" />
+                          <span className="truncate">{filters.participants} participants</span>
                         </span>
                         <button
                           onClick={() => clearFilter("participants")}
-                          className="ml-1 hover:text-destructive"
+                          className="ml-1 hover:text-destructive flex-shrink-0"
                         >
                           <X className="h-3 w-3" />
                         </button>
@@ -470,15 +465,15 @@ export default function ToursPage() {
                     {filters.tourDate && (
                       <Badge
                         variant="secondary"
-                        className="flex items-center gap-1 px-3 py-1 rounded-full bg-orange-100 text-orange-800 border-orange-200"
+                        className="flex items-center gap-1 px-3 py-1.5 md:py-1 rounded-full bg-orange-100 text-orange-800 border-orange-200 text-xs md:text-sm"
                       >
                         <span className="flex items-center gap-1">
-                          <CalendarDays className="h-3 w-3" />
-                          {format(new Date(filters.tourDate), "MMM dd, yyyy")}
+                          <CalendarDays className="h-3 w-3 flex-shrink-0" />
+                          <span className="truncate">{format(new Date(filters.tourDate), "MMM dd, yyyy")}</span>
                         </span>
                         <button
                           onClick={() => clearFilter("tourDate")}
-                          className="ml-1 hover:text-destructive"
+                          className="ml-1 hover:text-destructive flex-shrink-0"
                         >
                           <X className="h-3 w-3" />
                         </button>
@@ -491,7 +486,7 @@ export default function ToursPage() {
                 <div className="space-y-4">
                   {/* Participants Filter */}
                   <div className="space-y-2">
-                    <Label className="text-sm font-medium text-muted-foreground">
+                    <Label className="text-sm md:text-base font-medium text-muted-foreground">
                       Participants
                     </Label>
                     <Select
@@ -500,17 +495,26 @@ export default function ToursPage() {
                         updateFilter("participants", value)
                       }
                     >
-                      <SelectTrigger className="w-full h-10">
-                        <div className="flex items-center gap-2">
-                          <Users className="h-4 w-4 text-muted-foreground" />
-                          <SelectValue placeholder="Select participants" />
+                      <SelectTrigger className="w-full h-12 md:h-11 px-3 md:px-4">
+                        <div className="flex items-center gap-2 min-w-0 flex-1">
+                          <Users className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                          <SelectValue 
+                            placeholder="Select participants" 
+                            className="text-sm md:text-base truncate"
+                          />
                         </div>
                       </SelectTrigger>
-                      <SelectContent>
+                      <SelectContent className="min-w-[280px] md:min-w-[320px] max-w-[95vw]">
                         {Array.from({ length: 10 }, (_, i) => i + 1).map(
                           (num) => (
-                            <SelectItem key={num} value={num.toString()}>
-                              {num} {num === 1 ? "Participant" : "Participants"}
+                            <SelectItem 
+                              key={num} 
+                              value={num.toString()}
+                              className="py-3 md:py-2 px-3 md:px-4"
+                            >
+                              <span className="text-sm md:text-base">
+                                {num} {num === 1 ? "Participant" : "Participants"}
+                              </span>
                             </SelectItem>
                           )
                         )}
@@ -520,7 +524,7 @@ export default function ToursPage() {
 
                   {/* Tour Date Filter */}
                   <div className="space-y-2">
-                    <Label className="text-sm font-medium text-muted-foreground">
+                    <Label className="text-sm md:text-base font-medium text-muted-foreground">
                       Tour Date
                     </Label>
                     <div className="relative">
@@ -548,42 +552,53 @@ export default function ToursPage() {
                     </div>
                   </div>
 
-                  {/* Location Filter - Updated to use city-based filtering */}
+                  {/* Location/Region Filter - Enhanced with region-based filtering */}
                   <div className="space-y-2">
-                    <Label className="text-sm font-medium text-muted-foreground">
-                      Location
+                    <Label className="text-sm md:text-base font-medium text-muted-foreground">
+                      Pickup Location
                     </Label>
+                    
                     <Select
-                      value={filters.city || "all"}
-                      onValueChange={(value) =>
-                        updateFilter("city", value === "all" ? "" : value)
-                      }
+                      value={filters.region || PickupRegion.ALL}
+                      onValueChange={(value) => {
+                        if (value === PickupRegion.ALL) {
+                          updateFilter("region", "");
+                        } else {
+                          updateFilter("region", value);
+                        }
+                      }}
                     >
-                      <SelectTrigger className="w-full h-10">
-                        <div className="flex items-center gap-2">
-                          <MapPin className="h-4 w-4 text-muted-foreground" />
-                          <SelectValue 
-                            placeholder={
-                              citiesLoading 
-                                ? "Loading..." 
-                                : "Select location"
+                      <SelectTrigger className="w-full h-12 md:h-11 px-3 md:px-4">
+                        <div className="flex items-center text-start gap-2 min-w-0 flex-1">
+                          <MapPin className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                          <span className="text-sm md:text-base truncate">
+                            {filters.region && filters.region !== PickupRegion.ALL
+                              ? REGION_OPTIONS.find(opt => opt.value === filters.region)?.label || filters.region
+                              : "Select pickup region"
                             }
-                          />
+                          </span>
                         </div>
                       </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="all">
-                          All Locations
-                        </SelectItem>
-                        
-                        {/* Cities from locationAddress.city data */}
-                        {cities.map((city) => (
-                          <SelectItem key={city} value={city}>
-                            {city}
-                          </SelectItem>
+                      <SelectContent className="min-w-[280px] md:min-w-[320px] max-w-[90vw]">
+                        {REGION_OPTIONS.map((option) => (
+                          <SelectItemNoCheck 
+                            key={option.value} 
+                            value={option.value}
+                            className="h-auto min-h-[3rem] py-3 md:py-2.5 px-3 md:px-4"
+                          >
+                            <div className="flex flex-col gap-1 min-w-0 w-full">
+                              <span className="text-sm font-medium leading-normal truncate">{option.label}</span>
+                              {option.description && (
+                                <span className="text-xs text-muted-foreground leading-tight line-clamp-2">
+                                  {option.description}
+                                </span>
+                              )}
+                            </div>
+                          </SelectItemNoCheck>
                         ))}
                       </SelectContent>
                     </Select>
+                    
                   </div>
                 </div>
               </div>
@@ -620,7 +635,7 @@ export default function ToursPage() {
                             product={product}
                             selectedDate={filters.tourDate}
                             participants={filters.participants}
-                            selectedLocation={filters.city || filters.location}
+                            selectedLocation={filters.region}
                           />
                         ))}
                       </div>

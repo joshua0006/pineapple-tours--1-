@@ -1,12 +1,15 @@
-import { RezdyProduct } from '@/lib/types/rezdy';
+import { RezdyProduct, RegionFilterOptions, RegionFilterResult } from '@/lib/types/rezdy';
 import { CityFilterService } from './city-filter';
+import { RegionFilterService } from './region-filter-service';
+import { PickupRegion } from '@/lib/constants/pickup-regions';
 
 /**
- * Unified city-based filtering service that ensures consistent filtering logic
+ * Unified filtering service that ensures consistent filtering logic
  * between search form and tours page components.
  * 
- * MODERNIZED: Uses locationAddress.city data directly from Rezdy products
- * for simplified, high-performance filtering
+ * ENHANCED: Supports both region-based and city-based filtering
+ * - Region filtering: Uses pickup location regions for precise filtering
+ * - City filtering: Uses locationAddress.city data as fallback
  */
 export class UnifiedPickupFilter {
   private static readonly SUPPORTED_LOCATIONS = ['Brisbane', 'Gold Coast', 'Byron Bay', 'Tamborine Mountain'];
@@ -40,7 +43,7 @@ export class UnifiedPickupFilter {
     const { enableFallback = true } = options;
 
     // Handle 'all' location case
-    if (!location || location === 'all') {
+    if (!location || location === 'all' || location === PickupRegion.ALL) {
       return {
         filteredProducts: products,
         filterStats: {
@@ -317,6 +320,303 @@ export class UnifiedPickupFilter {
       issues: cityValidation.issues,
       supportedCities: cityValidation.supportedCities,
       dataSource: 'city_data',
+    };
+  }
+
+  // =============================================================================
+  // REGION-BASED FILTERING METHODS
+  // =============================================================================
+
+  /**
+   * Enhanced filtering method that supports both region and location-based filtering
+   * Automatically detects the filter type and applies the appropriate method
+   */
+  static async filterProductsByLocationOrRegion(
+    products: RezdyProduct[],
+    locationOrRegion: string,
+    options: {
+      preferRegion?: boolean;
+      enableFallback?: boolean;
+      exactMatch?: boolean;
+    } = {}
+  ): Promise<{
+    filteredProducts: RezdyProduct[];
+    filterStats: {
+      totalProducts: number;
+      filteredCount: number;
+      localDataUsed: number;
+      fallbackUsed: number;
+      location: string;
+      filteringMethod: 'region_based' | 'city_based' | 'text_based';
+      accuracy: 'high' | 'medium' | 'low';
+      dataSource: 'region_data' | 'city_data';
+      filterType: 'region' | 'city';
+    };
+  }> {
+    const { preferRegion = true, enableFallback = true, exactMatch = false } = options;
+
+    // Handle 'all' case
+    if (!locationOrRegion || locationOrRegion === 'all' || locationOrRegion === PickupRegion.ALL) {
+      return {
+        filteredProducts: products,
+        filterStats: {
+          totalProducts: products.length,
+          filteredCount: products.length,
+          localDataUsed: 0,
+          fallbackUsed: 0,
+          location: 'all',
+          filteringMethod: 'region_based',
+          accuracy: 'high',
+          dataSource: 'region_data',
+          filterType: 'region',
+        },
+      };
+    }
+
+    // Check if the input matches a region
+    const isRegionInput = Object.values(PickupRegion).includes(locationOrRegion as PickupRegion) ||
+                         RegionFilterService.getSupportedRegions().includes(locationOrRegion);
+
+    try {
+      if (preferRegion || isRegionInput) {
+        // Try region-based filtering first
+        const regionOptions: RegionFilterOptions = {
+          exactMatch,
+          fallbackToCity: enableFallback,
+        };
+
+        const regionResult = RegionFilterService.filterProductsByRegion(
+          products,
+          locationOrRegion,
+          regionOptions
+        );
+
+        return {
+          filteredProducts: regionResult.filteredProducts,
+          filterStats: {
+            totalProducts: regionResult.filterStats.totalProducts,
+            filteredCount: regionResult.filterStats.filteredCount,
+            localDataUsed: regionResult.filterStats.matchedPickupIds.length,
+            fallbackUsed: regionResult.filterStats.unmatchedProducts,
+            location: regionResult.filterStats.region,
+            filteringMethod: regionResult.filterStats.filteringMethod,
+            accuracy: regionResult.filterStats.accuracy,
+            dataSource: 'region_data',
+            filterType: 'region',
+          },
+        };
+      } else {
+        // Fall back to city-based filtering
+        const cityResult = await this.filterProductsByLocation(
+          products,
+          locationOrRegion,
+          { enableFallback }
+        );
+
+        return {
+          filteredProducts: cityResult.filteredProducts,
+          filterStats: {
+            ...cityResult.filterStats,
+            filterType: 'city' as const,
+          },
+        };
+      }
+    } catch (error) {
+      console.error('Enhanced filtering failed:', error);
+      
+      if (enableFallback) {
+        // Ultimate fallback: return all products
+        return {
+          filteredProducts: products,
+          filterStats: {
+            totalProducts: products.length,
+            filteredCount: products.length,
+            localDataUsed: 0,
+            fallbackUsed: products.length,
+            location: locationOrRegion,
+            filteringMethod: 'text_based',
+            accuracy: 'low',
+            dataSource: 'city_data',
+            filterType: 'city',
+          },
+        };
+      }
+
+      return {
+        filteredProducts: [],
+        filterStats: {
+          totalProducts: products.length,
+          filteredCount: 0,
+          localDataUsed: 0,
+          fallbackUsed: 0,
+          location: locationOrRegion,
+          filteringMethod: 'region_based',
+          accuracy: 'low',
+          dataSource: 'region_data',
+          filterType: 'region',
+        },
+      };
+    }
+  }
+
+  /**
+   * Region-based filtering method
+   */
+  static async filterProductsByRegion(
+    products: RezdyProduct[],
+    region: string,
+    options: RegionFilterOptions = {}
+  ): Promise<RegionFilterResult> {
+    return RegionFilterService.filterProductsByRegion(products, region, options);
+  }
+
+  /**
+   * Check if a product belongs to a specific region
+   */
+  static async hasPickupFromRegion(
+    product: RezdyProduct,
+    region: string
+  ): Promise<{ hasPickup: boolean; method: 'pickup_id' | 'city_fallback' | 'none'; confidence: 'high' | 'medium' | 'low' }> {
+    return RegionFilterService.hasProductFromRegion(product, region);
+  }
+
+  /**
+   * Get comprehensive region and city summary
+   */
+  static async getLocationAndRegionSummary(
+    products: RezdyProduct[]
+  ): Promise<{
+    regions: Array<{
+      region: string;
+      displayName: string;
+      productCount: number;
+      hasDirectMapping: boolean;
+      accuracy: 'high' | 'medium' | 'low';
+    }>;
+    cities: Array<{
+      city: string;
+      productCount: number;
+      isSupported: boolean;
+      accuracy: 'high' | 'medium' | 'low';
+    }>;
+    totalProcessed: number;
+    regionCoverage: number;
+    cityCoverage: number;
+    dataQuality: 'excellent' | 'good' | 'fair' | 'poor';
+    preferredFilterType: 'region' | 'city';
+  }> {
+    try {
+      // Get region summary
+      const regionSummary = RegionFilterService.getRegionSummary(products);
+      
+      // Get city summary
+      const citySummary = await this.getLocationSummary(products);
+
+      // Calculate overall metrics
+      const regionCoverage = regionSummary.directMappingCoverage;
+      const cityCoverage = citySummary.dataQuality === 'excellent' ? 90 : 
+                          citySummary.dataQuality === 'good' ? 70 :
+                          citySummary.dataQuality === 'fair' ? 50 : 30;
+
+      // Determine preferred filter type
+      const preferredFilterType = regionCoverage >= cityCoverage ? 'region' : 'city';
+
+      // Overall data quality
+      const avgQuality = (regionCoverage + cityCoverage) / 2;
+      let dataQuality: 'excellent' | 'good' | 'fair' | 'poor' = 'poor';
+      if (avgQuality >= 80) {
+        dataQuality = 'excellent';
+      } else if (avgQuality >= 65) {
+        dataQuality = 'good';
+      } else if (avgQuality >= 40) {
+        dataQuality = 'fair';
+      }
+
+      return {
+        regions: regionSummary.regions,
+        cities: citySummary.locations.map(loc => ({
+          city: loc.location,
+          productCount: loc.productCount,
+          isSupported: loc.hasLocalData,
+          accuracy: loc.accuracy
+        })),
+        totalProcessed: products.length,
+        regionCoverage,
+        cityCoverage,
+        dataQuality,
+        preferredFilterType,
+      };
+    } catch (error) {
+      console.warn('Failed to get location and region summary:', error);
+      
+      // Fallback to city-only summary
+      const citySummary = await this.getLocationSummary(products);
+      
+      return {
+        regions: [],
+        cities: citySummary.locations.map(loc => ({
+          city: loc.location,
+          productCount: loc.productCount,
+          isSupported: loc.hasLocalData,
+          accuracy: loc.accuracy
+        })),
+        totalProcessed: products.length,
+        regionCoverage: 0,
+        cityCoverage: citySummary.dataQuality === 'excellent' ? 90 : 50,
+        dataQuality: citySummary.dataQuality,
+        preferredFilterType: 'city',
+      };
+    }
+  }
+
+  /**
+   * Get supported regions for filtering
+   */
+  static getSupportedRegions(): string[] {
+    return RegionFilterService.getSupportedRegions();
+  }
+
+  /**
+   * Validate both region and city filter configurations
+   */
+  static validateEnhancedConfiguration(): {
+    isValid: boolean;
+    issues: string[];
+    regionConfig: {
+      isValid: boolean;
+      supportedRegions: number;
+      mappedPickupIds: number;
+    };
+    cityConfig: {
+      isValid: boolean;
+      supportedCities: number;
+    };
+    recommendedFilterType: 'region' | 'city';
+  } {
+    const regionValidation = RegionFilterService.validateConfiguration();
+    const cityValidation = CityFilterService.validateConfiguration();
+
+    const issues = [
+      ...regionValidation.issues.map(issue => `Region: ${issue}`),
+      ...cityValidation.issues.map(issue => `City: ${issue}`)
+    ];
+
+    const regionScore = regionValidation.isValid ? regionValidation.mappedPickupIds * 2 : 0;
+    const cityScore = cityValidation.isValid ? cityValidation.supportedCities : 0;
+
+    return {
+      isValid: regionValidation.isValid || cityValidation.isValid,
+      issues,
+      regionConfig: {
+        isValid: regionValidation.isValid,
+        supportedRegions: regionValidation.supportedRegions,
+        mappedPickupIds: regionValidation.mappedPickupIds,
+      },
+      cityConfig: {
+        isValid: cityValidation.isValid,
+        supportedCities: cityValidation.supportedCities,
+      },
+      recommendedFilterType: regionScore >= cityScore ? 'region' : 'city',
     };
   }
 }

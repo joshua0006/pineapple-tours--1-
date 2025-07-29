@@ -1,29 +1,31 @@
 "use client";
 
 /**
- * Enhanced Search Form with City-Based Location Filtering
+ * Enhanced Search Form with Region-Based Location Filtering
  *
  * This component provides a simplified search interface with three main inputs:
  * - Participants: Number of people for the tour
  * - Tour Date: When the tour should take place
- * - Location: City-based location selector using locationAddress.city data
+ * - Pickup Location: Region-based location selector
+ *
+ * Filtering Options:
+ * - Region-based: Uses pickup location regions (Brisbane, Gold Coast, Tamborine Mountain)
  *
  * Rezdy Integration Features:
  * - Real-time data fetching from Rezdy API with caching
- * - City-based location filtering using locationAddress.city
+ * - Region-based location filtering using pickup location data
  * - Product segmentation and filtering
  * - Quality metrics and error handling
  * - Smart cache invalidation and refresh capabilities
- * - Dynamic city extraction from product data
+ * - Dynamic region extraction from product data
  */
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { addDays, format } from "date-fns";
 import {
   Search,
   MapPin,
-  Calendar,
   Users,
   CalendarDays,
   RefreshCw,
@@ -40,26 +42,24 @@ import {
 } from "@/components/ui/select";
 import { DatePicker } from "@/components/ui/date-picker";
 import { useBookingPrompt } from "@/hooks/use-booking-prompt";
-import { useCityProducts } from "@/hooks/use-city-products";
 import { useRezdyDataManager } from "@/hooks/use-rezdy-data-manager";
-import { filterProductsByCity } from "@/lib/utils/product-utils";
+import { RegionFilterService } from "@/lib/services/region-filter-service";
+import { REGION_OPTIONS, PickupRegion } from "@/lib/constants/pickup-regions";
 
 interface SearchFormProps {
   onSearch?: (searchData: any) => void;
   showRedirect?: boolean;
-  onLocationChange?: (location: string, products: any[]) => void;
-  onCityChange?: (city: string, cityProducts: any[]) => void;
+  onRegionChange?: (region: string, regionProducts: any[]) => void;
 }
 
 export function SearchForm({
   onSearch,
   showRedirect = true,
-  onLocationChange,
+  onRegionChange,
 }: SearchFormProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { promptData } = useBookingPrompt();
-  const { cities, loading: citiesLoading } = useCityProducts();
 
   // Rezdy data management integration
   const {
@@ -75,21 +75,20 @@ export function SearchForm({
   });
 
   // Form state for simplified search
-  const [selectedLocation, setSelectedLocation] = useState<string>("all");
+  const [selectedRegion, setSelectedRegion] = useState<string>(PickupRegion.ALL);
   const [tourDate, setTourDate] = useState<Date | undefined>();
   const [participants, setParticipants] = useState("2");
   
   // State for filtered products
   const [filteredProducts, setFilteredProducts] = useState(rezdyData.products);
   const [isFiltering, setIsFiltering] = useState(false);
+  const [filterStats, setFilterStats] = useState<any>(null);
 
   // Initialize form with URL parameters or booking prompt data
   useEffect(() => {
     // Check URL parameters first (these take priority)
     const urlParticipants = searchParams.get("participants");
     const urlTourDate = searchParams.get("tourDate");
-    const urlLocation = searchParams.get("location");
-    const urlCity = searchParams.get("city");
 
     // Handle participants parameter
     if (urlParticipants) {
@@ -105,53 +104,61 @@ export function SearchForm({
       setTourDate(promptData.bookingDate);
     }
 
-    // Handle location parameter (city takes priority)
-    if (urlCity) {
-      setSelectedLocation(urlCity);
-    } else if (urlLocation) {
-      setSelectedLocation(urlLocation);
+    // Handle region parameters
+    const urlRegion = searchParams.get("region") || searchParams.get("location") || searchParams.get("city");
+    
+    if (urlRegion) {
+      setSelectedRegion(urlRegion);
     }
   }, [searchParams, promptData]);
 
-  // Handle location selection change with city-based filtering
-  const handleLocationChange = (location: string) => {
-    setSelectedLocation(location);
+  // Handle region selection change with region-based filtering
+  const handleRegionChange = (region: string) => {
+    setSelectedRegion(region);
     setIsFiltering(true);
 
     try {
-      if (location === "all") {
+      if (region === PickupRegion.ALL) {
         setFilteredProducts(rezdyData.products);
+        setFilterStats(null);
       } else {
-        // Use city-based filtering
-        const filtered = filterProductsByCity(rezdyData.products, location);
-        setFilteredProducts(filtered);
+        // Use region-based filtering
+        const result = RegionFilterService.filterProductsByRegion(
+          rezdyData.products, 
+          region,
+          { fallbackToCity: true }
+        );
+        setFilteredProducts(result.filteredProducts);
+        setFilterStats(result.filterStats);
       }
     } catch (error) {
-      console.error('Error filtering products:', error);
+      console.error('Error filtering products by region:', error);
       setFilteredProducts(rezdyData.products);
+      setFilterStats(null);
     } finally {
       setIsFiltering(false);
     }
   };
 
-  // Current location products
+
+  // Current region products
   const currentLocationProducts = filteredProducts;
 
   // Initialize filtered products when Rezdy data changes
   useEffect(() => {
-    if (selectedLocation === "all") {
+    if (selectedRegion === PickupRegion.ALL) {
       setFilteredProducts(rezdyData.products);
     } else {
-      handleLocationChange(selectedLocation);
+      handleRegionChange(selectedRegion);
     }
-  }, [rezdyData.products, selectedLocation]);
+  }, [rezdyData.products, selectedRegion]);
 
-  // Notify parent component when location changes
+  // Notify parent component when region changes
   useEffect(() => {
-    if (onLocationChange) {
-      onLocationChange(selectedLocation, currentLocationProducts);
+    if (onRegionChange) {
+      onRegionChange(selectedRegion, currentLocationProducts);
     }
-  }, [selectedLocation, currentLocationProducts, onLocationChange]);
+  }, [selectedRegion, currentLocationProducts, onRegionChange]);
 
   const handleToursSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -159,8 +166,7 @@ export function SearchForm({
     const searchData = {
       participants: participants,
       tourDate: tourDate ? format(tourDate, "yyyy-MM-dd") : "",
-      location: selectedLocation === "all" ? "" : selectedLocation,
-      city: selectedLocation === "all" ? "" : selectedLocation,
+      region: selectedRegion === PickupRegion.ALL ? "" : selectedRegion,
       searchType: "tours",
       // Additional Rezdy-specific parameters
       productType: "tour",
@@ -171,7 +177,9 @@ export function SearchForm({
       totalProducts: rezdyData.products.length,
       filteredCount: currentLocationProducts.length,
       dataQuality: rezdyError ? "error" : "good",
-      filteringMethod: "city_based",
+      filteringMethod: filterStats?.filteringMethod || 'region_based',
+      filterAccuracy: filterStats?.accuracy || 'medium',
+      filterStats: filterStats,
     };
 
     if (onSearch) {
@@ -182,8 +190,12 @@ export function SearchForm({
 
       // Include all parameters if they have values
       if (participants) params.append("participants", participants);
-      if (selectedLocation && selectedLocation !== "all")
-        params.append("city", selectedLocation);
+      
+      // Include region parameter
+      if (selectedRegion && selectedRegion !== PickupRegion.ALL) {
+        params.append("region", selectedRegion);
+      }
+      
       if (tourDate) params.append("tourDate", format(tourDate, "yyyy-MM-dd"));
 
       router.push(`/tours?${params.toString()}`);
@@ -298,18 +310,18 @@ export function SearchForm({
               </div>
             </div>
 
-            {/* Location */}
+            {/* Pickup Location Selector */}
             <div className="space-y-2 text-start">
               <Label
                 htmlFor="location"
                 className="font-text text-sm font-medium text-gray-700"
               >
-                Location
+                Pickup Location
               </Label>
               <div className="relative">
                 <Select
-                  value={selectedLocation}
-                  onValueChange={handleLocationChange}
+                  value={selectedRegion}
+                  onValueChange={handleRegionChange}
                 >
                   <SelectTrigger
                     id="location"
@@ -319,27 +331,31 @@ export function SearchForm({
                       <MapPin className="h-4 w-4 text-muted-foreground" />
                       <SelectValue
                         placeholder={
-                          citiesLoading || rezdyLoading || isFiltering
+                          rezdyLoading || isFiltering
                             ? "Loading..."
-                            : "Select location"
+                            : "Select pickup region"
                         }
                       />
                     </div>
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">
-                      All Locations
-                    </SelectItem>
-                    
-                    {/* Cities from locationAddress.city data */}
-                    {cities.map((city) => (
-                      <SelectItem key={city} value={city}>
-                        {city}
+                    {REGION_OPTIONS.map((option) => (
+                      <SelectItem key={option.value} value={option.value} className="h-auto py-2">
+                        <div className="flex flex-col text-start min-h-[2rem] justify-center">
+                          <span className="text-sm leading-tight">{option.label}</span>
+                          {option.description && (
+                            <span className="text-[11px] text-muted-foreground leading-tight">
+                              {option.description}
+                            </span>
+                          )}
+                        </div>
                       </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
               </div>
+              
+            
             </div>
           </div>
 

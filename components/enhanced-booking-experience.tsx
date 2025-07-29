@@ -76,6 +76,8 @@ import {
   getPickupWarningMessage 
 } from "@/lib/utils/pickup-validation";
 import { usePickupAnalytics } from "@/lib/utils/pickup-analytics";
+import { useGuestDetails, decodeGuestDetailsFromUrl } from "@/hooks/use-guest-details";
+import { GuestDetailsPrefillData, isValidPrefillData } from "@/lib/types/guest-details";
 
 interface EnhancedBookingExperienceProps {
   product: RezdyProduct;
@@ -93,6 +95,9 @@ interface EnhancedBookingExperienceProps {
   preSelectedSessionId?: string; // Session ID to auto-select when availability loads
   preSelectedLocation?: string; // Pickup location from search form
   preloadedPickupLocations?: RezdyPickupLocation[]; // Pre-fetched pickup locations for faster loading
+  // Prefill options for add-on bookings
+  enablePrefill?: boolean; // Enable prefill from stored guest details
+  encodedGuestDetails?: string; // Base64 encoded guest details from URL
 }
 
 
@@ -105,11 +110,55 @@ export function EnhancedBookingExperience({
   preSelectedSessionId,
   preSelectedLocation,
   preloadedPickupLocations,
+  enablePrefill = false,
+  encodedGuestDetails,
 }: EnhancedBookingExperienceProps) {
   const [bookingErrors, setBookingErrors] = useState<string[]>([]);
   
   // Initialize analytics
   const { trackApiRequest, trackPickupSelection, trackValidationError } = usePickupAnalytics();
+  
+  // Initialize guest details hook for prefill functionality
+  const { storedDetails, hasStoredDetails } = useGuestDetails();
+  
+  // Parse encoded guest details from URL if provided
+  const urlPrefillData: GuestDetailsPrefillData | null = useMemo(() => {
+    if (!encodedGuestDetails) return null;
+    
+    try {
+      const decoded = decodeGuestDetailsFromUrl(encodedGuestDetails);
+      return isValidPrefillData(decoded) ? decoded : null;
+    } catch (error) {
+      console.warn('Failed to decode guest details from URL:', error);
+      return null;
+    }
+  }, [encodedGuestDetails]);
+  
+  // Determine the prefill data source (URL takes precedence over stored details)
+  const prefillData = useMemo(() => {
+    if (!enablePrefill) return null;
+    
+    // URL prefill data takes precedence
+    if (urlPrefillData) {
+      console.log('✅ Using URL prefill data:', urlPrefillData);
+      return urlPrefillData;
+    }
+    
+    // Fallback to stored details if available
+    if (hasStoredDetails && storedDetails) {
+      console.log('✅ Using stored guest details for prefill:', storedDetails);
+      return {
+        contact: storedDetails.contact,
+        guests: storedDetails.guests,
+        metadata: {
+          source: 'stored_details' as const,
+          timestamp: storedDetails.metadata.timestamp,
+        }
+      };
+    }
+    
+    return null;
+  }, [enablePrefill, urlPrefillData, hasStoredDetails, storedDetails]);
   
   // Cache product data on mount
   useEffect(() => {
@@ -279,9 +328,22 @@ export function EnhancedBookingExperience({
     return initialCounts;
   });
   
+  // Update contact info when prefill data changes
+  useEffect(() => {
+    if (prefillData?.contact && enablePrefill) {
+      setContactInfo({
+        firstName: prefillData.contact.firstName || "",
+        lastName: prefillData.contact.lastName || "",
+        email: prefillData.contact.email || "",
+        phone: prefillData.contact.phone || "",
+      });
+      console.log('📧 Contact info pre-filled from guest details');
+    }
+  }, [prefillData, enablePrefill]);
+  
   // Update guest counts when prefill data is available
   useEffect(() => {
-    if (prefillData?.guests && product.priceOptions) {
+    if (prefillData?.guests && product.priceOptions && enablePrefill) {
       const prefillCounts: Record<string, number> = {};
       
       // Initialize all options to 0
@@ -311,9 +373,9 @@ export function EnhancedBookingExperience({
       });
       
       setGuestCounts(prefillCounts);
-      console.log('👥 Guest counts pre-filled from stored details:', prefillCounts);
+      console.log('👥 Guest counts pre-filled from guest details:', prefillCounts);
     }
-  }, [prefillData, product.priceOptions]);
+  }, [prefillData, product.priceOptions, enablePrefill]);
 
 
   // State for guest count input (new flow)
@@ -337,12 +399,22 @@ export function EnhancedBookingExperience({
   // Payment processing state
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
 
-  // Contact information state
-  const [contactInfo, setContactInfo] = useState({
-    firstName: "",
-    lastName: "",
-    email: "",
-    phone: "",
+  // Contact information state - initialize with prefill data if available
+  const [contactInfo, setContactInfo] = useState(() => {
+    if (prefillData?.contact) {
+      return {
+        firstName: prefillData.contact.firstName || "",
+        lastName: prefillData.contact.lastName || "",
+        email: prefillData.contact.email || "",
+        phone: prefillData.contact.phone || "",
+      };
+    }
+    return {
+      firstName: "",
+      lastName: "",
+      email: "",
+      phone: "",
+    };
   });
 
   // Contact field validation errors

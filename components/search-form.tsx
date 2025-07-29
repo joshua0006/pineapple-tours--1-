@@ -355,14 +355,7 @@ export function SearchForm({
                 </Select>
               </div>
               
-              {/* Filter Stats */}
-              {filterStats && (
-                <div className="flex items-center gap-2 text-xs">
-                  <span className="text-muted-foreground">
-                    ({filterStats.filteredCount} tours found)
-                  </span>
-                </div>
-              )}
+            
             </div>
           </div>
 

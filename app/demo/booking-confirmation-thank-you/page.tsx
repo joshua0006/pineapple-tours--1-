@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { RezdyExtra } from "@/lib/types/rezdy";
 import { formatCurrency } from "@/lib/utils/pricing-utils";
+import { useGuestDetails, encodeGuestDetailsForUrl } from "@/hooks/use-guest-details";
 import Image from "next/image";
 
 interface BookingDetails {
@@ -66,6 +67,9 @@ export default function BookingConfirmationThankYouDemo() {
   const [extrasError, setExtrasError] = useState<string | null>(null);
   const [selectedExtras, setSelectedExtras] = useState<{[key: string]: number}>({});
   const [searchTerm, setSearchTerm] = useState<string>('skywalk');
+  
+  // Initialize guest details hook for prefill functionality
+  const { storedDetails, hasStoredDetails } = useGuestDetails();
   
   // Demo search terms for testing
   const demoSearchTerms = ['skywalk', 'caves', 'glowworm', 'scenic', 'wildlife', 'adventure'];
@@ -231,6 +235,53 @@ export default function BookingConfirmationThankYouDemo() {
 
   const getSelectedExtrasCount = (): number => {
     return Object.values(selectedExtras).filter(qty => qty > 0).length;
+  };
+
+  // Handle booking with prefilled guest details
+  const handleCompleteBookingWithPrefill = (extra: RezdyExtra) => {
+    // Check if we have stored guest details for prefill
+    if (hasStoredDetails && storedDetails) {
+      try {
+        // Encode guest details for URL
+        const encodedDetails = encodeGuestDetailsForUrl(storedDetails);
+        
+        // Navigate to booking page with prefill parameters
+        const bookingUrl = `/booking/${extra.productCode}?prefill=true&guestDetails=${encodedDetails}`;
+        
+        console.log('🚀 Navigating to add-on booking with prefill:', {
+          productCode: extra.productCode,
+          hasGuestDetails: true,
+          encodedLength: encodedDetails.length,
+        });
+        
+        window.location.href = bookingUrl;
+      } catch (error) {
+        console.error('Failed to encode guest details:', error);
+        // Fallback to regular booking without prefill
+        window.location.href = `/booking/${extra.productCode}`;
+      }
+    } else {
+      // No stored details, proceed with regular booking
+      window.location.href = `/booking/${extra.productCode}`;
+    }
+  };
+
+  // Handle complete booking for all selected extras
+  const handleCompleteAllSelectedBookings = () => {
+    const selectedExtraIds = Object.entries(selectedExtras)
+      .filter(([_, quantity]) => quantity > 0)
+      .map(([extraId]) => extraId);
+    
+    if (selectedExtraIds.length === 0) {
+      console.warn('No extras selected for booking');
+      return;
+    }
+    
+    // For demo purposes, book the first selected extra with prefill
+    const firstSelectedExtra = extras.find(e => selectedExtraIds.includes(e.id));
+    if (firstSelectedExtra) {
+      handleCompleteBookingWithPrefill(firstSelectedExtra);
+    }
   };
 
   if (loading) {
@@ -618,24 +669,37 @@ export default function BookingConfirmationThankYouDemo() {
                               </div>
                               
                               {/* Action Button */}
-                              <Button 
-                                className={`w-full transition-all duration-200 ${
-                                  isSelected
-                                    ? "bg-brand-accent/90 hover:bg-brand-accent text-white"
-                                    : "bg-white border border-brand-accent text-brand-accent hover:bg-brand-accent hover:text-white"
-                                }`}
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  handleToggleExtra(extra.id);
-                                }}
-                              >
-                                <div className="flex items-center gap-2">
-                                  <ShoppingBag className="h-4 w-4" />
-                                  <span>
-                                    {isSelected ? "Remove from Booking" : "Add to Booking"}
-                                  </span>
-                                </div>
-                              </Button>
+                              <div className="flex gap-2">
+                                <Button 
+                                  className={`flex-1 transition-all duration-200 ${
+                                    isSelected
+                                      ? "bg-brand-accent/90 hover:bg-brand-accent text-white"
+                                      : "bg-white border border-brand-accent text-brand-accent hover:bg-brand-accent hover:text-white"
+                                  }`}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleToggleExtra(extra.id);
+                                  }}
+                                >
+                                  <div className="flex items-center gap-2">
+                                    <ShoppingBag className="h-4 w-4" />
+                                    <span>
+                                      {isSelected ? "Remove" : "Select"}
+                                    </span>
+                                  </div>
+                                </Button>
+                                
+                                <Button
+                                  className="bg-gradient-to-r from-brand-accent to-purple-500 hover:from-brand-accent/90 hover:to-purple-500/90 text-white"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleCompleteBookingWithPrefill(extra);
+                                  }}
+                                  title={hasStoredDetails ? "Book now with your saved details" : "Book now"}
+                                >
+                                  <ArrowRight className="h-4 w-4" />
+                                </Button>
+                              </div>
                             </CardContent>
                           </Card>
                         </motion.div>
@@ -688,6 +752,8 @@ export default function BookingConfirmationThankYouDemo() {
 
                     <Button 
                       className="w-full bg-gradient-to-r from-brand-accent to-purple-500 hover:from-brand-accent/90 hover:to-purple-500/90 text-white font-semibold py-3 text-lg"
+                      onClick={handleCompleteAllSelectedBookings}
+                      title={hasStoredDetails ? "Book selected extras with your saved details" : "Book selected extras"}
                     >
                       <div className="flex items-center gap-2">
                         <span>Complete Booking • {formatCurrency(getTotalSelectedPrice())}</span>
@@ -718,6 +784,11 @@ export default function BookingConfirmationThankYouDemo() {
                         <li>• Special rates for existing customers</li>
                         <li>• Seamless integration with your original booking</li>
                         <li>• Cancel up to 24 hours before for full refund</li>
+                        {hasStoredDetails && (
+                          <li className="font-medium text-brand-accent">
+                            • ✨ Quick booking with your saved details available
+                          </li>
+                        )}
                       </ul>
                     </div>
                   </div>

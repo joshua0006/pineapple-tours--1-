@@ -18,6 +18,9 @@ interface BookingPageProps {
     checkOut?: string;
     location?: string;
     pickupLocation?: string;
+    // Add-on booking prefill parameters
+    guestDetails?: string; // Base64 encoded guest details
+    prefill?: string; // 'true' to enable prefill
   }>;
 }
 
@@ -188,6 +191,16 @@ export default async function BookingPage({
     }
   }
 
+  // Parse prefill parameters
+  const enablePrefill = searchParamsData.prefill === 'true';
+  const encodedGuestDetails = searchParamsData.guestDetails;
+
+  console.log('Prefill Debug:', {
+    enablePrefill,
+    hasEncodedGuestDetails: !!encodedGuestDetails,
+    encodedGuestDetailsLength: encodedGuestDetails?.length || 0,
+  });
+
   return (
     <div className="min-h-screen bg-background">
       <EnhancedBookingExperience
@@ -202,6 +215,8 @@ export default async function BookingPage({
           searchParamsData.pickupLocation || searchParamsData.location
         }
         preloadedPickupLocations={preloadedPickupLocations}
+        enablePrefill={enablePrefill}
+        encodedGuestDetails={encodedGuestDetails}
       />
     </div>
   );

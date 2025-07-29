@@ -690,3 +690,45 @@ export interface PickupLocationDetails {
   status: string;
   productCount: string;
 }
+
+// Marketplace-specific types
+export interface MarketplaceProduct extends RezdyProduct {
+  agentPaymentType?: string;
+  maxCommissionPercent?: number;
+  maxCommissionNetRate?: number;
+  marketplaceRate?: boolean;
+  commissionIncludesExtras?: boolean;
+}
+
+export interface MarketplaceExtra extends RezdyExtra {
+  marketplaceEligible?: boolean;
+  commissionRate?: number;
+  region?: string;
+  targetAudience?: 'families' | 'adults' | 'couples' | 'solo' | 'groups';
+}
+
+export interface MarketplaceAddonsResponse {
+  addons: RezdyExtra[];
+  totalCount: number;
+  cached: boolean;
+  region: string;
+  lastUpdated: string;
+  fetchStats?: {
+    totalProducts: number;
+    filteredAddons: number;
+    fetchTime: string;
+  };
+}
+
+export interface BookingAddonRequest {
+  originalOrderNumber: string;
+  customerEmail: string;
+  selectedAddons: {
+    addonId: string;
+    quantity: number;
+    unitPrice: number;
+    totalPrice: number;
+  }[];
+  totalAddonPrice: number;
+  paymentMethod?: 'existing_card' | 'new_payment';
+}

@@ -576,17 +576,17 @@ export default function ToursPage() {
                           />
                         </div>
                       </SelectTrigger>
-                      <SelectContent className="min-w-[280px] md:min-w-[320px] max-w-[95vw]">
+                      <SelectContent className="min-w-[280px] md:min-w-[320px] max-w-[90vw]">
                         {REGION_OPTIONS.map((option) => (
                           <SelectItem 
                             key={option.value} 
                             value={option.value}
-                            className="h-auto py-3 md:py-2 px-3 md:px-4"
+                            className="h-auto min-h-[3rem] py-3 md:py-2.5 px-3 md:px-4"
                           >
-                            <div className="flex flex-col gap-1 min-w-0 min-h-[2.5rem] md:min-h-[2rem] justify-center">
-                              <span className="text-sm leading-tight font-medium truncate">{option.label}</span>
+                            <div className="flex flex-col gap-1 min-w-0 w-full">
+                              <span className="text-sm font-medium leading-normal truncate">{option.label}</span>
                               {option.description && (
-                                <span className="text-[11px] text-muted-foreground leading-tight line-clamp-2">
+                                <span className="text-xs text-muted-foreground leading-tight line-clamp-2">
                                   {option.description}
                                 </span>
                               )}

@@ -13,6 +13,7 @@ import { Separator } from "@/components/ui/separator";
 import { Shield, CreditCard, AlertCircle, CheckCircle, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { logStripeError } from "@/lib/stripe-error-monitor";
+import { trackAddPaymentInfo, getProductCategory, formatCurrencyForGTM } from "@/lib/gtm";
 
 interface StripePaymentFormProps {
   clientSecret: string;
@@ -114,6 +115,26 @@ export function StripePaymentForm({
 
     setIsLoading(true);
     setErrorMessage("");
+
+    // Track add payment info event in GTM
+    try {
+      if (bookingData) {
+        trackAddPaymentInfo({
+          value: formatCurrencyForGTM(amount),
+          currency: currency.toUpperCase(),
+          paymentType: 'credit_card',
+          items: [{
+            productCode: bookingData.product?.code || 'unknown',
+            productName: bookingData.product?.name || 'Tour Booking',
+            category: getProductCategory(bookingData.product?.code || '', bookingData.product?.name || ''),
+            quantity: 1,
+            price: formatCurrencyForGTM(amount),
+          }],
+        });
+      }
+    } catch (gtmError) {
+      console.warn('GTM tracking error:', gtmError);
+    }
 
     try {
       // Get the full name from booking data

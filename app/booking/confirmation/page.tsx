@@ -6,6 +6,7 @@ import { HorizontalScrollableProductCard } from "@/components/horizontal-scrolla
 import { MarketplaceProduct, MarketplaceProductsResponse } from "@/lib/types/rezdy";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Sparkles } from "lucide-react";
+import { trackPurchase, getProductCategory, formatCurrencyForGTM } from "@/lib/gtm";
 
 interface SelectedProduct {
   product: MarketplaceProduct;
@@ -15,10 +16,12 @@ interface SelectedProduct {
 export default function BookingConfirmationPage() {
   const searchParams = useSearchParams();
   const orderNumber = searchParams.get("orderNumber");
+  const sessionId = searchParams.get("session_id");
   const [products, setProducts] = useState<MarketplaceProduct[]>([]);
   const [selectedProducts, setSelectedProducts] = useState<SelectedProduct[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [purchaseTracked, setPurchaseTracked] = useState(false);
 
   // Fetch marketplace products from Rezdy API
   useEffect(() => {
@@ -51,6 +54,62 @@ export default function BookingConfirmationPage() {
 
     fetchMarketplaceProducts();
   }, []);
+
+  // Track purchase event when page loads with order details
+  useEffect(() => {
+    const trackBookingPurchase = async () => {
+      if (!orderNumber || !sessionId || purchaseTracked) {
+        return;
+      }
+
+      try {
+        // Fetch booking details from API or local storage
+        const response = await fetch(`/api/bookings/${orderNumber}`);
+        if (response.ok) {
+          const bookingData = await response.json();
+          
+          // Track the purchase in GTM
+          trackPurchase({
+            transactionId: orderNumber,
+            value: formatCurrencyForGTM(bookingData.total || 0),
+            currency: 'AUD',
+            items: [{
+              productCode: bookingData.productCode || 'unknown',
+              productName: bookingData.productName || 'Tour Booking',
+              category: getProductCategory(bookingData.productCode || '', bookingData.productName || ''),
+              quantity: bookingData.quantity || 1,
+              price: formatCurrencyForGTM(bookingData.total || 0),
+            }],
+            customerEmail: bookingData.customerEmail,
+          });
+          
+          setPurchaseTracked(true);
+          console.log('Purchase event tracked for order:', orderNumber);
+        }
+      } catch (error) {
+        console.error('Error tracking purchase:', error);
+        
+        // Fallback tracking with minimal data
+        if (orderNumber) {
+          trackPurchase({
+            transactionId: orderNumber,
+            value: 0,
+            currency: 'AUD',
+            items: [{
+              productCode: 'unknown',
+              productName: 'Tour Booking',
+              category: 'Day Tours',
+              quantity: 1,
+              price: 0,
+            }],
+          });
+          setPurchaseTracked(true);
+        }
+      }
+    };
+
+    trackBookingPurchase();
+  }, [orderNumber, sessionId, purchaseTracked]);
 
   // Filter out products without images
   const filteredProducts = products.filter(product => product.images && product.images.length > 0);

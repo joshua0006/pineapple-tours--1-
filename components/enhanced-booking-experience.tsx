@@ -78,6 +78,7 @@ import {
 import { usePickupAnalytics } from "@/lib/utils/pickup-analytics";
 import { useGuestDetails, decodeGuestDetailsFromUrl } from "@/hooks/use-guest-details";
 import { GuestDetailsPrefillData, isValidPrefillData } from "@/lib/types/guest-details";
+import { trackBeginCheckout, trackAddPaymentInfo, getProductCategory, formatCurrencyForGTM } from "@/lib/gtm";
 
 interface EnhancedBookingExperienceProps {
   product: RezdyProduct;
@@ -1221,6 +1222,23 @@ export function EnhancedBookingExperience({
         address: selectedPickupLocation.address
       } : null
     });
+
+    // Track begin checkout event in GTM
+    try {
+      trackBeginCheckout({
+        value: formatCurrencyForGTM(pricingBreakdown.total),
+        currency: 'AUD',
+        items: [{
+          productCode: product.productCode,
+          productName: product.name,
+          category: getProductCategory(product.productCode, product.name),
+          quantity: guestCounts.adults + guestCounts.children,
+          price: formatCurrencyForGTM(pricingBreakdown.total),
+        }],
+      });
+    } catch (gtmError) {
+      console.warn('GTM tracking error:', gtmError);
+    }
 
     try {
       // Prepare minimal booking data for payment processing

@@ -12,6 +12,7 @@ import { Prefetcher } from "@/components/prefetcher";
 import { DataPreloader } from "@/components/data-preloader";
 import { OrganizationSchema } from "@/components/schema-markup";
 import { FloatingCart } from "@/components/ui/floating-cart";
+import { GTMScript, GTMNoScript } from "@/components/gtm-script";
 
 const barlow = Barlow({
   subsets: ["latin"],
@@ -133,6 +134,8 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const gtmId = process.env.NEXT_PUBLIC_GTM_ID || '';
+  
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
@@ -145,6 +148,7 @@ export default function RootLayout({
       <body
         className={`${barlow.variable} ${openSans.variable} ${workSans.variable}`}
       >
+        <GTMNoScript gtmId={gtmId} />
         <ThemeProvider attribute="class" forcedTheme="light">
           <CartProvider>
             <div className="flex min-h-screen flex-col">
@@ -167,6 +171,7 @@ export default function RootLayout({
             <OrganizationSchema />
           </CartProvider>
         </ThemeProvider>
+        <GTMScript gtmId={gtmId} />
       </body>
     </html>
   );

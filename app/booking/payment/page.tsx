@@ -26,6 +26,14 @@ import {
   Info
 } from "lucide-react";
 import Link from "next/link";
+import { 
+  trackAddPaymentInfo, 
+  getProductCategory, 
+  formatCurrencyForGTM,
+  calculateTotalQuantity,
+  formatSessionTimeForGTM,
+  formatPickupLocationForGTM 
+} from "@/lib/gtm";
 
 // Initialize Stripe with error handling and logging
 const initializeStripe = () => {
@@ -113,6 +121,7 @@ function PaymentPageContent() {
   const [error, setError] = useState<string>("");
   const [bookingData, setBookingData] = useState<any>(null);
   const [isCreatingPaymentIntent, setIsCreatingPaymentIntent] = useState(false);
+  const [paymentPageTracked, setPaymentPageTracked] = useState(false);
 
   // Create payment intent when component mounts (with race condition protection)
   useEffect(() => {
@@ -128,6 +137,46 @@ function PaymentPageContent() {
 
     createPaymentIntent();
   }, [orderNumber, amount, isCreatingPaymentIntent, clientSecret]);
+
+  // Track payment page visit - alternative to the form submission tracking
+  useEffect(() => {
+    if (bookingData && !paymentPageTracked && orderNumber && amount > 0) {
+      try {
+        const totalQuantity = calculateTotalQuantity(bookingData.guestCounts || { adults: 1 });
+        const sessionTime = formatSessionTimeForGTM(bookingData.session?.startTime, bookingData.session?.endTime);
+        const pickupLocationName = formatPickupLocationForGTM(bookingData.session?.pickupLocation);
+        
+        // Track that user has reached the payment page (before actual payment submission)
+        trackAddPaymentInfo({
+          value: formatCurrencyForGTM(amount),
+          currency: 'AUD',
+          paymentType: 'page_visit', // Different from the form submission tracking
+          items: [{
+            productCode: bookingData.product?.code || 'unknown',
+            productName: bookingData.product?.name || 'Tour Booking',
+            category: getProductCategory(bookingData.product?.code || '', bookingData.product?.name || ''),
+            subCategory: pickupLocationName ? 'With Pickup' : 'Meet at Location',
+            quantity: totalQuantity,
+            price: formatCurrencyForGTM(amount),
+            pickupLocation: pickupLocationName,
+            tourDate: bookingData.session?.startTime ? new Date(bookingData.session.startTime).toISOString().split('T')[0] : undefined,
+            sessionTime: sessionTime,
+          }],
+          affiliation: 'Pineapple Tours',
+        });
+        
+        setPaymentPageTracked(true);
+        console.log('✅ Payment page visit tracked (add_payment_info):', {
+          orderNumber,
+          paymentType: 'page_visit',
+          totalValue: amount,
+          quantity: totalQuantity
+        });
+      } catch (gtmError) {
+        console.warn('🏷️ GTM tracking error for payment page visit:', gtmError);
+      }
+    }
+  }, [bookingData, paymentPageTracked, orderNumber, amount]);
 
   const createPaymentIntent = async (retryCount = 0, maxRetries = 3) => {
     // Prevent multiple concurrent calls

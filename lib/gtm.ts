@@ -7,7 +7,7 @@ declare global {
   }
 }
 
-// GTM Event Types
+// Enhanced GTM Event Types with better GA4 compliance
 export interface GTMBaseEvent {
   event: string;
   [key: string]: any;
@@ -19,10 +19,15 @@ export interface GTMPurchaseEvent extends GTMBaseEvent {
     transaction_id: string;
     value: number;
     currency: string;
+    affiliation?: string;
+    coupon?: string;
+    shipping?: number;
+    tax?: number;
     items: GTMPurchaseItem[];
   };
   user_data?: {
     email?: string;
+    phone?: string;
   };
 }
 
@@ -31,8 +36,16 @@ export interface GTMPurchaseItem {
   item_name: string;
   item_category: string;
   item_category2?: string;
+  item_category3?: string;
+  item_brand?: string;
+  item_variant?: string;
   quantity: number;
   price: number;
+  index?: number;
+  affiliation?: string;
+  coupon?: string;
+  discount?: number;
+  location_id?: string;
 }
 
 export interface GTMBeginCheckoutEvent extends GTMBaseEvent {
@@ -40,6 +53,8 @@ export interface GTMBeginCheckoutEvent extends GTMBaseEvent {
   ecommerce: {
     currency: string;
     value: number;
+    affiliation?: string;
+    coupon?: string;
     items: GTMPurchaseItem[];
   };
 }
@@ -50,6 +65,8 @@ export interface GTMAddPaymentInfoEvent extends GTMBaseEvent {
     currency: string;
     value: number;
     payment_type: string;
+    affiliation?: string;
+    coupon?: string;
     items: GTMPurchaseItem[];
   };
 }
@@ -70,20 +87,67 @@ export interface GTMCustomEvent extends GTMBaseEvent {
   value?: number;
 }
 
+// Debug mode control
+const isDevelopment = typeof process !== 'undefined' && process.env.NODE_ENV === 'development';
+
 // Initialize GTM Data Layer
 export const initializeGTM = (): void => {
   if (typeof window !== 'undefined') {
     window.dataLayer = window.dataLayer || [];
+    if (isDevelopment) {
+      console.log('🏷️ GTM DataLayer initialized');
+    }
   }
 };
 
-// Generic GTM event pusher
+// Enhanced GTM event pusher with validation and debugging
 export const pushGTMEvent = (event: GTMBaseEvent): void => {
-  if (typeof window !== 'undefined' && window.dataLayer) {
-    console.log('Pushing GTM event:', event);
+  if (typeof window === 'undefined') {
+    if (isDevelopment) {
+      console.warn('🏷️ GTM: Server-side render, skipping event:', event.event);
+    }
+    return;
+  }
+
+  if (!window.dataLayer) {
+    console.error('🏷️ GTM: dataLayer not available, initializing...');
+    initializeGTM();
+  }
+
+  // Validate event structure
+  if (!event.event) {
+    console.error('🏷️ GTM: Event missing required "event" field:', event);
+    return;
+  }
+
+  // Enhanced logging for development
+  if (isDevelopment) {
+    console.group(`🏷️ GTM Event: ${event.event}`);
+    console.log('Event Data:', event);
+    
+    // Special logging for e-commerce events
+    if (event.ecommerce) {
+      console.log('💰 E-commerce Data:', {
+        value: event.ecommerce.value,
+        currency: event.ecommerce.currency,
+        items: event.ecommerce.items?.length || 0,
+        transaction_id: event.ecommerce.transaction_id
+      });
+      
+      if (event.ecommerce.items?.length > 0) {
+        console.table(event.ecommerce.items);
+      }
+    }
+    console.groupEnd();
+  }
+
+  try {
     window.dataLayer.push(event);
-  } else {
-    console.warn('GTM dataLayer not available');
+    if (isDevelopment) {
+      console.log(`✅ GTM Event pushed successfully: ${event.event}`);
+    }
+  } catch (error) {
+    console.error('🏷️ GTM: Error pushing event:', error, event);
   }
 };
 
@@ -99,29 +163,48 @@ export const trackPurchase = (data: {
     subCategory?: string;
     quantity: number;
     price: number;
+    pickupLocation?: string;
+    tourDate?: string;
+    sessionTime?: string;
   }>;
   customerEmail?: string;
+  customerPhone?: string;
+  affiliation?: string;
+  coupon?: string;
+  shipping?: number;
+  tax?: number;
 }): void => {
   const event: GTMPurchaseEvent = {
     event: 'purchase',
     ecommerce: {
       transaction_id: data.transactionId,
-      value: data.value,
+      value: formatCurrencyForGTM(data.value),
       currency: data.currency,
-      items: data.items.map(item => ({
+      affiliation: data.affiliation || 'Pineapple Tours',
+      coupon: data.coupon,
+      shipping: data.shipping ? formatCurrencyForGTM(data.shipping) : undefined,
+      tax: data.tax ? formatCurrencyForGTM(data.tax) : undefined,
+      items: data.items.map((item, index) => ({
         item_id: item.productCode,
         item_name: item.productName,
         item_category: item.category,
         item_category2: item.subCategory,
+        item_category3: item.pickupLocation ? 'Pickup Service' : 'Meet at Location',
+        item_brand: 'Pineapple Tours',
+        item_variant: item.sessionTime,
         quantity: item.quantity,
-        price: item.price,
+        price: formatCurrencyForGTM(item.price),
+        index: index,
+        affiliation: data.affiliation || 'Pineapple Tours',
+        location_id: item.pickupLocation,
       })),
     },
   };
 
-  if (data.customerEmail) {
+  if (data.customerEmail || data.customerPhone) {
     event.user_data = {
       email: data.customerEmail,
+      phone: data.customerPhone,
     };
   }
 
@@ -139,20 +222,33 @@ export const trackBeginCheckout = (data: {
     subCategory?: string;
     quantity: number;
     price: number;
+    pickupLocation?: string;
+    tourDate?: string;
+    sessionTime?: string;
   }>;
+  affiliation?: string;
+  coupon?: string;
 }): void => {
   const event: GTMBeginCheckoutEvent = {
     event: 'begin_checkout',
     ecommerce: {
       currency: data.currency,
-      value: data.value,
-      items: data.items.map(item => ({
+      value: formatCurrencyForGTM(data.value),
+      affiliation: data.affiliation || 'Pineapple Tours',
+      coupon: data.coupon,
+      items: data.items.map((item, index) => ({
         item_id: item.productCode,
         item_name: item.productName,
         item_category: item.category,
         item_category2: item.subCategory,
+        item_category3: item.pickupLocation ? 'Pickup Service' : 'Meet at Location',
+        item_brand: 'Pineapple Tours',
+        item_variant: item.sessionTime,
         quantity: item.quantity,
-        price: item.price,
+        price: formatCurrencyForGTM(item.price),
+        index: index,
+        affiliation: data.affiliation || 'Pineapple Tours',
+        location_id: item.pickupLocation,
       })),
     },
   };
@@ -172,21 +268,34 @@ export const trackAddPaymentInfo = (data: {
     subCategory?: string;
     quantity: number;
     price: number;
+    pickupLocation?: string;
+    tourDate?: string;
+    sessionTime?: string;
   }>;
+  affiliation?: string;
+  coupon?: string;
 }): void => {
   const event: GTMAddPaymentInfoEvent = {
     event: 'add_payment_info',
     ecommerce: {
       currency: data.currency,
-      value: data.value,
+      value: formatCurrencyForGTM(data.value),
       payment_type: data.paymentType,
-      items: data.items.map(item => ({
+      affiliation: data.affiliation || 'Pineapple Tours',
+      coupon: data.coupon,
+      items: data.items.map((item, index) => ({
         item_id: item.productCode,
         item_name: item.productName,
         item_category: item.category,
         item_category2: item.subCategory,
+        item_category3: item.pickupLocation ? 'Pickup Service' : 'Meet at Location',
+        item_brand: 'Pineapple Tours',
+        item_variant: item.sessionTime,
         quantity: item.quantity,
-        price: item.price,
+        price: formatCurrencyForGTM(item.price),
+        index: index,
+        affiliation: data.affiliation || 'Pineapple Tours',
+        location_id: item.pickupLocation,
       })),
     },
   };
@@ -315,9 +424,68 @@ export const getProductCategory = (productCode: string, productName: string): st
   return 'Day Tours';
 };
 
-// Utility function to format currency amount
+// Utility function to format currency amount for GTM
 export const formatCurrencyForGTM = (amount: number): number => {
   return Math.round(amount * 100) / 100;
+};
+
+// Utility function to calculate total quantity from guest counts
+export const calculateTotalQuantity = (guestCounts: Record<string, number> | { adults?: number; children?: number; infants?: number }): number => {
+  if (!guestCounts) return 1;
+  
+  // Handle standard format (adults, children, infants)
+  if (typeof guestCounts.adults === 'number') {
+    return (guestCounts.adults || 0) + (guestCounts.children || 0) + (guestCounts.infants || 0) || 1;
+  }
+  
+  // Handle dynamic format (price option labels)
+  const total = Object.values(guestCounts).reduce((sum, count) => {
+    return sum + (typeof count === 'number' && count > 0 ? count : 0);
+  }, 0);
+  
+  return total || 1;
+};
+
+// Utility function to format session time for GTM
+export const formatSessionTimeForGTM = (startTime?: string, endTime?: string): string | undefined => {
+  if (!startTime) return undefined;
+  
+  try {
+    const start = new Date(startTime);
+    const startFormatted = start.toLocaleTimeString('en-US', { 
+      hour: 'numeric', 
+      minute: '2-digit', 
+      hour12: true 
+    });
+    
+    if (endTime) {
+      const end = new Date(endTime);
+      const endFormatted = end.toLocaleTimeString('en-US', { 
+        hour: 'numeric', 
+        minute: '2-digit', 
+        hour12: true 
+      });
+      return `${startFormatted} - ${endFormatted}`;
+    }
+    
+    return startFormatted;
+  } catch (error) {
+    if (isDevelopment) {
+      console.warn('🏷️ GTM: Error formatting session time:', error);
+    }
+    return startTime;
+  }
+};
+
+// Utility function to get pickup location name for tracking
+export const formatPickupLocationForGTM = (pickupLocation?: any): string | undefined => {
+  if (!pickupLocation) return undefined;
+  
+  if (typeof pickupLocation === 'string') return pickupLocation;
+  if (pickupLocation.locationName) return pickupLocation.locationName;
+  if (pickupLocation.name) return pickupLocation.name;
+  
+  return undefined;
 };
 
 export default {
@@ -333,4 +501,7 @@ export default {
   trackSearch,
   getProductCategory,
   formatCurrencyForGTM,
+  calculateTotalQuantity,
+  formatSessionTimeForGTM,
+  formatPickupLocationForGTM,
 };

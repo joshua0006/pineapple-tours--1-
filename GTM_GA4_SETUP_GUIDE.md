@@ -74,7 +74,7 @@ This guide will walk you through setting up Google Analytics 4 (GA4) with Google
    - Select "All Pages" (built-in trigger)
    - This ensures GA4 loads on every page
 
-5. **Save the Tag**
+/////5. **Save the Tag**
    - Click "Save" in the top right
 
 ### Step 3: Create E-commerce Event Tags
@@ -193,6 +193,8 @@ Now go back to each tag and assign the appropriate trigger:
 3. **GA4 - Purchase** tag → **Purchase** trigger
 
 ---
+///////////////////////////////////////////////////
+
 
 ## Part 3: Enhanced E-commerce in GA4
 

@@ -78,7 +78,15 @@ import {
 import { usePickupAnalytics } from "@/lib/utils/pickup-analytics";
 import { useGuestDetails, decodeGuestDetailsFromUrl } from "@/hooks/use-guest-details";
 import { GuestDetailsPrefillData, isValidPrefillData } from "@/lib/types/guest-details";
-import { trackBeginCheckout, trackAddPaymentInfo, getProductCategory, formatCurrencyForGTM } from "@/lib/gtm";
+import { 
+  trackBeginCheckout, 
+  trackAddPaymentInfo, 
+  getProductCategory, 
+  formatCurrencyForGTM,
+  calculateTotalQuantity,
+  formatSessionTimeForGTM,
+  formatPickupLocationForGTM 
+} from "@/lib/gtm";
 
 interface EnhancedBookingExperienceProps {
   product: RezdyProduct;
@@ -1223,8 +1231,12 @@ export function EnhancedBookingExperience({
       } : null
     });
 
-    // Track begin checkout event in GTM
+    // Track begin checkout event in GTM with enhanced data
     try {
+      const totalQuantity = calculateTotalQuantity(guestCounts);
+      const sessionTime = formatSessionTimeForGTM(selectedSession?.startTimeLocal, selectedSession?.endTimeLocal);
+      const pickupLocationName = formatPickupLocationForGTM(selectedPickupLocation);
+      
       trackBeginCheckout({
         value: formatCurrencyForGTM(pricingBreakdown.total),
         currency: 'AUD',
@@ -1232,12 +1244,25 @@ export function EnhancedBookingExperience({
           productCode: product.productCode,
           productName: product.name,
           category: getProductCategory(product.productCode, product.name),
-          quantity: guestCounts.adults + guestCounts.children,
+          subCategory: pickupLocationName ? 'With Pickup' : 'Meet at Location',
+          quantity: totalQuantity,
           price: formatCurrencyForGTM(pricingBreakdown.total),
+          pickupLocation: pickupLocationName,
+          tourDate: selectedSession?.startTimeLocal ? new Date(selectedSession.startTimeLocal).toISOString().split('T')[0] : undefined,
+          sessionTime: sessionTime,
         }],
+        affiliation: 'Pineapple Tours',
+      });
+      
+      console.log('✅ Begin checkout event tracked:', {
+        productCode: product.productCode,
+        totalValue: pricingBreakdown.total,
+        quantity: totalQuantity,
+        hasPickup: !!pickupLocationName,
+        tourDate: selectedSession?.startTimeLocal ? new Date(selectedSession.startTimeLocal).toISOString().split('T')[0] : 'N/A'
       });
     } catch (gtmError) {
-      console.warn('GTM tracking error:', gtmError);
+      console.warn('🏷️ GTM tracking error for begin_checkout:', gtmError);
     }
 
     try {

@@ -6,7 +6,14 @@ import { HorizontalScrollableProductCard } from "@/components/horizontal-scrolla
 import { MarketplaceProduct, MarketplaceProductsResponse } from "@/lib/types/rezdy";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Sparkles } from "lucide-react";
-import { trackPurchase, getProductCategory, formatCurrencyForGTM } from "@/lib/gtm";
+import { 
+  trackPurchase, 
+  getProductCategory, 
+  formatCurrencyForGTM,
+  calculateTotalQuantity,
+  formatSessionTimeForGTM,
+  formatPickupLocationForGTM 
+} from "@/lib/gtm";
 
 interface SelectedProduct {
   product: MarketplaceProduct;
@@ -63,31 +70,65 @@ export default function BookingConfirmationPage() {
       }
 
       try {
-        // Fetch booking details from API or local storage
-        const response = await fetch(`/api/bookings/${orderNumber}`);
-        if (response.ok) {
-          const bookingData = await response.json();
+        // First try to get data from session storage (more complete data)
+        const sessionStorageKey = `booking_${orderNumber}`;
+        const sessionData = sessionStorage.getItem(sessionStorageKey);
+        let bookingData = null;
+        
+        if (sessionData) {
+          bookingData = JSON.parse(sessionData);
+          console.log('✅ Using session storage data for purchase tracking');
+        } else {
+          // Fallback to API call
+          const response = await fetch(`/api/bookings/${orderNumber}`);
+          if (response.ok) {
+            bookingData = await response.json();
+            console.log('✅ Using API data for purchase tracking');
+          }
+        }
+        
+        if (bookingData) {
+          const totalQuantity = calculateTotalQuantity(bookingData.guestCounts || { adults: 1 });
+          const sessionTime = formatSessionTimeForGTM(bookingData.session?.startTime, bookingData.session?.endTime);
+          const pickupLocationName = formatPickupLocationForGTM(bookingData.session?.pickupLocation);
           
-          // Track the purchase in GTM
+          // Track the purchase in GTM with enhanced data
           trackPurchase({
             transactionId: orderNumber,
-            value: formatCurrencyForGTM(bookingData.total || 0),
+            value: formatCurrencyForGTM(bookingData.pricing?.total || bookingData.total || 0),
             currency: 'AUD',
             items: [{
-              productCode: bookingData.productCode || 'unknown',
-              productName: bookingData.productName || 'Tour Booking',
-              category: getProductCategory(bookingData.productCode || '', bookingData.productName || ''),
-              quantity: bookingData.quantity || 1,
-              price: formatCurrencyForGTM(bookingData.total || 0),
+              productCode: bookingData.product?.code || bookingData.productCode || 'unknown',
+              productName: bookingData.product?.name || bookingData.productName || 'Tour Booking',
+              category: getProductCategory(
+                bookingData.product?.code || bookingData.productCode || '', 
+                bookingData.product?.name || bookingData.productName || ''
+              ),
+              subCategory: pickupLocationName ? 'With Pickup' : 'Meet at Location',
+              quantity: totalQuantity,
+              price: formatCurrencyForGTM(bookingData.pricing?.total || bookingData.total || 0),
+              pickupLocation: pickupLocationName,
+              tourDate: bookingData.session?.startTime ? new Date(bookingData.session.startTime).toISOString().split('T')[0] : undefined,
+              sessionTime: sessionTime,
             }],
-            customerEmail: bookingData.customerEmail,
+            customerEmail: bookingData.contact?.email || bookingData.customerEmail,
+            customerPhone: bookingData.contact?.phone,
+            affiliation: 'Pineapple Tours',
+            tax: bookingData.pricing?.taxes,
+            shipping: bookingData.pricing?.serviceFees,
           });
           
           setPurchaseTracked(true);
-          console.log('Purchase event tracked for order:', orderNumber);
+          console.log('✅ Enhanced purchase event tracked:', {
+            orderNumber,
+            totalValue: bookingData.pricing?.total || bookingData.total || 0,
+            quantity: totalQuantity,
+            hasPickup: !!pickupLocationName,
+            customerEmail: bookingData.contact?.email || bookingData.customerEmail
+          });
         }
       } catch (error) {
-        console.error('Error tracking purchase:', error);
+        console.error('🏷️ Error tracking purchase:', error);
         
         // Fallback tracking with minimal data
         if (orderNumber) {
@@ -102,8 +143,10 @@ export default function BookingConfirmationPage() {
               quantity: 1,
               price: 0,
             }],
+            affiliation: 'Pineapple Tours',
           });
           setPurchaseTracked(true);
+          console.log('⚠️ Fallback purchase event tracked with minimal data');
         }
       }
     };

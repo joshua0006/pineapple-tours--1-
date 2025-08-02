@@ -13,7 +13,14 @@ import { Separator } from "@/components/ui/separator";
 import { Shield, CreditCard, AlertCircle, CheckCircle, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { logStripeError } from "@/lib/stripe-error-monitor";
-import { trackAddPaymentInfo, getProductCategory, formatCurrencyForGTM } from "@/lib/gtm";
+import { 
+  trackAddPaymentInfo, 
+  getProductCategory, 
+  formatCurrencyForGTM,
+  calculateTotalQuantity,
+  formatSessionTimeForGTM,
+  formatPickupLocationForGTM 
+} from "@/lib/gtm";
 
 interface StripePaymentFormProps {
   clientSecret: string;
@@ -116,9 +123,13 @@ export function StripePaymentForm({
     setIsLoading(true);
     setErrorMessage("");
 
-    // Track add payment info event in GTM
+    // Track add payment info event in GTM with enhanced data
     try {
       if (bookingData) {
+        const totalQuantity = calculateTotalQuantity(bookingData.guestCounts || { adults: 1 });
+        const sessionTime = formatSessionTimeForGTM(bookingData.session?.startTime, bookingData.session?.endTime);
+        const pickupLocationName = formatPickupLocationForGTM(bookingData.session?.pickupLocation);
+        
         trackAddPaymentInfo({
           value: formatCurrencyForGTM(amount),
           currency: currency.toUpperCase(),
@@ -127,13 +138,27 @@ export function StripePaymentForm({
             productCode: bookingData.product?.code || 'unknown',
             productName: bookingData.product?.name || 'Tour Booking',
             category: getProductCategory(bookingData.product?.code || '', bookingData.product?.name || ''),
-            quantity: 1,
+            subCategory: pickupLocationName ? 'With Pickup' : 'Meet at Location',
+            quantity: totalQuantity,
             price: formatCurrencyForGTM(amount),
+            pickupLocation: pickupLocationName,
+            tourDate: bookingData.session?.startTime ? new Date(bookingData.session.startTime).toISOString().split('T')[0] : undefined,
+            sessionTime: sessionTime,
           }],
+          affiliation: 'Pineapple Tours',
+        });
+        
+        console.log('✅ Add payment info event tracked:', {
+          productCode: bookingData.product?.code || 'unknown',
+          totalValue: amount,
+          quantity: totalQuantity,
+          paymentType: 'credit_card',
+          hasPickup: !!pickupLocationName,
+          orderNumber
         });
       }
     } catch (gtmError) {
-      console.warn('GTM tracking error:', gtmError);
+      console.warn('🏷️ GTM tracking error for add_payment_info:', gtmError);
     }
 
     try {

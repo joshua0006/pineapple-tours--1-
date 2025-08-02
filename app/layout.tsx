@@ -13,6 +13,7 @@ import { DataPreloader } from "@/components/data-preloader";
 import { OrganizationSchema } from "@/components/schema-markup";
 import { FloatingCart } from "@/components/ui/floating-cart";
 import { GTMScript, GTMNoScript } from "@/components/gtm-script";
+import { GA4Script } from "@/components/ga4-script";
 
 const barlow = Barlow({
   subsets: ["latin"],
@@ -135,6 +136,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   const gtmId = process.env.NEXT_PUBLIC_GTM_ID || '';
+  const ga4MeasurementId = process.env.NEXT_PUBLIC_GA4_MEASUREMENT_ID || '';
   
   return (
     <html lang="en" suppressHydrationWarning>
@@ -172,6 +174,7 @@ export default function RootLayout({
           </CartProvider>
         </ThemeProvider>
         <GTMScript gtmId={gtmId} />
+        <GA4Script measurementId={ga4MeasurementId} />
       </body>
     </html>
   );
